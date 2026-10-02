@@ -242,10 +242,13 @@ export const buildClimbLevel = async (
           // A glowing plane a little over the bottom: lava, not a drop.
           glows[o]!.push(xform(piece('lava', () => paint(rbox(CELL, 0.12, CELL, 0.04, 6, 4), '#ff6a1a')), [x0 + CELL / 2, y + 0.3, z0 + CELL / 2]))
         } else if (pk === 'spikes') {
-          // A bed of spikes: three rows of three cones.
+          // A bed of spikes: three rows of three cones, tall, their tips
+          // lit — from the edge, far above, the pit has to read as spikes
+          // (a plain dark floor read as "a floor to drop onto").
           for (let a = 0; a < 3; a++) {
             for (let c2 = 0; c2 < 3; c2++) {
-              decor[o]!.push(xform(piece('spike', () => paint(rcone(0.34, 0.03, 1.1, 0.01, 8), theme.pilaster)), [x0 + 0.5 + a, y + 0.55, z0 + 0.5 + c2]))
+              decor[o]!.push(xform(piece('spike', () => paint(rcone(0.44, 0.05, 1.8, 0.01, 8), theme.pilaster)), [x0 + 0.5 + a, y + 0.9, z0 + 0.5 + c2]))
+              glows[o]!.push(xform(piece('spikeTip', () => paint(rcone(0.17, 0.02, 0.6, 0.01, 8), theme.accent)), [x0 + 0.5 + a, y + 1.56, z0 + 0.5 + c2]))
             }
           }
         } else if (t.clouds) {

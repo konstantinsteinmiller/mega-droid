@@ -24,7 +24,7 @@ import {
 /** Walls rise this far above a room's highest floor (m). */
 const WALL_OVER = 5
 /** Pits are drawn this deep under the floor they are cut into (m). */
-const PIT_DEPTH = 12
+const PIT_DEPTH = 8
 /** The arena keeps the labyrinth's wall height: the boss drops in over it. */
 const ARENA_WALL = 4.2
 /** A wall button's face and the hint panel stand this far off their wall (m),

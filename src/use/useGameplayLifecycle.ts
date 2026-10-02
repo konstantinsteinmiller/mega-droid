@@ -58,6 +58,10 @@ export interface GameplayLiveInputs {
   visibilityHidden: boolean
   /** The portal's SDK asked us to pause (its own overlay, chrome, ad frame). */
   platformPaused: boolean
+  /** A new player's first play is under way: from the intro going live (after
+   *  the start gate's press) until the first mission hands him control
+   *  (`flow.introPlay`). */
+  introPlay?: boolean
 }
 
 /**
@@ -73,10 +77,18 @@ export interface GameplayLiveInputs {
  *     the screen wake lock `gameplayStart()` takes on a page nobody is using.
  *   • `phase` — reporting a start during the beam-in, before the player can
  *     act, is the kind of thing portal moderation rejects.
+ *
+ * One exception, the owner's call (2026-10-02): the INTRO is the start of the
+ * game. A new player's play opens when the film goes live — never before a
+ * press on the page: the film waits behind its start gate, and Poki's own
+ * first-start gate holds it too — and stays open through the hand-over into
+ * the first mission, beam-in included, so the portal sees ONE start for
+ * "intro, then the tutorial", not a second one as the level begins (and no
+ * stop/start pair inside Poki's 50 ms window). Everything that pauses a play
+ * still closes it: a modal, an ad, a hidden tab, the portal's pause.
  */
 export const isGameplayLive = (i: GameplayLiveInputs): boolean =>
-  i.screen === 'mission'
-  && i.phase === 'play'
+  ((i.screen === 'mission' && i.phase === 'play') || (!!i.introPlay && (i.screen === 'intro' || i.screen === 'mission')))
   && !i.flowModal
   && !i.anyModalOpen
   && !i.adShowing

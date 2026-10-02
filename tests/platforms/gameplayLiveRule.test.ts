@@ -27,6 +27,43 @@ const playing: GameplayLiveInputs = {
   platformPaused: false
 }
 
+// A new player's first play starts with the intro (the owner's call): one
+// bracket from the film going live to the tutorial's end, not a second start
+// as the first level begins.
+describe('the intro is the start of the first play', () => {
+  const film: GameplayLiveInputs = { ...playing, screen: 'intro', phase: 'boot', introPlay: true }
+
+  it('is live once the film runs; never before (the start gate is still up)', () => {
+    expect(isGameplayLive(film)).toBe(true)
+    expect(isGameplayLive({ ...film, introPlay: false })).toBe(false)
+  })
+
+  it('stays ONE play through the hand-over: no stop between the film and the first level', () => {
+    // The film, the tutorial's build overlay, its beam-in, then control.
+    const steps: GameplayLiveInputs[] = [
+      film,
+      { ...film, screen: 'mission', phase: 'boot' },
+      { ...film, screen: 'mission', phase: 'beamIn' },
+      { ...film, screen: 'mission', phase: 'play' },
+      // The flag is dropped on the first moment of control: still live, by the usual rule.
+      { ...playing }
+    ]
+    expect(steps.map(isGameplayLive)).toEqual([true, true, true, true, true])
+  })
+
+  it('pauses like any play: a hidden tab, an ad, the portal\'s pause, a modal', () => {
+    expect(isGameplayLive({ ...film, visibilityHidden: true })).toBe(false)
+    expect(isGameplayLive({ ...film, adShowing: true })).toBe(false)
+    expect(isGameplayLive({ ...film, platformPaused: true })).toBe(false)
+    expect(isGameplayLive({ ...film, anyModalOpen: true })).toBe(false)
+  })
+
+  it('is only ever the first play: every later beam-in is an animation again, and the Lab is menus', () => {
+    expect(isGameplayLive({ ...playing, phase: 'beamIn' })).toBe(false)
+    expect(isGameplayLive({ ...film, screen: 'hub', phase: 'hub' })).toBe(false)
+  })
+})
+
 describe('isGameplayLive', () => {
   it('is live while the player has control in a mission', () => {
     expect(isGameplayLive(playing)).toBe(true)

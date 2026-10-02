@@ -68,7 +68,11 @@ export const flow = reactive({
   /** 0..1 progress of that build. */
   loadProgress: 0,
   /** The sector being built (the overlay's label). */
-  loadingSector: '' as SectorId | ''
+  loadingSector: '' as SectorId | '',
+  /** A new player's first play, from the intro going live to the first
+   *  mission's first moment of control: the portals count it as ONE play
+   *  (`use/useGameplayLifecycle.ts`). Never a replay from Options. */
+  introPlay: false
 })
 
 type MissionFactory = (
@@ -84,6 +88,7 @@ export interface IntroHandle extends Pick<import('./engine/app').GameMode, 'scen
 type IntroFactory = (opts: {
   replay: boolean
   onStart: () => void
+  onLive: () => void
   onEnd: (skipped: boolean) => void
 }) => IntroHandle
 /** The ending (`story/ending.ts`), as far as the flow and its layer drive it. */
@@ -324,6 +329,8 @@ const beginIntro = (replay: boolean): IntroHandle => {
       performance.mark('boot:intro-start')
       if (!replay) buildBehindIntro()
     },
+    // The film runs (the start gate, if there was one, has been pressed).
+    onLive: () => { flow.introPlay = !replay },
     onEnd: (skipped) => { void finishIntro(replay, skipped) }
   })
   introLive = m
@@ -370,6 +377,7 @@ const dropBehind = (): void => {
 const abandonIntro = async (t: BootTarget): Promise<void> => {
   introLive?.abort()
   introLive = null
+  flow.introPlay = false
   dropBehind()
   markStorySeen('intro')
   performance.mark('boot:intro-end')
@@ -479,6 +487,7 @@ export const retryFromSnapshot = async (s: MissionSnapshot): Promise<void> => {
 export const goHub = (): void => {
   if (!hubFactory) return
   flow.modal = ''
+  flow.introPlay = false
   flow.screen = 'hub'
   hud.phase = 'hub'
   hud.combat = false

@@ -326,6 +326,12 @@ watch(() => flow.screen, (sc) => {
 
 // A touch player's first mission: the controls legend once, right after the
 // beam-in (phone testers never found it in the pause menu).
+// The first play that began with the intro is an ordinary one from the
+// moment the mission hands over control: its bracket follows the usual rule.
+watch(() => hud.phase, (ph) => {
+  if (ph === 'play') flow.introPlay = false
+})
+
 watch(() => hud.phase, (ph) => {
   if (ph === 'play' && flow.screen === 'mission' && !flow.modal && input.device === 'touch' &&
     !profile.tips['controlsIntro:touch']) flow.modal = 'controls'
@@ -342,6 +348,7 @@ watch(isGamePaused, (p) => {
 // `isGameplayLive`; the Poki arm defers a start inside its 50 ms bad-event
 // window, so a modal closing in the same breath as an ad opening is safe.
 const live = computed(() => isGameplayLive({
+  introPlay: flow.introPlay,
   screen: flow.screen,
   phase: hud.phase,
   flowModal: flow.modal !== '',

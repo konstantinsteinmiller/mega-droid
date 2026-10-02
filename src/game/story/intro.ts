@@ -75,6 +75,8 @@ export interface IntroOptions {
   /** The cutscene became the live mode (the loader is gone): the owner starts
    *  building what comes next behind it. */
   onStart?: () => void
+  /** The film itself began to run (at once, or on the start gate's press). */
+  onLive?: () => void
   /** It ended (`skipped`: by the player). Called once. */
   onEnd?: (skipped: boolean) => void
   /** Flux's gear colours (the hub's refresh passes the player's). */
@@ -570,6 +572,7 @@ export class IntroMode implements GameMode {
     // audio only unlocks later (the first tap), it joins at the shot on screen.
     setSongStartHint((id) => (id === 'intro' ? this.t : 0))
     setMusicTrack('intro')
+    this.opts.onLive?.()
   }
 
   /** The player skipped (the button, `Esc`, `Space` held). Counts from `SKIP_AFTER`. */

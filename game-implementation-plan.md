@@ -738,6 +738,16 @@ while bars and damage numbers get direct DOM writes.
       camera; its charge and charged shot are the game's too (green to the
       full charge's flickering cyan at the muzzle; the shot's glow, core,
       comet tail and rings), from one shared module the mission uses as well.
+    - The intro is the start of the first play (the owner's call, against
+      the playbook's "no portal gameplayStart during an intro" guardrail):
+      the portals' gameplay bracket opens when the film goes live (after the
+      start gate's press; Poki's own first-start gate still holds it where
+      no press has happened) and stays open through the hand-over and the
+      tutorial's beam-in, so there is ONE start for "intro, then the first
+      level". A modal, an ad, a hidden tab or the portal's pause still close
+      it. Only a new player's intro, never a replay. Watch for it in review:
+      a portal's QA may read a start during a film as early; `flow.introPlay`
+      is the one switch.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

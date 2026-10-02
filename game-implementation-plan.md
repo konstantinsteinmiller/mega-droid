@@ -691,6 +691,15 @@ while bars and damage numbers get direct DOM writes.
     one waiting at a time, a late scan dropped); tips once in a save;
     thirteen plain-to-see stage hints never said; one line on the way in; a
     level-up line every second level; one line of small talk a mission.
+  - [x] **#123** "the Flame Master level's puzzle shows yellow and there is
+    no yellow in the room". A colour puzzle's hint panel had a lamp for all
+    four colours, the three not asked for dimmed but plain to see; it has a
+    lamp per colour in the room now, the others switched off. The panel
+    stood half behind the post beside the false wall: it is in the middle of
+    its wall face. Checked every puzzle (10 stages x 24 seeds, the Tower
+    Run): one Volt Tower story seed started SOLVED (the first shot un-solved
+    it); the builder refuses that now, and a key colour no button has. The
+    puzzle audit pins all of it.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

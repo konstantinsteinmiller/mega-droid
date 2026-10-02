@@ -21,8 +21,10 @@ import type { Shot } from './world'
  *  - 'lights': each button is on or off; the panel's lamps show the pattern
  *    to copy, bright against dark.
  *  - 'color':  each button has a fixed colour and is on or off; the false
- *    wall wears a frame in the key colour and the panel lights only that
- *    colour: exactly the key's buttons on, every other off.
+ *    wall wears a frame in the key colour and the panel has one lamp for
+ *    each colour IN THE ROOM, only the key's lit: exactly the key's buttons
+ *    on, every other off. (It used to show all four colours: a room with
+ *    no yellow button showed a yellow lamp, and read as unsolvable, #123.)
  *  - 'cycle':  each hit steps a button red → green → blue → yellow → red;
  *    the panel shows the colour each button wants.
  *
@@ -79,6 +81,11 @@ export const press = (spec: SecretSpec, state: number[], i: number): number => {
   state[i] = v
   return v
 }
+
+/** A colour puzzle's panel: the colours its room's buttons have, in palette
+ *  order. Never a colour the player cannot find. */
+export const panelColors = (spec: SecretSpec): number[] =>
+  [...new Set(spec.buttons.map(b => ((b.color % 4) + 4) % 4))].sort((a, b) => a - b)
 
 /** Every button shows what the panel asks for. */
 export const solved = (spec: SecretSpec, state: readonly number[]): boolean => {
@@ -155,9 +162,9 @@ export class SecretsFeature implements StageFeature {
         host.propParent(b.x, b.z).add(m.root)
         return m
       })
-      // The panel: one lamp per button (a colour puzzle: one per colour).
+      // The panel: one lamp per button (a colour puzzle: one per colour in the room).
       const P = spec.panel
-      const panel = buildPanel(th, spec.kind === 'color' ? 4 : spec.buttons.length)
+      const panel = buildPanel(th, spec.kind === 'color' ? panelColors(spec).length : spec.buttons.length)
       panel.root.position.set(P.x, P.y, P.z)
       panel.root.rotation.y = Math.atan2(P.nx, P.nz)
       host.propParent(P.x, P.z).add(panel.root)
@@ -204,15 +211,22 @@ export class SecretsFeature implements StageFeature {
    *  from in front of it (along its right-hand axis: (nz, −nx)). */
   private paintPanel(spec: SecretSpec, lamps: LampMesh[], nx: number, nz: number): void {
     if (spec.kind === 'color') {
-      lamps.forEach((l, c) => {
+      const colors = panelColors(spec)
+      lamps.forEach((l, slot) => {
+        const c = colors[slot]!
         const lit = c === spec.key
-        setLamp(l.lampMat, LAMP.colors[c]!, lit ? 1 : DIM)
         l.icon.geometry = iconGeometry(c)
-        // Only the key reads at a glance: the others' icons dim with their
-        // lamps (bright icons on dark lamps read as four equal answers — a
-        // Sky Docks playtester could not tell which colour the hint meant).
-        if (lit) l.iconMat.color.copy(LAMP.dark)
-        else l.iconMat.color.copy(LAMP.colors[c]!).multiplyScalar(0.3)
+        // Only the key reads at a glance: it is lit in its colour. The others
+        // are lamps switched OFF (dark, their icon a faint trace of their
+        // colour): "these stay off", not three more answers. A Sky Docks
+        // playtester could not tell which colour the hint meant.
+        if (lit) {
+          setLamp(l.lampMat, LAMP.colors[c]!)
+          l.iconMat.color.copy(LAMP.dark)
+        } else {
+          setLamp(l.lampMat, LAMP.off, 0.6)
+          l.iconMat.color.copy(LAMP.colors[c]!).multiplyScalar(0.35)
+        }
       })
       return
     }

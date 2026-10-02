@@ -305,8 +305,9 @@ export class Builder {
       }
     })
     // The panel: on the wall beside the false wall (the face next to it along
-    // the same line, if that is a wall), else on the false wall itself, off
-    // its middle.
+    // the same line, if that is a wall), in the MIDDLE of that face — nearer
+    // the false wall, the post between the two faces stood in front of its
+    // first lamp (#123) — else on the false wall itself, off its middle.
     const fx = door.axis === 'x' ? (door.i + oi + 1) / 2 * CELL : cellCenter(door.i)
     const fz = door.axis === 'z' ? (door.j + oj + 1) / 2 * CELL : cellCenter(door.j)
     const nx = door.axis === 'x' ? Math.sign(oi - door.i) : 0
@@ -320,7 +321,7 @@ export class Builder {
       const ri = oi + ax * s
       const rj = oj + az * s
       const open = this.cell[this.k(wi, wj)] !== Cell.Void && !inAlcove(wi, wj)
-      if (!open && this.room[this.k(ri, rj)] === room) { along = s * (CELL / 2 + 0.9); break }
+      if (!open && this.room[this.k(ri, rj)] === room) { along = s * CELL; break }
     }
     const panel = {
       x: fx + ax * along + nx * BUTTON_OFF, y: y + PANEL_Y, z: fz + az * along + nz * BUTTON_OFF, nx, nz
@@ -335,9 +336,18 @@ export class Builder {
         if (d > far) { far = d; pi = i; pj = j }
       }
     }
+    // A puzzle must ask for something: a key colour no button has, or a
+    // target the buttons start on, is no puzzle (the wall would never open,
+    // or the first shot would un-solve it).
+    if (kind === 'color' && !bs.some(b => b.color === key)) throw new Error(`[builder] secret in room ${room}: no button has the key colour ${key}`)
+    const want = target.slice()
+    if (kind !== 'color' && want.length) {
+      const start = bs.map(b => (kind === 'cycle' ? ((b.color % 4) + 4) % 4 : 0))
+      if (start.every((v, n) => v === (want[n] ?? 0))) want[0] = kind === 'cycle' ? (start[0]! + 1) % 4 : 1
+    }
     const spec: SecretSpec = {
       room, kind, buttons: bs,
-      target: kind === 'color' ? bs.map(b => (b.color === key ? 1 : 0)) : target.slice(),
+      target: kind === 'color' ? bs.map(b => (b.color === key ? 1 : 0)) : want,
       key: kind === 'color' ? key : undefined,
       panel, door: { ...door }, cells, prize,
       prizeAt: { x: cellCenter(pi), y, z: cellCenter(pj) }

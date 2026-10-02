@@ -11,6 +11,7 @@ import { generateClimb } from '@/game/world/climbGen'
 import { secretWallFaces } from '@/game/world/climbMesh'
 import { CELL, type MapData } from '@/game/world/levelGen'
 import { createNav, floorAt, hasLineOfSight } from '@/game/world/nav'
+import { initialState, panelColors, solved, targetOf } from '@/game/sim/secrets'
 import type { SectorId } from '@/game/world/themes'
 
 const STAGES: SectorId[] = ['blaze', 'cryo', 'volt', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor', 'fortress']
@@ -26,7 +27,24 @@ const audit = (m: MapData, label: string): void => {
   const t = m.terrain!
   const faces = secretWallFaces(t, m.w)
   const nav = createNav(m)
-  for (const s of t.secrets ?? []) {
+  for (const [n, s] of (t.secrets ?? []).entries()) {
+    const sec = `${label} secret ${n}`
+    // Solvable (#123): it asks for something, and for nothing the room lacks.
+    expect(solved(s, initialState(s)), `${sec}: not solved before a shot`).toBe(false)
+    expect(s.buttons.some((_b, i) => targetOf(s, i) !== initialState(s)[i]), `${sec}: some button to change`).toBe(true)
+    if (s.kind === 'color') {
+      const inRoom = new Set(s.buttons.map(b => b.color))
+      expect(inRoom.has(s.key!), `${sec}: a button in the key colour`).toBe(true)
+      // The panel shows the room's colours only (it once showed a yellow lamp in a room with no yellow).
+      expect(panelColors(s).every(c => inRoom.has(c)), `${sec}: the panel shows only colours in the room`).toBe(true)
+      expect(panelColors(s), `${sec}: the key is on the panel`).toContain(s.key)
+    }
+    // The panel clear of the wall posts: in the middle third of its wall face
+    // (a post stands 0.3 m proud on each cell corner and covered its first lamp).
+    const along = s.panel.nx ? s.panel.z : s.panel.x
+    const off = Math.abs((along / CELL) % 1 - 0.5) * CELL
+    const onFalseWall = s.cells.includes(Math.floor((s.panel.z - s.panel.nz * 0.5) / CELL) * m.w + Math.floor((s.panel.x - s.panel.nx * 0.5) / CELL))
+    if (!onFalseWall) expect(off, `${sec}: the panel in the middle of its wall face`).toBeLessThan(0.3)
     const mounts = [...s.buttons.map((b, n) => ({ ...b, what: `button ${n}` })), { ...s.panel, what: 'hint panel' }]
     for (const b of mounts) {
       const i = Math.floor((b.x + b.nx * 0.5) / CELL)

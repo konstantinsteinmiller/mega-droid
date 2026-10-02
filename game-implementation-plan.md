@@ -773,6 +773,14 @@ while bars and damage numbers get direct DOM writes.
       button with the finger (touch).
     - Icicle halls (Cryo Plant, Deep Mine, Fortress) have a roof at the
       icicles' roots, drawn from below only.
+    - No debrief after the Volt Tower either: a Master's FIRST fall in a run
+      owes its debrief whatever the flags say. A New Game+ begun before its
+      debrief flags were cleared (or a migration) left every film "seen",
+      so none played for the whole run; the stale flag is dropped on the
+      first clear.
+    - The Lab's sector tiles: a one-word name too long for its tile
+      ("Gezeitenschleusen", "Polaritätswerk") shrinks to fit, down to 80 %,
+      and past that widens its own tile; the level range stays on one line.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

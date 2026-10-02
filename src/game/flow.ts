@@ -121,7 +121,7 @@ let pendingDebrief: DebriefPlan | null = null
 /**
  * The debrief (#119): after a story mission's results (and the interstitial,
  * if one was due — never during it), the city from above and Pip's briefing
- * on what comes next; then the Lab. Once ever per Master, like every story
+ * on what comes next; then the Lab. Once per Master and run (New Game+ tells it again), like every story
  * beat; the Vex scene that Master had in the Lab plays inside it and counts
  * as seen. Without the film (a build or a test with no factory), the Lab.
  */
@@ -540,7 +540,7 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
       if (!profile.world.bosses.includes(sector.boss)) {
         profile.world.bosses.push(sector.boss)
         profile.story++
-        // The story moves on: its debrief, unless this save has seen it (a New Game+ run).
+        // The story moves on: its debrief, once per run (New Game+ clears the flags).
         const plan = debriefFor(sector.boss)
         if (plan && !profile.world.seen.includes(debriefSeen(sector.boss))) pendingDebrief = plan
         const w = (Object.values(WEAPONS).find(d => d.from === sector.boss))

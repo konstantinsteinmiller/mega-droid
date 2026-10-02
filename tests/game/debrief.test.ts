@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // The debrief (#119): after a story mission's results, the city from above
 // and Pip's briefing on what comes next, then the Lab. It plays once per
-// Master, after the result screen (and its ad), never in place of the ending;
+// Master and run (New Game+ tells it again), after the result screen (and its
+// ad), never in place of the ending;
 // its lines are the voice catalog's, and the Vex scene that Master had in the
 // Lab plays inside it and counts as seen.
 
@@ -126,7 +127,7 @@ describe('the debrief in the flow', () => {
     expect(m.flow.screen).toBe('hub')
     expect(h.hubs).toBe(1)
 
-    // The same Master again (a replay, or New Game+): straight to the Lab.
+    // The same Master again in this run: straight to the Lab.
     m.profile.world.bosses = []
     m.flow.quest = (await import('@/game/data/quests')).tutorialQuest()
     m.flow.screen = 'mission'
@@ -135,6 +136,19 @@ describe('the debrief in the flow', () => {
     expect(h.plans.length).toBe(1)
     expect(m.flow.screen).toBe('hub')
     expect(h.hubs).toBe(2)
+  })
+
+  it('plays again in New Game+, welcome and all; the Lab scene it absorbed stays seen', async () => {
+    const m = await load(true)
+    const { startNewGamePlus } = await import('@/game/state/profile')
+    m.profile.world.seen = [...new Set([...m.profile.world.seen, debriefSeen('scrapper'), debriefSeen('blazeMaster'), hubSceneFor('scrapper')!.seen])]
+    startNewGamePlus()
+    expect(m.profile.world.seen.some(s => s.startsWith('debrief:'))).toBe(false)
+    expect(m.profile.world.seen).toContain(hubSceneFor('scrapper')!.seen)
+    await m.finishMission(true, tally)
+    await m.leaveResults()
+    await vi.waitFor(() => expect(h.plans).toEqual([{ boss: 'scrapper', hello: true }]))
+    expect(m.flow.screen).toBe('debrief')
   })
 
   it('a lost mission has none', async () => {

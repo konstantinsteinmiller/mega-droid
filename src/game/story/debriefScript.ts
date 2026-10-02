@@ -43,7 +43,7 @@ export const debriefFor = (bossId: string): DebriefPlan | null => {
   return { boss: bossId, from: from.id, to: to.id, toBoss: to.boss, weapon: copiedWeapon(bossId) }
 }
 
-/** Its seen flag (`profile.world.seen`): once ever, like every story beat. */
+/** Its seen flag (`profile.world.seen`): once per run (`startNewGamePlus` clears it, so New Game+ tells the story again). */
 export const debriefSeen = (bossId: string): string => `debrief:${bossId}`
 
 /**

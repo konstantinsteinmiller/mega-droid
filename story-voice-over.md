@@ -797,7 +797,8 @@ red. Pip says what the win changed, the camera goes to the weapon Flux copied
 or the blueprint, the reserve, the breach), then the camera travels to the
 next sector, where its Master stands as a hologram: where to go, what that
 Master has done there, how to beat it. Six Pip lines at most, about 25 s; a
-tap moves on a line, Skip ends it. Once ever per Master (`debrief:<boss>`).
+tap moves on a line, Skip ends it. Once per Master and run (`debrief:<boss>`;
+New Game+ clears the flags, so the story is told again).
 The Fortress has none: its win has the ending.
 
 `{weapon}`, `{sector}` and `{boss}` are filled with the game's own names.

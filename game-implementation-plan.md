@@ -651,8 +651,9 @@ while bars and damage numbers get direct DOM writes.
     (`story/debrief.ts` on its own chunk, `debriefScript.ts` for the beats,
     `DebriefLayer.vue` for the cards). Decisions:
     - Where: after the result screen and its interstitial, before the Lab
-      (`leaveResults`); the ending wins after the Fortress. Once ever per
-      Master (`debrief:<boss>`, marked at its start; old saves migrated).
+      (`leaveResults`); the ending wins after the Fortress. Once per Master
+      and run (`debrief:<boss>`, marked at its start; New Game+ clears the
+      flags so the story is told again; old saves migrated).
     - What: the valley from above (the intro's diorama; freed sectors in
       their own colour, the rest Vex's red), then four stages moved by the
       beats: the city, the copied weapon (its card), Vex (the Lab scene that

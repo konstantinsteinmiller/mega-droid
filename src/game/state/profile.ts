@@ -302,7 +302,8 @@ export const saveProfile = (): void => {
  * cycle harder. Flux keeps everything he is — level, gear, chips, skills,
  * copied weapons, bolts, stats — and the tutorial stays done; the sectors
  * lock again and every Master waits to be beaten anew. Story beats already
- * seen do not replay.
+ * seen do not replay, except the debriefs (#119): they are the story between
+ * the missions, so each run tells it again, like the intro and the ending.
  */
 export const startNewGamePlus = (): void => {
   const w = profile.world
@@ -311,6 +312,7 @@ export const startNewGamePlus = (): void => {
   w.bosses = []
   w.selected = 'scrapyard'
   w.tutorialDone = true
+  w.seen = w.seen.filter(s => !s.startsWith('debrief:'))
   profile.quests.storyAttempts = {}
   profile.quests.jobs = []
   saveProfile()

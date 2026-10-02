@@ -151,6 +151,26 @@ describe('the debrief in the flow', () => {
     expect(m.flow.screen).toBe('debrief')
   })
 
+  // Playtest: "there was no debrief after the Flame Master". The film was a
+  // note in memory between the result screen and Continue; the save owes it now.
+  it('is owed by the save: the last Master beaten with its return to the Lab untold', async () => {
+    const m = await load(true)
+    m.profile.world.bosses = ['scrapper', 'blazeMaster']
+    m.profile.world.seen = [...m.profile.world.seen.filter(s => !s.startsWith('debrief:')), debriefSeen('scrapper')]
+    expect(m.dueDebrief()?.boss).toBe('blazeMaster')
+    // As after a reload on the result screen: nothing in memory, Continue pressed.
+    await m.leaveResults()
+    await vi.waitFor(() => expect(h.plans).toEqual([{ boss: 'blazeMaster', hello: false }]))
+    expect(m.flow.screen).toBe('debrief')
+    expect(m.dueDebrief()).toBeNull()
+    // Only ever the last one: an older Master's film never queues up behind it.
+    m.profile.world.seen = m.profile.world.seen.filter(s => s !== debriefSeen('scrapper'))
+    expect(m.dueDebrief()).toBeNull()
+    // And none for a Master with no sector after it.
+    m.profile.world.bosses = ['scrapper', 'nobody']
+    expect(m.dueDebrief()).toBeNull()
+  })
+
   it('a lost mission has none', async () => {
     const m = await load(true)
     m.profile.world.bosses = []

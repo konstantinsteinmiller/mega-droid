@@ -120,8 +120,43 @@ export const registerModeFactories = (m: MissionFactory, h: HubFactory, i?: Intr
 
 /** The debrief playing now (its layer's buttons and the skip keys drive it). */
 export let debriefLive: DebriefHandle | null = null
-/** A Core Master just fell for the first time: its debrief follows the results (#119). */
-let pendingDebrief: DebriefPlan | null = null
+
+/**
+ * The debrief the save still owes (#119): the last Core Master beaten whose
+ * return to the Lab was never told. Read from the SAVE: it used to be a
+ * note in memory between the result screen and Continue, and anything that
+ * dropped the page in between (a reload, a tab the browser put away) lost
+ * the film for good.
+ */
+export const dueDebrief = (): DebriefPlan | null => {
+  const { bosses, seen } = profile.world
+  const last = bosses[bosses.length - 1]
+  if (!last || seen.includes(debriefSeen(last))) return null
+  return debriefFor(last)
+}
+
+/** A game that boots into the Lab with a debrief still owed plays it on the
+ *  first press there: the browser gives no sound before one, and the film is
+ *  voiced. The press itself is spent on it (it opens no menu under the film). */
+const oweDebriefAtBoot = (): void => {
+  if (typeof window === 'undefined' || !debriefFactory || !dueDebrief()) return
+  const go = (e: Event): void => {
+    if (flow.screen !== 'hub') { stop(); return }
+    if (flow.modal) return
+    const plan = dueDebrief()
+    stop()
+    if (!plan) return
+    e.stopPropagation()
+    e.preventDefault()
+    void startDebrief(plan)
+  }
+  const stop = (): void => {
+    window.removeEventListener('click', go, true)
+    window.removeEventListener('keydown', go, true)
+  }
+  window.addEventListener('click', go, true)
+  window.addEventListener('keydown', go, true)
+}
 
 /**
  * The debrief (#119): after a story mission's results (and the interstitial,
@@ -140,6 +175,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
   // Seen at the start: a quit mid-film never replays it. Pip's welcome is for the very first one.
   const hello = !profile.world.seen.some(s => s.startsWith('debrief:'))
   markStorySeen(debriefSeen(plan.boss))
+  void flushSaveNow()
   const vex = hubSceneFor(plan.boss)
   if (vex) markStorySeen(vex.seen)
   try {
@@ -294,6 +330,7 @@ export const createBootMode = async (onProgress?: (p01: number) => void): Promis
   setMusicTrack('hub')
   const h = hubFactory!()
   onProgress?.(1)
+  oweDebriefAtBoot()
   return h
 }
 
@@ -549,9 +586,8 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
       if (!profile.world.bosses.includes(sector.boss)) {
         profile.world.bosses.push(sector.boss)
         profile.story++
-        // The story moves on: its debrief, once per run (New Game+ clears the flags).
-        const plan = debriefFor(sector.boss)
-        if (plan && !profile.world.seen.includes(debriefSeen(sector.boss))) pendingDebrief = plan
+        // The story moves on: its debrief follows the results, once per run
+        // (`dueDebrief` reads it off the save; New Game+ clears the flags).
         const w = (Object.values(WEAPONS).find(d => d.from === sector.boss))
         if (w) weapon = grantWeapon(w.id)
         const next = SECTORS.find(s => s.after === sector.id)
@@ -644,8 +680,7 @@ export const leaveResults = async (): Promise<void> => {
     await waitForAdGate()
   } finally {
     leavingResults = false
-    const debrief = pendingDebrief
-    pendingDebrief = null
+    const debrief = dueDebrief()
     if (pendingEnding) {
       pendingEnding = false
       void startEnding()

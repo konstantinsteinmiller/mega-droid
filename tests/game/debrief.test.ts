@@ -127,8 +127,8 @@ describe('the debrief in the flow', () => {
     expect(m.flow.screen).toBe('hub')
     expect(h.hubs).toBe(1)
 
-    // The same Master again in this run: straight to the Lab.
-    m.profile.world.bosses = []
+    // The same Master's mission again in this run: straight to the Lab.
+    expect(m.profile.world.bosses).toContain('scrapper')
     m.flow.quest = (await import('@/game/data/quests')).tutorialQuest()
     m.flow.screen = 'mission'
     await m.finishMission(true, tally)
@@ -136,6 +136,23 @@ describe('the debrief in the flow', () => {
     expect(h.plans.length).toBe(1)
     expect(m.flow.screen).toBe('hub')
     expect(h.hubs).toBe(2)
+  })
+
+  // Playtest: no debrief after the Flame Master, none after the Volt Tower.
+  // The run was a New Game+ begun before its debrief flags were cleared: every
+  // Master's film was "seen" (in the run before) and so never played.
+  it('a Master\'s first fall in a run owes its debrief, even with a "seen" left over from an earlier run', async () => {
+    const m = await load(true)
+    m.profile.world.bosses = []
+    m.profile.world.seen = [...new Set([...m.profile.world.seen, debriefSeen('scrapper'), debriefSeen('blazeMaster')])]
+    await m.finishMission(true, tally)
+    expect(m.dueDebrief()?.boss).toBe('scrapper')
+    await m.leaveResults()
+    await vi.waitFor(() => expect(h.plans.map(p => p.boss)).toEqual(['scrapper']))
+    expect(m.flow.screen).toBe('debrief')
+    // Seen again from its start: once per run.
+    expect(m.profile.world.seen).toContain(debriefSeen('scrapper'))
+    expect(m.dueDebrief()).toBeNull()
   })
 
   it('plays again in New Game+, welcome and all; the Lab scene it absorbed stays seen', async () => {

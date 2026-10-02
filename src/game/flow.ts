@@ -587,7 +587,12 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
         profile.world.bosses.push(sector.boss)
         profile.story++
         // The story moves on: its debrief follows the results, once per run
-        // (`dueDebrief` reads it off the save; New Game+ clears the flags).
+        // (`dueDebrief` reads it off the save). A Master's FIRST fall in a
+        // run owes it whatever the flags say: a "seen" left over from an
+        // earlier run (a New Game+ begun before its flags were cleared, a
+        // migration) used to swallow every debrief of the run.
+        const stale = debriefSeen(sector.boss)
+        if (profile.world.seen.includes(stale)) profile.world.seen = profile.world.seen.filter(s => s !== stale)
         const w = (Object.values(WEAPONS).find(d => d.from === sector.boss))
         if (w) weapon = grantWeapon(w.id)
         const next = SECTORS.find(s => s.after === sector.id)

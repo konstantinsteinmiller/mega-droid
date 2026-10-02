@@ -1,6 +1,6 @@
 import type { Group } from 'three'
-import { cellCenter, type IcicleSpec, type Terrain } from '../../world/levelGen'
-import { buildIcicle } from '../../models/stageProps/frost'
+import { CELL, cellCenter, type IcicleSpec, type Terrain } from '../../world/levelGen'
+import { buildIcicle, buildIcicleRoof } from '../../models/stageProps/frost'
 import { buildStalactite } from '../../models/stageProps/rock'
 import type { ClimbBody, ClimbHost } from '../climb'
 import { PLAYER_R } from '../constants'
@@ -15,6 +15,9 @@ import { AtlasCue, type StageFeature } from '../stageFeatures'
  * (ICICLE_FALL s) and shatters on the floor — whoever stands within
  * ICICLE_REACH of its line on that floor takes ICICLE_COST of the health,
  * not blockable — and it grows back from the ceiling before the next ring.
+ *
+ * The ceiling is real: every room that holds icicles gets a roof at their
+ * roots (`buildIcicleRoof`). They used to hang in the open sky.
  */
 
 export const ICICLE_WARN = 1.1
@@ -26,6 +29,11 @@ export const ICICLE_REACH = 1
 export const ICICLE_COST = 0.12
 /** After the crash, a beat of nothing before it starts to grow back (s). */
 const REGROW_AFTER = 0.3
+/** The roof's underside over an icicle's root (m): its mount sits in it. */
+const ROOF_OVER = 0.12
+/** Floor to roof, at least (m): a room with a ledge closer to the roots than
+ *  this stays open (Flux would walk with his head in the ceiling). */
+const HEADROOM = 2.6
 
 interface IcicleRt {
   def: IcicleSpec
@@ -40,6 +48,8 @@ export class Icicles implements StageFeature {
   private readonly host: ClimbHost
   readonly icicles: IcicleRt[] = []
   private readonly cue: AtlasCue | null = null
+  /** The roofs built (room, centre, underside, size in m). */
+  readonly roofs: Array<{ room: number; x: number; y: number; z: number; w: number; d: number }> = []
   /** The Deep Mine drops stalactites instead (same rhythm, same marker). */
   private readonly rock: boolean
 
@@ -55,8 +65,37 @@ export class Icicles implements StageFeature {
       host.propParent(x, z).add(mesh)
       this.icicles.push({ def: d, x, z, mesh, warned: -1, landed: -1 })
     }
+    this.buildRoofs(t)
     const f = this.icicles[0]
     if (f) this.cue = new AtlasCue(host, this.rock ? 'hint.drill.drop' : 'hint.cryo.icicles', f.x, f.z, f.def.y, 8)
+  }
+
+  /** One roof per room that holds icicles, at the height of their roots. */
+  private buildRoofs(t: Terrain): void {
+    const map = this.host.map
+    const roots = new Map<number, number>()
+    for (const c of this.icicles) {
+      const id = map.room[c.def.j * map.w + c.def.i] ?? -1
+      if (id >= 0) roots.set(id, Math.max(roots.get(id) ?? -Infinity, c.def.y + ICICLE_H))
+    }
+    for (const [id, top] of roots) {
+      const r = map.rooms[id]
+      if (!r) continue
+      let hi = -Infinity
+      for (let j = r.z0; j < r.z0 + r.h; j++) {
+        for (let i = r.x0; i < r.x0 + r.w; i++) {
+          const k = j * map.w + i
+          if (!t.pit[k]) hi = Math.max(hi, t.floor[k]! + t.rise[k]!)
+        }
+      }
+      if (hi > top - HEADROOM) continue
+      const x = (r.x0 + r.w / 2) * CELL
+      const z = (r.z0 + r.h / 2) * CELL
+      const roof = buildIcicleRoof(r.w, r.h, CELL, this.rock)
+      roof.position.set(x, top + ROOF_OVER, z)
+      this.host.propParent(x, z).add(roof)
+      this.roofs.push({ room: id, x, y: top + ROOF_OVER, z, w: r.w * CELL, d: r.h * CELL })
+    }
   }
 
   update(_dt: number, time: number, p: ClimbBody, playing: boolean): void {

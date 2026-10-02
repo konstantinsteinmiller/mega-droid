@@ -553,6 +553,26 @@ describe('icicles', () => {
     expect(f.icicles[0]!.mesh.visible).toBe(true)
   })
 
+  // Playtest: "the icicles spawn from a ceiling where there is no ceiling".
+  it('the hall has a roof at the icicles\' roots, over the whole room; the real Icicle hall too', () => {
+    const { f } = run([cellCenter(1), cellCenter(2)], 0.1)
+    expect(f.roofs).toHaveLength(1)
+    const r = f.roofs[0]!
+    // Over the room (cells 1..6 × 1..3), just above the root (9 + 4.6 m).
+    expect([r.x, r.z, r.w, r.d]).toEqual([4 * CELL, 2.5 * CELL, 6 * CELL, 3 * CELL])
+    expect(r.y).toBeGreaterThan(9 + 4.6)
+    expect(r.y).toBeLessThan(9 + 4.6 + 0.3)
+    expect(f.icicles[0]!.mesh.position.y).toBeLessThan(r.y)
+
+    for (const seed of SEEDS.slice(0, 4)) {
+      const map = generateGlacier(seed)
+      const spy: Spy = { said: [], hits: [], marks: 0, sfx: [] }
+      const g = new Icicles(hostFor(map, spy), map.terrain!)
+      const rooms = new Set(g.icicles.map(c => map.room[c.def.j * map.w + c.def.i]))
+      expect(g.roofs.map(q => q.room).sort()).toEqual([...rooms].sort())
+    }
+  })
+
   it('misses a body a cell away, or a floor below', () => {
     expect(run([cellCenter(4), cellCenter(2)], 3.5).spy.hits).toHaveLength(0)
     const map = hall()

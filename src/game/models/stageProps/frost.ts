@@ -1,4 +1,4 @@
-import { Group, Mesh, MeshBasicMaterial, Color, type BufferGeometry } from 'three'
+import { Group, Mesh, MeshBasicMaterial, PlaneGeometry, Color, type BufferGeometry } from 'three'
 import { rcyl, rcone, rbox, sph, torus, xform, paint, paintBy, merge } from '../kit'
 import { toonVC, glowVC, outlineMat } from '../toon'
 import type { Theme } from '../../world/themes'
@@ -106,6 +106,44 @@ let icicleGeo: BufferGeometry | null = null
 
 /** An icicle hanging from the group's origin (its root at the ceiling),
  *  tip down, about 1.6 m long, with two smaller ones beside it. */
+let roofMat: MeshBasicMaterial | null = null
+
+/**
+ * The roof an icicle hall hangs its icicles from (`sim/stages/icicles.ts`):
+ * `cw` × `cd` cells of `cell` m, its underside at the group's origin. Frosted
+ * steel panels in the Cryo Plant, mottled rock where stalactites fall
+ * (`rock`). Drawn from below only: a camera over the hall (the rescue's
+ * lift, a kill-cam) looks straight through it, and it casts nothing.
+ */
+export const buildIcicleRoof = (cw: number, cd: number, cell: number, rock: boolean): Group => {
+  const down = (g: BufferGeometry, x: number, y: number, z: number) => xform(g, [x, y, z], [Math.PI / 2, 0, 0])
+  const geos: BufferGeometry[] = []
+  if (rock) {
+    const a = new Color('#5e4d3c')
+    const b = new Color('#3f3329')
+    const g = paintBy(new PlaneGeometry(cw * cell + 0.1, cd * cell + 0.1, cw * 2, cd * 2), (x, y) => {
+      const h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453
+      return a.clone().lerp(b, h - Math.floor(h))
+    })
+    geos.push(down(g, 0, 0, 0))
+  } else {
+    // A dark seam behind a grid of panels in two tones, frost in the joints.
+    geos.push(down(paint(new PlaneGeometry(cw * cell + 0.1, cd * cell + 0.1), '#20405a'), 0, 0.02, 0))
+    for (let j = 0; j < cd; j++) {
+      for (let i = 0; i < cw; i++) {
+        const x = (i + 0.5 - cw / 2) * cell
+        const z = (j + 0.5 - cd / 2) * cell
+        geos.push(down(paint(new PlaneGeometry(cell - 0.16, cell - 0.16), (i + j) & 1 ? '#4a7ea6' : '#3f7099'), x, 0, z))
+        if (((i * 5 + j * 3) & 3) === 0) geos.push(down(paint(new PlaneGeometry(cell * 0.5, cell * 0.34), ICE), x + cell * 0.12, -0.01, z - cell * 0.1))
+      }
+    }
+  }
+  roofMat ??= new MeshBasicMaterial({ vertexColors: true })
+  const root = new Group()
+  root.add(new Mesh(merge(geos), roofMat))
+  return root
+}
+
 export const buildIcicle = (): Group => {
   if (!icicleGeo) {
     icicleGeo = merge([

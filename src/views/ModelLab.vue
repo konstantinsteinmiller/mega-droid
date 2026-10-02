@@ -31,7 +31,7 @@ import { HubMode } from '@/game/sim/hub'
 import { PAL } from '@/game/models/palette'
 import { glowVC } from '@/game/models/toon'
 import { pose, nudge, type Rig, type V3 } from '@/game/models/kit'
-import { buildBossRig, poseBoss, type BossId } from '@/game/models/bosses'
+import { buildBossRig, poseBoss, type BossAct, type BossId } from '@/game/models/bosses'
 import { buildEnemyRig, poseHardhat, poseTrooper, poseHeli, poseHopper, poseRoller, poseBrute, poseTurret, poseGolem, type EnemyKind } from '@/game/models/enemies'
 import { newMotion } from '@/game/models/motion'
 import { golemColors } from '@/game/sim/enemies'
@@ -240,8 +240,14 @@ interface ThumbShot {
   fired?: number
   /** `false` switches the room's wall light strips off (a logo is laid over that wall). Sector backdrops only. */
   lights?: boolean
+  /** Which sector's room (sector backdrops; `theme=` in the address wins, then the Volt Tower). */
+  theme?: SectorId
+  /** Core Masters in the shot (the cover plates, `tools/art-promotion.mjs`). */
+  bosses?: ThumbBoss[]
 }
 interface ThumbEnemy { kind: EnemyKind; at: V3; yaw: number; act?: number }
+/** A boss frozen in `act` (`k` 0..1 into it, at animation time `t`), `scale` times its size. */
+interface ThumbBoss { id: BossId; at: V3; yaw: number; scale?: number; act?: BossAct; k?: number; t?: number }
 
 /**
  * Braced, three-quarter to the camera: the cannon raised and out to screen
@@ -317,6 +323,50 @@ const THUMB: Record<string, ThumbShot> = {
     crouch: 0.06, charge: 0.5, glow: 1.2, turn: 4.56, key: 1.05, fired: 0.9, lights: false,
     enemies: [{ kind: 'heli', at: [0.55, 2.75, -3.9], yaw: -0.15 }]
   },
+  // ── The cover scenarios (#120): plates for `pnpm art:promotion --scenario <id>`,
+  // framed at 16:9 here; the tool re-frames each per aspect (`__lab.thumb`).
+  // The staging room is four cells square: a Master stands within 4.5 m. ──
+  // `frost`: the duel. Flux left, in profile, his charged shot in flight at
+  // the Frost Master on the right: amber against ice blue.
+  frost: {
+    bg: 'sector', theme: 'cryo', cam: [0.15, 0.95, 0.6], look: [0.15, 1.2, -2.7], fov: 46, at: [-1.35, 0, -2.6], yaw: 1.55,
+    pose: {
+      chest: [0, 0.15, 0], head: [0.03, -0.55, 0.06], shoulderR: [-1.6, 0, 0.15], elbowR: [-0.08, 0, 0], shoulderL: [-0.55, 0, -0.4],
+      elbowL: [-1.6, 0, 0], hipL: [-0.4, 0, -0.2], kneeL: [0.45, 0, 0], hipR: [0.4, 0, 0.22], kneeR: [0.35, 0, 0]
+    },
+    crouch: 0.07, charge: 0.6, glow: 1.4, turn: 4.56, key: 1.0, fired: 1.15, lights: false,
+    bosses: [{ id: 'frostMaster', at: [1.75, 0, -3.0], yaw: -1.2, scale: 1.7, act: 'attack', k: 0.6 }]
+  },
+  // `neon`: the face. Flux's helmet and the charging muzzle fill the frame,
+  // the cannon pointed past the lens; the Neon Master looms behind him.
+  neon: {
+    bg: 'sector', theme: 'neon', cam: [0.15, 1.12, -1.25], look: [-0.05, 1.18, -2.6], fov: 40, at: [-0.2, 0, -2.6], yaw: 0.45,
+    pose: { ...THUMB_STANCE, head: [0.06, -0.35, 0.08], shoulderR: [-1.55, 0, 0.55], elbowR: [-0.15, 0, 0] },
+    crouch: 0.05, charge: 1.2, glow: 1.6, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'neonMaster', at: [-1.75, 0, -4.5], yaw: 0.5, scale: 1.7, act: 'tele', k: 0.6 }]
+  },
+  // `blaze`: the charge. Flux leaps at the lens, cannon first, eyes on the
+  // viewer; the Blaze Master and its fire behind him: white on warm orange.
+  blaze: {
+    bg: 'sector', theme: 'blaze', cam: [0.1, 0.8, 0.5], look: [0.2, 1.35, -3.0], fov: 50, at: [-0.45, 0.42, -1.7], yaw: 0.25,
+    pose: {
+      chest: [0.25, 0.15, 0], head: [-0.22, -0.2, 0.05], shoulderR: [-1.75, 0, 0.5], elbowR: [-0.1, 0, 0], shoulderL: [0.6, 0, -0.5],
+      elbowL: [-1.2, 0, 0], hipL: [-1.0, 0, -0.15], kneeL: [1.3, 0, 0], hipR: [0.5, 0, 0.15], kneeR: [0.9, 0, 0]
+    },
+    crouch: 0, charge: 1.1, glow: 1.4, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'blazeMaster', at: [1.7, 0, -4.2], yaw: -0.45, scale: 2.0, act: 'attack', k: 0.6 }]
+  },
+  // `vex`: the villain. Dr. Vex Mk-I hangs over the right of the frame,
+  // leaning in; Flux small and defiant below, his charged shot on its way up.
+  vex: {
+    bg: 'sector', theme: 'fortress', cam: [-0.5, 0.55, 0.7], look: [0.35, 1.7, -3.0], fov: 56, at: [-1.25, 0, -2.2], yaw: 1.75,
+    pose: {
+      chest: [-0.12, 0.2, 0], head: [-0.25, -0.5, 0], shoulderR: [-2.25, 0, 0.2], elbowR: [-0.1, 0, 0], shoulderL: [-0.55, 0, -0.4],
+      elbowL: [-1.6, 0, 0], hipL: [-0.4, 0, -0.22], kneeL: [0.45, 0, 0], hipR: [0.4, 0, 0.24], kneeR: [0.35, 0, 0]
+    },
+    crouch: 0.08, charge: 0.6, glow: 1.3, turn: 4.56, key: 1.0, fired: 1.1, lights: false,
+    bosses: [{ id: 'vexMk1', at: [1.3, 1.5, -3.9], yaw: -0.7, scale: 1.7, act: 'tele', k: 0.8 }]
+  },
   // Head to boots on the hub's pad
   full: {
     bg: 'lab', cam: [-0.6, 0.72, 2.9], look: [0.08, 1.08, 0], fov: 36, at: [0, 0.38, 0], yaw: 0.3,
@@ -330,6 +380,7 @@ let thumbScene: Scene | null = null
 let thumbReady = false
 let thumbHero: Rig | null = null
 let thumbEnemies: Rig[] = []
+let thumbBosses: Rig[] = []
 let thumbSky: Object3D | null = null
 const thumbAnchor = new Vector3()
 const thumbCharge = new Group()
@@ -430,6 +481,14 @@ const applyThumb = (shot: ThumbShot): void => {
     r.root.rotation.y = e.yaw + shot.turn
     poseThumbEnemy(r, e)
   })
+  shot.bosses?.forEach((b, i) => {
+    const r = thumbBosses[i]
+    if (!r) return
+    r.root.position.copy(thumbAt(b.at, shot.turn))
+    r.root.rotation.y = b.yaw + shot.turn
+    r.root.scale.setScalar(b.scale ?? 1)
+    poseBoss(r, b.id, b.t ?? 0.4, b.act ?? 'idle', b.k ?? 0)
+  })
   camera.fov = shot.fov
   camera.position.copy(thumbAt(shot.cam, shot.turn))
   camera.lookAt(thumbAt(shot.look, shot.turn))
@@ -474,7 +533,7 @@ const buildThumb = async (shot: ThumbShot): Promise<void> => {
     thumbAnchor.set(0, 0, 0)
   } else {
     // A Volt Tower room, built the way a mission builds it (mission.ts)
-    const th = THEMES[thumbTheme] ?? THEMES.volt
+    const th = THEMES[(hashQuery.get('theme') as SectorId | null) ?? shot.theme ?? thumbTheme] ?? THEMES.volt
     const map = generateMap({ seed: 20260926, rooms: 5, boss: false })
     const level = await buildLevel(map, th)
     // The level's glow meshes (wall strips, lamps) share one material
@@ -504,6 +563,11 @@ const buildThumb = async (shot: ThumbShot): Promise<void> => {
   sc.add(thumbHero.root, thumbCharge, thumbFired, thumbLight, thumbKey, thumbKey.target)
   thumbEnemies = (shot.enemies ?? []).map((e) => {
     const r = buildEnemyRig(e.kind)
+    sc.add(r.root)
+    return r
+  })
+  thumbBosses = (shot.bosses ?? []).map((b) => {
+    const r = buildBossRig(b.id)
     sc.add(r.root)
     return r
   })

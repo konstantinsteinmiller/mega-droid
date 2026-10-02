@@ -700,6 +700,27 @@ while bars and damage numbers get direct DOM writes.
     Run): one Volt Tower story seed started SOLVED (the first shot un-solved
     it); the builder refuses that now, and a key colour no button has. The
     puzzle audit pins all of it.
+  - [x] **#120** store covers (`pnpm art:promotion`, records in
+    `store-art/cover-research.md` and `cover-comparison.md`). Decisions:
+    - Evidence first (web research, graded): one subject, a readable face
+      with an expression, action on a diagonal, exactly one opponent, the
+      white hero on a dark or saturated ground, a simple background; Poki
+      tests text-free covers better, CrazyGames and GamePix allow the title,
+      Steam requires it. No source supports a 20 % click-through for a grid
+      tile (stated levels are low single digits): the target is relative.
+    - Four new scenarios, staged in the composition view (it places Core
+      Masters now) and painted once each at 16:9: neon (the face), blaze
+      (the leap), vex (the villain), frost (the duel).
+    - Compared blind at tile size by three reviewers on the research rubric:
+      neon 79, blaze 78, vex 72, the first painted cover 67, frost 63, the
+      old unpainted renders 54 and 47. A proxy, not a measurement.
+    - Ships neon, repainted once with its two weak points fixed (a big boss
+      behind Flux, the charge whole in the frame); the other aspects painted
+      against that master so every format is one picture.
+    - Eleven sizes, .jpg and .webp, bare and with the logo (44 files). The
+      logo is laid on afterwards, lower-left / lower-right / upper-right by
+      format, never top-left (CrazyGames' banner); a test pins sizes,
+      formats and that corner.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

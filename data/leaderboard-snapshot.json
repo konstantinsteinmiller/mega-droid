@@ -1,8 +1,8 @@
 {
   "source": "https://mega-adventure-leaderboard.rodent-race.workers.dev",
-  "fetchedAt": 1790895950734,
-  "updatedAt": 1790895950802,
-  "total": 6,
+  "fetchedAt": 1790969270127,
+  "updatedAt": 1790969270262,
+  "total": 8,
   "entries": [
     {
       "rank": 1,
@@ -36,6 +36,18 @@
     },
     {
       "rank": 6,
+      "name": "Servo773490",
+      "score": 328,
+      "flair": 3
+    },
+    {
+      "rank": 7,
+      "name": "Sprocket932332",
+      "score": 126,
+      "flair": 2
+    },
+    {
+      "rank": 8,
       "name": "Android731972",
       "score": 120,
       "flair": 2
@@ -60,6 +72,14 @@
     ],
     [
       340,
+      1
+    ],
+    [
+      328,
+      1
+    ],
+    [
+      126,
       1
     ],
     [

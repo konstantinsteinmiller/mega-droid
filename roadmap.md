@@ -206,7 +206,7 @@ Wait for my "go" to start implementation, ask to review the decisions first.
 
 - [x] #116 add the remaining language locales from the new-web-game-playbook to the game, so the game can be played in all languages that are supported by the new-web-game-playbook.
 
-- [ ] #117 Let's start on creating an voice-over pipeline. In general this is a very task to voice over NPCs and the player with manually voiced 
+- [x] #117 Let's start on creating an voice-over pipeline. In general this is a very task to voice over NPCs and the player with manually voiced 
  sound files, especially if you have to pitch and change the sound style of the spoken VO in audacity, which I did for another project. 
  Therefore, I would like to automate it if possible. Elevenlabs offers the best models for this as far as I know but has low rate limits.
  Creating a Gemini-like voice-over pipeline with free accounts of elevenlabs is only the very last possibility for me as it would be quite cumbersome and the paid license is ways to expensive for me now.
@@ -223,3 +223,42 @@ Wait for my "go" to start implementation, ask to review the decisions first.
  all voice-lines in english and german and with their potential stage directions and their character descriptions(or generates some character description cards).
  The package.json script also needs to have a -samples run with 3 samples for each language.
  After the pipeline is fully built and runs, we can create a skill from the learnings to recreate this pipeline in other projects, not only games.
+  Done (branch vo-test-install): `pnpm voice:cards / collect / gen / compare / setup`; five engines compared blind (Gemini Flash-Lite 4.5 stars, Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3); all 358 live lines voiced by Chatterbox (free, local) with the robot chains and automatic QA, shipped as Opus 24k .ogg (3.3 MB); Vex, Flux and Gauss wired into the game with their scenes.
+  Also done: Atlas's remaining 69 lines wired and voiced (beam-ins, scans, warnings, hints, the mission board); the ElevenLabs route through its web app (`--engine elevenlabs`, rated 5.0, listening tests only on the free plan); merged into main; the skill `voice-over-pipeline`.
+  Later: re-voice with Gemini 3.8 Flash-Lite once billing is on (`pnpm voice:gen --engine gemini-lite --force`, voices already designed); a format old iPhones decode.
+
+- [x] #118 The player now has the current mission boss 2 times on the HUD, once with a question mark and once in the objective/Ziel badge with a clear portrait of the boss, so the mystery boss doesnt make sense.
+  Done: the "?" chip is gone; that spot is only the objective locator's cooldown now, and the boss shows once, in the objective card.
+
+- [x] #119 now that we have VOs, we should add cutscenes similar to the Intro, where the cybercity is shown with the level 1 area and the Vexs fortress level 18-26 area, but this time it plays after the player has come back from the last story mission (skippable), the cutscene introduces the next boss enemy with a similar view, but now the next area is e.g. level 4 and the boss e.g. Flame Master is shown in that area as a hologram.
+ Pip (probably male voice) then explains the next mission with the new boss and his specialty in the usually short type of sentences that also Atlas uses.
+ Pip is wired in to the VOs. This type of Cutscene now plays after each finished story mission and story progress.
+ Derive the order and text needed from the story-arc.md and story-voice-over.md files, so the cutscene is consistent with the story and the next mission.
+ give a bit of situational context to the next mission (e.g. Flame Master burned something or Frost Master has been freezing Machines in his vaccinity, therefore he must be stopped).
+ The Cutscenes are the main story telling in the game, but they should not get excessive, so the player gets bored being stuck in the Cutscene.
+  Done: a debrief plays after each story mission's result screen (once per Master and run, so New Game+ plays them again; skippable, a tap moves on a line): the city from above with the freed sectors in their colours, the copied weapon's card, Vex's reaction, then the next sector with its Master as a hologram and its level band. Pip is voiced (a fifth voice, 52 lines, EN + DE; subtitles in all 39 languages): what the win changed, the weapon, where next, what that Master has done there, how to beat it. About 25 s.
+ Also show the new special weapon gained from the last boss in the cutscene, so the player knows what he has gained and can use it in the next mission.
+ Leave enough time for the player to read the voice line of Pip and Atlas, just like in the Intro, also make the city hologram scenematic, so its a joy to watch then, not just still images/viewpoints.
+ Make each Cutscene a breathing experience.
+ Do the first Cutscene about the Flame Master and only after I approved the quality, you can do the remaining Cutscenes after each mission.
+
+- [x] #120 The game needs better ULTRA-HIGH-CTR(20%+) cover images painted with 
+  Gemini for all the platforms (800x800, 1920x1080, 1080x1920(only jpg), 800x1200(only webp), 1360x850(only with logo, only jpg), 800x450(only with logo, only webp), 400x225(only with logo, only jpg), 
+  512x512(only with logo, only jpg), 628x628(only with logo, only jpg), 512x384(only with logo, only jpg), 512x340(only with logo, only jpg) in jpg, and webp, once without a logo, once with a logo somewhere that is not in the top left corner as CG banners are placed in top left corner up to the middle of the image horizontally).
+  Create 4 different new cover image scenarios (like the current non-painted ones), paint them once in Gemini and compare them with the old cover images(not painted) for the CTR value. Go with the best results that would potentially and based on web-search evidence yield the best CTR results on web game platforms and Steam.
+  Done: four new scenarios painted and compared blind at tile size with the old covers (scores out of 100: neon "the face" 79, blaze 78, vex 72, the first painted cover 67, frost 63, the old unpainted renders 54 and 47); neon ships in all eleven sizes, jpg and webp, with and without the logo (logo never top-left). The record and which file goes to which portal: store-art/cover-comparison.md. Note: no source supports 20 % CTR for a grid tile (stated levels are low single digits); a live A/B test (Poki takes three thumbnails; blaze is the second candidate) is the real judge.
+
+- [x] #121 the charge tutorial should activate as soon as the player gets 1 step closer to the shoot dummy rotor drones. The next room is not rendered right now until the charge tutorial is done, but that looks weird, I actually intended that the first room with the charged tutorial is completely isolated and upon
+ tutorial completion, a secret door to the next room opens up, so the player does not see the entrance to the next room before finishing the tutorial.
+  Done: the lesson starts with the first step toward the drones (or a shot at one); the start room is closed all round, and the wall in front of the way on sinks when the lesson is done.
+ The repair gel hint from Atlas come late. Also I noticed that the automatic repair gel consumed the only charge and I could not do it myself pressing H, so the Atlas says "Now lets train repair gel", but Flux is fully healed and has no charges left to train it.
+  Done too: the lesson's demo no longer spends the gel (Flux is hurt again when it ends, with his gel, for his own try); the lesson's line comes at once (no health warnings ahead of it in the tutorial).
+
+- [x] #122 Atlas speaks too much, its not neccessary to state all obvious hints, especially not 3 hints back to back, it feels like a handholding then, only warn the player with hints on dangerous things like traps or weak points of bosses. Occasionally drop the other machine hints, but only once per gameplay, not on repeat whenever meeting a enemy.
+  try to space out hints queuing up. The level up hint is also a bit overused, maybe just say and print it every 2nd level up.
+  In general the hints should be lower frequency to not annoy the player with constant chatting and focus on the important hints and warnings.
+ Chest golem hint for example is very important as he is not obvious to kill, but the "jump down the platforms" is obvious for the player if he has nowhere else to go.
+  Done: warnings (health, traps, bosses and weak points, stage dangers, lessons) come at once; scans, the relay count, level-ups and tips wait for 12 s of quiet, one at a time, and are said once per save; 13 plain-to-see stage hints are never said; one line on the way in; a level-up line every 2nd level; the crate golem's scan stays prompt.
+ 
+- [x] #123 the first puzzle in the Flame Masters level is not solvable, as it shows yellow and there is no yellow in the room. Check all puzzles for solvability.
+  Done: the hint panel showed all four colours (the yellow lamp too, in a room with no yellow button) and stood half behind a wall post; it shows only the room's colours now, the asked one lit, and hangs in the middle of its wall. All puzzles checked across seeds: one Volt Tower story seed started already solved, fixed; the audit test now pins solvability. 

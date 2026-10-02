@@ -6,7 +6,9 @@
  * blocked, never slid. Glyphs alone did not teach a MECHANIC. So every lesson
  * room now runs the same four beats:
  *
- *   intro  Atlas flies in with a gold bubble — "Let's train the Charge Shot" —
+ *   intro  (the charge lesson waits for a first step toward its drones,
+ *          `steppedToward`) Atlas flies in with a gold bubble — "Let's train
+ *          the Charge Shot" —
  *          while a gold vignette and the room's label ("Charge Shot Tutorial")
  *          say: this is a training room;
  *   card   time freezes and the view dims round the subject: a short card
@@ -33,6 +35,15 @@ export const TUTORIAL_TRAINING: readonly TrainId[] = ['charge', 'block', 'gap', 
 /** Lessons without a card: the gap is taught by its arrows alone (take-off
  *  and landing marks), wordless, as the playtest brief asked. */
 const NO_CARD: ReadonlySet<TrainId> = new Set(['gap'])
+
+/** The charge lesson starts once Flux is this much closer to its drones than
+ *  his pad is (m): one step. He has his bearings before time stops for the card. */
+export const CHARGE_STEP = 1
+
+interface XZ { readonly x: number; readonly z: number }
+/** `now` is at least `step` closer to `target` than `from` is. */
+export const steppedToward = (target: XZ, from: XZ, now: XZ, step = CHARGE_STEP): boolean =>
+  Math.hypot(target.x - now.x, target.z - now.z) <= Math.hypot(target.x - from.x, target.z - from.z) - step
 
 /** Atlas's intro holds this long before time freezes for the card (s). */
 export const INTRO_FOR = 1.8

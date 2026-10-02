@@ -13,8 +13,10 @@ import { Builder, finish, YAW_PX, YAW_NX } from './builder'
  * `walkSteps`:
  *
  *   0 Start pad        the charge shot: two blue training drones (a demo one
- *                      and the player's); the way on is a wall until the
- *                      charged shot pops the player's drone
+ *                      and the player's); the lesson starts with Flux's first
+ *                      step toward them. The room is walled in: the way on
+ *                      (its corridor and door) is behind a wall like the
+ *                      others until the charged shot pops the player's drone
  *   1 Salvage bay      a Hardhat, then the glowing crate (charge's second use)
  *   2 Shield hall      the Shield Trooper: block (and the perfect block)
  *   3 The gap          a spiked gap across the room: walk off the edge and

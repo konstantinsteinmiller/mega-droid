@@ -2,7 +2,7 @@ import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
 import {
   Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3, Raycaster, Vector2,
   Mesh, RingGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
-  Frustum, Matrix4, Sphere, SphereGeometry, WebGLRenderTarget, Quaternion, Euler, BoxGeometry, MeshToonMaterial, Shape, ShapeGeometry, type Object3D
+  Frustum, Matrix4, Sphere, SphereGeometry, WebGLRenderTarget, Quaternion, Euler, Shape, ShapeGeometry, type Object3D
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { buildCityscape, type Cityscape } from '../world/cityscape'
@@ -26,7 +26,7 @@ import { consumeEdges } from '../engine/input'
 import { generateMap, type MapData, type SecretSpec, CELL, WALL_H } from '../world/levelGen'
 import { createSlicer, type Slice } from '../engine/slicer'
 import { createNav, moveCircle, findPath, smoothPath, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
-import { buildLevel, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
+import { buildLevel, buildWallPlug, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
 import { THEMES, type Theme, type SectorId } from '../world/themes'
 import { buildDoor, buildTeleporter, type DoorMesh, type PadMesh } from '../models/props'
 import {
@@ -71,7 +71,7 @@ import { showBanner, clearBanner, BANNER_HOLD } from '../state/banner'
 import { ExitRun, ExitCamera, planExit, newExitPose, type ExitEvent, type ExitHost } from './exitRun'
 import { cineWorld, type CineWorld, type CineBox } from './cineCam'
 import { FreezeDirector, type FreezeKind, type FreezeSpec } from './freezeCam'
-import { Training, TUTORIAL_TRAINING, type TrainHost, type TrainId } from './training'
+import { Training, TUTORIAL_TRAINING, steppedToward, type TrainHost, type TrainId } from './training'
 import { BossArena, type ArenaHost } from './bossArena'
 import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
@@ -88,7 +88,7 @@ import { WeaponSystem } from './weapons'
 import { WEAPONS, type WeaponId } from '../data/weapons'
 import type { BossDef } from '../data/bosses'
 import { perfFlag } from '@/use/perfVariants'
-import { roomCenter, cellCenter, type Room } from '../world/levelGen'
+import { roomCenter, cellCenter, corridorMouth, type Room } from '../world/levelGen'
 import { Locator, type LocatorInput } from './locator'
 import { generateClimb } from '../world/climbGen'
 import { loadStage } from '../world/stages/load'
@@ -547,8 +547,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private coreGlow: Mesh | null = null
   /** A snapshot's Core Descent stage, applied once the climb has placed Flux. */
   private pendingVex: { stage: number; hp: number } | null = null
-  /** Doors hidden behind a false wall until released (the tutorial's first). */
-  private readonly falseWalls = new Map<number, { mesh: Mesh; t: number; x: number; z: number }>()
+  /** Doors hidden behind a false wall until released (the tutorial's first):
+   *  the wall stands in the mouth of the door's corridor, so the room is shut. */
+  private readonly falseWalls = new Map<number, { mesh: Object3D; slab: Slab; t: number; x: number; y: number; z: number; tall: number }>()
   /** The gap lesson's take-off and landing arrows (the built tutorial). */
   private gapArrows: Mesh[] = []
   /** A stage's beam-in room: the weapon it teaches before its door opens
@@ -1871,12 +1872,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const d = this.doors[id]
     if (!d || !d.held) return
     // The tutorial's first way on is a wall until now: it sinks first, and
-    // the door behind it opens once it is down (`updateFalseWalls`).
+    // the door at the end of the corridor behind it opens once it is down
+    // (`updateFalseWalls`).
     const fw = this.falseWalls.get(id)
     if (fw && fw.t < 0) {
       d.held = false
       fw.t = 0
-      this.sfx('stomp', d.x, d.z)
+      this.sfx('stomp', fw.x, fw.z)
       this.shake(0.3)
       sfx('objective')
       return
@@ -2906,9 +2908,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     const gel = walk.plan.gel
     if (gel) this.lessonSpots.set('gel', { x: cellCenter(gel.spot.i), y: 0, z: cellCenter(gel.spot.j) })
-    // A built tutorial hides its first door behind a wall that sinks when
-    // the charge lesson is done (players took the shut door for the way on
-    // and never met the drone).
+    // A built tutorial walls its first room in: the way on (the corridor
+    // and its door) is behind a wall like any other until the charge lesson
+    // is done, then that wall sinks (players took a shut door for the way on
+    // and never met the drone; an open doorway onto nothing looked broken).
     const first = walk.plan.gates[0]
     if (first && this.map.walkSteps && walk.passed === 0) this.hideDoor(first.door)
     this.buildGapArrows()
@@ -3000,32 +3003,43 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
+  /** Wall a door's corridor off from its room: a wall like the ones beside
+   *  it across the corridor's mouth (in the room's own group, so it is drawn
+   *  whenever the room is), solid to Flux and to shots. */
   private hideDoor(id: number): void {
     const d = this.doors[id]
-    if (!d) return
-    d.mesh.root.visible = false
-    const mat = new MeshToonMaterial({ color: new Color(this.theme.wall) })
-    const mesh = new Mesh(new BoxGeometry(d.axis === 'x' ? 0.5 : CELL, WALL_H, d.axis === 'x' ? CELL : 0.5), mat)
-    mesh.position.set(d.x, d.y + WALL_H / 2, d.z)
-    this.propParent(d.x, d.z).add(mesh)
-    this.falseWalls.set(id, { mesh, t: -1, x: d.x, z: d.z })
+    const spec = this.map.doors.find(x => x.id === id)
+    if (!d || !spec) return
+    const at = corridorMouth(this.map, spec)
+    // As tall as the room's own walls (a stage's stand over its highest floor).
+    const tall = (this.climb?.t.wallTop[d.from] ?? d.y + WALL_H) - d.y
+    const mesh = buildWallPlug(this.theme, at.axis, at.n, tall)
+    mesh.position.set(at.x, d.y, at.z)
+    ;(this.level.rooms[d.from] ?? this.scene).add(mesh)
+    const half = CELL / 2
+    const thin = 0.22
+    const slab: Slab = at.axis === 'x'
+      ? { minX: at.x - thin, maxX: at.x + thin, minZ: at.z - half, maxZ: at.z + half, active: true }
+      : { minX: at.x - half, maxX: at.x + half, minZ: at.z - thin, maxZ: at.z + thin, active: true }
+    this.nav.slabs.push(slab)
+    this.falseWalls.set(id, { mesh, slab, t: -1, x: at.x, y: d.y, z: at.z, tall })
   }
 
   /** A released false wall sinks into the floor (dust, a rumble); once down
-   *  the door behind it shows and opens. */
+   *  the way is free and the door at the corridor's end opens. */
   private updateFalseWalls(dt: number): void {
     for (const [id, fw] of this.falseWalls) {
       if (fw.t < 0) continue
       fw.t += dt
       const k = Math.min(1, fw.t / FALSE_WALL_SINK)
-      fw.mesh.position.y = WALL_H / 2 - k * (WALL_H + 0.1) + Math.sin(fw.t * 50) * 0.03 * (1 - k)
-      if (Math.random() < 0.5) this.fx.emit({ x: fw.x + (Math.random() - 0.5) * CELL, y: 0.2, z: fw.z + (Math.random() - 0.5) * 0.8, vy: 1.2, color: '#b8ad98', size: 0.7, sizeEnd: 1.3, life: 0.6 })
+      fw.mesh.position.y = fw.y - k * (fw.tall + 0.5) + Math.sin(fw.t * 50) * 0.03 * (1 - k)
+      if (Math.random() < 0.5) this.fx.emit({ x: fw.x + (Math.random() - 0.5) * 0.8, y: fw.y + 0.2, z: fw.z + (Math.random() - 0.5) * 0.8, vy: 1.2, color: '#b8ad98', size: 0.7, sizeEnd: 1.3, life: 0.6 })
       if (k < 1) continue
       fw.mesh.removeFromParent()
+      fw.slab.active = false
       this.falseWalls.delete(id)
       const d = this.doors[id]
       if (!d) continue
-      d.mesh.root.visible = true
       d.locked = false
       d.opening = true
       this.nav.pathBlock[d.cellJ * this.map.w + d.cellI] = 1
@@ -3112,6 +3126,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
       return
     }
+    // The charge lesson waits for a first step toward its drones (or a shot
+    // at one): Flux has his bearings before time stops for the card.
+    if (id === 'charge' && tr.id !== id && !this.chargeLessonDue()) return
     if (tr.id !== id) tr.enter(id, this.time)
     // The subject, fresh every step (a machine walks).
     this.demoAim = null
@@ -3131,6 +3148,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     } else if (id === 'gap') {
       this.trainSpot = this.lessonSpots.get('gap') ?? null
     }
+  }
+
+  /** The charge lesson's start: Flux is a step closer to the training drone
+   *  than his pad is, or has shot at it. A lesson done already, or a drone
+   *  popped from the pad, has nothing to wait for. */
+  private chargeLessonDue(): boolean {
+    const a = this.lessons.droneAt
+    if (!a || this.training.done.has('charge') || this.lessons.droneShot) return true
+    return steppedToward(a, this.map.start, this.player)
   }
 
   /** A lesson done by the player's own hand: ticked off for good. */

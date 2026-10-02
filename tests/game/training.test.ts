@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Training, INTRO_FOR, HELP_AFTER, type TrainHost, type TrainId } from '@/game/sim/training'
+import { Training, INTRO_FOR, HELP_AFTER, CHARGE_STEP, steppedToward, type TrainHost, type TrainId } from '@/game/sim/training'
 import { DemoDriver, chargeDemo, blockDemo, DEMO_SKIP } from '@/game/sim/demo'
 import { createInput } from '@/game/engine/input'
 
@@ -115,5 +115,27 @@ describe('demo driver', () => {
     }
     expect(d.active).toBe(false)
     expect(inp.fireHeld).toBe(false)
+  })
+})
+
+// The charge lesson waits on the pad: it starts with the first step toward
+// its drones (#121), so time never stops on a player still finding the stick.
+describe("the charge lesson's start", () => {
+  const pad = { x: 7.5, z: 13.5 }
+  const drone = { x: 14.5, z: 13.5 }
+
+  it('waits while Flux stands on the pad, or shuffles in place', () => {
+    expect(steppedToward(drone, pad, pad)).toBe(false)
+    expect(steppedToward(drone, pad, { x: pad.x + CHARGE_STEP * 0.5, z: pad.z })).toBe(false)
+  })
+
+  it('starts one step closer, from any side', () => {
+    expect(steppedToward(drone, pad, { x: pad.x + CHARGE_STEP, z: pad.z })).toBe(true)
+    expect(steppedToward(drone, pad, { x: pad.x + 2, z: pad.z + 1.5 })).toBe(true)
+  })
+
+  it('walking away, or straight sideways, is not a step toward the drones', () => {
+    expect(steppedToward(drone, pad, { x: pad.x - 2, z: pad.z })).toBe(false)
+    expect(steppedToward(drone, pad, { x: pad.x, z: pad.z + 3 })).toBe(false)
   })
 })

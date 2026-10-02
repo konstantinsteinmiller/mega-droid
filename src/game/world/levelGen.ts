@@ -762,3 +762,27 @@ export const roomCenter = (r: Room): [number, number] => [
 ]
 
 export type { Rng }
+
+/**
+ * Where a door's corridor leaves its parent room: the middle of that mouth on
+ * the room's wall line, and the side (`n`, along the door's axis) the room is
+ * on. A door with no corridor has its mouth at its own frame.
+ */
+export const corridorMouth = (map: MapData, d: Door): { x: number; z: number; axis: 'x' | 'z'; n: 1 | -1 } => {
+  const di = d.axis === 'x' ? -d.dir : 0
+  const dj = d.axis === 'z' ? -d.dir : 0
+  let i = d.i
+  let j = d.j
+  let guard = 0
+  // Back along the corridor to its last cell before the room.
+  while (map.cell[(j + dj) * map.w + i + di] === Cell.Corridor && guard++ < 20) {
+    i += di
+    j += dj
+  }
+  return {
+    x: cellCenter(i) + di * CELL / 2,
+    z: cellCenter(j) + dj * CELL / 2,
+    axis: d.axis,
+    n: (d.axis === 'x' ? di : dj) as 1 | -1
+  }
+}

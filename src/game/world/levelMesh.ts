@@ -312,6 +312,49 @@ export const doorFramePos = (d: Door): [number, number] => {
   return [x, z]
 }
 
+/**
+ * One cell of wall as its own mesh, looking like the walls beside it (the
+ * same textured face, cap and baseboard): a way on that is a wall until the
+ * run time takes it away (the tutorial's first, `sim/mission.ts`). Local
+ * origin: the foot of its middle. `axis` is the way through it, `n` the side
+ * it is seen from, `h` the height of the walls it stands between (a tall one
+ * is built in bands of about WALL_H, as a stage's walls are).
+ */
+export const buildWallPlug = (theme: Theme, axis: 'x' | 'z', n: 1 | -1, h = WALL_H): Group => {
+  const half = CELL / 2
+  const lo = new Color(theme.wallLow)
+  const hi = new Color(theme.wall)
+  const b = new QuadBatch()
+  // Wound so the face points along `n`, as `buildLevel` winds its walls.
+  const bands = Math.max(1, Math.ceil(h / WALL_H - 0.05))
+  for (let m = 0; m < bands; m++) {
+    const y0 = h * m / bands
+    const y1 = h * (m + 1) / bands
+    if (axis === 'x') {
+      b.quad([0, y0, -half * n], [0, y1, -half * n], [0, y1, half * n], [0, y0, half * n], [n, 0, 0], WALL_UV, lo, hi, hi, lo)
+    } else {
+      b.quad([half * n, y0, 0], [half * n, y1, 0], [-half * n, y1, 0], [-half * n, y0, 0], [0, 0, n], WALL_UV, lo, hi, hi, lo)
+    }
+  }
+  const alongX = axis === 'z'
+  const rot: [number, number, number] = alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]
+  const out = (d: number, y: number): [number, number, number] => [axis === 'x' ? d * n : 0, y, axis === 'z' ? d * n : 0]
+  const parts = [
+    xform(paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim), [0, h, 0], rot),
+    xform(paint(cap(0.13, CELL - 0.3, 8, 2), theme.wallLow), out(0.06, 0.14), rot)
+  ]
+  // The rail between two bands, as on a stage's tall walls.
+  for (let m = 1; m < bands; m++) parts.push(xform(paint(cap(0.1, CELL - 0.3, 8, 2), theme.pilaster), out(0.08, h * m / bands), rot))
+  const decor = merge(parts)
+  const g = new Group()
+  g.add(new Mesh(b.build()!, toonVCMap(levelAtlas())))
+  g.add(new Mesh(decor, toonVC()))
+  const ol = new Mesh(decor, outlineMat(0.035))
+  ol.renderOrder = -1
+  g.add(ol)
+  return g
+}
+
 /** The sky dome's radius (m). It follows the camera, so only the far plane
  *  (`SKY_FAR`) must clear it; both reach well past the tallest landmark top
  *  (the tether, 225 m up in the far ring) seen from any corner of the level. */

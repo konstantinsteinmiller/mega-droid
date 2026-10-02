@@ -206,6 +206,7 @@ export class LessonDirector {
   private targetRoom = -1
   /** The drone's glyph is on (see REVEAL_AFTER). */
   private revealed = false
+  private shotAtDrone = false
   private playT = 0
   private crate: Crate | null = null
   private crateRoom = -1
@@ -339,6 +340,7 @@ export class LessonDirector {
       // TINK: the bubble holds. The glyph comes in (if it was still waiting
       // for the coach's) and shakes — hold the button instead.
       t.hitT = 1
+      this.shotAtDrone = true
       h.fx.sparks(s.x, s.y, s.z, PAL.glowCyan, 8, 5, 0.16)
       pushHud({ t: 'text', x: s.x, y: s.y + 0.3, z: s.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', t.x, t.z)
@@ -821,6 +823,12 @@ export class LessonDirector {
       if (Math.abs(a) < bestA) { bestA = Math.abs(a); best = t }
     }
     return best
+  }
+
+  /** A quick shot has bounced off the training drone's bubble (the charge
+   *  lesson need not wait for a step toward it). */
+  get droneShot(): boolean {
+    return this.shotAtDrone
   }
 
   /** The training drone still hovers (the walkthrough's first gate). */

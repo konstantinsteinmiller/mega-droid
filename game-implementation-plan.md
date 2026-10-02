@@ -670,6 +670,14 @@ while bars and damage numbers get direct DOM writes.
       catalogue, flow order, once ever, none after a lost mission), type
       check, a private Chrome on desktop and phone sizes (three debriefs,
       no console errors).
+  - [x] **#121** the tutorial's first room: the charge lesson starts with
+    Flux's first step toward the training drones (or a shot at one), not by
+    itself on the pad. The room is walled in: the way on was an open doorway
+    onto a room not drawn yet (its cover wall stood at the door, in the next
+    room's group, so it was culled with it); now a wall like the others
+    stands in the corridor's mouth, in the start room's own group, solid to
+    Flux and shots, and sinks when the lesson is done; then the door at the
+    corridor's end opens.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

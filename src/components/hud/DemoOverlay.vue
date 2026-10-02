@@ -12,6 +12,11 @@
     div.skip(aria-hidden="true")
       GameIcon(name="skip-forward")
       span.pip(v-for="i in 2" :key="i" :class="{ on: i <= hud.demoSkips }")
+  //- The player's turn: the same input stays up, pulsing, until they have
+  //- done it (desktop; on a phone the button itself is lit, `ActionButtons`).
+  div.demo.turn(v-else-if="tryGlyph" aria-hidden="true")
+    div.big.pulse
+      InputGlyph(v-bind="tryGlyph")
 </template>
 
 <script setup lang="ts">
@@ -28,6 +33,16 @@ import GameIcon from '@/components/icons/GameIcon.vue'
  * player's thumb will go.
  */
 const { t } = useI18n()
+/** What the lesson asks for, once the demo is over and it is the player's turn. */
+const tryGlyph = computed(() => {
+  if (hud.device === 'touch' || hud.phase !== 'play' || hud.trainPhase !== 'try') return null
+  switch (hud.trainId) {
+    case 'charge': return { kind: 'mouse' as const, button: 'left' as const, hold: true }
+    case 'block': return { kind: 'mouse' as const, button: 'right' as const, hold: true }
+    case 'slide': return { kind: 'key' as const, code: 'Space', wide: true }
+    default: return null
+  }
+})
 const glyph = computed(() => {
   if (hud.device === 'touch') return null
   switch (hud.demoAct) {
@@ -80,6 +95,16 @@ const glyph = computed(() => {
   &.down
     transform: translateX(-50%) scale(0.93)
     filter: drop-shadow(0 0 14px rgba(255, 216, 74, 0.95))
+  &.pulse
+    height: clamp(52px, 10vmin, 80px)
+    animation: turn 1.1s ease-in-out infinite
+// The player's turn has no frame: the game is theirs again.
+.turn
+  box-shadow: none
+@keyframes turn
+  50%
+    transform: translateX(-50%) scale(1.08)
+    filter: drop-shadow(0 0 14px rgba(255, 216, 74, 0.95))
 // Beside the "watch" mark (the top right is the checklist's).
 .skip
   position: absolute
@@ -103,6 +128,6 @@ const glyph = computed(() => {
   &.on
     background: #7fffc8
 @media (prefers-reduced-motion: reduce)
-  .watch
+  .watch, .big.pulse
     animation: none
 </style>

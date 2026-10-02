@@ -52,6 +52,35 @@ describe('training rooms', () => {
     expect(tr.phase).toBe('done')
   })
 
+  // Playtest: "the slide tutorial shows no automated execution". A slide in
+  // an earlier room had ticked the lesson off before its room was reached.
+  it('a slide counts only on the player\'s turn in its own lesson: the room always teaches first', () => {
+    const { h, log, endDemo } = host()
+    const tr = new Training(h)
+    // On the way, in another lesson's room: not the slide lesson's business.
+    tr.enter('block', 0)
+    expect(tr.counts('slide')).toBe(false)
+    tr.leave()
+    expect(tr.counts('slide')).toBe(false)
+    // In its room: not before the card and the demo have been shown.
+    tr.enter('slide', 10)
+    expect(tr.counts('slide')).toBe(false)
+    tr.update(10 + INTRO_FOR + 0.01, true)
+    expect(tr.phase).toBe('card')
+    expect(tr.counts('slide')).toBe(false)
+    tr.dismissCard(13)
+    expect(log).toContain('demo:slide')
+    expect(tr.counts('slide')).toBe(false)
+    endDemo()
+    tr.update(16, true)
+    expect(tr.phase).toBe('try')
+    expect(tr.counts('slide')).toBe(true)
+    // Learned on an earlier run: it counts wherever it is done.
+    tr.complete('slide')
+    tr.leave()
+    expect(tr.counts('slide')).toBe(true)
+  })
+
   it('the gap is wordless: no card', () => {
     const { h, log } = host()
     const tr = new Training(h)

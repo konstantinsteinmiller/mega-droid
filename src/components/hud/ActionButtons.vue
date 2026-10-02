@@ -152,8 +152,14 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
  */
 /** A lesson demo presses this button (`sim/demo.ts`): it lights, and on a
  *  phone a finger shows on it — where the player's thumb will go. */
-const demoOn = (act: string): boolean => hud.trainPhase === 'demo' && hud.demoAct === act && !desk.value
-const demoClass = (act: string) => (demoOn(act) ? { demo: true, 'demo-down': hud.demoDown } : {})
+const demoNow = (act: string): boolean => hud.trainPhase === 'demo' && hud.demoAct === act && !desk.value
+/** The player's turn (the lesson's try): the button the lesson is about
+ *  stays lit until they have done it — with the finger on a phone, and with
+ *  its key on a desktop (`DemoOverlay` shows it big). The gel has its own ring. */
+const TRY_ACT: Record<string, string> = { charge: 'fire', block: 'block', slide: 'slide' }
+const tryNow = (act: string): boolean => hud.trainPhase === 'try' && TRY_ACT[hud.trainId] === act
+const demoOn = (act: string): boolean => demoNow(act) || (tryNow(act) && !desk.value)
+const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': hud.demoDown } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
 /** A weapon's mark inside its orb (the same glyph as the results screen). */
 const weaponIcon = (id: string) => WEAPON_ICON[id as WeaponId] ?? 'buster'
 const { t } = useI18n()
@@ -765,6 +771,15 @@ watch(() => hud.borrowed.teach, (on, was) => {
 .act.demo-down
   transform: scale(0.9)
   filter: brightness(1.25)
+// The player's turn: the ring breathes until they press it.
+.act.demo-try
+  animation: demo-try 1.1s ease-in-out infinite
+@keyframes demo-try
+  50%
+    box-shadow: 0 0 0 7px #ffd84a, 0 0 34px rgba(255, 216, 74, 1), inset 0 -5px 0 rgba(0, 0, 0, 0.18)
+@media (prefers-reduced-motion: reduce)
+  .act.demo-try
+    animation: none
 .demo-finger
   position: absolute
   left: 55%

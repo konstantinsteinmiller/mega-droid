@@ -137,6 +137,18 @@ export class Training {
     else this.toTry(now)
   }
 
+  /**
+   * Does the move count for lesson `id` right now? Only made IN the lesson,
+   * on the player's turn after its demo (or by a player who learned it on an
+   * earlier run). For the lessons a room is built around: a slide in an
+   * earlier room used to tick the slide lesson off, so the Stomper yard
+   * found it done — no card, no demo, no key shown — and the one move nobody
+   * had explained was the one the room needs.
+   */
+  counts(id: TrainId): boolean {
+    return this.done.has(id) || (this.id === id && this.phase === 'try')
+  }
+
   /** The player did it: the lesson ticks off. Also for a lesson done before
    *  its room was reached (a charged shot fired on the way). */
   complete(id: TrainId): void {

@@ -3192,6 +3192,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return steppedToward(a, this.map.start, this.player)
   }
 
+  /** Does a slide tick the slide lesson off? In the tutorial, only one made
+   *  in the lesson (`Training.counts`); anywhere else, any. */
+  private slideCounts(): boolean {
+    return !this.walk || this.training.counts('slide')
+  }
+
   /** A lesson done by the player's own hand: ticked off for good. */
   private trainDone(id: TrainId): void {
     if (this.demo.active) return
@@ -3575,7 +3581,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       p.path = null
       sfx('slide')
       this.coach.use('slide')
-      if (!this.demo.active) { this.walk?.noteSlide(); this.trainDone('slide') }
+      if (!this.demo.active && this.slideCounts()) { this.walk?.noteSlide(); this.trainDone('slide') }
       this.fx.emit({ x: p.x, y: p.y + 0.2, z: p.z, color: '#dfefff', size: 0.9, sizeEnd: 1.6, life: 0.3 })
     }
 

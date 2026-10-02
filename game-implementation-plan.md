@@ -749,6 +749,30 @@ while bars and damage numbers get direct DOM writes.
       it. Only a new player's intro, never a replay. Watch for it in review:
       a portal's QA may read a start during a film as early; `flow.introPlay`
       is the one switch.
+  - [x] **The stages, from a playtest (2026-10-02).**
+    - Pits. No fall goes on for ever: the gap a crumbled slab leaves is a pit
+      (the slab waits 10 km under the level and was "a floor"), a room with
+      no pit kind of its own holds spikes again (one lava room had turned
+      every other pit of its stage into a bottomless dark floor), and the
+      pit's floor is solid: Flux lands ON the spikes or the lava and the
+      rescue starts there. Any fall over 30 m is a pit fall, whatever is
+      under him. Stage pits are 8 m deep (12 before) and the spikes taller,
+      with lit tips, so the bed reads as spikes from the edge.
+    - Flame Wave fired under the ground on every raised floor (it started
+      at height 0.45 of the map) and died on the spot. It starts at Flux's
+      feet, hugs the floor it rolls over, belches a fan of flames at the
+      muzzle, is wider, and roars (the flame jet).
+    - The debrief is owed by the save (`dueDebrief`: the last Master beaten
+      with its return to the Lab untold), not by a note in memory that a
+      reload between the result screen and Continue lost. A game that boots
+      into the Lab owing one plays it on the first press there.
+    - The slide lesson: a slide counts only on the player's turn in its own
+      lesson (`Training.counts`), so the Stomper yard always shows its card
+      and demo first; a slide on the way used to tick it off. In every
+      lesson's try the input stays up: the key pulsing (desktop), the lit
+      button with the finger (touch).
+    - Icicle halls (Cryo Plant, Deep Mine, Fortress) have a roof at the
+      icicles' roots, drawn from below only.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

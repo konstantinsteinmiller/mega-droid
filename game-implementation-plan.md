@@ -719,8 +719,9 @@ while bars and damage numbers get direct DOM writes.
       against that master so every format is one picture.
     - Eleven sizes, .jpg and .webp, bare and with the logo (44 files). The
       logo is laid on afterwards, lower-left / lower-right / upper-right by
-      format, never top-left (CrazyGames' banner); a test pins sizes,
-      formats and that corner.
+      format, never top-left (CrazyGames' banner). The folder is a pick
+      list, not a contract: only the files a portal needs are kept, and no
+      test tracks it.
   - [x] **The intro, from a playtest (2026-10-02).**
     - A start gate: with no press on the page yet the browser mutes
       everything, so the film opened silent and its voices and score cut in

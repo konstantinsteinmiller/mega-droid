@@ -26,6 +26,8 @@ export default {
     'menu': 'Menu',
     'home': 'Home',
     'info': 'Info',
+    'clickToStart': 'Click to Start',
+    'tapToStart': 'Tap to Start',
     'skip': 'Skip',
     // Beside the skip button: {key} is the space bar's name (pause.keys.space).
     'holdToSkip': 'Hold {key} to skip'

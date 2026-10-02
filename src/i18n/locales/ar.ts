@@ -22,6 +22,8 @@ export default {
     'menu': 'القائمة',
     'home': 'الرئيسية',
     'info': 'معلومات',
+    'clickToStart': 'انقر للبدء',
+    'tapToStart': 'اضغط للبدء',
     'skip': 'تخطي',
     'holdToSkip': 'اضغط مطولًا على {key} للتخطي'
   },

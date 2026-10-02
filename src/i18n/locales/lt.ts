@@ -22,6 +22,8 @@ export default {
     'menu': 'Meniu',
     'home': 'Pradžia',
     'info': 'Informacija',
+    'clickToStart': 'Spustelėk ir pradėk',
+    'tapToStart': 'Paliesk ir pradėk',
     'skip': 'Praleisti',
     'holdToSkip': 'Laikyk {key}, kad praleistum'
   },

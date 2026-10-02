@@ -22,6 +22,8 @@ export default {
     'menu': 'Menuo',
     'home': 'Hejmo',
     'info': 'Informoj',
+    'clickToStart': 'Klaku por komenci',
+    'tapToStart': 'Tuŝu por komenci',
     'skip': 'Preterlasi',
     'holdToSkip': 'Tenu {key} por preterlasi'
   },

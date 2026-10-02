@@ -22,6 +22,8 @@ export default {
     'menu': 'Meny',
     'home': 'Start',
     'info': 'Info',
+    'clickToStart': 'Klicka för att starta',
+    'tapToStart': 'Tryck för att starta',
     'skip': 'Hoppa över',
     'holdToSkip': 'Håll {key} för att hoppa över'
   },

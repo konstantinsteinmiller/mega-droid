@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Start',
     'info': 'Info',
+    'clickToStart': 'Klik om te starten',
+    'tapToStart': 'Tik om te starten',
     'skip': 'Overslaan',
     'holdToSkip': 'Houd {key} ingedrukt om over te slaan'
   },

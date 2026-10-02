@@ -22,6 +22,8 @@ export default {
     'menu': '菜单',
     'home': '主页',
     'info': '信息',
+    'clickToStart': '点击开始',
+    'tapToStart': '轻触开始',
     'skip': '跳过',
     'holdToSkip': '按住{key}跳过'
   },

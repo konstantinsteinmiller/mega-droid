@@ -22,6 +22,8 @@ export default {
     'menu': '메뉴',
     'home': '홈',
     'info': '정보',
+    'clickToStart': '클릭해서 시작',
+    'tapToStart': '탭해서 시작',
     'skip': '건너뛰기',
     'holdToSkip': '{key} 길게 눌러 건너뛰기'
   },

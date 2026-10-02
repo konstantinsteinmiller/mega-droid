@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Trang chính',
     'info': 'Thông tin',
+    'clickToStart': 'Nhấp để bắt đầu',
+    'tapToStart': 'Chạm để bắt đầu',
     'skip': 'Bỏ qua',
     'holdToSkip': 'Giữ {key} để bỏ qua'
   },

@@ -22,6 +22,8 @@ export default {
     'menu': 'Izbornik',
     'home': 'Početna',
     'info': 'Info',
+    'clickToStart': 'Klikni za početak',
+    'tapToStart': 'Dodirni za početak',
     'skip': 'Preskoči',
     'holdToSkip': 'Drži {key} za preskakanje'
   },

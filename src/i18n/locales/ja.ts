@@ -22,6 +22,8 @@ export default {
     'menu': 'メニュー',
     'home': 'ホーム',
     'info': '情報',
+    'clickToStart': 'クリックでスタート',
+    'tapToStart': 'タップでスタート',
     'skip': 'スキップ',
     'holdToSkip': '{key}長押しでスキップ'
   },

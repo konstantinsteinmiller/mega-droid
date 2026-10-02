@@ -22,6 +22,8 @@ export default {
     'menu': 'Menyu',
     'home': 'Əsas ekran',
     'info': 'Məlumat',
+    'clickToStart': 'Başlamaq üçün kliklə',
+    'tapToStart': 'Başlamaq üçün toxun',
     'skip': 'Keç',
     'holdToSkip': 'Keçmək üçün {key} düyməsini basılı saxla'
   },

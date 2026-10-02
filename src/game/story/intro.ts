@@ -1,6 +1,7 @@
 import {
   AdditiveBlending, BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Fog, Group, HemisphereLight, DirectionalLight,
-  LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Scene, Vector3, CylinderGeometry
+  LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Scene, Sprite, SpriteMaterial, Vector3,
+  CylinderGeometry
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
@@ -16,6 +17,9 @@ import { buildStreet, vexFaceTexture, STREET_HAZE, type Street } from '../models
 import { newMotion } from '../models/motion'
 import { pose, nudge, torus, cap, sph, rcyl, paint, type Rig } from '../models/kit'
 import { PAL } from '../models/palette'
+import { buildBarrier, type BarrierFx } from '../models/barrier'
+import { buildChargedShot, type ChargedShotFx } from '../fx/chargedShot'
+import { glowTexture } from '../world/textures'
 import { THEMES } from '../world/themes'
 import { buildLabSet } from '../sim/hub'
 import { Particles } from '../fx/particles'
@@ -33,11 +37,12 @@ import {
   PIP_POP, GLYPH_ON, LV_POP, HOLO_FROM, SCRAP_BLINK, TURN_FROM, HOLO_FOLD_FROM, HOLO_FOLD_TO, STEP_FROM, STEP_TO, BEAM_RISE,
   FLASH_FROM, FLASH_FULL
 } from './introScript'
-import { cine, cineLive, resetCine, setSkipHandler, skipHold } from './cine'
+import { cine, cineLive, resetCine, setGateHandler, setSkipHandler, skipHold } from './cine'
 import { holdProgress, stepHold } from './holdSkip'
 import { sceneQuality, type SceneQuality } from '../engine/quality'
 import { buildAtlas, animateAtlas } from '../models/atlas'
-import { playVoice, prefetchVoice, stopVoice } from '../audio/voice'
+import { playVoiceSoon, prefetchVoice, stopVoice } from '../audio/voice'
+import { audio, audioAllowed } from '../audio/engine'
 
 /** How far ahead of an Atlas line its recording starts loading (s). */
 const VOICE_LEAD = 1.5
@@ -295,13 +300,21 @@ export class IntroMode implements GameMode {
   private trooperRoot = new Group()
   private drones: Rig[] = []
   private droneRoots: Group[] = []
-  private chargeRing: Mesh
-  private shotBall: Mesh
+  /** The charge at the muzzle and the charged shot: the game's own looks
+   *  (`fx/chargedShot.ts`; the charge steps green, then the full charge's
+   *  flickering cyan, as on the arm cannon in play). */
+  private charge = new Group()
+  private chargeGlow: SpriteMaterial
+  private chargeCore: MeshBasicMaterial
+  private shot: ChargedShotFx
   private eyeStreak: Mesh
-  /** The showcase's props: the shield's barrier, drone 2's orbs, the
-   *  Trooper's shock ring, the Repair Gel flask and its burst. */
-  private barrier: Mesh
-  private barrierMat: MeshBasicMaterial
+  /** The showcase's props: the shield (the game's barrier, held free of the
+   *  first-person camera), drone 2's orbs, the Trooper's shock ring, the
+   *  Repair Gel flask and its burst. */
+  private shield: BarrierFx
+  private readonly shieldAt = new Vector3()
+  /** The last frame's length (s): the barrier animates on its own clock. */
+  private frameDt = 0
   private orbs: Mesh[] = []
   private shockRing: Mesh
   private shockMat: MeshBasicMaterial
@@ -378,14 +391,16 @@ export class IntroMode implements GameMode {
       this.droneRoots.push(r)
       this.streetSet.add(r)
     }
-    this.chargeRing = new Mesh(torus(0.16, 0.03, 6, 24), additive(PAL.heroPlasma, 0.9))
-    this.shotBall = new Mesh(sph(0.2, 14, 10), additive(PAL.heroPlasmaHot, 1))
+    this.chargeGlow = new SpriteMaterial({ map: glowTexture(), color: new Color('#c8ff7a'), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
+    this.chargeCore = new MeshBasicMaterial({ color: new Color('#ffffff'), toneMapped: false })
+    const halo = new Sprite(this.chargeGlow)
+    halo.renderOrder = 6
+    this.charge.add(halo, new Mesh(sph(0.09, 12, 8), this.chargeCore))
+    this.shot = buildChargedShot('charge2')
     this.eyeStreak = new Mesh(cap(0.03, 1.2, 6, 2), additive(PAL.heroPlasma, 0.55))
-    this.streetSet.add(this.chargeRing, this.shotBall, this.eyeStreak)
+    this.streetSet.add(this.charge, this.shot.root, this.eyeStreak)
     // The showcase's props.
-    this.barrierMat = additive(PAL.glowCyan, 0.5)
-    this.barrier = new Mesh(sph(0.5, 20, 12), this.barrierMat)
-    this.barrier.scale.set(1, 1, 0.12)
+    this.shield = buildBarrier({ free: 0.62 })
     for (let k = 0; k < SHOW_VOLLEY.length; k++) {
       const o = new Mesh(sph(0.11, 10, 8), additive('#ff4a3a', 1))
       o.visible = false
@@ -398,8 +413,8 @@ export class IntroMode implements GameMode {
     this.runner.bones.elbowL!.add(this.flask)
     this.healMat = additive('#5dff8a', 0.8)
     this.healRing = new Mesh(torus(0.7, 0.05, 6, 36), this.healMat)
-    this.streetSet.add(this.barrier, this.shockRing, this.healRing, ...this.orbs)
-    this.barrier.visible = this.shockRing.visible = this.flask.visible = this.healRing.visible = false
+    this.streetSet.add(this.shield.root, this.shockRing, this.healRing, ...this.orbs)
+    this.shockRing.visible = this.flask.visible = this.healRing.visible = false
     // Atlas, flying at his shoulder: the cold open is a flash-forward.
     this.atlasStreet = buildAtlas()
     this.streetSet.add(this.atlasStreet.root)
@@ -529,12 +544,32 @@ export class IntroMode implements GameMode {
     resetCine()
     cine.on = true
     setSkipHandler(() => this.skip())
+    // The tutorial builds behind the film from now, gate or no gate.
+    this.opts.onStart?.()
+    // The browser lets no sound start before the first press on the page. A
+    // player who has not pressed yet would get the opening in silence, with
+    // the voices and the score cutting in at whatever shot his first click
+    // lands on: the film waits behind "Click to Start" instead.
+    // (Asking for the graph makes the context: an embed that grants autoplay
+    // is known only once it exists.)
+    audio()
+    if (audioAllowed()) return this.begin()
+    cine.gate = true
+    // Only a press the browser counts as one opens it (Esc is not one: the
+    // film would start and stay silent).
+    setGateHandler(() => { if (audioAllowed()) this.begin() })
+  }
+
+  /** The film goes live: from the mode's entry, or from the start gate's press. */
+  private begin(): void {
+    if (this.started || this.ended) return
+    setGateHandler(null)
+    cine.gate = false
     this.started = true
     // The score ("Wake-Up Call", `audio/songs.ts`) follows this clock: if the
     // audio only unlocks later (the first tap), it joins at the shot on screen.
     setSongStartHint((id) => (id === 'intro' ? this.t : 0))
     setMusicTrack('intro')
-    this.opts.onStart?.()
   }
 
   /** The player skipped (the button, `Esc`, `Space` held). Counts from `SKIP_AFTER`. */
@@ -551,6 +586,7 @@ export class IntroMode implements GameMode {
     if (this.ended) return
     this.ended = true
     setSkipHandler(null)
+    setGateHandler(null)
     setSongStartHint(null)
     resetCine()
   }
@@ -588,12 +624,12 @@ export class IntroMode implements GameMode {
           cine.atlas = e.key
           cine.atlasSeq++
           cineLive.atlasAt = e.at
-          // Its recorded voice, if one was dropped in (else the caption only).
-          playVoice(`story.atlas.${e.key}`)
+          // Its recorded voice (a moment late if it is still loading, never missing).
+          playVoiceSoon(`story.atlas.${e.key}`)
           break
         case 'vex':
           cine.vex = e.key
-          if (e.key) playVoice(`story.vex.${e.key}`)
+          if (e.key) playVoiceSoon(`story.vex.${e.key}`)
           break
         case 'music': if (!this.opts.replay) setMusicTrack(e.track); break
       }
@@ -635,7 +671,7 @@ export class IntroMode implements GameMode {
         }
       }
       if (st > 1.9 && st < 2.6 && Math.random() < dt * 40 * rate) {
-        const m = this.chargeRing.position
+        const m = this.charge.position
         const a = Math.random() * Math.PI * 2
         this.fx.emit({ x: S.x + m.x + Math.cos(a) * 0.6, y: S.y + m.y + Math.sin(a) * 0.6, z: S.z + m.z, vx: -Math.cos(a) * 2 * rate, vy: -Math.sin(a) * 2 * rate, color: PAL.heroPlasma, size: 0.08, sizeEnd: 0.02, life: 0.3 / rate })
       }
@@ -660,6 +696,7 @@ export class IntroMode implements GameMode {
   }
 
   render(alpha: number, dt: number): void {
+    this.frameDt = dt
     const t = this.ended || !this.started ? this.t : Math.min(INTRO_END, this.t + alpha * STEP)
     const shot = shotIndexAt(t)
     if (this.started) this.needSets(shot === 1 ? 2 : shot >= 2 ? this.jobs.length : 0)
@@ -784,15 +821,23 @@ export class IntroMode implements GameMode {
     const muzzle = R.bones.elbowR!.getWorldPosition(_a).sub(this.streetSet.position)
       .add(_b.set(Math.sin(ry), 0, Math.cos(ry)).multiplyScalar(0.38))
     const charge = st > 1.9 && st < 2.62 ? ramp(1.9, 2.55, st) : 0
-    this.chargeRing.visible = charge > 0
-    this.chargeRing.position.copy(muzzle)
-    this.chargeRing.rotation.set(0, ry, st * 9)
-    this.chargeRing.scale.setScalar(0.6 + 2.2 * charge)
+    // As the arm cannon charges in play: green through the first level, then
+    // the full charge's cyan, flickering.
+    this.charge.visible = charge > 0
+    this.charge.position.copy(muzzle)
+    const full = charge >= 0.55
+    const flick = full && Math.floor(t * 30) % 2 ? 0.55 : 1
+    this.chargeGlow.color.set(full ? '#7ff4ff' : '#c8ff7a')
+    this.chargeGlow.opacity = (0.45 + 0.5 * charge) * flick
+    this.chargeCore.color.set(full ? '#e6fbff' : '#eaffb0')
+    this.charge.scale.setScalar(0.5 + 1.5 * charge)
     const shield = _b.set(0.55, 0.75, -6.0)
     const fly = st >= 2.6 && st < SHOW_HIT ? clamp01((st - 2.6) / 0.1) * 0.88 + 0.12 * clamp01((st - STREET_RELEASE) / (SHOW_HIT - STREET_RELEASE)) : -1
-    this.shotBall.visible = fly >= 0
-    if (fly >= 0) this.shotBall.position.copy(muzzle).lerp(shield, fly)
-    this.shotBall.scale.setScalar(1 + Math.sin(t * 50) * 0.08)
+    if (fly >= 0) {
+      _d.copy(shield).sub(muzzle).normalize()
+      _c.copy(muzzle).lerp(shield, fly)
+      this.shot.fly(_c.x, _c.y, _c.z, _d.x, _d.y, _d.z, t)
+    } else this.shot.hide()
     // Amber streaks off his visor while he runs.
     this.eyeStreak.visible = st < 1.6
     this.eyeStreak.position.copy(R.bones.head!.getWorldPosition(_a)).sub(this.streetSet.position).add(_d.set(0, 0.02, -0.75))
@@ -850,18 +895,15 @@ export class IntroMode implements GameMode {
       ramp(SHOW_GUARD_UP, SHOW_GUARD_UP + 0.1, st) * (1 - ramp(SHOW_GUARD_DOWN - 0.1, SHOW_GUARD_DOWN, st)),
       ramp(SHOW_SHIELD_UP, SHOW_SHIELD_UP + 0.15, st) * (1 - ramp(SHOW_SHIELD_DOWN - 0.15, SHOW_SHIELD_DOWN, st))
     )
-    const flashOf = (at: number): number => (st >= at ? 1 - clamp01((st - at) / 0.25) : 0)
-    let flash = flashOf(SHOW_PARRY) * 1.4
-    for (const v of SHOW_VOLLEY) flash = Math.max(flash, flashOf(v + SHOW_ORB_FLIGHT))
-    this.barrier.visible = guard > 0.02
     if (guard > 0) {
       pose(R, 'shoulderL', -1.35 * guard, 0, 0.35 * guard)
       pose(R, 'elbowL', -0.5 * guard, 0, 0)
-      this.barrier.position.set(F.position.x + 0.05, 1.05, fz - 0.62)
-      this.barrier.scale.set(guard * (1 + 0.12 * flash), guard * (1 + 0.12 * flash), 0.12)
-      this.barrierMat.opacity = 0.32 + 0.55 * Math.min(1, flash)
-      this.barrierMat.color.set(flashOf(SHOW_PARRY) > 0 ? '#fff4a8' : PAL.glowCyan)
     }
+    // The game's own barrier, a hand's width in front of him; its ripple and
+    // parry ring are set off on the beats (`showcaseBursts`).
+    this.shieldAt.set(F.position.x + 0.05, 1.05, fz - 0.62)
+    this.shield.root.position.copy(this.shieldAt)
+    this.shield.update(this.frameDt, guard > 0.02, 1, t)
     // The Repair Gel: the flask up in his left hand, then the green burst.
     const gel = ramp(SHOW_GEL, SHOW_GEL + 0.35, st) * (1 - ramp(SHOW_GEL_BURST, SHOW_GEL_BURST + 0.45, st))
     this.flask.visible = st >= SHOW_GEL && st < SHOW_GEL_BURST
@@ -934,12 +976,12 @@ export class IntroMode implements GameMode {
       o.visible = u >= 0 && u < 1
       if (o.visible) o.position.copy(d1.position).lerp(_d.set(0.05, 1.05, fz - 0.62), u)
     })
-    // The shot ball, reused: the answer at drone 2, the point-blank finish.
+    // The shot, reused: the answer at drone 2, the point-blank finish.
     const shotAt = (from: number, to: number, target: Vector3, scale: number): boolean => {
       if (st < from || st >= to) return false
-      this.shotBall.visible = true
-      this.shotBall.position.copy(muzzle).lerp(target, (st - from) / (to - from))
-      this.shotBall.scale.setScalar(scale * (1 + Math.sin(t * 50) * 0.08))
+      const at = _a.copy(muzzle).lerp(target, (st - from) / (to - from))
+      _b.copy(target).sub(muzzle).normalize()
+      this.shot.fly(at.x, at.y, at.z, _b.x, _b.y, _b.z, t, scale)
       return true
     }
     if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(d1.position), 0.55)) {
@@ -970,9 +1012,16 @@ export class IntroMode implements GameMode {
     const T = this.trooperRoot.position
     const n = this.low ? 0.5 : 1
     if (passed(SHOW_HIT)) burst(0.55, 0.9, -6.0, [PAL.heroPlasmaHot, PAL.heroPlasma, '#ffffff'], 26 * n, 6, 0.16)
-    const bp = this.barrier.position
-    if (passed(SHOW_PARRY)) burst(bp.x, bp.y, bp.z, ['#fff4a8', '#ffffff', PAL.glowCyan], 30 * n, 7, 0.14)
-    for (const v of SHOW_VOLLEY) if (passed(v + SHOW_ORB_FLIGHT)) burst(bp.x, bp.y, bp.z, ['#ff6a4a', PAL.glowCyan], 12 * n, 4, 0.1, 0.35)
+    const bp = this.shieldAt
+    if (passed(SHOW_PARRY)) {
+      this.shield.impact('parry')
+      burst(bp.x, bp.y, bp.z, ['#fff4a8', '#ffffff', PAL.glowCyan], 30 * n, 7, 0.14)
+    }
+    for (const v of SHOW_VOLLEY) {
+      if (!passed(v + SHOW_ORB_FLIGHT)) continue
+      this.shield.impact('block')
+      burst(bp.x, bp.y, bp.z, ['#ff6a4a', PAL.glowCyan], 12 * n, 4, 0.1, 0.35)
+    }
     const d0 = this.droneRoots[0]!.position
     if (passed(SHOW_PARRY + 0.95)) burst(d0.x, 0.3, d0.z, ['#6a6a78', '#ffb040', '#3a3a44'], 18 * n, 3, 0.25, 0.9)
     const d1 = this.droneRoots[1]!.position
@@ -1243,6 +1292,7 @@ export class IntroMode implements GameMode {
 
   dispose(): void {
     if (!this.ended) setSkipHandler(null)
+    setGateHandler(null)
     resetCine()
     this.fx.dispose()
     this.scene.traverse((o) => {

@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Domů',
     'info': 'Info',
+    'clickToStart': 'Klikni a začni',
+    'tapToStart': 'Klepni a začni',
     'skip': 'Přeskočit',
     'holdToSkip': 'Podrž {key} pro přeskočení'
   },

@@ -22,6 +22,8 @@ export default {
     'menu': 'Menú',
     'home': 'Inicio',
     'info': 'Info',
+    'clickToStart': 'Fai clic para comezar',
+    'tapToStart': 'Toca para comezar',
     'skip': 'Saltar',
     'holdToSkip': 'Mantén {key} para saltar'
   },

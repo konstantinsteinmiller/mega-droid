@@ -22,6 +22,8 @@ export default {
     'menu': 'Menü',
     'home': 'Főoldal',
     'info': 'Infó',
+    'clickToStart': 'Kattints az indításhoz',
+    'tapToStart': 'Koppints az indításhoz',
     'skip': 'Kihagyás',
     'holdToSkip': 'Tartsd lenyomva a kihagyáshoz: {key}'
   },

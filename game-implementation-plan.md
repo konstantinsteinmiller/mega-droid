@@ -721,6 +721,23 @@ while bars and damage numbers get direct DOM writes.
       logo is laid on afterwards, lower-left / lower-right / upper-right by
       format, never top-left (CrazyGames' banner); a test pins sizes,
       formats and that corner.
+  - [x] **The intro, from a playtest (2026-10-02).**
+    - A start gate: with no press on the page yet the browser mutes
+      everything, so the film opened silent and its voices and score cut in
+      at whatever shot the first click landed on. It waits behind "Click to
+      Start" / "Tap to Start" now (the logo, one button, the whole screen is
+      the target; any key the browser counts as a press works too; 39
+      locales). Only when sound is locked: an embed that grants autoplay, a
+      replay from Options and a returning player's Lab never see it.
+    - "Core online. Good morning, Flux." went unvoiced: a recording asked for
+      while sound was still locked was never fetched, and a line whose file
+      was not decoded at its cue stayed silent. A cutscene line now starts
+      the moment it has loaded, if within 1.5 s.
+    - The showcase's shield is the game's barrier (the honeycomb dome, its
+      ripple on a block, its ring on a parry), built free of the first-person
+      camera; its charge and charged shot are the game's too (green to the
+      full charge's flickering cyan at the muzzle; the shot's glow, core,
+      comet tail and rings), from one shared module the mission uses as well.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

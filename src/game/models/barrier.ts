@@ -29,6 +29,11 @@ import { PAL } from './palette'
  * −Z — so it stays centre-left in the view whatever the arm is doing. The
  * arm's world scale tells portrait (0.62) from landscape (0.82).
  *
+ * A scene that shows Flux from outside (the intro's showcase) builds it
+ * FREE: `buildBarrier({ free: radius })` leaves the root where its owner
+ * puts it (the dome bulges toward the root's −Z) and only sizes it, so the
+ * cutscene's shield is this one, cells, ripple, parry ring and all.
+ *
  * Precompile: the mesh is `visible` from birth (at zero intensity) so
  * `renderer.compile()` and the loading render see it; `update()` only hides
  * it once it has been drawn at least once and is fully down.
@@ -223,7 +228,7 @@ const backOut = (x: number): number => {
   return 1 + c3 * k * k * k + c1 * k * k
 }
 
-export const buildBarrier = (): BarrierFx => {
+export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
   const mat = new ShaderMaterial({
     uniforms: {
       uDepth: { value: 0.42 },
@@ -274,6 +279,13 @@ export const buildBarrier = (): BarrierFx => {
   let flickT = 0
 
   const place = (sx: number, sy: number, lift: number, t: number) => {
+    if (opts.free) {
+      // Its owner's place and facing; only its size (and the raise's little rise) are its own.
+      const r = opts.free
+      mesh.scale.set(r * Math.max(0.02, sx), r * Math.max(0.02, sy), r)
+      mesh.position.set(0, lift * r, kick * 0.06 * r)
+      return
+    }
     const parent = root.parent
     let portrait = false
     if (parent) {

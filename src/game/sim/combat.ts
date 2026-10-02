@@ -1,11 +1,11 @@
 import { sceneQuality } from '../engine/quality'
 import {
-  Sprite, SpriteMaterial, AdditiveBlending, Color, Mesh, MeshBasicMaterial, SphereGeometry, Group, ConeGeometry,
-  TorusGeometry, BufferAttribute, DoubleSide, Vector3, type Scene
+  Sprite, SpriteMaterial, AdditiveBlending, Color, Mesh, MeshBasicMaterial, SphereGeometry, Group, type Scene
 } from 'three'
 import type { Enemy, Shot, World, Pickup, PickupKind } from './world'
 import type { PlayerStats } from './stats'
 import { glowTexture } from '../world/textures'
+import { SHOT_LOOK, CHARGE_AURA, buildAura, tintAura, poseAura, type ChargeKind } from '../fx/chargedShot'
 import { hasLineOfSight, floorAt } from '../world/nav'
 import { PARRY_WINDOW, wake, golemShielded, wakeGolem, ROCK_G, tryStun } from './enemies'
 import { Rubble } from '../fx/rubble'
@@ -57,73 +57,7 @@ export interface CombatHost extends World {
  *  enemy's `floor`) lift everything aimed at him; 0 on a flat map. */
 const feetOf = (h: World): number => h.player.y ?? 0
 
-const SHOT_LOOK: Record<string, { core: string; glow: string; r: number; g: number }> = {
-  pellet: { core: '#fff6b0', glow: '#ffe066', r: 0.085, g: 0.55 },
-  charge1: { core: '#eaffb0', glow: '#9dff5a', r: 0.15, g: 1.0 },
-  charge2: { core: '#e6fbff', glow: '#3ce0ff', r: 0.24, g: 1.9 },
-  // The Overload: a gold-white core in the epic violet (the prototype tier's).
-  charge3: { core: '#fff6d6', glow: '#b46cff', r: 0.42, g: 3.2 },
-  enemy: { core: '#fff0e0', glow: '#ff5a3a', r: 0.12, g: 0.8 },
-  shell: { core: '#3b4458', glow: '#ff7a3a', r: 0.22, g: 1.0 },
-  reflect: { core: '#ffffff', glow: '#7ff4ff', r: 0.16, g: 1.2 },
-  special: { core: '#ffffff', glow: '#ffffff', r: 0.2, g: 1.2 },
-  // A golem's rock: a stone mesh (fx/rubble.ts) in a faint dust halo that
-  // flashes white in the parry window like every blockable shot
-  rock: { core: '#6a645a', glow: '#6e5a40', r: 0.19, g: 0.9 }
-}
-
 const sphereGeo = new SphereGeometry(1, 12, 8)
-
-type ChargeKind = 'charge1' | 'charge2' | 'charge3'
-
-/** A charged shot is more than a bigger ball: a comet tail streams behind it
- *  and it sheds energy rings that widen and fade in its wake, more of both
- *  the fuller the charge, and a full one crackles. `tail` is the tail's
- *  length and `rings` their count, in core radii; `crackle` the chance per
- *  tick of a spark jumping off it. */
-const CHARGE_AURA: Record<ChargeKind, { tail: number; rings: number; crackle: number }> = {
-  charge1: { tail: 4, rings: 1, crackle: 0 },
-  charge2: { tail: 6, rings: 2, crackle: 0.45 },
-  charge3: { tail: 10, rings: 3, crackle: 1 }
-}
-const MAX_RINGS = 3
-/** Rings shed per second (each one's cycle). */
-const RING_RATE = 3.4
-
-/** The comet tail: a cone from the core (z = 0) back to a point at z = −1,
- *  fading to nothing along its length (additive: black draws nothing). */
-const tailGeo = (() => {
-  const g = new ConeGeometry(1, 1, 14, 4, true)
-  g.rotateX(-Math.PI / 2)
-  g.translate(0, 0, -0.5)
-  const p = g.attributes.position!
-  const c = new Float32Array(p.count * 3)
-  for (let k = 0; k < p.count; k++) c.fill(Math.pow(Math.max(0, 1 + p.getZ(k)), 1.6), k * 3, k * 3 + 3)
-  g.setAttribute('color', new BufferAttribute(c, 3))
-  return g
-})()
-/** An energy ring, square to the flight (+Z). */
-const ringGeo = new TorusGeometry(1, 0.08, 6, 28)
-const _ahead = new Vector3()
-
-const auraMat = (vertexColors: boolean): MeshBasicMaterial =>
-  new MeshBasicMaterial({
-    color: new Color('#ffffff'), vertexColors, transparent: true, blending: AdditiveBlending,
-    depthWrite: false, toneMapped: false, side: DoubleSide
-  })
-
-/** Children: the tail, its white-hot inner tail, then MAX_RINGS rings. */
-const buildAura = (): Group => {
-  const g = new Group()
-  const tail = new Mesh(tailGeo, auraMat(true))
-  tail.material.opacity = 0.6
-  const inner = new Mesh(tailGeo, auraMat(true))
-  inner.material.opacity = 0.8
-  g.add(tail, inner)
-  for (let k = 0; k < MAX_RINGS; k++) g.add(new Mesh(ringGeo, auraMat(false)))
-  for (const m of g.children) m.renderOrder = 6
-  return g
-}
 
 /** How charged a player shot is: 0 for a quick pellet; a copied weapon's
  *  shots and reflected shots count as charged. */
@@ -271,13 +205,7 @@ export class CombatSystem {
         s.aura = buildAura()
         this.root.add(s.aura)
       }
-      const [tail, inner, ...rings] = s.aura.children as Mesh<ConeGeometry, MeshBasicMaterial>[]
-      tail!.material.color.set(s.color)
-      inner!.material.color.set(crit ? '#fff6d0' : SHOT_LOOK[kind]!.core)
-      for (let k = 0; k < rings.length; k++) {
-        rings[k]!.material.color.set(s.color)
-        rings[k]!.visible = k < CHARGE_AURA[kind].rings
-      }
+      tintAura(s.aura, kind, s.color, crit ? '#fff6d0' : SHOT_LOOK[kind]!.core)
       s.aura.visible = true
     }
     // Fired from a buster already through the wall (Flux pressed up to it,
@@ -658,7 +586,7 @@ export class CombatSystem {
         s.sprite.scale.setScalar(L.g * k)
         const A = CHARGE_AURA[s.kind as ChargeKind]
         if (s.aura) s.aura.visible = !!A
-        if (A) this.syncAura(s, A, x, y, z, k)
+        if (A) this.syncAura(s, x, y, z, k)
       }
     }
     for (const p of this.pickups) {
@@ -669,28 +597,9 @@ export class CombatSystem {
 
   /** A charged shot's tail and rings, at its drawn position, facing along its
    *  flight; `grow` is its sprite's start-small factor. The core throbs. */
-  private syncAura(s: Shot, A: (typeof CHARGE_AURA)[ChargeKind], x: number, y: number, z: number, grow: number): void {
-    const au = s.aura!
+  private syncAura(s: Shot, x: number, y: number, z: number, grow: number): void {
     // Its remaining life is a free, steady clock (it only counts down)
-    const clock = -s.life
-    const r = SHOT_LOOK[s.kind]!.r
-    au.position.set(x, y, z)
-    au.lookAt(_ahead.set(x + s.vx, y + s.vy, z + s.vz))
-    au.scale.setScalar(r * Math.max(0.35, grow))
-    s.core!.scale.setScalar(r * (1 + 0.14 * Math.sin(clock * 42)))
-    const [tail, inner, ...rings] = au.children as Mesh<ConeGeometry, MeshBasicMaterial>[]
-    const flick = 1 + 0.08 * Math.sin(clock * 57)
-    tail!.scale.set(0.95, 0.95, A.tail * flick)
-    inner!.scale.set(0.45, 0.45, A.tail * 0.7 * flick)
-    // Each ring is born at the core, then drifts back, widens and fades
-    for (let k = 0; k < A.rings; k++) {
-      const ring = rings[k]!
-      const t = clock * RING_RATE + k / A.rings
-      const ph = t - Math.floor(t)
-      ring.position.z = -ph * A.tail * 0.6
-      ring.scale.setScalar(1.15 + ph * 1.5)
-      ring.material.opacity = 0.85 * (1 - ph)
-    }
+    s.core!.scale.setScalar(poseAura(s.aura!, s.kind as ChargeKind, x, y, z, s.vx, s.vy, s.vz, grow, -s.life))
   }
 
   /** A shot ends on a wall (or the floor) where it last was: sparks, and a

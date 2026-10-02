@@ -50,13 +50,28 @@
           span.skip-icon(aria-hidden="true")
             GameIcon(name="skip-forward")
     div.sr-only(aria-live="polite") {{ cine.line ? t(`story.intro.${cine.line}`) : '' }}
+    //- The start gate: no press on the page yet, so the browser would mute
+    //- the film's opening. The whole screen is the button.
+    Transition(name="gate")
+      button.start-gate(
+        v-if="cine.gate"
+        type="button"
+        @click.stop="openGate()"
+        @pointerdown.stop
+      )
+        span.gate-glow(aria-hidden="true")
+        span.gate-logo(v-html="LOGO_SVG" aria-hidden="true")
+        span.gate-cta
+          span.gate-icon(aria-hidden="true")
+            GameIcon(name="play")
+          span.gate-label {{ t(keyboard ? 'ui.clickToStart' : 'ui.tapToStart') }}
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { addHudTicker } from '@/game/state/hud'
-import { cine, cineLive, skipCutscene } from '@/game/story/cine'
+import { cine, cineLive, openGate, skipCutscene } from '@/game/story/cine'
 import { ATLAS_HOLD, VEX_ON, ramp } from '@/game/story/introScript'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { LOGO_SVG } from './logoLockup'
@@ -211,6 +226,86 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="sass">
+// ── The start gate ──
+.start-gate
+  position: absolute
+  inset: 0
+  z-index: 30
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: clamp(18px, 5vmin, 44px)
+  margin: 0
+  padding: 0
+  border: 0
+  background: radial-gradient(ellipse at 50% 42%, #24306e 0%, #141a33 55%, #0a0d1f 100%)
+  color: #fff
+  font-family: var(--font-ui)
+  cursor: pointer
+  touch-action: manipulation
+  -webkit-tap-highlight-color: transparent
+  &:focus-visible .gate-cta
+    outline: 3px solid #ffd84a
+    outline-offset: 4px
+.gate-glow
+  position: absolute
+  left: 50%
+  top: 42%
+  width: min(90vmin, 620px)
+  aspect-ratio: 1
+  transform: translate(-50%, -50%)
+  border-radius: 50%
+  background: radial-gradient(circle, rgba(255, 180, 60, 0.28), rgba(255, 180, 60, 0) 65%)
+  pointer-events: none
+  animation: gate-breathe 2.4s ease-in-out infinite
+.gate-logo
+  position: relative
+  width: min(56vmin, 340px)
+  filter: drop-shadow(0 6px 0 rgba(8, 10, 24, 0.55))
+  :deep(svg)
+    display: block
+    width: 100%
+    height: auto
+.gate-cta
+  position: relative
+  display: inline-flex
+  align-items: center
+  gap: 0.55em
+  min-height: 56px
+  padding: 0.55em 1.5em 0.55em 1.1em
+  border-radius: 999px
+  border: 3px solid #141a33
+  background: linear-gradient(#ffd84a, #ffb020)
+  box-shadow: 0 5px 0 #141a33, 0 0 0 4px rgba(255, 216, 74, 0.25)
+  color: #141a33
+  font-size: clamp(18px, 4.2vmin, 28px)
+  font-weight: 700
+  letter-spacing: 0.02em
+  line-height: 1.1
+  animation: gate-pulse 1.3s ease-in-out infinite
+.gate-icon
+  display: inline-flex
+  width: 1.15em
+  height: 1.15em
+.start-gate:active .gate-cta
+  transform: translateY(3px)
+  box-shadow: 0 2px 0 #141a33, 0 0 0 4px rgba(255, 216, 74, 0.25)
+  animation: none
+.gate-leave-active
+  transition: opacity 0.35s ease
+.gate-leave-to
+  opacity: 0
+@keyframes gate-pulse
+  50%
+    transform: scale(1.06)
+@keyframes gate-breathe
+  50%
+    opacity: 0.6
+    transform: translate(-50%, -50%) scale(1.08)
+@media (prefers-reduced-motion: reduce)
+  .gate-cta, .gate-glow
+    animation: none
 .no-os-ui
   caret-color: transparent
   user-select: none

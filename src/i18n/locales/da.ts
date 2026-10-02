@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Start',
     'info': 'Info',
+    'clickToStart': 'Klik for at starte',
+    'tapToStart': 'Tryk for at starte',
     'skip': 'Spring over',
     'holdToSkip': 'Hold {key} for at springe over'
   },

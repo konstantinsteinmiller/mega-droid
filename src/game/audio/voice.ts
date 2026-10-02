@@ -160,6 +160,27 @@ export const playVoice = (id: string, channel: VoiceChannel = 'line'): number | 
   }
 }
 
+/** The newest line asked of each channel: a late one that was overtaken stays silent. */
+const asked: Record<VoiceChannel, number> = { line: 0, bark: 0 }
+
+/**
+ * Speak a line that sits on a clock (a cutscene's): `playVoice`, except that
+ * a recording still loading starts the moment it has loaded, if that is
+ * within `grace` seconds and nothing else was asked for meanwhile. Late by a
+ * moment beats a caption with no voice (the intro's "Good morning, Flux"
+ * went unvoiced when its file was asked for too late).
+ */
+export const playVoiceSoon = (id: string, grace = 1.5, channel: VoiceChannel = 'line'): void => {
+  const mine = ++asked[channel]
+  if (playVoice(id, channel) !== null) return
+  const url = voiceUrl(id)
+  if (!url) return
+  const since = performance.now()
+  void load(url).then((buf) => {
+    if (buf && asked[channel] === mine && performance.now() - since <= grace * 1000) playVoice(id, channel)
+  })
+}
+
 /** Test seam. */
 export const __resetVoices = (): void => {
   buffers.clear()

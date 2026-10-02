@@ -22,6 +22,8 @@ export default {
     'menu': '選單',
     'home': '首頁',
     'info': '資訊',
+    'clickToStart': '點擊開始',
+    'tapToStart': '輕觸開始',
     'skip': '略過',
     'holdToSkip': '按住{key}略過'
   },

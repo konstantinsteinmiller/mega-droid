@@ -22,6 +22,8 @@ export default {
     'menu': 'Izvēlne',
     'home': 'Sākums',
     'info': 'Info',
+    'clickToStart': 'Noklikšķini, lai sāktu',
+    'tapToStart': 'Pieskaries, lai sāktu',
     'skip': 'Izlaist',
     'holdToSkip': 'Turi {key}, lai izlaistu'
   },

@@ -22,6 +22,8 @@ export default {
     'menu': 'Мәзір',
     'home': 'Басты бет',
     'info': 'Ақпарат',
+    'clickToStart': 'Бастау үшін басыңыз',
+    'tapToStart': 'Бастау үшін түртіңіз',
     'skip': 'Өткізу',
     'holdToSkip': 'Өткізу үшін {key} басып тұрыңыз'
   },

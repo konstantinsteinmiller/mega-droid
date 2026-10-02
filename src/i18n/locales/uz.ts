@@ -22,6 +22,8 @@ export default {
     'menu': 'Menyu',
     'home': 'Bosh sahifa',
     'info': 'Maʼlumot',
+    'clickToStart': 'Boshlash uchun bosing',
+    'tapToStart': 'Boshlash uchun teging',
     'skip': 'Oʻtkazib yuborish',
     'holdToSkip': 'Oʻtkazib yuborish uchun {key} ni bosib turing'
   },

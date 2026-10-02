@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Beranda',
     'info': 'Info',
+    'clickToStart': 'Klik untuk mulai',
+    'tapToStart': 'Ketuk untuk mulai',
     'skip': 'Lewati',
     'holdToSkip': 'Tahan {key} untuk melewati'
   },

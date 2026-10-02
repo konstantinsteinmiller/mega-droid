@@ -17,6 +17,10 @@ import { newHold, pressHold, releaseHold } from './holdSkip'
 export const cine = shallowReactive({
   /** A cutscene is on screen. */
   on: false,
+  /** The start gate is up ("Click to Start"): the browser has not let sound
+   *  start yet, and the cutscene waits for the first press rather than play
+   *  its opening in silence. */
+  gate: false,
   /** The skip button is up (and a skip counts). */
   skip: false,
   /** The screen-reader line: the shot whose `story.intro.<id>` is read. */
@@ -51,9 +55,15 @@ export const cineLive: CineLive = { ...newOverlay(), t: 0, atlasAt: -10, bubbleX
  *  cutscene steps it on its clock. */
 export const skipHold = newHold()
 
+/** The start gate's press (the overlay's button, any key): the live cutscene sets what it does. */
+let gateHandler: (() => void) | null = null
+export const setGateHandler = (fn: (() => void) | null): void => { gateHandler = fn }
+export const openGate = (): void => { gateHandler?.() }
+
 /** Back to rest (a cutscene ended, or a new one starts). */
 export const resetCine = (): void => {
   cine.on = false
+  cine.gate = false
   cine.skip = false
   cine.line = ''
   cine.atlas = ''

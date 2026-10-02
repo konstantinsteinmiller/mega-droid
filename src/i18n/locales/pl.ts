@@ -22,6 +22,8 @@ export default {
     'menu': 'Menu',
     'home': 'Ekran główny',
     'info': 'Info',
+    'clickToStart': 'Kliknij, aby zacząć',
+    'tapToStart': 'Dotknij, aby zacząć',
     'skip': 'Pomiń',
     'holdToSkip': 'Przytrzymaj {key}, aby pominąć'
   },

@@ -22,6 +22,8 @@ export default {
     'menu': 'Valikko',
     'home': 'Alkuun',
     'info': 'Tietoa',
+    'clickToStart': 'Aloita napsauttamalla',
+    'tapToStart': 'Aloita napauttamalla',
     'skip': 'Ohita',
     'holdToSkip': 'Pidä {key} pohjassa ohittaaksesi'
   },

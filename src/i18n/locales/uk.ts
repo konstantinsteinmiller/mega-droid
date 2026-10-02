@@ -22,6 +22,8 @@ export default {
     'menu': 'Меню',
     'home': 'Головна',
     'info': 'Інфо',
+    'clickToStart': 'Натисни, щоб почати',
+    'tapToStart': 'Торкнися, щоб почати',
     'skip': 'Пропустити',
     'holdToSkip': 'Утримуйте {key}, щоб пропустити'
   },

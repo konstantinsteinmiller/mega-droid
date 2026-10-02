@@ -22,6 +22,8 @@ export default {
     'menu': 'Meniu',
     'home': 'Acasă',
     'info': 'Info',
+    'clickToStart': 'Fă clic pentru a începe',
+    'tapToStart': 'Atinge pentru a începe',
     'skip': 'Sari peste',
     'holdToSkip': 'Ține apăsat {key} pentru a sări'
   },

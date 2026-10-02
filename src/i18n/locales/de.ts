@@ -22,6 +22,8 @@ export default {
     'menu': 'Menü',
     'home': 'Start',
     'info': 'Info',
+    'clickToStart': 'Zum Starten klicken',
+    'tapToStart': 'Zum Starten tippen',
     'skip': 'Überspringen',
     'holdToSkip': '{key} halten zum Überspringen'
   },

@@ -127,7 +127,7 @@ import MissionLoading from '@/components/hud/MissionLoading.vue'
 import CutsceneLayer from '@/components/story/CutsceneLayer.vue'
 import EndingLayer from '@/components/story/EndingLayer.vue'
 import DebriefLayer from '@/components/story/DebriefLayer.vue'
-import { holdToSkip, skipCutscene } from '@/game/story/cine'
+import { cine, holdToSkip, openGate, skipCutscene } from '@/game/story/cine'
 
 /**
  * The one game view. Hosts the canvas, the gesture surface and whichever UI
@@ -190,6 +190,11 @@ const onKey = (e: KeyboardEvent) => {
   // Space never scrolls or presses a focused button here: it is only the
   // hold. There is no pause menu over a cutscene, and no captured mouse.
   if (flow.screen === 'intro') {
+    // The start gate: any key that the browser counts as a press starts the film.
+    if (cine.gate) {
+      if (!e.repeat) openGate()
+      return
+    }
     if (e.code === 'Escape' && !e.repeat) skipCutscene()
     if (e.code === 'Space' && !typing(e)) {
       e.preventDefault()

@@ -14,11 +14,21 @@
  * `atlas.secret.<id>` in the locales; a recording is optional (no file: the
  * bubble alone). Like most lines, each is said once a mission.
  *
- * Rules that keep it from nagging:
+ * Rules that keep it from nagging (#122: "Atlas speaks too much"):
  * - one line at a time; a waiting line with a higher priority goes first;
- * - a gap after each line, and a cooldown per line;
- * - warnings re-arm only once their cause has cleared (health back up, …);
- * - a quiet stretch in play (no fight) may earn one line of small talk.
+ * - two kinds of line. What matters now (the one line on the way in,
+ *   health, a trap, a boss and its weak point, a danger of the stage, a
+ *   lesson, the objective done) comes at once, a short gap apart. The rest
+ *   is CHATTER (a machine scan, the relay count, a level-up, a tip, small
+ *   talk): it waits for a long quiet (CHATTER_GAP), only one of it waits at
+ *   a time, and a scan that would come late is dropped;
+ * - a tip is said once in a save, not once a mission (`ONCE_EVER`): a
+ *   machine's scan, a stage's hint, the relay count. What is plain to see is
+ *   not said at all (`OBVIOUS`: "one ledge at a time" where there is nowhere
+ *   else to go);
+ * - one line on the way in, a level-up line every second level;
+ * - a cooldown per line; warnings re-arm only once their cause has cleared;
+ * - a long quiet stretch in play (no fight) may earn one line of small talk.
  *
  * It also drives where Atlas's model is: `peek` 0..1 eases it into the top
  * left of Flux's view while it speaks, and now and then just to check in,
@@ -88,10 +98,38 @@ const prioOf = (l: AtlasLine): number =>
   PRIO[l] ?? (l === 'noWeak' || l.startsWith('weak.') ? 8 : l.startsWith('idle') ? 1 : l.startsWith('train.') ? 8
     : l.startsWith('hint.') || l.startsWith('help.') ? HINT_PRIO : l.startsWith('scan.') || l.startsWith('warn.') ? 6 : 3)
 
+/**
+ * CHATTER: what Atlas may say but need not, so it waits for a quiet moment
+ * and never comes in a row. Everything else is said when it happens: the one
+ * line on the way in, every warning, a lesson, the objective done.
+ */
+const CHATTER = /^(scan|arc|idle)\.|^(levelUp|hint\.levelUp|hint\.locator|hint\.upgrade)$/
+/** A scan Atlas should not sit on: a machine that is not what it seems. */
+const IMPORTANT: ReadonlySet<string> = new Set(['scan.golem'])
+export const isChatter = (l: AtlasLine): boolean => CHATTER.test(l) && !IMPORTANT.has(l)
+
+/**
+ * A stage's hints that say what the player can see for himself: never said
+ * (their text and recordings stay, for a stage that wants one back).
+ */
+const OBVIOUS: ReadonlySet<string> = new Set([
+  'hint.blaze.drop', 'hint.cryo.stairs', 'hint.volt.wave', 'hint.volt.dip', 'hint.volt.arrive', 'hint.gale.down',
+  'hint.gale.shuttle', 'hint.gale.bob', 'hint.drill.dip', 'hint.drill.arrive', 'hint.tide.wade', 'hint.rotor.dip',
+  'hint.rotor.arrive'
+])
+/** Stage hints that warn of a danger as it happens: every mission, not once in a save. */
+const EVERY_MISSION: ReadonlySet<string> = new Set(['hint.tide.deep', 'hint.tide.rise', 'hint.neon.blackout'])
+/** The sectors whose stages give hints (`hint.<sector>.<id>`); a boss fight's (`gm`, `vex`) are its own. */
+const HINT_SECTORS = /^hint\.(blaze|cryo|volt|gale|magnet|drill|tide|neon|rotor)\./
+/** Said once in a SAVE (the profile keeps it, `AtlasMemory`): the tips, never the warnings. */
+export const onceEver = (l: AtlasLine): boolean =>
+  l.startsWith('scan.') || l.startsWith('arc.') || l === 'hint.upgrade' || l === 'hint.locator' ||
+  (HINT_SECTORS.test(l) && !EVERY_MISSION.has(l))
+
 /** Seconds before the same line may come back (default: once a mission). */
 const COOLDOWN: Partial<Record<AtlasLine, number>> = {
-  lowHp: 30, lowHpGel: 30, lowWe: 45, trap: 25, plate: 25, levelUp: 10,
-  'warn.gel': 30, 'warn.critical': 30, 'warn.weEmpty': 20, 'warn.down': 1, 'hint.levelUp': 10, 'hint.upgrade': 20
+  lowHp: 30, lowHpGel: 30, lowWe: 120, trap: 25, plate: 25, levelUp: 10,
+  'warn.gel': 30, 'warn.critical': 30, 'warn.weEmpty': 60, 'warn.down': 1, 'hint.levelUp': 10
 }
 /** A borrowed weapon can be refilled and run dry again: its last-shot line may return. */
 const cooldownOf = (id: AtlasLine): number | undefined =>
@@ -104,15 +142,22 @@ const CRITICAL_AT = 0.25
 const SECTOR_LINES: ReadonlySet<string> = new Set(['blaze', 'cryo', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor'])
 /** Quiet after a line before the next one (s). */
 export const ATLAS_GAP = 1.2
+/** Quiet after ANY line before chatter may follow (s): tips never come in a row. */
+export const CHATTER_GAP = 12
 /** Longest a line waits for its recording to finish loading before it goes
  *  up as a bubble alone (s). */
 export const VOICE_WAIT = 0.8
 /** A waiting line older than this is dropped (it would come too late).
- *  Doubled with the hold times, so a queue of two lines still gets through. */
+ *  Doubled with the hold times, so a queue of two lines still gets through.
+ *  A scan is about the machine in view: it has seconds. Other chatter keeps
+ *  (the relay count is as true a minute later). */
 const STALE = 16
+const SCAN_STALE = 6
+const CHATTER_STALE = 60
+const staleOf = (l: AtlasLine): number => (l.startsWith('scan.') && !IMPORTANT.has(l) ? SCAN_STALE : isChatter(l) ? CHATTER_STALE : STALE)
 /** Quiet play before a line of small talk (s), and at most this many. */
-const IDLE_AFTER = 55
-const IDLE_MAX = 2
+const IDLE_AFTER = 90
+const IDLE_MAX = 1
 /** An idle peek into view every so often (s), for this long. */
 const PEEK_EVERY = 38
 const PEEK_FOR = 2.6
@@ -132,6 +177,14 @@ export interface AtlasMissionInfo {
   freed: number
   /** The first story landing in this sector ever: its beam-in line stands in for the briefing. */
   firstVisit?: boolean
+  /** Any running number (missions done): a job's one line on the way in takes turns by it. */
+  variant?: number
+}
+
+/** What Atlas has said in this SAVE (the profile's tips): the once-ever lines. */
+export interface AtlasMemory {
+  seen(id: AtlasLine): boolean
+  mark(id: AtlasLine): void
 }
 
 export interface AtlasTick {
@@ -144,6 +197,8 @@ export interface AtlasTick {
   we01: number
   level: number
   objectiveDone: boolean
+  /** Health and gel warnings wait (the tutorial, until its own gel lesson is learned). */
+  hpMuted?: boolean
   /** A trap ahead within reach: its id, or −1. */
   trapNear: number
   /** What that trap is (a corridor flame jet or a blade), for its first-time line. */
@@ -166,7 +221,7 @@ export class AtlasDirector {
   private t = 0
   private queue: Array<{ id: AtlasLine; at: number }> = []
   private said = new Map<AtlasLine, number>()
-  private quietSince = -ATLAS_GAP
+  private quietSince = -CHATTER_GAP
   private idleSaid = 0
   private nextPeek = PEEK_EVERY * 0.6
   private peekUntil = -1
@@ -190,13 +245,17 @@ export class AtlasDirector {
     info: AtlasMissionInfo,
     speak: (key: string) => number | null = () => null,
     prefetch: (key: string) => 'none' | 'loading' | 'ready' = () => 'none',
-    first: (flag: string) => boolean = () => false
+    first: (flag: string) => boolean = () => false,
+    ever: AtlasMemory = { seen: () => false, mark: () => {} }
   ) {
     this.info = info
     this.speak = speak
     this.prefetch = prefetch
     this.first = first
+    this.ever = ever
   }
+
+  private readonly ever: AtlasMemory
 
   /** True the first time EVER a teaching line's flag is asked (the profile keeps it), false after:
    *  the story's "first time" variants are said once in a save, not once a mission. */
@@ -206,16 +265,30 @@ export class AtlasDirector {
   private readonly speak: (key: string) => number | null
   private readonly prefetch: (key: string) => 'none' | 'loading' | 'ready'
 
-  /** Ask for a line (it waits its turn; a line on cooldown is dropped). */
-  say(id: AtlasLine): void {
+  /**
+   * Ask for a line (it waits its turn). False when it will not be said: on
+   * cooldown, plain to see, said before in this save, or one tip too many
+   * (only one line of chatter waits at a time; the more urgent one stays).
+   */
+  say(id: AtlasLine): boolean {
+    if (OBVIOUS.has(id)) return false
     const last = this.said.get(id)
     // A lesson's hint repeats while the player stays stuck (`training.ts`).
     const cd = cooldownOf(id)
-    if (last !== undefined && (cd === undefined || this.t - last < cd)) return
-    if (this.queue.some(q => q.id === id) || this.line?.id === id) return
+    if (last !== undefined && (cd === undefined || this.t - last < cd)) return false
+    if (this.queue.some(q => q.id === id) || this.line?.id === id) return false
+    if (onceEver(id) && this.ever.seen(id)) return false
+    if (isChatter(id)) {
+      const n = this.queue.findIndex(q => isChatter(q.id))
+      if (n >= 0) {
+        if (prioOf(this.queue[n]!.id) >= prioOf(id)) return false
+        this.queue.splice(n, 1)
+      }
+    }
     this.queue.push({ id, at: this.t })
     // Its recording loads now, on demand: it has the wait before the bubble.
     this.prefetch(atlasKey(id))
+    return true
   }
 
   /**
@@ -236,10 +309,13 @@ export class AtlasDirector {
   /** One-off moments the mission reports. */
   event(e: 'landed' | 'play' | 'bossAhead' | 'bossDown' | 'vexDown' | 'exit'): void {
     if (e === 'play') return this.brief()
+    // The way in gets ONE line (`brief`): "Touchdown!" is a job's, by turns with its briefing.
+    if (e === 'landed') return
     this.say(e)
   }
 
-  /** The way in: a briefing, then (on a story mission) where the story is. */
+  /** The way in, one line: the briefing. A story mission's relay count follows
+   *  later, as chatter, the first time that count is reached. */
   private brief(): void {
     if (this.briefed) return
     this.briefed = true
@@ -250,7 +326,7 @@ export class AtlasDirector {
       // The first landing in a sector: what the place is to the story, in place of the usual line.
       this.say((i.firstVisit && SECTOR_LINES.has(i.sector) ? `sector.${i.sector}` : `story.${i.sector}`) as AtlasLine)
       if (i.freed >= 1 && i.freed <= ARC_LINES) this.say(`arc.${i.freed}` as AtlasLine)
-    } else this.say('brief.job')
+    } else this.say((i.variant ?? 0) % 2 ? 'landed' : 'brief.job')
   }
 
   update(dt: number, k: AtlasTick): void {
@@ -263,7 +339,9 @@ export class AtlasDirector {
       // word); under a quarter, "Critical!". With none: under a quarter, "No
       // gel left" once a mission, then the plain "Careful".
       // One hit through both steps says only the critical line.
-      if (k.hp01 < CRITICAL_AT && this.armed.hp) {
+      if (k.hpMuted) {
+        // A lesson is teaching exactly this: nothing over it, and nothing owed after.
+      } else if (k.hp01 < CRITICAL_AT && this.armed.hp) {
         this.armed.hp = false
         this.armed.gel = false
         if (k.tanks > 0) this.say(this.first('atlas:critical') ? 'warn.criticalFirst' : 'warn.critical')
@@ -291,8 +369,8 @@ export class AtlasDirector {
         this.armed.objective = false
         this.say('hint.done')
       }
-      // Two ways to say it, by turns.
-      if (this.lastLevel >= 0 && k.level > this.lastLevel) this.say(k.level % 2 ? 'hint.levelUp' : 'levelUp')
+      // Every second level, in two ways by turns: the level-up screen says the rest.
+      if (this.lastLevel >= 0 && k.level > this.lastLevel && k.level % 2 === 0) this.say(k.level % 4 ? 'hint.levelUp' : 'levelUp')
     }
     this.lastLevel = k.level
     // ── The line up now ──
@@ -300,12 +378,15 @@ export class AtlasDirector {
       this.line = null
       this.quietSince = t
     }
-    this.queue = this.queue.filter(q => t - q.at < STALE)
+    this.queue = this.queue.filter(q => t - q.at < staleOf(q.id))
     if (!this.held && !this.line && this.queue.length && t - this.quietSince >= ATLAS_GAP) {
-      this.queue.sort((a, b) => prioOf(b.id) - prioOf(a.id) || a.at - b.at)
+      // What matters now before any chatter, then by urgency, then by age.
+      this.queue.sort((a, b) => Number(isChatter(a.id)) - Number(isChatter(b.id)) || prioOf(b.id) - prioOf(a.id) || a.at - b.at)
       const next = this.queue[0]!
+      // Chatter waits for a long quiet: no tip right after another line.
+      const due = !isChatter(next.id) || t - this.quietSince >= CHATTER_GAP
       // Still loading its voice: give it a moment, then go without.
-      if (this.prefetch(atlasKey(next.id)) !== 'loading' || t - next.at >= VOICE_WAIT) {
+      if (due && (this.prefetch(atlasKey(next.id)) !== 'loading' || t - next.at >= VOICE_WAIT)) {
         this.queue.shift()
         this.start(next.id)
       }
@@ -330,6 +411,8 @@ export class AtlasDirector {
     const key = atlasKey(id)
     const voice = this.speak(key)
     this.said.set(id, this.t)
+    // Said, not just asked for: a tip dropped unsaid may come another day.
+    if (onceEver(id)) this.ever.mark(id)
     const chars = id.length * 3 + 12 // no text here; a rough stand-in, see `holdFor`
     const hold = voice !== null ? Math.max(1.2, voice + 0.35) : holdFor(key) ?? lineSeconds(chars)
     this.line = { id, at: this.t, hold }

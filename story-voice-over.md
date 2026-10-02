@@ -868,6 +868,34 @@ The Fortress has none: its win has the ending.
 | `pip_debrief_rotor_tip` | `pip.debrief.rotor.tip` | "It borrows the Masters' attacks. Pack Repair Gel!" | Caring and practical: the last piece of advice before the big one. | 3 s |
 | `pip_debrief_go` | `pip.debrief.go` | "Gear up, then go! I'll mind the lab." | A cheerful send-off; practical on 'gear up', cosy on 'I'll mind the lab'. | 2.8 s |
 
+### How often Atlas talks (#122)
+
+Playtest: "Atlas speaks too much… three hints back to back… it feels like
+hand-holding." The rules since (`sim/atlas.ts`):
+
+- **What matters now comes at once**, a short gap apart: the one line on the
+  way in, health, a trap, a boss and its weak point, a danger of the stage,
+  a lesson, the objective done.
+- **Everything else is chatter** and keeps its distance: a machine scan, the
+  relay count, a level-up, "that's an upgrade", the locator tip, small talk.
+  Chatter waits for 12 s of quiet after any line, only one of it waits at a
+  time, and a scan that would come more than 6 s late is dropped unsaid (it
+  comes another day).
+- **Tips are said once in a save**, not once a mission: every machine scan,
+  every stage hint, the relay count, the upgrade and locator tips. Told
+  every mission: a danger as it happens (rising water, a blackout) and a
+  boss fight's own calls.
+- **What is plain to see is not said**: "one ledge at a time" where there is
+  nowhere else to go, "hop off" at the end of a ride, wading, bobbing
+  platforms, a shuttle. The lines and their recordings stay in the catalogue.
+- **The crate golem's scan is not chatter**: it is not what it seems, so it
+  comes at once.
+- **One line on the way in** (the landing has none of its own; a job says
+  "Touchdown!" or its briefing by turns). **A level-up line every second
+  level.** One line of small talk a mission at most, after 90 s of quiet.
+- In the tutorial, no health warnings until its own Repair Gel lesson is
+  learned; a lesson's intro goes up at once, over whatever was being said.
+
 ### Atlas: field warnings
 
 | VO id | Key | Line | Direction | Max |

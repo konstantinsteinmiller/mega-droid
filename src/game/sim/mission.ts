@@ -7,7 +7,7 @@ import {
 import type { GameMode } from '../engine/app'
 import { buildCityscape, type Cityscape } from '../world/cityscape'
 import { weakSpotUnderRay } from '../data/weakspots'
-import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine } from './atlas'
+import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine, type AtlasMemory } from './atlas'
 import { buildAtlas, animateAtlas } from '../models/atlas'
 import { playVoice, prefetchVoice } from '../audio/voice'
 import { bark, barkFor, preloadBarks } from '../audio/barks'
@@ -251,6 +251,18 @@ const firstEver = (flag: string): boolean => {
   markTip(flag)
   return true
 }
+/** Where the profile keeps a once-ever Atlas line (`AtlasMemory`): the scans keep the flags they always had. */
+const atlasFlag = (id: AtlasLine): string => {
+  if (id.startsWith('scan.')) {
+    const what = id.slice(5)
+    return what === 'fire' || what === 'ice' || what === 'volt' || what === 'wind' ? `atlas:scan:coat:${what}` : `atlas:scan:${what}`
+  }
+  return id === 'hint.locator' ? 'atlas:locator' : `atlas:said:${id}`
+}
+const ATLAS_MEMORY: AtlasMemory = {
+  seen: (id) => !!profile.tips[atlasFlag(id)],
+  mark: (id) => markTip(atlasFlag(id))
+}
 /** A blackout's sky and fog, and a lightning flash's. */
 const NIGHT = new Color('#04050b')
 const FLASH_WHITE = new Color('#e8eeff')
@@ -383,8 +395,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private bossStarted = false
   /** A voiced story scene running (`story/vexScene.ts`, #117), if any. */
   private storyScene: StoryScene | null = null
-  /** Scan flags already looked up this mission (`noteSighting`): one profile lookup each. */
-  private readonly scanned = new Set<string>()
+  /** Scans known said in this save (`noteSighting`): one profile lookup each. */
+  private readonly scanned = new Set<AtlasLine>()
   /** A scene waiting for Atlas's current line to end (the landing's "Touchdown!"). */
   private pendingScene: (() => void) | null = null
   /** The Mk-I fight's beats: phase 2 seen, the attack in its wind-up, the elements called. */
@@ -552,6 +564,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private readonly falseWalls = new Map<number, { mesh: Object3D; slab: Slab; t: number; x: number; y: number; z: number; tall: number }>()
   /** The gap lesson's take-off and landing arrows (the built tutorial). */
   private gapArrows: Mesh[] = []
+  /** Flux's health before the gel lesson's demo used its (free) gel; null outside it. */
+  private gelDemoHp: number | null = null
   /** A stage's beam-in room: the weapon it teaches before its door opens
    *  (the newest one not yet taught), whether its drones came, its door. */
   private beamTeach: WeaponId | null = null
@@ -863,8 +877,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       template: q?.template ?? '',
       sector: setup.sector,
       freed: profile.world.bosses.filter(b => b !== 'vexMk1').length,
-      firstVisit: q?.kind === 'story' && !vexSeen(`sector:${setup.sector}`)
-    }, (key) => playVoice(key), (key) => prefetchVoice(key), firstEver)
+      firstVisit: q?.kind === 'story' && !vexSeen(`sector:${setup.sector}`),
+      variant: profile.questsDone
+    }, (key) => playVoice(key), (key) => prefetchVoice(key), firstEver, ATLAS_MEMORY)
     preloadBarks()
   }
 
@@ -1813,6 +1828,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if ((line === 'warn.crusher' && this.setup.sector === 'blaze') || (line === 'warn.pit' && this.setup.sector === 'gale')) return
       if (!a.first(`atlas:${line}`)) return
     }
+    // A lesson's intro is up at once, over whatever Atlas was saying: its
+    // card follows in under two seconds (`training.ts`, INTRO_FOR).
+    if (line.startsWith('train.')) {
+      a.sayNow(line)
+      return
+    }
     a.say(line)
   }
 
@@ -2304,7 +2325,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       sfx('denied')
       return false
     }
-    profile.inv.tanks--
+    // The lesson's demo shows a gel used; it costs none and teaches nothing
+    // yet: the health it gave goes back when the demo ends (`stepTraining`),
+    // so the player has a gel and a reason to use it.
+    const demo = this.demo.active
+    if (demo) this.gelDemoHp = Math.min(this.gelDemoHp ?? c.hp, c.hp)
+    else profile.inv.tanks--
     // The HUD drains the gel from its button and pours it into the bar from
     // where health stood (`ActionButtons`, `HudBars`); the repair itself is
     // instant, the animation only catches up.
@@ -2315,6 +2341,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.fx.riseRing(this.player.x, this.player.y + 0.1, this.player.z, '#8dff7a', 0.9, 20)
     pushHud({ t: 'flash', color: '#8dff7a', strength: 0.35 })
     sfx('tank')
+    if (demo) return true
     bark('gel')
     this.coach.use('tank')
     this.lessons.gelUsed()
@@ -3103,6 +3130,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     if (tr.id === 'gel') {
       this.trainSpot = { x: p.x - Math.sin(p.yaw) * 2, y: p.y + EYE_H - 0.4, z: p.z - Math.cos(p.yaw) * 2 }
+      // The demo's gel was only shown: Flux is hurt again for his own try.
+      if (this.gelDemoHp !== null && !this.demo.active) {
+        this.combat.hp = Math.min(this.combat.hp, this.gelDemoHp)
+        this.gelDemoHp = null
+        pushHud({ t: 'flash', color: '#ffa23a', strength: 0.25 })
+      }
       if (this.lessons.gelEnded) {
         this.trainDone('gel')
         tr.leave()
@@ -3326,12 +3359,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (this.locator.popped) {
       this.locator.popped = false
       sfx('locate')
-      // What the yellow triangle is, the first two times ever it shows.
-      const shown = Number(profile.tips['atlas:locator'] ?? 0)
-      if (shown < 2 && !this.setup.tutorial) {
-        profile.tips['atlas:locator'] = shown + 1
-        this.atlas?.say('hint.locator')
-      }
+      // What the yellow triangle is, the first time ever it shows.
+      if (!this.setup.tutorial) this.atlas?.say('hint.locator')
     }
     L.alpha = this.locator.alpha
   }
@@ -4019,19 +4048,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * A machine in plain view: Atlas reads it the first time ever its kind is
    * seen (then an elite's gold ring, then an element coat: one line per
    * sighting). Not in the tutorial (its lessons teach), not over a scene or
-   * another line (a late scan is noise).
+   * another line (a late scan is noise). A scan is chatter: the director
+   * may turn it down (another tip is waiting), and it comes another time.
    */
   private noteSighting(e: Enemy): void {
     const a = this.atlas
     if (!a || e.boss || this.setup.tutorial || this.storyScene || a.line) return
-    const checks: Array<readonly [string, AtlasLine]> = []
-    if (SCAN_KINDS.has(e.kind)) checks.push([`scan:${e.kind}`, `scan.${e.kind}` as AtlasLine])
-    if (e.elite) checks.push(['scan:elite', 'scan.elite'])
-    if (e.element !== 'none') checks.push([`scan:coat:${e.element}`, `scan.${e.element}` as AtlasLine])
-    for (const [flag, line] of checks) {
-      if (this.scanned.has(flag)) continue
-      this.scanned.add(flag)
-      if (a.first(`atlas:${flag}`)) { a.say(line); return }
+    const lines: AtlasLine[] = []
+    if (SCAN_KINDS.has(e.kind)) lines.push(`scan.${e.kind}` as AtlasLine)
+    if (e.elite) lines.push('scan.elite')
+    if (e.element !== 'none') lines.push(`scan.${e.element}` as AtlasLine)
+    for (const line of lines) {
+      if (this.scanned.has(line)) continue
+      if (a.say(line)) return
+      if (ATLAS_MEMORY.seen(line)) this.scanned.add(line)
     }
   }
 
@@ -4573,6 +4603,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     k.trapNear = -1
     k.plateNear = false
     k.trapKind = ''
+    // The tutorial teaches the Repair Gel itself: no health warnings over that lesson, or before it.
+    k.hpMuted = !!this.setup.tutorial && !this.training.done.has('gel')
     this.traps.traps.forEach((s, i) => {
       if (s.stage === 'spent') return
       const d = Math.hypot(s.spot.x - p.x, s.spot.z - p.z)

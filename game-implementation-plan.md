@@ -678,6 +678,19 @@ while bars and damage numbers get direct DOM writes.
     stands in the corridor's mouth, in the start room's own group, solid to
     Flux and shots, and sinks when the lesson is done; then the door at the
     corridor's end opens.
+    Follow-up from the same playtest: the Repair Gel lesson's demo spent the
+    only gel and healed Flux, so there was nothing left to train (it even
+    counted as the lesson done). The demo's gel is free now and teaches
+    nothing; Flux is hurt again when it ends, for his own try. The lesson's
+    line came late behind Atlas's health warnings: those wait in the
+    tutorial until the gel lesson is learned, and a lesson's intro goes up
+    at once.
+  - [x] **#122** Atlas talks less (`sim/atlas.ts`, rules in
+    `story-voice-over.md` "How often Atlas talks"): warnings at once; scans,
+    the relay count, level-ups and tips are chatter (12 s of quiet first,
+    one waiting at a time, a late scan dropped); tips once in a save;
+    thirteen plain-to-see stage hints never said; one line on the way in; a
+    level-up line every second level; one line of small talk a mission.
   - Chosen (user's blind test, 2026-10-02): Gemini Flash-Lite 4.5 stars,
     Gemini Flash and Chatterbox 4.0, VoxCPM2 and Qwen3 3.3; Opus 24k/16k
     rated above Vorbis q2. Production on Chatterbox (free) and Opus 24k in

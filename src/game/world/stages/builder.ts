@@ -68,7 +68,7 @@ export class Builder {
   chests: ChestSpot[] = []
   secrets: SecretSpec[] = []
   /** Per room; only rooms given a kind other than 'void' need an entry. */
-  pitKinds: PitKind[] = []
+  pitKinds: Array<PitKind | undefined> = []
   wind: WindZone[] = []
   magnets: MagnetRail[] = []
   water: WaterZone[] = []
@@ -192,7 +192,7 @@ export class Builder {
   }
 
   pitKind(room: number, kind: PitKind): void {
-    while (this.pitKinds.length <= room) this.pitKinds.push('void')
+    while (this.pitKinds.length <= room) this.pitKinds.push(undefined)
     this.pitKinds[room] = kind
   }
 
@@ -392,9 +392,11 @@ export const finish = (b: Builder, start: { x: number; z: number; yaw: number },
   if (b.chests.length) terrain.chests = b.chests
   if (b.secrets.length) terrain.secrets = b.secrets
   if (b.iceMask) terrain.ice = b.iceMask
-  if (b.pitKinds.some(p => p !== 'void')) {
-    terrain.pitKind = b.rooms.map((_, id) => b.pitKinds[id] ?? 'void')
-  }
+  // A room with no kind of its own keeps the rule (`pitKindOf`: spikes, or
+  // the open sky's void). It used to be written out as 'void' here, so one
+  // lava room turned every other pit of its stage into a bottomless dark
+  // floor with nothing to land on.
+  if (b.pitKinds.some(p => p !== undefined)) terrain.pitKind = b.rooms.map((_, id) => b.pitKinds[id])
   if (b.wind.length) terrain.wind = b.wind
   if (b.magnets.length) terrain.magnets = b.magnets
   if (b.water.length) terrain.water = b.water

@@ -70,6 +70,11 @@ const KICK_SPEED = 7
 const KICK_SLIP = 0.9
 /** Fallen this far under the last floor over a pit: it is a pit fall. */
 const PIT_DROP = 4.5
+/** No fall is longer than this (m), wherever it happens: the rescue comes. */
+const FALL_LIMIT = 30
+/** A surface this far under the feet (m) is no floor: a platform put away
+ *  (a crumbled slab waits at −10 km until it comes back). */
+const PARKED = 200
 /** Crusher cycle (s from the warning): warn, slam, hold, rise; idle after. */
 const CR_WARN = 0.75
 const CR_SLAM = 0.12
@@ -867,20 +872,37 @@ export class ClimbRun {
     }
     p.plat = p.ground ? platUnder(nav, out[0], out[1], p.y) : -1
     if (p.ground && p.air === 0) p.safeY = p.y
-    if (!p.ground && groundAt(this.host.map, out[0], out[1]) === -Infinity && floorAt(nav, out[0], out[1]) === -Infinity) {
-      const drop = p.safeY - p.y
-      this.pitDark = clamp(drop / PIT_DROP, 0, 1)
-      if (drop > PIT_DROP) {
-        this.pitted = true
-        const map = this.host.map
-        const i = Math.floor(out[0] / CELL)
-        const j = Math.floor(out[1] / CELL)
-        const r = i >= 0 && j >= 0 && i < map.w && j < map.h ? map.room[j * map.w + i]! : -1
-        const kind = pitKindOf(this.t, r)
-        // Lava costs twice a fall; spikes are the plain fall made visible.
-        this.pitCost = kind === 'lava' ? PIT_COST * HOT_PIT : PIT_COST
+    // A pit: over a pit cell, with nothing to land on before the pit's own
+    // floor. (It used to ask for "no surface at all there", and a crumbled
+    // slab is still a surface to the nav, parked far below the level: Flux
+    // ran into the gap it left and fell for ever, with no rescue.)
+    const drop = p.safeY - p.y
+    const bed = this.pitFloor(out[0], out[1])
+    if (!p.ground && groundAt(this.host.map, out[0], out[1]) === -Infinity &&
+      floorAt(nav, out[0], out[1], p.y) < (bed > -Infinity ? bed : p.y - PARKED)) {
+      // The pit's own floor (its spikes, its lava) is solid: he lands on it.
+      // A pit with none (open sky) takes him once he is well under the edge.
+      const depth = bed > -Infinity ? Math.max(0.5, p.safeY - bed) : PIT_DROP
+      this.pitDark = clamp(drop / depth, 0, 1)
+      if (bed > -Infinity ? p.y <= bed : drop > PIT_DROP) {
+        if (bed > -Infinity) p.y = bed
+        this.pitFell(out)
       }
+    } else if (!p.ground && drop > FALL_LIMIT) {
+      // The last net: no fall goes on for ever, whatever is under him.
+      this.pitFell(out)
     }
+  }
+
+  /** Flux is in the pit at `out`: the mission takes it from here (`pitFall`). */
+  private pitFell(out: [number, number]): void {
+    this.pitted = true
+    const map = this.host.map
+    const i = Math.floor(out[0] / CELL)
+    const j = Math.floor(out[1] / CELL)
+    const r = i >= 0 && j >= 0 && i < map.w && j < map.h ? map.room[j * map.w + i]! : -1
+    // Lava costs twice a fall; spikes are the plain fall made visible.
+    this.pitCost = pitKindOf(this.t, r) === 'lava' ? PIT_COST * HOT_PIT : PIT_COST
   }
 
   /**

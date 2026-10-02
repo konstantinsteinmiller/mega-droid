@@ -25,7 +25,7 @@ vi.mock('@/game/fx/markers', async () => {
 })
 
 import { Group, Scene } from 'three'
-import { CELL, cellCenter, type MapData } from '@/game/world/levelGen'
+import { CELL, cellCenter, pitKindOf, type MapData } from '@/game/world/levelGen'
 import { createNav, findPath, groundAt, moveBody, type Nav } from '@/game/world/nav'
 import { generateClimb } from '@/game/world/climbGen'
 import { Builder, finish, mirrorX, secretDoorFace, YAW_PX } from '@/game/world/stages/builder'
@@ -252,6 +252,64 @@ describe('pit kinds', () => {
   it('the terrain lists them per room, and a map without any has none', () => {
     expect(gapMap(1, 'lava').terrain!.pitKind).toEqual(['lava'])
     expect(gapMap(1).terrain!.pitKind).toBeUndefined()
+  })
+
+  // Playtest: "I fell through the ground instead of hitting spikes and getting
+  // rescued", in three stages. Each of these was a way to fall for ever.
+  it('a room with no kind of its own holds spikes, even beside a lava room (it was written out as a bottomless void)', () => {
+    const b = new Builder(12, 7)
+    b.addRoom(0, 0, 12, 3, 'start', 'hall', 0)
+    b.addRoom(0, 4, 12, 3, 'combat', 'hall', 0)
+    b.pits(4, 0, 5, 2)
+    b.pits(4, 4, 5, 6)
+    b.pitKind(1, 'lava')
+    const t = finish(b, { x: cellCenter(1), z: cellCenter(1), yaw: YAW_PX }, 1).terrain!
+    expect(pitKindOf(t, 0)).toBe('spikes')
+    expect(pitKindOf(t, 1)).toBe('lava')
+    // Only a map open to the sky keeps a bottomless pit.
+    expect(pitKindOf({ ...t, clouds: true }, 0)).toBe('void')
+  })
+
+  it('the pit\'s floor is solid: Flux lands ON the spikes, never under them', () => {
+    const map = gapMap(2, 'spikes')
+    const run = new ClimbRun(hostFor(map), 1)
+    const bed = run.pitFloor(cellCenter(4), cellCenter(1))
+    expect(bed).toBeLessThan(-2)
+    const p = body(4 * CELL - 0.3, cellCenter(1))
+    const out: [number, number] = [0, 0]
+    for (let n = 0; n < 400 && !run.pitted; n++) {
+      p.vx = WALK_SPEED
+      run.stepBody(p, out, 1, 0, DT, false)
+      p.x = out[0]
+      p.z = out[1]
+    }
+    expect(run.pitted).toBe(true)
+    expect(p.y).toBe(bed)
+  })
+
+  it('the gap a crumbled slab left is a pit (the slab waits far below the level, and is no floor)', () => {
+    for (const pit of ['spikes', 'void'] as const) {
+      const map = gapMap(3, pit)
+      if (pit === 'void') map.terrain!.clouds = true
+      const host = hostFor(map)
+      const run = new ClimbRun(host, 1)
+      // As `CrumbleFeature` leaves a slab that fell: still in the nav, 10 km down.
+      host.nav.plats = [{ x0: 4 * CELL, z0: 0, x1: 7 * CELL, z1: 3 * CELL, top: -1e4, dx: 0, dz: 0 }]
+      const p = body(4 * CELL - 0.3, cellCenter(1))
+      const out: [number, number] = [0, 0]
+      let steps = 0
+      for (; steps < 600 && !run.pitted; steps++) {
+        if (p.ground) p.vx = WALK_SPEED
+        run.stepBody(p, out, 1, 0, DT, false)
+        p.x = out[0]
+        p.z = out[1]
+      }
+      expect(run.pitted, pit).toBe(true)
+      // Seconds, not for ever; and on the spikes where the pit has them.
+      expect(steps, pit).toBeLessThan(240)
+      if (pit === 'spikes') expect(p.y).toBe(run.pitFloor(p.x, p.z))
+      else expect(p.y).toBeGreaterThan(-12)
+    }
   })
 })
 

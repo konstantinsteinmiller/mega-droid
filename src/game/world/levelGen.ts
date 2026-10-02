@@ -481,8 +481,8 @@ export interface Terrain {
   secrets?: SecretSpec[]
   /** 1 = an ice cell: low friction, momentum carries (per cell). */
   ice?: Uint8Array
-  /** Per room: what its pits hold (absent: 'void'). */
-  pitKind?: PitKind[]
+  /** Per room: what its pits hold (unset: the rule, `pitKindOf`). */
+  pitKind?: Array<PitKind | undefined>
   /** Crumbling platforms over pits (`sim/stages/crumble.ts`). */
   crumbles?: CrumbleSpec[]
   wind?: WindZone[]

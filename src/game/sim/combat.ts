@@ -441,6 +441,12 @@ export class CombatSystem {
       s.y += s.vy * dt
       s.z += s.vz * dt
 
+      // The Flame Wave hugs the floor it rolls over (a step up or down, a
+      // ramp); over a gap it holds its height.
+      if (s.weapon === 'flameWave') {
+        const f = floorAt(h.nav, s.x, s.z, s.y + 0.6)
+        if (f > -Infinity && Math.abs(f + 0.45 - s.y) < 1.2) s.y = f + 0.45
+      }
       // A copied weapon's own trail: what it IS reads in flight.
       if (s.kind === 'special') this.specialTrail(s)
       // Trails for charged shots
@@ -685,9 +691,9 @@ export class CombatSystem {
     const r = Math.random
     switch (s.weapon) {
       case 'flameWave':
-        for (let n = 0; n < 2; n++) {
+        for (let n = 0; n < 4; n++) {
           if (r() > k) continue
-          fx.emit({ x: s.x + (r() - 0.5) * 0.7, y: s.y - 0.2 + r() * 0.3, z: s.z + (r() - 0.5) * 0.7, vx: s.vx * 0.15, vy: 1.8 + r() * 1.6, vz: s.vz * 0.15, color: r() < 0.35 ? '#fff27a' : r() < 0.6 ? '#ffa23a' : '#ff5a1f', size: 0.7 + r() * 0.4, sizeEnd: 0.05, life: 0.45 + r() * 0.2 })
+          fx.emit({ x: s.x + (r() - 0.5) * 1.4, y: s.y - 0.3 + r() * 0.3, z: s.z + (r() - 0.5) * 0.7, vx: s.vx * 0.15, vy: 1.8 + r() * 1.6, vz: s.vz * 0.15, color: r() < 0.35 ? '#fff27a' : r() < 0.6 ? '#ffa23a' : '#ff5a1f', size: 0.7 + r() * 0.4, sizeEnd: 0.05, life: 0.45 + r() * 0.2 })
         }
         if (r() < 0.3 * k) fx.emit({ x: s.x, y: s.y, z: s.z, vx: (r() - 0.5) * 3, vy: 2.5 + r() * 2, vz: (r() - 0.5) * 3, color: '#ffd35a', size: 0.12, sizeEnd: 0.02, life: 0.7, gravity: 6 })
         break

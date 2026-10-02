@@ -337,6 +337,26 @@ describe('no Weapon Energy', () => {
     expect(h.combat.we).toBe(20 - w.cost('flameWave'))
   })
 
+  // Playtest: "the flame attack does nothing, just a blop". It started at
+  // height 0.45 of the MAP, under every raised floor, and died on the spot.
+  it('the Flame Wave rolls along the floor Flux stands on, in flames and with a fire sound', () => {
+    const h = makeWeaponHost(20)
+    const spawned: number[] = []
+    const flames: number[] = []
+    const sounds: string[] = []
+    const base = h.system.spawnPlayerShot as unknown as () => Record<string, unknown>
+    ;(h.system as unknown as { spawnPlayerShot: unknown }).spawnPlayerShot = (_k: string, _x: number, y: number) => { spawned.push(y); return base() }
+    ;(h.fx as unknown as { emit: unknown }).emit = (p: { y: number }) => { flames.push(p.y) }
+    ;(h as unknown as { sfx: unknown }).sfx = (n: string) => { sounds.push(n) }
+    ;(h.player as unknown as { y: number }).y = 9
+    const w = new WeaponSystem(h, {})
+    expect(w.use(0, 'flameWave', [0, 10.4, 0], aim)).toBe('ok')
+    expect(spawned).toEqual([9.45])
+    expect(flames.length).toBeGreaterThanOrEqual(10)
+    for (const y of flames) expect(y).toBeGreaterThan(9.5)
+    expect(sounds).toEqual(['flameJet'])
+  })
+
   it('Thunder Arc with nothing to hit fires nothing (so no charge is spent)', () => {
     const h = makeWeaponHost(0)
     const w = new WeaponSystem(h, {})

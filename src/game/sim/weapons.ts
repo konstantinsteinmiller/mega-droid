@@ -137,14 +137,31 @@ export class WeaponSystem {
         break
       }
       case 'flameWave': {
-        const s = sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, 0.45, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
+        // A wall of fire rolling along the floor FLUX STANDS ON. (It used to
+        // start at height 0.45 of the map: on any raised floor that is under
+        // the ground, so the weapon fired nothing anyone could see or hit.)
+        const feet = h.player.y ?? 0
+        const s = sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, feet + 0.45, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
         this.tag(s, id, '#ff7a2a')
         s.pierce = 99
         s.burn = Math.round(dmg * 0.35)
         s.vx *= 0.55
         s.vz *= 0.55
         s.life = 1.6
-        h.sfx('chargeShotBig')
+        // Wide and low: it takes whatever stands in its lane.
+        s.radius = 0.85
+        // The cannon belches it out: a fan of flames at the muzzle, a roar.
+        const r = Math.random
+        for (let n = 0; n < 14; n++) {
+          const a = (r() - 0.5) * 0.9
+          const ca = Math.cos(a)
+          const sa = Math.sin(a)
+          const fx = dx * ca - dz * sa
+          const fz = dz * ca + dx * sa
+          const v = 5 + r() * 6
+          h.fx.emit({ x: mx + fx * 0.3, y: my - 0.1 + (r() - 0.5) * 0.2, z: mz + fz * 0.3, vx: fx * v, vy: 0.6 + r() * 1.8, vz: fz * v, color: r() < 0.3 ? '#fff27a' : r() < 0.65 ? '#ffa23a' : '#ff5a1f', size: 0.6 + r() * 0.5, sizeEnd: 0.05, life: 0.35 + r() * 0.2, drag: 2.5 })
+        }
+        h.sfx('flameJet')
         break
       }
       case 'iceLance': {

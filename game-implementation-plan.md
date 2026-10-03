@@ -815,6 +815,13 @@ while bars and damage numbers get direct DOM writes.
     paywall at once (its free-tier block, not worked around). Open: the
     user's call between one paid plan, the first account's monthly reset,
     or Chatterbox for the rest.
+    Then (user): every Chatterbox file left the game for now, English and
+    German (455 files, `git mv` to `vo-src/backup-chatterbox/<lang>/`; put
+    one back by moving it to `public/audio/voice/<lang>/`). The game ships
+    only the 123 ElevenLabs lines; every other line is a bubble alone, and
+    German players hear those 123 in English (the German fallback).
+    `vo-src/shipped.json` records the engine of every shipped file; the
+    generator keeps it up to date.
 
 ## Resume notes
 

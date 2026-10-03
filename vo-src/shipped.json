@@ -1,0 +1,494 @@
+{
+  "en/atlas_arc_10": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_bossAhead": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_brief_climb": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_brief_job": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_brief_story": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_brief_tutorial": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_landed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_lowHp": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_cryo": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_fortress": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_weak_flameWave": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_weak_iceLance": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_weak_neonBlade": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_weak_thunderArc": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_crusher_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_crusher_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_crusher_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_down_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_fire_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_fire_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_fire_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_gel_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_gel_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_heavy_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_heavy_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_heavy_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_ice_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_ice_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_ice_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_light_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_light_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_light_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_parry_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_pit_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_pit_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_pit_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_trap_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_trap_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_trap_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_volt_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_volt_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_wind_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_wind_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_wind_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_blaze_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_blaze_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_blaze_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_blaze_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_blaze_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_cryo_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_cryo_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_cryo_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_cryo_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_cryo_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_drill_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_drill_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_drill_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_drill_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_drill_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_gale_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_gale_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_gale_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_gale_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_gale_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_go": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_hello": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_magnet_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_magnet_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_magnet_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_magnet_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_neon_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_neon_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_neon_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_neon_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_neon_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_rotor_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_rotor_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_rotor_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_rotor_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_scrapyard_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_scrapyard_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_scrapyard_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_scrapyard_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_scrapyard_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_tide_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_tide_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_tide_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_volt_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_volt_next": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_volt_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_volt_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_volt_won": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/story_atlas_goodMorning": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/story_atlas_logStart": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/story_atlas_scrapyardFirst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/story_vex_diagnosis": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_blaze": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_blueprint": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_breach": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_gale": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_magnet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_neon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_scrapper": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_mk1_defeat": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_mk1_intro": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_mk1_listen": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_mk1_obey": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_blaze": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_drill": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_frost": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_gale": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_magnet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_neon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_scrapper": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_tide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_present_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_sting_doctorIn": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_volt_fail": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_volt_hack": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  }
+}

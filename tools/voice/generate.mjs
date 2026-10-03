@@ -131,6 +131,17 @@ for (const r of results) {
   r.shipped = relative(ROOT, out).replaceAll('\\', '/')
 }
 
+// The shipped files carry no mark of their own (the encode strips metadata, the
+// game finds a line by its name): vo-src/shipped.json says which engine made each.
+if (ship) {
+  const file = join(VO_SRC, 'shipped.json')
+  const book = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {}
+  const day = new Date().toISOString().slice(0, 10)
+  for (const r of results) if (r.best != null) book[`${r.job.lang}/${r.job.file}`] = { engine: engineName, at: day }
+  const sorted = Object.fromEntries(Object.entries(book).sort(([x], [y]) => x.localeCompare(y)))
+  writeFileSync(file, `${JSON.stringify(sorted, null, 2)}\n`)
+}
+
 // A partial run (--only, --lang, --retry) updates its lines and keeps the rest.
 const merged = all.map(j => results.find(r => r.job.id === j.id) ?? before.find(r => r.job.id === j.id)).filter(Boolean)
 writeFileSync(resultsFile, `${JSON.stringify({ engine: engineName, label: engine.label, mode, takes, results: merged }, null, 2)}\n`)

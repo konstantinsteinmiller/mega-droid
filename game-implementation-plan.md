@@ -822,6 +822,18 @@ while bars and damage numbers get direct DOM writes.
     German players hear those 123 in English (the German fallback).
     `vo-src/shipped.json` records the engine of every shipped file; the
     generator keeps it up to date.
+    Then the Starter plan (the user's, 2026-10-03; 30k credits a month,
+    commercial licence): English 308/310, German 265/268 ship, all ElevenLabs
+    (the 42 grunts and laughs are one English take for every language). What
+    made the difference: the audio tag is the tone word alone (a clause in it
+    was read out, and made short lines come out twice), "Mk-I" is said as
+    "Mark One", a hung Whisper is killed and restarted, and an empty text box
+    is typed into again. Bubbles for now: EN `atlas.scan.volt` (every take
+    heard as "Volt-coded"), EN `pip.debrief.magnet.next` (5.7-5.9 s against
+    5.4; the catalogue's 3.5 s cap stays), DE `atlas.story.cryo` (drops its
+    "Brr!"), DE `atlas.story.rotor` (heard "Roter Pflüg"), DE
+    `atlas.scan.elite` (2.7 s against 2.5). The Chatterbox backup stays in
+    `vo-src/backup-chatterbox/` until the user drops it.
 
 ## Resume notes
 

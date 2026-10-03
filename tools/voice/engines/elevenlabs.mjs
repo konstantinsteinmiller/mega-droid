@@ -84,10 +84,21 @@ const speak = async (page, text) => {
   const clear = page.locator('button[aria-label="Clear text"]')
   if (await clear.count()) await clear.first().evaluate((b) => b.click())
   await page.waitForTimeout(300)
-  await editor.locator('[contenteditable=true]').first().or(editor).first().focus()
+  const field = editor.locator('[contenteditable=true]').first().or(editor).first()
+  await field.focus()
   await page.keyboard.insertText(text)
   await page.waitForTimeout(300)
-  const typed = (await editor.innerText()).replace(/\s+/g, ' ').trim()
+  let typed = (await editor.innerText()).replace(/\s+/g, ' ').trim()
+  if (!typed) {
+    // Pip's German welcome never landed (2026-10-03): something kept the
+    // focus after the voice pick. Shut any popup, click into the box, type again.
+    await page.keyboard.press('Escape')
+    await field.click({ force: true }).catch(() => {})
+    await field.focus()
+    await page.keyboard.insertText(text)
+    await page.waitForTimeout(400)
+    typed = (await editor.innerText()).replace(/\s+/g, ' ').trim()
+  }
   if (typed !== text.replace(/\s+/g, ' ').trim()) throw new Error(`ElevenLabs: the editor holds "${typed.slice(0, 60)}", not the line`)
   const audio = page.waitForResponse(r => r.request().method() === 'POST' && /\/v1\/text-to-(dialogue|speech)\b/.test(r.url()) && /audio/.test(r.headers()['content-type'] ?? ''), { timeout: 90000 })
   await page.getByTestId('tts-generate').evaluate((b) => b.click())

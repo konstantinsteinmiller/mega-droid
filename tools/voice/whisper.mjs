@@ -13,8 +13,18 @@ export const VENVS = process.env.VO_VENVS ?? join(homedir(), '.vo-venvs')
 export const pythonOf = (env) => join(VENVS, env, process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
 export const RUNNERS = join(ROOT, 'tools', 'voice', 'py')
 
+/** A runner that prints nothing this long is hung (a Whisper run once sat an
+ *  hour on one second of CPU, before its first line): it is killed. */
+const IDLE_MS = 4 * 60 * 1000
+
+/** The runner and the interpreter a venv launcher starts under it. */
+const killTree = (p) => {
+  if (process.platform === 'win32') spawn('taskkill', ['/PID', String(p.pid), '/T', '/F'], { windowsHide: true })
+  else p.kill('SIGKILL')
+}
+
 /** Run a Python runner (`py/run_<name>.py jobs.json results.json`) in its environment; resolves with results.json. */
-export const runPython = (env, runner, payload, { label = runner } = {}) => new Promise((resolve, reject) => {
+export const runPython = (env, runner, payload, { label = runner, idleMs = IDLE_MS } = {}) => new Promise((resolve, reject) => {
   const py = pythonOf(env)
   if (!existsSync(py)) return reject(new Error(`no Python environment ${env}: run pnpm voice:setup ${env}`))
   const dir = mkdtempSync(join(tmpdir(), 'vo-'))
@@ -23,10 +33,19 @@ export const runPython = (env, runner, payload, { label = runner } = {}) => new 
   writeFileSync(jobs, JSON.stringify(payload))
   const p = spawn(py, [join(RUNNERS, runner), jobs, results], { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } })
   let err = ''
-  p.stdout.on('data', (d) => process.stdout.write(`  [${label}] ${d}`))
-  p.stderr.on('data', (d) => { err += d })
+  let hung = false
+  let idle
+  const arm = () => {
+    clearTimeout(idle)
+    idle = setTimeout(() => { hung = true; killTree(p) }, idleMs)
+  }
+  arm()
+  p.stdout.on('data', (d) => { arm(); process.stdout.write(`  [${label}] ${d}`) })
+  p.stderr.on('data', (d) => { arm(); err += d })
   p.on('close', (code) => {
+    clearTimeout(idle)
     try {
+      if (hung) return reject(new Error(`${label} hung: no output in ${Math.round(idleMs / 60000)} min, killed`))
       if (code !== 0 || !existsSync(results)) return reject(new Error(`${label} exited ${code}: ${err.slice(-1500)}`))
       resolve(JSON.parse(readFileSync(results, 'utf8')))
     } finally {
@@ -43,6 +62,12 @@ export const transcribe = async (items) => {
   }
   // The cast's names as a spelling hint (Whisper hears "Flux" as "Phlox" without it).
   const prompt = 'Flux, Vex, Atlas, Gauss, Pip.'
-  const r = await runPython('whisper', 'run_whisper.py', { jobs: items.map(i => ({ ...i, prompt })) }, { label: 'whisper' })
+  const payload = { jobs: items.map(i => ({ ...i, prompt })) }
+  // A hung run is killed by the watchdog; one fresh start usually goes through.
+  const r = await runPython('whisper', 'run_whisper.py', payload, { label: 'whisper' }).catch((e) => {
+    if (!/hung/.test(e.message)) throw e
+    console.warn(`  ${e.message}; starting it again`)
+    return runPython('whisper', 'run_whisper.py', payload, { label: 'whisper' })
+  })
   return Object.fromEntries(r.results.map(x => [x.id, x.text ?? null]))
 }

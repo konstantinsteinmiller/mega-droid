@@ -117,9 +117,9 @@ describe('generateDeepMine', () => {
     for (const seed of SEEDS) {
       const m = generateDeepMine(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
         ['dock', 'hall', 'descent', 'lift', 'icicles', 'islands', 'hall', 'hall', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.drill)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.drill)
       mirrored.add(m.start.x > m.w * CELL / 2)
       beats.add(Math.round(t.icicles![0]!.period * 100))
       const start = t.floor[idx(m, m.start.x, m.start.z)]!

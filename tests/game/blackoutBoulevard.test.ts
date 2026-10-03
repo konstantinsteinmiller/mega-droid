@@ -102,9 +102,9 @@ describe('generateBlackoutBoulevard', () => {
     for (const seed of SEEDS) {
       const m = generateBlackoutBoulevard(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
         ['dock', 'islands', 'hall', 'islands', 'descent', 'hall', 'islands', 'hall', 'islands', 'descent', 'islands', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.neon)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.neon)
       expect(t.clouds).toBe(true)
       mirrored.add(m.start.x > m.w * CELL / 2)
       blinks.add(Math.round(t.neon!.find(n => n.period)!.period! * 100))

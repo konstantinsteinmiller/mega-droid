@@ -242,6 +242,8 @@ export const generateDeepMine = (seed: number): MapData => {
 
   // The beam-in room: south of the headframe, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

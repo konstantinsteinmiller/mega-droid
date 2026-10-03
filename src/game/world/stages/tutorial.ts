@@ -113,6 +113,8 @@ export const generateWakeUpCall = (seed: number): MapData => {
 
   // Start: on the pad, facing the drones and the (hidden) way on.
   const start = { x: cellCenter(2), z: cellCenter(4), yaw: YAW_PX }
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, start, seed)
   map.walkSteps = TUTORIAL_STEPS
   map.walkCast = TUTORIAL_CAST

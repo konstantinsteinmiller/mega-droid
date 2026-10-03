@@ -105,7 +105,7 @@ export const POLAR_OPEN = 1.8
 
 export const createEnemy = (
   kind: EnemyKind, level: number, x: number, z: number, room: number,
-  opts: { elite?: boolean; element?: Element; theme?: Pick<Theme, 'crate' | 'crateTrim' | 'accent'>; echo?: BossId } = {}
+  opts: { elite?: boolean; element?: Element; theme?: Pick<Theme, 'crate' | 'crateTrim' | 'accent'>; echo?: BossId; colors?: EnemyColors } = {}
 ): Enemy => {
   const golem = kind === 'golem'
   // A golem's own copy: its hit volume shrinks to a crate's while it sleeps
@@ -114,7 +114,7 @@ export const createEnemy = (
   const element = golem ? 'none' : opts.element ?? 'none'
   // A Master's echo wears its Master's rig, a little smaller.
   const echo = kind === 'echo' ? opts.echo ?? 'blazeMaster' : undefined
-  const rig = echo ? buildBossRig(echo) : buildEnemyRig(kind, golem && opts.theme ? golemColors(opts.theme, elite) : colorsFor(kind, element, elite))
+  const rig = echo ? buildBossRig(echo) : buildEnemyRig(kind, opts.colors ?? (golem && opts.theme ? golemColors(opts.theme, elite) : colorsFor(kind, element, elite)))
   const root = new Group()
   root.add(rig.root)
   const scale = elite ? 1.18 : 1

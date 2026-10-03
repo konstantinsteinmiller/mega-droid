@@ -145,8 +145,8 @@ describe('generateSkyDocks', () => {
     for (const seed of SEEDS) {
       const m = generateSkyDocks(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(['dock', 'islands', 'shuttle', 'wind', 'lift', 'ladder', 'islands', 'descent', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.gale)
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(['dock', 'islands', 'shuttle', 'wind', 'lift', 'ladder', 'islands', 'descent', 'hall', 'arena'])
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.gale)
       expect(m.w).toBeLessThanOrEqual(48)
       expect(m.h).toBeLessThanOrEqual(40)
       mirrored.add(m.start.x > m.w * CELL / 2)

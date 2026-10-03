@@ -39,7 +39,7 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  * platforms' pace, and the gusts' rhythm and strength — never the route.
  */
 
-const GRID_W = 38
+const GRID_W = 41
 const GRID_H = 34
 /** One storey (m): a ladder, a bobbing platform's ride, a drop. */
 const STOREY = 3
@@ -262,6 +262,8 @@ export const generateSkyDocks = (seed: number): MapData => {
   // dock's west half), the door into the dock's east half.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // Start: in the beam-in room, facing its door.
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   map.terrain!.clouds = true
   return rng() < 0.5 ? mirrorX(map) : map

@@ -27,8 +27,8 @@ const pinned = ref(false)
 const glyph = computed(() => {
   if (hud.device === 'touch' || hud.phase !== 'play' || hud.slideCue) return null
   switch (hud.holoAct) {
-    case 'fire':
-    case 'weapon': return { kind: 'mouse' as const, button: 'left' as const, hold: hud.holoAct === 'fire' && hud.holoDown }
+    case 'fire': return { kind: 'mouse' as const, button: 'left' as const, hold: hud.holoDown }
+    case 'weapon': return { kind: 'key' as const, code: 'Digit1' }
     case 'block': return { kind: 'mouse' as const, button: 'right' as const, hold: hud.holoDown }
     case 'slide': return { kind: 'key' as const, code: 'Space', wide: true }
     case 'tank': return { kind: 'key' as const, code: 'KeyH' }

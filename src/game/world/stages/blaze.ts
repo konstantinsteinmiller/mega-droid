@@ -38,7 +38,7 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  */
 
 const GRID_W = 40
-const GRID_H = 20
+const GRID_H = 29
 /** Fire vents: seconds per cycle (the jets roar `VENT_ON` of it), and the
  *  wall nozzle's mouth over its floor (chest height: the jet hits a body). */
 const VENT_ON = 1.1
@@ -233,6 +233,8 @@ export const generateMeltdown = (seed: number): MapData => {
   b.beamRoom(2, 8, 8, 2, 4, 7, 0, -1, 1)
   // Start: in the beam-in room, facing its door.
   const start = { x: cellCenter(3), z: cellCenter(8) + CELL / 2, yaw: YAW_PX }
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

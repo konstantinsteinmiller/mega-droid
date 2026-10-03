@@ -501,7 +501,8 @@ export const buildBeacon = (): { root: Group; mat: MeshBasicMaterial } => {
 // ─── Training target (the charge-shot lesson) ────────────────────────────────
 
 /** The training drone's paint: blue and white, a friendly practice machine. */
-const TRAINING_DRONE: EnemyColors = { main: '#3c8dff', deep: '#1f4fb0', accent: '#dff1ff', eye: '#7ff4ff', metal: '#8fa3c8' }
+/** The training drones' blue: a machine that is only there to be shot. */
+export const TRAINING_DRONE: EnemyColors = { main: '#3c8dff', deep: '#1f4fb0', accent: '#dff1ff', eye: '#7ff4ff', metal: '#8fa3c8' }
 
 export interface TrainingTargetMesh {
   root: Group

@@ -91,6 +91,10 @@ export interface MapData {
    *  Flux lands, and the door into the level it holds until the newest
    *  weapon has had its lesson. */
   beam?: { room: number; door: number }
+  /** A boss stage's weapon lesson room behind the arena (`Builder.exitRoom`):
+   *  its door from the arena (held until the boss is down) and the cell of
+   *  its beam pedestal. */
+  exit?: { room: number; door: number; pad: [number, number] }
 }
 
 // ─── Terrain (the climb) ─────────────────────────────────────────────────────

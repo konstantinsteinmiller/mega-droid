@@ -2,7 +2,7 @@ import {
   AdditiveBlending, BoxGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial,
   RingGeometry, SphereGeometry, Vector3, type Object3D
 } from 'three'
-import { buildHero, animateHeroIdle, animateHeroWalk, animateHeroHop } from '../models/hero'
+import { buildHero, buildViewmodel, animateHeroIdle, animateHeroWalk, animateHeroHop, type HeroColors } from '../models/hero'
 import { buildEnemyRig, poseHeli, poseTrooper, poseHopper } from '../models/enemies'
 import { pose, type Rig } from '../models/kit'
 import { newMotion } from '../models/motion'
@@ -405,5 +405,61 @@ export class TargetArrow {
     this.root.traverse((o) => { if ((o as Mesh).isMesh) (o as Mesh).geometry.dispose() })
     this.mat.dispose()
     this.glow.dispose()
+  }
+}
+
+/** The weapon arm hangs this long after the boss falls (s). */
+export const ARM_HOLO_FOR = 5
+
+/**
+ * The copied weapon, shown (#D26): the moment the boss falls, Flux's arm in
+ * the new weapon's colours (the red flame arm for the Flame Wave) hangs in
+ * front of him as a hologram, turning on a light ring, for ARM_HOLO_FOR; it
+ * grows in and shrinks away. A beam-out clears it at once (`dispose`).
+ */
+export class ArmHologram {
+  readonly root = new Group()
+  private readonly arm: Group
+  private readonly ringMat: MeshBasicMaterial
+  private t = 0
+
+  constructor(colors: HeroColors, ringColor: string) {
+    const vm = buildViewmodel(colors)
+    vm.barrier.root.visible = false
+    this.arm = vm.root
+    // The viewmodel points along -Z; stood up and turned, life-size and more.
+    this.arm.scale.setScalar(1.9)
+    this.arm.rotation.set(0.35, 0, 0)
+    this.root.add(this.arm)
+    this.ringMat = new MeshBasicMaterial({ color: new Color(ringColor), transparent: true, opacity: 0.8, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false })
+    const ring = new Mesh(new RingGeometry(0.75, 0.9, 40, 1), this.ringMat)
+    ring.rotation.x = -Math.PI / 2
+    ring.position.y = -0.55
+    this.root.add(ring)
+    this.root.scale.setScalar(0.01)
+  }
+
+  /** Hang it at (x, y, z), facing a viewer standing along `yaw`. */
+  place(parent: Object3D, x: number, y: number, z: number, yaw: number): void {
+    parent.add(this.root)
+    this.root.position.set(x, y, z)
+    this.root.rotation.y = yaw
+  }
+
+  /** One frame; false once its time is up (then `dispose`). */
+  update(dt: number): boolean {
+    this.t += dt
+    const t = this.t
+    const k = t < 0.4 ? smooth(t / 0.4) : t > ARM_HOLO_FOR - 0.5 ? smooth((ARM_HOLO_FOR - t) / 0.5) : 1
+    this.root.scale.setScalar(Math.max(0.01, k))
+    this.arm.rotation.y = t * 1.2
+    this.arm.position.y = Math.sin(t * 2) * 0.06
+    this.ringMat.opacity = (0.55 + 0.3 * Math.sin(t * 6)) * k
+    return t < ARM_HOLO_FOR
+  }
+
+  dispose(): void {
+    this.root.removeFromParent()
+    this.ringMat.dispose()
   }
 }

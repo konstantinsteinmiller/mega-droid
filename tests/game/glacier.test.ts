@@ -157,7 +157,7 @@ describe('generateGlacier', () => {
       mirrored.add(m.start.x > m.w * CELL / 2)
       cracked.add(m.terrain!.icePillars!.find(p => p.cracked)!.j)
       kinds.add(m.terrain!.secrets![0]!.kind)
-      expect(m.terrain!.sections.slice(0, m.beam ? -1 : undefined)).toEqual(SECTIONS)
+      expect(m.terrain!.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(SECTIONS)
       expect(m.w).toBeLessThanOrEqual(48)
       expect(m.h).toBeLessThanOrEqual(40)
     }

@@ -66,9 +66,9 @@ import {
   profile, grantXp, saveProfile, claimGiftTank, computeStats, writeSnapshot, retryPointOf, xp01, heroColors, markTip, equipped, type MissionSnapshot
 } from '../state/profile'
 import { rollItem, type Item } from '../data/items'
-import { flow, finishMission, retryFromSnapshot } from '../flow'
+import { flow, finishMission, retryFromSnapshot, copyBossWeapon } from '../flow'
 import { showBanner, clearBanner, BANNER_HOLD } from '../state/banner'
-import { ExitRun, ExitCamera, planExit, newExitPose, type ExitEvent, type ExitHost } from './exitRun'
+import { ExitRun, ExitCamera, planExit, newExitPose, PAD_R, type ExitEvent, type ExitHost } from './exitRun'
 import { cineWorld, type CineWorld, type CineBox } from './cineCam'
 import { FreezeDirector, type FreezeKind, type FreezeSpec } from './freezeCam'
 import { Training, TUTORIAL_TRAINING, steppedToward, type TrainHost, type TrainId } from './training'
@@ -77,7 +77,7 @@ import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
-import { LessonHologram, TargetArrow } from '../fx/lessonHologram'
+import { LessonHologram, TargetArrow, ArmHologram } from '../fx/lessonHologram'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import {
@@ -521,6 +521,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private slideCue: Enemy | null = null
   private slideCued: Enemy | null = null
   private gelHoloOn = false
+  /** The weapon lesson room behind the boss (`map.exit`): its pedestal (lit
+   *  once the lesson is done: walking onto it beams Flux out), the weapon
+   *  copied from the boss, whether its lesson has begun, and the arm
+   *  hologram shown as the boss falls. */
+  private exitPad: PadMesh | null = null
+  private exitWeapon: WeaponId | null = null
+  private exitLit = false
+  private exitStarted = false
+  private armHolo: ArmHologram | null = null
   /** Where the lesson's subject is (the target arrow, the slide freeze's view);
    *  set by whoever runs the room (the walkthrough, a weapon lesson). */
   trainSpot: { x: number; y: number; z: number } | null = null
@@ -1432,6 +1441,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           const beats = first ? freedBeats(bid) : []
           if (beats.length) this.playScene(beats, 'top', null)
           else this.atlas?.event('bossDown')
+          this.onBossDownWeapon(e)
         }
       }
     }
@@ -2271,8 +2281,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.cine.boxes = this.cineBoxes()
     this.exitCam.reset()
     this.humT = 0
-    // The pad, when he is on its floor: standing on it, he stands on its plate.
-    const pad = this.pad.root.position
+    this.armHolo?.dispose()
+    this.armHolo = null
+    // The pad, when he is on its floor: standing on it, he stands on its plate
+    // (the lesson room's pedestal, when he beams out from that).
+    const ep = this.exitPad?.root.position
+    const pad = ep && Math.hypot(p.x - ep.x, p.z - ep.z) < PAD_R + 0.3 ? ep : this.pad.root.position
     const onPadFloor = Math.abs(floorAt(this.nav, pad.x, pad.z) - p.y) < 0.5
     this.exit.start(planExit(this.cine, p.x, p.y, p.z, p.yaw, p.ground && p.ladder < 0, onPadFloor ? { x: pad.x, z: pad.z } : null))
   }
@@ -2872,6 +2886,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     this.setupBeamLesson()
     this.setupGuards()
+    this.setupExitRoom()
     const walk = this.walk
     if (!walk) return
     for (const g of walk.plan.gates) {
@@ -2948,6 +2963,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     this.beamTeach = id
     this.holdDoor(beam.door)
+    // Its hologram: along the room's long side, playing toward the door.
+    const r = this.map.rooms[beam.room]!
+    const d = this.doors[beam.door]
+    const cx = (r.x0 + r.w / 2) * CELL
+    const cz = (r.z0 + r.h / 2) * CELL
+    const along = r.w >= r.h ? [1, 0] : [0, 1]
+    const s = d && (d.x - cx) * along[0]! + (d.z - cz) * along[1]! < 0 ? -1 : 1
+    this.addHolo('weapon', beam.room, cx - along[0]! * s * 0.5, cz - along[1]! * s * 0.5, Math.atan2(-along[1]! * s, along[0]! * s), WEAPONS[id].color)
   }
 
   /** Per step while a beam lesson is owed: the drones come once Flux moves
@@ -2980,6 +3003,104 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.releaseDoor(beam.door)
       tr.leave()
     }
+  }
+
+  // ─── The weapon lesson behind the boss (`map.exit`, #D26) ──────────────
+
+  /** Build time: the room's door stays shut until the boss is down; its
+   *  pedestal stands dark at the far end. A story stage only: a replay of a
+   *  Master from the labyrinth has no such room. */
+  private setupExitRoom(): void {
+    const ex = this.map.exit
+    if (!ex || this.setup.quest?.kind !== 'story') return
+    this.holdDoor(ex.door)
+    const pad = buildTeleporter(this.theme)
+    pad.root.position.set(cellCenter(ex.pad[0]), 0, cellCenter(ex.pad[1]))
+    this.scene.add(pad.root)
+    this.exitPad = pad
+  }
+
+  /**
+   * The boss is down: its weapon is copied and equipped at once, its arm
+   * hangs in front of Flux as a hologram for a few seconds, and the door to
+   * the lesson room opens. A weapon learned on an earlier run lights the
+   * pedestal straight away.
+   */
+  private onBossDownWeapon(e: Enemy): void {
+    const ex = this.map?.exit
+    const w = Object.values(WEAPONS).find(d => d.from === e.bossId)
+    if (!ex || !w || !this.exitPad || this.exitWeapon) return
+    this.exitWeapon = w.id
+    copyBossWeapon(w.id)
+    saveProfile()
+    this.vm.setColors(heroColors())
+    const p = this.player
+    const fx = -Math.sin(p.yaw)
+    const fz = -Math.cos(p.yaw)
+    this.armHolo?.dispose()
+    this.armHolo = new ArmHologram(heroColors(), w.color)
+    this.armHolo.place(this.scene, p.x + fx * 1.7, p.y + EYE_H - 0.1, p.z + fz * 1.7, p.yaw)
+    sfx('loot')
+    this.releaseDoor(ex.door)
+    // The weapon's hologram in the lesson room, playing away from the door.
+    const r = this.map.rooms[ex.room]!
+    const d = this.doors[ex.door]!
+    const cx = (r.x0 + r.w / 2) * CELL
+    const cz = (r.z0 + r.h / 2) * CELL
+    const l = Math.hypot(cx - d.x, cz - d.z) || 1
+    const ux = (cx - d.x) / l
+    const uz = (cz - d.z) / l
+    this.addHolo('weapon', ex.room, cx - uz * 2.4 + ux * 0.5, cz + ux * 2.4 + uz * 0.5, Math.atan2(-uz, ux), w.color)
+    if (profile.tips[`train:weapon:${w.id}`]) this.lightExit()
+  }
+
+  /** The lesson is done (or was learned before): the pedestal lights up. */
+  private lightExit(): void {
+    if (this.exitLit || !this.exitPad) return
+    this.exitLit = true
+    const at = this.exitPad.root.position
+    this.fx.riseRing(at.x, 0.2, at.z, PAL.glowCyan, 1.3, 26)
+    this.sfx('beamIn', at.x, at.z)
+  }
+
+  /** Per step: the arm hologram's time; in the room, the lesson (blue
+   *  drones that never fire, energy kept topped up); then the pedestal. */
+  private stepExitRoom(playing: boolean, dt: number): void {
+    if (this.armHolo && !this.armHolo.update(dt)) {
+      this.armHolo.dispose()
+      this.armHolo = null
+    }
+    const ex = this.map.exit
+    const pad = this.exitPad
+    if (!ex || !pad) return
+    const p = this.player
+    const at = pad.root.position
+    const dist = Math.hypot(p.x - at.x, p.z - at.z)
+    pad.setBeamView(dist, this.exitLit, dt)
+    pad.ring.rotation.y += dt * 0.6
+    const id = this.exitWeapon
+    if (!id || !playing) return
+    const tr = this.training
+    if (!this.exitStarted && roomAt(this.map, p.x, p.z) === ex.room) {
+      this.exitStarted = true
+      if (!this.exitLit) {
+        if (this.lessons.teachWeapon(ex.room, id)) tr.enter('weapon', this.time)
+        else this.lightExit()
+      }
+    }
+    if (this.exitStarted && !this.exitLit) {
+      const d = this.lessons.weaponDronesAt
+      this.trainSpot = d ? { x: d.x, y: d.y, z: d.z } : null
+      this.combat.we = Math.max(this.combat.we, Math.min(this.combat.maxWe, this.weaponCost(id) * 2))
+      if (this.lessons.weaponLearned === id) {
+        markTip(`train:weapon:${id}`)
+        this.trainDone('weapon')
+        tr.leave()
+        this.lightExit()
+      }
+    }
+    // Onto the lit pedestal: the quadcopter, as B does.
+    if (this.exitLit && dist < PAD_R && p.ground && hud.phase === 'play' && !hud.combat) this.beamOut()
   }
 
   /** Wall a door's corridor off from its room: a wall like the ones beside
@@ -3072,6 +3193,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private stepTraining(playing: boolean, dt: number): void {
     this.trainSpot = null
     this.stepTrainingBeats(playing)
+    this.stepExitRoom(playing, dt)
     if (playing) this.stepHolograms(dt)
   }
 

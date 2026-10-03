@@ -109,9 +109,9 @@ describe('generateTidewaterLocks', () => {
     for (const seed of SEEDS) {
       const m = generateTidewaterLocks(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
         ['dock', 'water', 'water', 'lift', 'water', 'islands', 'conveyor', 'hall', 'islands', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.tide)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.tide)
       mirrored.add(m.start.x > m.w * CELL / 2)
       tides.add(Math.round(t.water!.find(z => z.period && z.room === 2)!.period! * 100))
       expect(t.water!.filter(z => z.valve).length).toBe(1)

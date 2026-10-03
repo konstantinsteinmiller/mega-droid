@@ -6,7 +6,7 @@ import type { MapData, Room } from '../world/levelGen'
 import { CELL, cellCenter } from '../world/levelGen'
 import { isSolidAt, hasLineOfSight, groundAt, type Nav } from '../world/nav'
 import { profile, markTip } from '../state/profile'
-import { buildTrainingTarget, type TrainingTargetMesh } from '../models/props'
+import { buildTrainingTarget, TRAINING_DRONE, type TrainingTargetMesh } from '../models/props'
 import { PAL } from '../models/palette'
 import type { Crate } from './objectives'
 import { createEnemy } from './enemies'
@@ -194,6 +194,11 @@ export interface LessonTick {
   hp01?: number
   tanks?: number
 }
+
+/** Weapons whose shot runs level, low over the floor: their lesson drones
+ *  hover at LOW_DRONE_Y (m) instead of a drone's usual height. */
+export const LOW_SHOT: ReadonlySet<WeaponId> = new Set<WeaponId>(['flameWave', 'bubbleLance', 'galeGuard'])
+export const LOW_DRONE_Y = 1
 
 export class LessonDirector {
   private host: LessonHost
@@ -649,16 +654,21 @@ export class LessonDirector {
     // energy for a few tries.
     const dmg = h.weaponDamage(w.id)
     this.drones = row.map(([x, z]) => {
-      const e = createEnemy('heli', h.setup.enemyLevel, x, z, room.id)
+      // The training blue: harmless, there only to take the shots.
+      const e = createEnemy('heli', h.setup.enemyLevel, x, z, room.id, { colors: TRAINING_DRONE })
       e.hold = true
       e.hp = e.maxHp = Math.min(e.maxHp, Math.max(1, Math.floor(dmg * (e.def.armor ?? 1) * 0.9)))
       e.yaw = Math.atan2(p.x - x, p.z - z)
       // On a terrain map the drone hovers over its own floor (as the climb's
-      // cast does, `sim/climbSpawn.ts`), in a band that keeps it there.
+      // cast does, `sim/climbSpawn.ts`), in a band that keeps it there. For a
+      // weapon that fires level along the floor it skims low: at its usual
+      // height the Flame Wave rolled under every drone and the lesson could
+      // never be finished.
       const f = h.map.terrain ? groundAt(h.map, x, z) : 0
-      if (h.map.terrain) {
-        e.floor = f
-        e.hover = [f, f]
+      const low = LOW_SHOT.has(w.id) ? LOW_DRONE_Y - e.def.fly : 0
+      if (h.map.terrain || low) {
+        e.floor = f + low
+        e.hover = [f + low, f + low]
       }
       h.addEnemy(e)
       h.fx.riseRing(x, f + 0.1, z, WEAPONS[w.id].color, 0.7, 16)

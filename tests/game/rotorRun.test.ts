@@ -102,9 +102,9 @@ describe('generateRotorRun', () => {
     for (const seed of SEEDS) {
       const m = generateRotorRun(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
         ['dock', 'islands', 'shuttle', 'hall', 'lift', 'cart', 'rail', 'wind', 'hall', 'islands', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.rotor)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.rotor)
       expect(t.clouds).toBe(true)
       expect(t.waves!.every(w => w.kind === 'hornet')).toBe(true)
       mirrored.add(m.start.x > m.w * CELL / 2)

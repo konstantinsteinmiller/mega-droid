@@ -859,10 +859,16 @@ while bars and damage numbers get direct DOM writes.
     gate waits for the gel. The playthrough probe drives the real game room
     by room (teleport to each entry, play the lesson through the input
     record).
-  - [ ] **P5 Weapon lessons after the boss** (#275, #285, the weapon item):
-    the arm hologram, a lesson room and exit pedestal behind every boss
+  - [x] **P5 Weapon lessons after the boss** (#275, #278, #285, the weapon
+    item): the arm hologram, a lesson room and exit pedestal behind every boss
     (not the Fortress), the beam-in lesson as a fallback only, Blaze's quiet
-    landing room.
+    landing room. `Builder.exitRoom()` finds free grid beside the arena by
+    itself (Blaze grew to 29 rows, Sky Docks and Polarity Works to 41
+    columns); `map.exit` = room, door, pedestal cell. `copyBossWeapon`
+    (flow.ts) grants and equips at the boss's fall and still reports the
+    weapon as new on the results. Found on the way: the Flame Wave rolled
+    under the lesson drones (they hover at 2.1 m); level-shot weapons get
+    low drones (`LOW_SHOT`).
   - [ ] **P6 Hazards and feel**: barrel flatten (#280), lava and slab rattle
     (#279), crate golem ram (#281), Atlas's rescue (#282).
   - [ ] **P7 Boss bar** horizontal under the compass (#276).

@@ -237,6 +237,8 @@ export const generateRotorRun = (seed: number): MapData => {
 
   // The beam-in room: south of the pad, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open sky under the airfield: a fall is the rescue's.
   map.terrain!.clouds = true

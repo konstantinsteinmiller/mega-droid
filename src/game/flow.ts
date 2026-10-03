@@ -488,8 +488,29 @@ export const __resetIntro = (): void => {
  * mission only takes over once it is complete, shaders included. A Deploy tap
  * therefore answers at once instead of freezing the hub for the whole build.
  */
+/** The weapon a mission copied from its boss the moment it fell (`copyBossWeapon`):
+ *  the results still name it as new, though it is owned already by then. */
+let copiedNow: WeaponId | null = null
+
+/**
+ * The boss is down: its weapon is Flux's at once (#D26), equipped in the
+ * first slot for the lesson behind the arena. The results screen still
+ * reports it as the new weapon. Returns whether it was new.
+ */
+export const copyBossWeapon = (id: WeaponId): boolean => {
+  const fresh = grantWeapon(id) === id
+  if (fresh) copiedNow = id
+  const s = profile.hero.slots
+  if (s[0] !== id) {
+    if (s[1] === id) s[1] = s[0]
+    s[0] = id
+  }
+  return fresh
+}
+
 export const startMission = async (quest: Quest, snapshot: MissionSnapshot | null = null): Promise<void> => {
   if (!missionFactory || flow.loading) return
+  copiedNow = null
   flow.loading = true
   flow.loadProgress = 0
   flow.loadingSector = quest.sector
@@ -594,7 +615,7 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
         const stale = debriefSeen(sector.boss)
         if (profile.world.seen.includes(stale)) profile.world.seen = profile.world.seen.filter(s => s !== stale)
         const w = (Object.values(WEAPONS).find(d => d.from === sector.boss))
-        if (w) weapon = grantWeapon(w.id)
+        if (w) weapon = grantWeapon(w.id) ?? (copiedNow === w.id ? w.id : null)
         const next = SECTORS.find(s => s.after === sector.id)
         if (next && !profile.world.unlocked.includes(next.id)) {
           profile.world.unlocked.push(next.id)

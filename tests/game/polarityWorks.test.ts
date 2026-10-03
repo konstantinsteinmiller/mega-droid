@@ -137,9 +137,9 @@ describe('generatePolarityWorks', () => {
     for (const seed of SEEDS) {
       const m = generatePolarityWorks(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, m.beam ? -1 : undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
         ['dock', 'magnet', 'islands', 'conveyor', 'hall', 'shuttle', 'magnet', 'islands', 'descent', 'hall', 'arena'])
-      expect(t.sections.length - 1 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.magnet)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.magnet)
       mirrored.add(m.start.x > m.w * CELL / 2)
       clocks.add(Math.round(t.magnets!.find(r => r.every && r.room === 3)!.every! * 100))
       // Panels on three rails; the arena's two flip on the clock.

@@ -238,6 +238,8 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
 
   // The beam-in room: south of the pad, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open air under the roofs: a fall is the rescue's, not a spike pit.
   map.terrain!.clouds = true

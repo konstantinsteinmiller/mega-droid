@@ -318,6 +318,8 @@ export const generateRailRush = (seed: number): MapData => {
   void stairI
   // Start: in the beam-in room, facing its door.
   const start = { x: cellCenter(4) + CELL / 2, z: cellCenter(10), yaw: YAW_NZ }
+  // The weapon lesson room behind the boss, where the grid has room for it.
+  b.exitRoom()
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

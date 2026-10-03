@@ -88,6 +88,8 @@ export class Builder {
   crumbles: CrumbleSpec[] = []
   /** The beam-in room and its door, if the stage has one (`beamRoom`). */
   beam: { room: number; door: number } | null = null
+  /** The room behind the boss, if the stage has one (`exitRoom`). */
+  exit: MapData['exit'] | null = null
   links: NavLink[] = []
 
   constructor(W: number, H: number) {
@@ -175,6 +177,92 @@ export class Builder {
       x: (x0 + w / 2) * CELL, z: (z0 + h / 2) * CELL, y, yaw: Math.atan2(-di, -dj), room: id,
       cells: cells.map(([a, b]) => this.k(a, b))
     })
+  }
+
+  /**
+   * The weapon lesson room behind the boss (#278, the copied-weapon lesson):
+   * a quiet room off the arena, through a door that opens once the boss is
+   * down, with the beam pedestal at its far end. Placed by itself in free
+   * grid beside the arena (the side away from the boss corridor first, a
+   * cell of void kept round it); a stage with no room for one keeps the
+   * old way (the next stage's beam-in room teaches). Call it last, after
+   * `beamRoom`: it is a room of its own, not on the chain.
+   */
+  exitRoom(): boolean {
+    const arena = [...this.rooms].reverse().find(r => this.sections[r.id] === 'arena')
+    if (!arena) return false
+    const voidAt = (i: number, j: number) => i >= 1 && j >= 1 && i < this.W - 1 && j < this.H - 1 && this.cell[this.k(i, j)] === Cell.Void
+    const inDoor = this.doors.find(d => d.to === arena.id)
+    // Sides: away from the door in first.
+    const sides: Array<[number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    if (inDoor) {
+      const back: [number, number] = inDoor.axis === 'x' ? [inDoor.dir, 0] : [0, inDoor.dir]
+      sides.sort((a, b) => (b[0] === back[0] && b[1] === back[1] ? 1 : 0) - (a[0] === back[0] && a[1] === back[1] ? 1 : 0))
+    }
+    const N = 2
+    for (const [w, h] of [[6, 6], [6, 5], [5, 5], [5, 4], [4, 4]] as const) {
+      for (const [di, dj] of sides) {
+        // Corridor cells run out of the arena's wall on this side, from each
+        // arena cell along it (middle first).
+        const along = di !== 0 ? arena.h : arena.w
+        const order = Array.from({ length: along }, (_, k) => k).sort((a, b) => Math.abs(a - (along - 1) / 2) - Math.abs(b - (along - 1) / 2))
+        for (const o of order) {
+          const ci = di > 0 ? arena.x0 + arena.w : di < 0 ? arena.x0 - 1 : arena.x0 + o
+          const cj = dj > 0 ? arena.z0 + arena.h : dj < 0 ? arena.z0 - 1 : arena.z0 + o
+          // The room past the corridor, centred on it across.
+          const ex = ci + di * N
+          const ez = cj + dj * N
+          const x0 = di > 0 ? ex : di < 0 ? ex - w + 1 : ex - Math.floor(w / 2)
+          const z0 = dj > 0 ? ez : dj < 0 ? ez - h + 1 : ez - Math.floor(h / 2)
+          let free = true
+          for (let j = z0 - 1; j <= z0 + h && free; j++) for (let i = x0 - 1; i <= x0 + w && free; i++) free = voidAt(i, j)
+          for (let s = 0; s < N && free; s++) {
+            const i = ci + di * s
+            const j = cj + dj * s
+            // The corridor and the void on both sides of it.
+            free = voidAt(i, j) && voidAt(i + dj, j + di) && voidAt(i - dj, j - di)
+          }
+          if (!free) continue
+          this.carveExit(arena.id, x0, z0, w, h, ci, cj, di, dj, N)
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  private carveExit(arena: number, x0: number, z0: number, w: number, h: number, ci: number, cj: number, di: number, dj: number, n: number): void {
+    const y = 0
+    const id = this.rooms.length
+    const r: Room = { id, x0, z0, w, h, depth: 0, parent: -1, children: [], role: 'start', door: -1, spots: [], wallSpots: [] }
+    this.rooms.push(r)
+    this.sections.push('hall')
+    for (let j = z0; j < z0 + h; j++) {
+      for (let i = x0; i < x0 + w; i++) {
+        const k = this.k(i, j)
+        this.cell[k] = Cell.Room
+        this.room[k] = id
+        this.floor[k] = y
+      }
+    }
+    for (let s = 0; s < n; s++) {
+      const k = this.k(ci + di * s, cj + dj * s)
+      this.cell[k] = Cell.Corridor
+      this.floor[k] = y
+    }
+    const door = this.doors.length
+    this.doors.push({
+      id: door, i: ci + di * (n - 1), j: cj + dj * (n - 1), axis: di !== 0 ? 'x' : 'z',
+      dir: (di !== 0 ? di : dj) as 1 | -1, from: arena, to: id, boss: false
+    })
+    // The pedestal: the far end of the room, in line with the door.
+    const pi = di > 0 ? x0 + w - 2 : di < 0 ? x0 + 1 : ci
+    const pj = dj > 0 ? z0 + h - 2 : dj < 0 ? z0 + 1 : cj
+    this.exit = { room: id, door, pad: [pi, pj] }
+    // Its own checkpoint, facing the pedestal: a fall in it comes back here.
+    const cells: number[] = []
+    for (let j = z0; j < z0 + h; j++) for (let i = x0; i < x0 + w; i++) cells.push(this.k(i, j))
+    this.checkpoints.push({ x: (x0 + w / 2) * CELL, z: (z0 + h / 2) * CELL, y, yaw: Math.atan2(-di, -dj), room: id, cells })
   }
 
   /** A bridge of light (`sim/stages/neon.ts`) at top `y` over the w × d
@@ -423,6 +511,7 @@ export const finish = (b: Builder, start: { x: number; z: number; yaw: number },
     doors: b.doors, pillars: [], start, terrain
   }
   if (b.beam) map.beam = b.beam
+  if (b.exit) map.exit = b.exit
   return map
 }
 
@@ -516,6 +605,7 @@ export const mirrorX = (m: MapData): MapData => {
     rooms: m.rooms.map(r => ({ ...r, x0: W - (r.x0 + r.w) })),
     doors: m.doors.map(d => ({ ...d, i: mi(d.i), dir: (d.axis === 'x' ? -d.dir : d.dir) as 1 | -1 })),
     start: { x: X - m.start.x, z: m.start.z, yaw: -m.start.yaw },
+    ...(m.exit ? { exit: { ...m.exit, pad: [mi(m.exit.pad[0]), m.exit.pad[1]] as [number, number] } } : {}),
     terrain
   }
 }

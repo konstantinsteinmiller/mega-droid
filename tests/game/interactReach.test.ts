@@ -142,6 +142,17 @@ describe('a chest answers [E] from where a player stands (playtest S3)', () => {
     objs.openChest(chest)
     expect(objs.nearestInteractable(x, z, yaw)).toBeNull()
   })
+
+  it('a shot opens a shut chest (any hit by Flux), and stops on an open one', () => {
+    const { objs, chest } = tutorialChest()
+    expect(chest.opened).toBe(false)
+    // A pellet flying into its side, at chest height.
+    expect(objs.shotHitsChest(chest.x, chest.y + 0.5, chest.z, 0.2)).toBe(true)
+    expect(chest.opened).toBe(true)
+    // Already open: the shot still stops on it, nothing opens twice.
+    expect(objs.shotHitsChest(chest.x, chest.y + 0.5, chest.z, 0.2)).toBe(true)
+    expect(chest.opened).toBe(true)
+  })
 })
 
 describe('never through a wall', () => {

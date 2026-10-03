@@ -585,12 +585,15 @@ export class MissionObjects {
     return false
   }
 
-  /** A shot hit a chest, open or shut? It stops there (no damage, sparks). */
+  /** A shot hit a chest, open or shut? It stops there (sparks), and a shut
+   *  one opens: any hit by Flux does it, a pellet, a charged shot or a copied
+   *  weapon (a playtest note: players shot chests and nothing happened). */
   shotHitsChest(x: number, y: number, z: number, r: number): boolean {
     for (const c of this.chests) {
       if (y > c.y + 1.05 + r || y < c.y - r) continue
       if (Math.hypot(c.x - x, c.z - z) > this.host.nav.props[c.navIdx]!.r + r) continue
       if (!hasLineOfSight(this.host.nav, x, z, c.x, c.z)) continue
+      if (!c.opened) this.openChest(c)
       return true
     }
     return false

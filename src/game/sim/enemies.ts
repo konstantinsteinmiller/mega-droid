@@ -8,6 +8,7 @@ import {
 } from '../models/enemies'
 import { makeTeleRing, setTeleRing, makeBlobShadow } from '../fx/markers'
 import { hasLineOfSight, findPath, moveCircle, resolveCircle, smoothPath } from '../world/nav'
+import { CELL } from '../world/levelGen'
 import { PLAYER_R, EYE_H, FREEZE_SLOW, FREEZE_SLOW_BOSS } from './constants'
 import { CHARGE_L2 } from './stats'
 import { pushHud } from '../state/hud'
@@ -171,6 +172,24 @@ const distToPlayer = (w: World, e: Enemy): number => Math.hypot(w.player.x - e.x
 
 const seesPlayer = (w: World, e: Enemy): boolean =>
   hasLineOfSight(w.nav, e.x, e.z, w.player.x, w.player.z)
+
+/** Flux stands in this machine's own room. */
+const inMyRoom = (w: World, e: Enemy): boolean => {
+  const m = w.map
+  const i = Math.floor(w.player.x / CELL)
+  const j = Math.floor(w.player.z / CELL)
+  if (e.room < 0 || i < 0 || j < 0 || i >= m.w || j >= m.h) return false
+  return m.room[j * m.w + i] === e.room
+}
+/** Beyond this nothing fires, its room or not (m). */
+export const ROOM_REACH = 32
+/**
+ * Close enough to shoot: within the machine's own range, or anywhere in its
+ * room (a playtest note: machines in a big room watched Flux shoot them from
+ * just past their range and never answered). The caller has the sight line.
+ */
+export const inReach = (w: World, e: Enemy, d: number, range: number): boolean =>
+  d < range || (d < ROOM_REACH && inMyRoom(w, e))
 
 const _out: [number, number] = [0, 0]
 
@@ -676,7 +695,8 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
   switch (e.state) {
     case 'idle': {
       // Idle bob / patrol-in-place; perception tick.
-      if (!e.hold && d < def.aggro && seesPlayer(w, e)) wake(w, e)
+      // Within its aggro radius, or anywhere in its own room: it sees him, it comes.
+      if (!e.hold && (d < def.aggro || (d < ROOM_REACH && inMyRoom(w, e))) && seesPlayer(w, e)) wake(w, e)
       break
     }
     case 'alert': {
@@ -1042,7 +1062,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.guard = Math.min(1, e.guard + dt * 5)
         faceTo(e, px, pz, 3, dt)
         if (d > 7) seek(w, e, px, pz, def.speed, dt)
-        if (canAttack && d < 13) startTele(e, 'spread', def.tele + 0.2, false)
+        if (canAttack && inReach(w, e, d, 13)) startTele(e, 'spread', def.tele + 0.2, false)
       } else if (e.state === 'tele') {
         e.guard = Math.max(0, 1 - e.st / 0.22)
         faceTo(e, px, pz, 8, dt)
@@ -1072,7 +1092,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.aim = Math.max(0, e.aim - dt * 4)
         faceTo(e, px, pz, 5, dt)
         keepRange(w, e, dt, 0.7)
-        if (canAttack && d < 16) startTele(e, 'burst', def.tele, false)
+        if (canAttack && inReach(w, e, d, 16)) startTele(e, 'burst', def.tele, false)
       } else if (e.state === 'tele') {
         e.guard = Math.max(0, e.guard - dt * 5)
         e.aim = Math.min(1, e.aim + dt * 5)
@@ -1391,7 +1411,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
     case 'turret': {
       if (e.state === 'engage') {
         faceTo(e, px, pz, 2.5, dt)
-        if (canAttack && d < 20) {
+        if (canAttack && inReach(w, e, d, 20)) {
           startTele(e, 'lob', def.tele, true)
           e.tx = px
           e.tz = pz
@@ -1432,7 +1452,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.a += dt * 0.35 * (e.id % 2 ? 1 : -1)
         const r = (def.range[0] + def.range[1]) / 2
         seek(w, e, px + Math.cos(e.a) * r, pz + Math.sin(e.a) * r, def.speed * 0.7, dt)
-        if (canAttack && open && d < 14) startTele(e, 'pulse', def.tele, false)
+        if (canAttack && open && inReach(w, e, d, 14)) startTele(e, 'pulse', def.tele, false)
       } else if (e.state === 'tele') {
         faceTo(e, px, pz, 6, dt)
         if (e.st >= e.teleDur) {
@@ -1459,7 +1479,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         faceTo(e, px, pz, 2, dt)
         e.guard += (1 - e.guard) * Math.min(1, dt * 6)
         e.b = Math.max(0, e.b - dt * 3)
-        if (canAttack && d < 18) startTele(e, 'cannon', def.tele, false)
+        if (canAttack && inReach(w, e, d, 18)) startTele(e, 'cannon', def.tele, false)
       } else if (e.state === 'tele') {
         faceTo(e, px, pz, 3, dt)
         e.b = Math.min(1, e.st / e.teleDur)
@@ -1773,7 +1793,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         faceTo(e, px, pz, 4, dt)
         golemRange(w, e, dt, d)
         if (golemTryDodge(w, e, d)) break
-        if (canAttack && d < 16) {
+        if (canAttack && inReach(w, e, d, 16)) {
           if (g.throws >= 2) {
             // The boulder, at where Flux stands now (red: step out)
             g.throws = 0

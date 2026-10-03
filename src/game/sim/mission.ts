@@ -166,6 +166,8 @@ const ARENA_RED = new Color('#ff5a3a')
 const TRAP_CAM_DUR = 1.5
 /** The pit rescue: its length with a spiked floor and without (s), the
  *  impact before Atlas grabs, the grab, the lift; the footing trail. */
+/** How close Flux comes to a boss shutter before it opens by itself (m). */
+export const BOSS_DOOR_AUTO = 4
 export const RESCUE_SPIKES = 3.9
 export const RESCUE_VOID = 2.7
 export const RESCUE_IMPACT = 1.2
@@ -3468,15 +3470,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (!it || hud.phase !== 'play') return
     if (it.kind === 'chest') this.objects.openChest(it.ref as Chest)
     else if (it.kind === 'npc') this.objects.rescue(it.ref as NonNullable<MissionObjects['npc']>)
-    else if (it.kind === 'door') {
-      const d = it.ref as DoorState
-      d.locked = false
-      d.opening = true
-      this.nav.pathBlock[d.cellJ * this.map.w + d.cellI] = 1
-      this.shake(0.2)
-      this.sfx('door', d.x, d.z)
-      pushHud({ t: 'toast', key: 'mission.bossDoor', color: '#ff7a7a' })
-    }
+    else if (it.kind === 'door') this.openBossDoor(it.ref as DoorState)
     this.interact = null
     this.dirty = true
     this.coach.use('interact')
@@ -3975,10 +3969,29 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
+  /** The boss shutter rolls up: by the interact key or button, or by itself
+   *  when Flux walks up to it (`BOSS_DOOR_AUTO`) before the fight. */
+  private openBossDoor(d: DoorState): void {
+    d.locked = false
+    d.opening = true
+    this.nav.pathBlock[d.cellJ * this.map.w + d.cellI] = 1
+    this.shake(0.2)
+    this.sfx('door', d.x, d.z)
+    pushHud({ t: 'toast', key: 'mission.bossDoor', color: '#ff7a7a' })
+  }
+
   private updateDoors(dt: number): void {
     this.updateFalseWalls(dt)
     const p = this.player
     for (const d of this.doors) {
+      // A boss shutter opens as Flux walks up to it, like any door (players
+      // looked for a button): never once the fight began, never while a
+      // lesson holds it.
+      if (d.locked && d.mesh.boss && !d.held && !d.opening && !this.bossStarted && hud.phase === 'play' &&
+        Math.hypot(p.x - d.x, p.z - d.z) < BOSS_DOOR_AUTO && Math.abs(p.y - d.y) < 2.6) {
+        this.openBossDoor(d)
+        if (this.interact?.kind === 'door') this.interact = null
+      }
       if (!d.opening && !d.locked) {
         if (Math.hypot(p.x - d.x, p.z - d.z) < DOOR_OPEN_DIST && Math.abs(p.y - d.y) < 2.6) {
           d.opening = true

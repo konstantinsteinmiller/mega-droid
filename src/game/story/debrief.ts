@@ -193,8 +193,8 @@ export class DebriefMode implements GameMode {
     const p = this.opts.plan
     const v = this.valley
     v.animate(t)
-    // The freed sector flares for its first seconds; the next one pulses once the camera is on it.
-    v.setProgress(this.freed, t < 4.5 ? p.from : null, this.stage === 'next' ? p.to : null, t)
+    // The freed sector flares for its first seconds; the next target pulses red all along.
+    v.setProgress(this.freed, t < 4.5 ? p.from : null, p.to, t)
     const k = Math.min(1, dt * EASE)
     this.pos.lerp(this.toPos, k)
     this.look.lerp(this.toLook, k)

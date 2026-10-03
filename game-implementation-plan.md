@@ -844,7 +844,7 @@ while bars and damage numbers get direct DOM writes.
     test, Flux's fumble lines voiced and wired; the skill updated.
   - [x] **P2 Bugs from the maps**: golem double-lifted aim, void-pit rescue
     sign, unleashed tutorial machines, lesson doors naming their lesson.
-  - [ ] **P3 Quick wins**: chests open on any hit (#273), the boss shutter
+  - [x] **P3 Quick wins**: chests open on any hit (#273), the boss shutter
     opens by itself (#283), enemies fire back across their room (#277), the
     debrief's colours (cleared blue, target red).
   - [ ] **P4 Hologram lessons** (#266-#270 and the new tutorial points):

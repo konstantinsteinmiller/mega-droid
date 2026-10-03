@@ -70,12 +70,16 @@ export interface Diorama {
   /** A sector's place in the valley (diorama space, on the ground): where a camera looks. */
   sectorPos(id: SectorId): { x: number; y: number; z: number }
   /**
-   * The story so far (the debrief, #119): the freed sectors glow in their own
-   * colour and the rest stay Vex's red; `hot` (the one just freed) flares
-   * white and settles, `next` (the one to free) pulses. `t` in s.
+   * The story so far (the debrief, #119): every freed sector glows the one
+   * cleared blue (CLEARED_BLUE: "safe" at a glance, a playtest ask), the next
+   * target pulses in Vex's red, the rest stay a dim red; `hot` (the one just
+   * freed) flares white and settles into the blue. `t` in s.
    */
   setProgress(freed: ReadonlySet<SectorId>, hot: SectorId | null, next: SectorId | null, t: number): void
 }
+
+/** A freed sector in the debrief's valley: cleared, safe. */
+export const CLEARED_BLUE = '#3aa8ff'
 
 const at = (mx: number, my: number): [number, number] => [(mx - 0.5) * 2 * DIORAMA_R * 0.85, (my - 0.5) * 2 * DIORAMA_R * 0.85]
 
@@ -464,6 +468,7 @@ export const buildDiorama = (opts: { holo?: boolean; low?: boolean } = {}): Dior
   })
 
   const red = new Color(VEX_RED)
+  const blue = new Color(CLEARED_BLUE)
   const tmp = new Color()
   let signalOn = 0
 
@@ -483,10 +488,10 @@ export const buildDiorama = (opts: { holo?: boolean; low?: boolean } = {}): Dior
         if (l.sector === 'lab') { l.mat.color.copy(l.base); continue }
         // The Spire is Vex's until the end.
         if (l.sector === 'spire' || l.sector === 'relay') { l.mat.color.copy(red); continue }
-        if (l.sector === hot) l.mat.color.copy(l.base).lerp(tmp.set('#ffffff'), 0.5 + 0.5 * Math.sin(t * 9))
-        else if (freed.has(l.sector)) l.mat.color.copy(l.base)
+        if (l.sector === hot) l.mat.color.copy(blue).lerp(tmp.set('#ffffff'), 0.5 + 0.5 * Math.sin(t * 9))
+        else if (freed.has(l.sector)) l.mat.color.copy(blue)
         else if (l.sector === next) l.mat.color.copy(red).multiplyScalar(0.75 + 0.45 * (0.5 + 0.5 * Math.sin(t * 5)))
-        else l.mat.color.copy(red).multiplyScalar(0.55)
+        else l.mat.color.copy(red).multiplyScalar(0.4)
       }
     },
     setSignal: (k, flash) => {

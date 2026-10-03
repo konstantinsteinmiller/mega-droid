@@ -1184,6 +1184,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     sfx('fumble')
     hud.sayKey = say
     hud.saySeq++
+    // His line is voiced on the bark channel: it never cuts Atlas or Vex off.
+    playVoice(say, 'bark')
   }
 
   private checkDown(): void {

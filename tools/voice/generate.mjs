@@ -145,6 +145,9 @@ if (ship) {
   for (const r of results) if (r.best != null) book[`${r.job.lang}/${r.job.file}`] = { engine: engineName, at: day }
   const sorted = Object.fromEntries(Object.entries(book).sort(([x], [y]) => x.localeCompare(y)))
   writeFileSync(file, `${JSON.stringify(sorted, null, 2)}\n`)
+  // The to-do list follows every ship: what is voiced now, what is missing.
+  const { writeVoiceTodo } = await import('./todo.mjs')
+  writeVoiceTodo()
 }
 
 // A partial run (--only, --lang, --retry) updates its lines and keeps the rest.

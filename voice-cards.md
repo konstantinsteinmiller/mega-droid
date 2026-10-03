@@ -54,7 +54,7 @@ A plucky, eager little hero who never talks, only yelps, and every yelp lands as
 - **Design prompt (DE):** Ein fröhlicher junger Mann von etwa achtzehn Jahren, deutscher Muttersprachler, mit heller, leichter, etwas jungenhafter Stimme und schnellem, federndem Rhythmus. Mutig, eifrig und gutmütig, mit Cartoon-Timing und viel Energie in kurzen Ausrufen. Saubere Studioaufnahme ohne Hall.
 - **Reference text (EN):** Okay, okay, I've got this! Jump, slide, dodge the sparks, and grab the shiny thing at the very top. Wow, look how far you can see from up here! Wait for me, I'm right behind you!
 - **Reference text (DE):** Okay, okay, das schaffe ich! Springen, rutschen, den Funken ausweichen und ganz oben das glänzende Ding schnappen. Wow, schau mal, wie weit man von hier oben sieht! Warte auf mich, ich bin direkt hinter dir!
-- **Lines:** 39 (pained 30, sad 3, cheeky 3, calm 3)
+- **Lines:** 45 (pained 30, cheeky 7, sad 3, calm 3, excited 2)
 - **Notes:** The speaker card says 'never pained' yet the barks are hurt reactions, so 'pained' here means a funny cartoon yelp, not real pain; parry, gel and power-down barks get cheeky, calm and sad from their feel in story-arc §9. The chain adds +3 semitones with rising formants, so the source is a late-teen voice, not a child's, to avoid a chipmunk result.
 
 ## Prof. Gauss

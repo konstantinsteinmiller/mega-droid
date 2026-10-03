@@ -1,4 +1,5 @@
 import { isSpeaking, playVoice, prefetchVoice } from './voice'
+import { FUMBLE_LINES } from '../sim/fumble'
 
 /**
  * ─── Flux's barks ────────────────────────────────────────────────────────────
@@ -64,6 +65,8 @@ export const bark = (type: BarkType, t = now(), rand = Math.random): string | nu
 /** Warm every bark in the background (a few small files), so the first hit already yelps. */
 export const preloadBarks = (): void => {
   for (const type of BARK_TYPES) for (let n = 1; n <= 3; n++) prefetchVoice(`flux.hurt.${type}.${n}`)
+  // The lines he blurts when a hard hit shakes his charge loose (`sim/fumble.ts`).
+  for (let n = 1; n <= FUMBLE_LINES; n++) prefetchVoice(`flux.fumble.${n}`)
 }
 
 /** Test seam. */

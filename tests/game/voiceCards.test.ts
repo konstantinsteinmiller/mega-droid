@@ -2,18 +2,23 @@
 // (`src/game/audio/voiceCards.ts`): every catalogue line has exactly one
 // tone, and every card can be handed to a voice-design model as it stands.
 import { describe, expect, it } from 'vitest'
-import { VOICE_LINES, SPEAKERS } from '@/game/audio/voiceCatalog'
-import { CARDS, TONES, TONES_LIST } from '@/game/audio/voiceCards'
+import { VOICE_DETAIL, SPEAKERS } from '@/game/audio/voiceCatalog'
+import { VOICE_LINES } from '@/game/audio/voiceLines'
+import { CARDS, TONES, TONES_LIST, toneOf } from '@/game/audio/voiceCards'
 
 describe('the voice cards', () => {
-  it('gives every catalogue line one known tone, and no line that is not in the catalogue', () => {
-    const keys = VOICE_LINES.map(l => l.key)
+  it('gives every detailed line one known tone, in catalogue order, and names no other line', () => {
+    const keys = VOICE_DETAIL.map(l => l.key)
     expect(Object.keys(TONES)).toEqual(keys)
     for (const k of keys) expect(TONES_LIST, k).toContain(TONES[k])
   })
 
+  it('gives every voice line a known tone, a derived line its section\'s', () => {
+    for (const l of VOICE_LINES) expect(TONES_LIST, l.key).toContain(toneOf(l))
+  })
+
   it('never has Atlas shout: its tense lines are urgent', () => {
-    for (const l of VOICE_LINES) if (l.speaker === 'atlas') expect(TONES[l.key], l.key).not.toBe('shout')
+    for (const l of VOICE_LINES) if (l.speaker === 'atlas') expect(toneOf(l), l.key).not.toBe('shout')
   })
 
   it('has a card per speaker, with a design prompt and a reference text in both languages', () => {

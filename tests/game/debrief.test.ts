@@ -9,7 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SECTORS } from '@/game/data/regions'
 import { WEAPONS } from '@/game/data/weapons'
-import { VOICE_LINES } from '@/game/audio/voiceCatalog'
+import { VOICE_LINES } from '@/game/audio/voiceLines'
 import { debriefBeats, debriefFor, debriefSeen, type DebriefStage } from '@/game/story/debriefScript'
 import { hubSceneFor } from '@/game/story/vexScenes'
 import en from '@/i18n/locales/en'

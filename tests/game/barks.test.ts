@@ -12,7 +12,7 @@ vi.mock('@/game/audio/voice', () => ({
 }))
 
 const { bark, barkFor, __resetBarks, BARK_GAP, TYPE_GAP } = await import('@/game/audio/barks')
-const { VOICE_LINES } = await import('@/game/audio/voiceCatalog')
+const { VOICE_LINES } = await import('@/game/audio/voiceLines')
 
 beforeEach(() => {
   __resetBarks()

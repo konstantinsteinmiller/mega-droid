@@ -27,11 +27,13 @@ import PDFDocument from 'pdfkit'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const catalog = await import(pathToFileURL(join(ROOT, 'src/game/audio/voiceCatalog.ts')).href)
-const { VOICE_LINES, SPEAKERS, SCENES, voicePath, rawPath, fileName } = catalog
+const { SPEAKERS, SCENES, voicePath, rawPath, fileName } = catalog
 const LOCALES = {
   en: (await import(pathToFileURL(join(ROOT, 'src/i18n/locales/en.ts')).href)).default,
   de: (await import(pathToFileURL(join(ROOT, 'src/i18n/locales/de.ts')).href)).default
 }
+// Every line: the catalogue's detail plus each speaker's text lines.
+const VOICE_LINES = catalog.deriveVoiceLines(LOCALES.en)
 const LANGS = ['en', 'de']
 const SPEAKER_ORDER = ['atlas', 'vex', 'flux', 'gauss', 'pip']
 const AUDIO_EXT = ['.ogg', '.mp3', '.m4a']

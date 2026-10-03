@@ -1,15 +1,24 @@
 /**
  * ─── The voice catalog: every voice-over line, in one place ──────────────────
  *
- * The single source of truth for voice work. Every line anyone may record
- * is listed here once: who says it, where in the game, when it plays, how to
- * read it, how long it may run, and the file it ships as. Everything else is
- * generated from it:
+ * The TEXT decides what gets a voice. Every text line in a speaker's section
+ * of the locales (`SPEECH`: `atlas.*`, `vex.*`, `pip.*`, `flux.*`, a
+ * speaker's lines in `story.*` and `ending.*`) is a voice line by itself:
+ * `deriveVoiceLines(en)` lists them all, so a line added to the game can never
+ * be missed by the voice work again (the lesson rooms, eleven stage hints and
+ * Flux's fumble lines once were, for months). `VOICE_DETAIL` below only adds
+ * what a line needs beyond its section's defaults (when it plays, how to read
+ * it, how long it may run) and declares the lines with no text (grunts,
+ * laughs) and the planned ones. The full list is `VOICE_LINES` in
+ * `voiceLines.ts` (the game, the tests) and in `tools/voice/lib.mjs`.
+ * Everything else is generated from it:
  *
  *   pnpm voice:report   status per language (done / recorded / to record) in
  *                       the console, and the recording scripts
  *                       src/assets/voice-lines-list_en.pdf / _de.pdf
- *   pnpm voice:script   voice-todo.md (the lines in the game today)
+ *   pnpm voice:script   voice-todo.md: every line with its state (voiced by
+ *                       which engine, or missing); a test fails when it is
+ *                       stale, and every voice run rewrites it
  *
  * A line's file name is its key with the dots as underscores (`fileName`):
  * `atlas.bossAhead` ships as `public/audio/voice/<lang>/atlas_bossAhead.ogg`
@@ -31,7 +40,8 @@
  * sector names), so a variant reads with the name as the game spells it;
  * `{NAME}` in capitals fills it in capitals (Vex shouting a boss's name).
  *
- * Pure data, no runtime imports: `tools/` read it with Node's type stripping.
+ * Pure data and pure functions, no runtime imports: `tools/` read it with
+ * Node's type stripping and hand `deriveVoiceLines` the locale they load.
  */
 
 export type Speaker = 'atlas' | 'vex' | 'flux' | 'gauss' | 'pip'
@@ -58,6 +68,12 @@ export interface VoiceLine {
   params?: Readonly<Record<string, string>>
   /** Recorded once, in English, for every language (barks, laughs). */
   neutral?: boolean
+  /** A sound more than words ("Hoppla-hopp!", "Bzzt! Ups!"): QA only fails a
+   *  take that adds speech, since a read-back cannot spell an interjection. */
+  loose?: boolean
+  /** The delivery knob (voiceCards' TONES has the detailed lines' tones;
+   *  a derived line takes its section's). */
+  tone?: string
 }
 
 export interface SpeakerInfo {
@@ -1299,11 +1315,79 @@ const ATLAS_LESSONS: VoiceLine[] = [
   })
 ]
 
-export const VOICE_LINES: readonly VoiceLine[] = [
+// ── Flux: the lines he blurts when a hard hit shakes his charge loose ──
+const FLUX_FUMBLE: VoiceLine[] = ['1', '2', '3', '4', '5', '6'].map(n => live(`flux.fumble.${n}`, 'flux', 'barks', {
+  when: ['A hard hit shook his charge loose: a wild shot, a flailing arm', 'Ein harter Treffer hat ihm die Ladung entrissen: ein wilder Schuss, ein zappelnder Arm'],
+  direction: ['A friendly robot caught off guard: surprised, silly, never hurt.', 'Ein freundlicher Roboter, überrumpelt: überrascht, albern, nie verletzt.'],
+  max: 1.6,
+  loose: true
+}))
+
+/** The lines that need more than their section's defaults, and the ones with
+ *  no text (barks, laughs, planned lines). */
+export const VOICE_DETAIL: readonly VoiceLine[] = [
   ...ATLAS_LIVE, ...ATLAS_PLAN,
   ...ATLAS_HINT_BLAZE, ...ATLAS_HINT_CRYO, ...ATLAS_HINT_VOLT, ...ATLAS_HINT_GALE, ...ATLAS_SECRET,
-  ...VEX, ...FLUX, ...FINALE, ...PIP, ...ATLAS_LESSONS
+  ...VEX, ...FLUX, ...FINALE, ...PIP, ...ATLAS_LESSONS, ...FLUX_FUMBLE
 ]
+
+/** Who speaks a text line, by where it sits in the locales, and the defaults
+ *  a line takes when `VOICE_DETAIL` says nothing more. The first match wins:
+ *  `at` ending in "." is a section, otherwise a key (or a key's section). */
+export interface SpeechRule {
+  at: string
+  speaker: Speaker
+  scene: SceneId
+  direction: Both
+  tone: string
+  max: number
+}
+export const SPEECH: readonly SpeechRule[] = [
+  { at: 'story.atlas.', speaker: 'atlas', scene: 'intro', direction: ['Calm, warm, a first word to Flux.', 'Ruhig, warm, ein erstes Wort an Flux.'], tone: 'warm', max: 3 },
+  { at: 'story.vex.', speaker: 'vex', scene: 'intro', direction: ['Theatrical, smug, enjoying himself.', 'Theatralisch, selbstgefällig, genießt es.'], tone: 'menacing', max: 3.5 },
+  { at: 'story.gauss.', speaker: 'gauss', scene: 'intro', direction: ['Warm, tired, proud.', 'Warm, müde, stolz.'], tone: 'warm', max: 3.5 },
+  { at: 'story.pip.', speaker: 'pip', scene: 'intro', direction: ['Chirpy and helpful.', 'Fröhlich und hilfsbereit.'], tone: 'warm', max: 3 },
+  { at: 'story.flux.', speaker: 'flux', scene: 'intro', direction: ['A friendly robot, bright and eager.', 'Ein freundlicher Roboter, hell und eifrig.'], tone: 'cheeky', max: 2.5 },
+  { at: 'ending.gauss', speaker: 'gauss', scene: 'ending', direction: ['Warm, tired, proud.', 'Warm, müde, stolz.'], tone: 'warm', max: 3.5 },
+  { at: 'ending.spark', speaker: 'gauss', scene: 'ending', direction: ['Warm, tired, proud.', 'Warm, müde, stolz.'], tone: 'warm', max: 3.5 },
+  { at: 'ending.atlas', speaker: 'atlas', scene: 'ending', direction: ['Calm, warm.', 'Ruhig, warm.'], tone: 'calm', max: 3.5 },
+  { at: 'atlas.', speaker: 'atlas', scene: 'fieldWarn', direction: ['Warm and quick: a navigator who is also a friend.', 'Warm und flott: ein Navigator, der zugleich ein Freund ist.'], tone: 'neutral', max: 3 },
+  { at: 'vex.', speaker: 'vex', scene: 'shift', direction: ['Theatrical, smug, enjoying himself.', 'Theatralisch, selbstgefällig, genießt es.'], tone: 'menacing', max: 3 },
+  { at: 'pip.', speaker: 'pip', scene: 'debrief', direction: ['Chirpy and helpful, short plain sentences.', 'Fröhlich und hilfsbereit, kurze einfache Sätze.'], tone: 'warm', max: 3 },
+  { at: 'flux.', speaker: 'flux', scene: 'barks', direction: ['A friendly robot, surprised and silly.', 'Ein freundlicher Roboter, überrascht und albern.'], tone: 'cheeky', max: 2 },
+  { at: 'gauss.', speaker: 'gauss', scene: 'ending', direction: ['Warm, tired, proud.', 'Warm, müde, stolz.'], tone: 'warm', max: 3.5 }
+]
+/** Keys in a speaker's section that no code says any more. */
+export const RETIRED: ReadonlySet<string> = new Set(['atlas.objective'])
+
+const inRule = (key: string, at: string): boolean =>
+  at.endsWith('.') ? key.startsWith(at) : key === at || key.startsWith(`${at}.`)
+/** The rule a text line falls under, or undefined when nobody speaks it. */
+export const speechRuleOf = (key: string): SpeechRule | undefined => SPEECH.find(r => inRule(key, r.at))
+
+const leaves = (o: unknown, p = ''): string[] => Object.entries(o as Record<string, unknown>)
+  .flatMap(([k, v]) => (v && typeof v === 'object' ? leaves(v, `${p}${k}.`) : typeof v === 'string' ? [`${p}${k}`] : []))
+
+/**
+ * Every voice line: the detailed ones as written, then every other text line
+ * of a speaker's section (in the source locale, English) with its section's
+ * defaults. The result is the one list the game, the tests and the tools use.
+ */
+export const deriveVoiceLines = (source: unknown): VoiceLine[] => {
+  const known = new Set(VOICE_DETAIL.map(l => l.key))
+  const derived: VoiceLine[] = []
+  for (const key of leaves(source)) {
+    if (known.has(key) || RETIRED.has(key)) continue
+    const r = speechRuleOf(key)
+    if (!r) continue
+    derived.push({
+      key, speaker: r.speaker, scene: r.scene, status: 'live', max: r.max, tone: r.tone,
+      when: [`A ${SPEAKERS[r.speaker].name} line with no notes yet (${key})`, `Eine Zeile von ${SPEAKERS[r.speaker].name} ohne Notizen (${key})`],
+      direction: r.direction
+    })
+  }
+  return [...VOICE_DETAIL, ...derived]
+}
 
 /** A key's file name, without the extension: `atlas.bossAhead` → `atlas_bossAhead`. */
 export const fileName = (key: string): string => key.replace(/\./g, '_')

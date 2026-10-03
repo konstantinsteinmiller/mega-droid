@@ -6,7 +6,8 @@
 // asks for a line the game will not play.
 
 import { describe, expect, it } from 'vitest'
-import { VOICE_LINES, SCENES, SPEAKERS, WEAK_TO, SECTOR_FLOOR, voicePath, rawPath, fileName } from '@/game/audio/voiceCatalog'
+import { SCENES, SPEAKERS, WEAK_TO, SECTOR_FLOOR, SPEECH, RETIRED, VOICE_DETAIL, speechRuleOf, voicePath, rawPath, fileName } from '@/game/audio/voiceCatalog'
+import { VOICE_LINES } from '@/game/audio/voiceLines'
 import { voiceFiles } from '@/game/assets/overrides'
 import { ATLAS_LINES, atlasKey } from '@/game/sim/atlas'
 import { BOSSES } from '@/game/data/bosses'
@@ -30,18 +31,37 @@ describe('the voice catalog', () => {
     }
   })
 
-  it('covers every Atlas line the locales hold: the lesson rooms and the stage hints went unvoiced for months', () => {
+  it('holds every text line of a speaker\'s section: the text decides, nothing is listed by hand', () => {
     const leaves = (o: unknown, p: string): string[] => Object.entries(o as Record<string, unknown>)
       .flatMap(([k, v]) => (v && typeof v === 'object' ? leaves(v, `${p}${k}.`) : [`${p}${k}`]))
     const keys = new Set(VOICE_LINES.map(l => l.key))
-    // `atlas.objective` is retired: no code asks for it any more.
-    const missing = leaves(en.atlas, 'atlas.').filter(k => !keys.has(k) && k !== 'atlas.objective')
-    expect(missing).toEqual([])
+    const spoken = leaves(en, '').filter(k => speechRuleOf(k) && !RETIRED.has(k))
+    expect(spoken.filter(k => !keys.has(k))).toEqual([])
+    // The lesson rooms, the stage hints and Flux's fumble lines went unvoiced
+    // for months while the catalogue was a hand-kept list.
+    for (const k of ['atlas.train.charge', 'atlas.help.block', 'atlas.hint.neon.kick', 'flux.fumble.1']) expect(keys.has(k), k).toBe(true)
+  })
+
+  it('gives each speaker\'s whole top-level section a rule, and each rule a known speaker and scene', () => {
+    for (const ns of ['atlas', 'vex', 'pip', 'flux']) expect(speechRuleOf(`${ns}.x`)?.speaker, ns).toBe(ns)
+    const scenes = new Set(SCENES.map(s => s.id))
+    for (const r of SPEECH) {
+      expect(SPEAKERS[r.speaker], r.at).toBeTruthy()
+      expect(scenes.has(r.scene), r.at).toBe(true)
+    }
+    // Captions and UI are nobody's lines.
+    for (const k of ['story.intro.lab', 'ending.card.title', 'train.card.charge', 'hud.level']) expect(speechRuleOf(k), k).toBeUndefined()
+  })
+
+  it('retires only keys that exist, and lists every detailed line once among the voice lines', () => {
+    for (const k of RETIRED) expect(typeof at(en, k), k).toBe('string')
+    const keys = VOICE_LINES.map(l => l.key)
+    for (const l of VOICE_DETAIL) expect(keys.filter(k => k === l.key), l.key).toHaveLength(1)
   })
 
   it('live lines have their text in both locales; planned lines carry a draft in both (or are in both locales)', () => {
     for (const l of VOICE_LINES) {
-      if (l.speaker === 'flux' || l.key.startsWith('vex.laugh.')) {
+      if (l.neutral) {
         // Barks and laughs: no bubble, so no locale text; the draft is the sound.
         expect(l.neutral && l.draft?.[0], l.key).toBeTruthy()
       } else if (l.status === 'live' || !l.draft) {

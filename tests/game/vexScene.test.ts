@@ -17,7 +17,7 @@ vi.mock('@/game/audio/sfx', () => ({ sfx: (n: string) => { sounds.push(n) } }))
 const { Scene, sceneUi, MOTIF_LEAD, LINE_TAIL } = await import('@/game/story/vexScene')
 const { hubSceneFor, presentBeats, freedBeats, voltHackBeats } = await import('@/game/story/vexScenes')
 const { voBeatsBehind } = await import('@/game/state/profile')
-const { VOICE_LINES } = await import('@/game/audio/voiceCatalog')
+const { VOICE_LINES } = await import('@/game/audio/voiceLines')
 
 const run = (s: InstanceType<typeof Scene>, secs: number, dt = 0.05): void => {
   for (let t = 0; t < secs; t += dt) s.update(dt)

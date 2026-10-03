@@ -13,13 +13,18 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const h = vi.hoisted(() => ({ sounds: [] as string[] }))
+const h = vi.hoisted(() => ({ sounds: [] as string[], voices: [] as string[] }))
 
 vi.mock('@/game/audio/sfx', () => ({ sfx: (id: string) => { h.sounds.push(id) } }))
 vi.mock('@/use/useAds', () => ({ showMidgameAd: async () => {} }))
 vi.mock('@/use/useAdGate', () => ({ canShowInterstitial: () => false, markInterstitialShown: () => {} }))
 vi.mock('@/use/useCrazyGames', () => ({ triggerHappytime: () => {} }))
 vi.mock('@/game/engine/app', () => ({ app: { setMode: () => {}, setWanted: () => {} } }))
+// Which lines get voiced, on which channel (no audio in a test).
+vi.mock('@/game/audio/voice', async (orig) => ({
+  ...(await orig<typeof import('@/game/audio/voice')>()),
+  playVoice: (id: string, channel = 'line') => { h.voices.push(`${channel}:${id}`); return null }
+}))
 
 import { Mission, type MissionSetup } from '@/game/sim/mission'
 import {
@@ -189,6 +194,8 @@ describe('when a hit fumbles the charge', () => {
     expect(h.sounds).toContain('fumble')
     expect(h.sounds).toContain('chargeShotBig')
     expect(hud.sayKey).toBe('flux.fumble.1')
+    // His line is voiced too, on the bark channel (it never cuts Atlas off).
+    expect(h.voices).toContain('bark:flux.fumble.1')
   })
 
   it('about one hard hit in four (a seeded run)', () => {

@@ -5,7 +5,7 @@
 
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CARDS, TONES, VOICE_LINES, ROOT } from './lib.mjs'
+import { CARDS, VOICE_LINES, ROOT, toneOf } from './lib.mjs'
 
 const rows = []
 rows.push(`# Voice cards
@@ -22,7 +22,7 @@ read from the reference text below.
 for (const [id, c] of Object.entries(CARDS)) {
   const lines = VOICE_LINES.filter(l => l.speaker === id)
   const tones = {}
-  for (const l of lines) tones[TONES[l.key]] = (tones[TONES[l.key]] ?? 0) + 1
+  for (const l of lines) tones[toneOf(l)] = (tones[toneOf(l)] ?? 0) + 1
   const split = Object.entries(tones).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} ${n}`).join(', ')
   rows.push(`## ${c.name}
 

@@ -24,10 +24,14 @@ const PATHS = {
   out: 'public/audio/voice'
 }
 
-export const { VOICE_LINES, SPEAKERS, SCENES, fileName } = await load(PATHS.catalog)
-export const { CARDS, TONES } = await load(PATHS.cards)
+const catalog = await load(PATHS.catalog)
+export const { SPEAKERS, SCENES, fileName } = catalog
+export const { CARDS, TONES, toneOf } = await load(PATHS.cards)
 export const LANGS = PATHS.langs
 export const LOCALES = Object.fromEntries(await Promise.all(LANGS.map(async (l) => [l, (await load(PATHS.locale(l))).default])))
+/** Every voice line: the catalogue's detail plus every text line of a
+ *  speaker's section in the source locale (`deriveVoiceLines`). */
+export const VOICE_LINES = catalog.deriveVoiceLines(LOCALES[LANGS[0]])
 const LI = Object.fromEntries(LANGS.map((l, i) => [l, i]))
 
 /** Pipeline work files: sources worth keeping (refs) and caches (gen). */

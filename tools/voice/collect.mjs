@@ -14,7 +14,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { CARDS, LANGS, ROOT, SAMPLE_KEYS, TONES, VOICE_LINES, VO_SRC, VOICE_OUT, args, fileName, textOf } from './lib.mjs'
+import { CARDS, LANGS, ROOT, SAMPLE_KEYS, VOICE_LINES, VO_SRC, VOICE_OUT, args, fileName, textOf, toneOf } from './lib.mjs'
 import { normalize } from './normalize.mjs'
 
 /**
@@ -63,13 +63,13 @@ for (const line of pick) {
       speaker: line.speaker,
       scene: line.scene,
       status: line.status,
-      tone: TONES[line.key],
+      tone: toneOf(line),
       max: line.max,
       shown,
       text,
       ...(SAY[`${lang}/${file}`] ? { say: SAY[`${lang}/${file}`] } : {}),
       // A sound, not words (barks, laughs), or a word broken on purpose: QA does not check it against the text.
-      ...(line.neutral || BROKEN.has(line.key) ? { loose: true } : {}),
+      ...(line.neutral || line.loose || BROKEN.has(line.key) ? { loose: true } : {}),
       emphasis,
       direction: line.direction[LANGS.indexOf(lang)],
       // For engines that take the direction as an English tag whatever the line's language.

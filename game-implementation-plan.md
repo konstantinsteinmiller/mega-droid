@@ -834,6 +834,35 @@ while bars and damage numbers get direct DOM writes.
     "Brr!"), DE `atlas.story.rotor` (heard "Roter Pflüg"), DE
     `atlas.scan.elite` (2.7 s against 2.5). The Chatterbox backup stays in
     `vo-src/backup-chatterbox/` until the user drops it.
+- **Chunk 24 — roadmap.md playtest bullets (2026-10-03).** One-writer method;
+  decisions (D1-D31, the user's answers folded in) in
+  https://claude.ai/artifact/W8gQe5npfn3LsrAu771D4c. A commit per phase, the
+  roadmap item ticked when its phase is committed.
+  - [x] **P1 Voice: one source of truth** (#274, #284): the text decides
+    (`SPEECH` rules + `deriveVoiceLines`, `VOICE_DETAIL` for the extras),
+    voice-todo.md rendered with every line's state and kept current by a
+    test, Flux's fumble lines voiced and wired; the skill updated.
+  - [ ] **P2 Bugs from the maps**: golem double-lifted aim, void-pit rescue
+    sign, unleashed tutorial machines, lesson doors naming their lesson.
+  - [ ] **P3 Quick wins**: chests open on any hit (#273), the boss shutter
+    opens by itself (#283), enemies fire back across their room (#277), the
+    debrief's colours (cleared blue, target red).
+  - [ ] **P4 Hologram lessons** (#266-#270 and the new tutorial points):
+    hologram engine, no cards, the slide freeze with the yellow-arrow button,
+    target arrows, rooted block guard, doors closing behind, the first level's
+    new rooms (drones, wheel + guard, golem) and the longer gel stretch, then a
+    headed-Chrome playthrough of the whole tutorial.
+  - [ ] **P5 Weapon lessons after the boss** (#275, #285, the weapon item):
+    the arm hologram, a lesson room and exit pedestal behind every boss
+    (not the Fortress), the beam-in lesson as a fallback only, Blaze's quiet
+    landing room.
+  - [ ] **P6 Hazards and feel**: barrel flatten (#280), lava and slab rattle
+    (#279), crate golem ram (#281), Atlas's rescue (#282).
+  - [ ] **P7 Boss bar** horizontal under the compass (#276).
+  - [ ] **P8 Intro rework** (#271, #272): new order, synced shots, the
+    Mega Man X dash, the score rewritten.
+  - [ ] **P9 Wrap-up**: voice the new lines, story/voice docs, final browser
+    pass.
 
 ## Resume notes
 

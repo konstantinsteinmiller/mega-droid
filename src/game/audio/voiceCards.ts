@@ -476,5 +476,14 @@ export const TONES: Readonly<Record<string, Tone>> = {
   'atlas.hint.drill.drop': 'urgent',
   'atlas.hint.drill.rock': 'neutral',
   'atlas.hint.magnet.panel': 'cheeky',
-  'atlas.hint.magnet.rail': 'neutral'
+  'atlas.hint.magnet.rail': 'neutral',
+  'flux.fumble.1': 'cheeky',
+  'flux.fumble.2': 'cheeky',
+  'flux.fumble.3': 'cheeky',
+  'flux.fumble.4': 'excited',
+  'flux.fumble.5': 'cheeky',
+  'flux.fumble.6': 'excited'
 }
+
+/** A line's tone: its own in TONES, else its section's (a derived line). */
+export const toneOf = (l: { key: string; tone?: string }): string => TONES[l.key] ?? l.tone ?? 'neutral'

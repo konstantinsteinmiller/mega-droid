@@ -50,7 +50,10 @@ const affixText = (a: Affix) => formatAffix(t, a)
   display: flex
   gap: 10px
   align-items: center
+// A one-word name too long for its line ("Standardkanone") breaks itself, and
+// never squeezes the icon.
 .d-ico
+  flex: none
   width: 44px
   height: 44px
   padding: 8px
@@ -58,7 +61,11 @@ const affixText = (a: Affix) => formatAffix(t, a)
   border: 2px solid #141a33
   background: radial-gradient(circle at 40% 30%, #fff, var(--rc) 70%)
   color: #141a33
+.d-title
+  min-width: 0
 .d-name
+  hyphens: auto
+  overflow-wrap: anywhere
   font-size: clamp(15px, 3.2vmin, 19px)
   color: var(--rc)
   text-shadow: 0 2px 0 #141a33
@@ -96,4 +103,13 @@ const affixText = (a: Affix) => formatAffix(t, a)
     color: #7f8ba3
     list-style: none
     margin-left: -16px
+// A phone on its side: the card shares half a narrow column. Its icon goes
+// (the selected slot or row beside it wears the same glyph) and the name has
+// the whole line.
+@media (orientation: landscape) and (max-height: 540px)
+  .detail
+    gap: 6px
+    padding: 8px
+  .d-ico
+    display: none
 </style>

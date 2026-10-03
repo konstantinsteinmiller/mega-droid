@@ -471,6 +471,39 @@ const statRows = computed(() => {
 @media (orientation: portrait)
   .cols
     flex-direction: column
+// A phone on its side: the plate is one slim line, the gear tiles stop at a
+// thumb's width, so the list and the item card come up into view.
+@media (orientation: landscape) and (max-height: 540px)
+  .plate
+    padding: 2px 10px 2px 2px
+  .p-face
+    width: 28px
+    height: 28px
+    border-width: 2px
+  .p-id
+    flex-direction: row
+    align-items: baseline
+    gap: 8px
+  .p-name
+    font-size: 18px
+  .p-role
+    margin-top: 0
+    font-size: 11px
+  .slots
+    grid-template-columns: repeat(6, minmax(0, 46px))
+  .slot
+    border-radius: 10px
+  // Half a narrow column: the name gets the row's whole first line (the
+  // level and the equipped tag beside it squeezed it to "Stan…"), the level
+  // and the tag go under it.
+  .row
+    flex-wrap: wrap
+    row-gap: 2px
+  .r-name
+    flex-basis: 100%
+    white-space: normal
+    line-height: 1.15
+    hyphens: auto
 @keyframes cta
   50%
     transform: scale(1.03)

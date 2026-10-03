@@ -1,15 +1,18 @@
 <template lang="pug">
   div.hub(ref="root")
     div.topbar
-      div.lvl
-        span.lv-num {{ profile.level }}
-        div.lv-col
-          span.lv-label {{ t('hud.level', { n: profile.level }) }}
-          div.xp
-            div.xp-fill(:style="{ width: Math.min(100, xp01() * 100) + '%' }")
-      button.pill.attr(v-if="profile.hero.pendingAttrs > 0" type="button" @click="flow.modal = 'levelUp'")
-        GameIcon.pi(name="star")
-        span {{ t('hub.levelUpReady') }}
+      //- The level and its pending pick. On a short landscape screen they move
+      //- to the bottom-right corner, under Flux, and the panel takes the top.
+      div.who
+        div.lvl
+          span.lv-num {{ profile.level }}
+          div.lv-col
+            span.lv-label {{ t('hud.level', { n: profile.level }) }}
+            div.xp
+              div.xp-fill(:style="{ width: Math.min(100, xp01() * 100) + '%' }")
+        button.pill.attr(v-if="profile.hero.pendingAttrs > 0" type="button" @click="flow.modal = 'levelUp'")
+          GameIcon.pi(name="star")
+          span {{ t('hub.levelUpReady') }}
       div.spacer
       div.pill.bolts(data-lesson="bolts" @pointerdown="registerQaAdTap()")
         GameIcon.pi(name="nut")
@@ -305,6 +308,9 @@ onUnmounted(() => {
   padding: clamp(8px, 2vmin, 14px)
 .spacer
   flex: 1
+// Its children sit in the top bar's row as if it were not there.
+.who
+  display: contents
 .lvl
   display: flex
   align-items: center
@@ -551,6 +557,25 @@ onUnmounted(() => {
     width: min(56vw, 620px)
   .tabs
     width: min(56vw, 620px)
+// A phone on its side: every row of height goes to the panel. The top bar
+// leaves the flow (Bolts, the board and Options stay top-right, over the lab),
+// and the level goes to the bottom-right corner, beside the tab row.
+@media (orientation: landscape) and (max-height: 540px)
+  .topbar
+    position: absolute
+    top: env(safe-area-inset-top, 0px)
+    right: env(safe-area-inset-right, 0px)
+    left: calc(env(safe-area-inset-left, 0px) + min(56vw, 620px))
+  .who
+    position: fixed
+    right: calc(env(safe-area-inset-right, 0px) + clamp(8px, 2vmin, 14px))
+    bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(8px, 2vmin, 14px))
+    display: flex
+    flex-direction: row-reverse
+    align-items: center
+    gap: clamp(6px, 1.4vmin, 10px)
+  .panel
+    margin-top: clamp(8px, 2vmin, 14px)
 // Portrait: the panel is a bottom sheet under Flux.
 @media (orientation: portrait)
   .panel

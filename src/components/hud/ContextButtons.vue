@@ -1,13 +1,13 @@
 <template lang="pug">
   div.ctx(v-if="hud.phase === 'play'")
     Transition(name="ctx-pop")
-      button.ctx-btn.interact(v-if="hud.interactKey" type="button" @click="interact")
+      button.ctx-btn.interact(v-if="hud.interactKey" type="button" @mousedown.prevent @click="interact")
         KeyCap(v-if="hud.device === 'mouse'" code="KeyE")
         GameIcon.ico(:name="icon")
         span {{ t(hud.interactKey) }}
         CoachRing.ring(:hint="hud.hints.find(h => h.id === 'interact' && h.family === 'touch')")
     Transition(name="ctx-pop")
-      button.ctx-btn.beam(v-if="hud.objectiveDone && !hud.combat" type="button" @click="beamOut")
+      button.ctx-btn.beam(v-if="hud.objectiveDone && !hud.combat" type="button" @mousedown.prevent @click="beamOut")
         KeyCap(v-if="hud.device === 'mouse'" code="KeyB")
         GameIcon.ico(name="up")
         span {{ t('hud.beamOut') }}
@@ -66,6 +66,17 @@ const beamOut = () => {
   text-shadow: 0 2px 0 #141a33
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), inset 0 3px 0 rgba(255, 255, 255, 0.3)
   animation: ctx-bob 1.4s ease-in-out infinite
+  // iOS drew a white box round the pill after a tap: the native button look,
+  // the tap highlight and a focus ring in currentColor (white). A press never
+  // takes focus (mousedown.prevent above); none of the three is drawn.
+  -webkit-appearance: none
+  appearance: none
+  -webkit-tap-highlight-color: transparent
+  -webkit-touch-callout: none
+  touch-action: manipulation
+  outline: none
+  &:focus, &:focus-visible
+    outline: none
   &:active
     transform: translateY(2px)
 .keycap

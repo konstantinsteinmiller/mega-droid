@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.obj(v-if="hud.objectiveKey && hud.phase !== 'hub'" :class="{ done: hud.objectiveDone, boss: !!hud.bossName }")
+  div.obj(v-if="hud.objectiveKey && hud.phase !== 'hub'" :class="{ done: hud.objectiveDone }")
     div.obj-head
       span.dot
       span.label {{ hud.objectiveDone ? t('objective.complete') : t('objective.title') }}
@@ -68,10 +68,6 @@ watch([bossId, () => hud.phase], ([id, phase]) => {
   &.done
     border-color: rgba(141, 255, 122, 0.8)
     box-shadow: 0 0 14px rgba(141, 255, 122, 0.35)
-  // The boss's energy bar stands third beside the player's two (BossBar):
-  // step aside by one bar and its gap.
-  &.boss
-    left: calc(env(safe-area-inset-left, 0px) + clamp(8px, 2.2vmin, 18px) + clamp(40px, 9vmin, 60px) + clamp(14px, 3.4vmin, 22px) + clamp(3px, 0.8vmin, 6px))
 .obj-head
   display: flex
   align-items: center
@@ -116,7 +112,7 @@ watch([bossId, () => hud.phase], ([id, phase]) => {
 // Portrait: too narrow to share the top row with the status pills, so the
 // tracker sits under the bars instead.
 @media (max-aspect-ratio: 1/1)
-  .obj, .obj.boss
+  .obj
     left: calc(env(safe-area-inset-left, 0px) + clamp(8px, 2.2vmin, 18px))
     top: calc(env(safe-area-inset-top, 0px) + clamp(8px, 2.2vmin, 18px) + clamp(110px, 28vmin, 200px) + 24px)
     max-width: min(70vw, 320px)

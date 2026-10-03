@@ -876,7 +876,11 @@ while bars and damage numbers get direct DOM writes.
     `stepLava`); `CR_SHAKE` 1 s and `rattles()`; the golem's `ram`
     (`GOLEM_RAM_*`); the rescue frames from below (`RESCUE_PULL/RISE` in
     freezeCam.ts) with `Mission.tractor`.
-  - [ ] **P7 Boss bar** horizontal under the compass (#276).
+  - [x] **P7 Boss bar** horizontal under the compass (#276). BossBar.vue
+    holds the name and the bar in one block under Compass.vue's strip;
+    short landscape (max-height 480px) puts it under the objective card.
+    Also: a weapon lesson's frame leaves with Flux when he steps out of its
+    room (`weaponRoomNow`).
   - [ ] **P8 Intro rework** (#271, #272): new order, synced shots, the
     Mega Man X dash, the score rewritten.
   - [ ] **P9 Wrap-up**: voice the new lines, story/voice docs, final browser

@@ -3161,6 +3161,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (profile.tips[`train:weapon:${w.id}`]) this.lightExit()
   }
 
+  /** The room a weapon lesson runs in now, or -1. */
+  private weaponRoomNow(): number {
+    if (this.beamTeach && this.map.beam) return this.map.beam.room
+    if (this.exitStarted && !this.exitLit && this.map.exit) return this.map.exit.room
+    return -1
+  }
+
   /** The lesson is done (or was learned before): the pedestal lights up. */
   private lightExit(): void {
     if (this.exitLit || !this.exitPad) return
@@ -3196,6 +3203,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (this.exitStarted && !this.exitLit) {
+      // Out of the room the lesson's frame goes; back in, it comes back.
+      const inRoom = roomAt(this.map, p.x, p.z) === ex.room
+      if (tr.id !== 'weapon' && inRoom) tr.enter('weapon', this.time)
+      else if (tr.id === 'weapon' && !inRoom) tr.leave()
       const d = this.lessons.weaponDronesAt
       this.trainSpot = d ? { x: d.x, y: d.y, z: d.z } : null
       this.combat.we = Math.max(this.combat.we, Math.min(this.combat.maxWe, this.weaponCost(id) * 2))
@@ -3334,7 +3345,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (!id) {
-      if (tr.id && tr.id !== 'weapon') tr.leave()
+      // A weapon lesson runs in its own room (the beam-in room, the room
+      // behind the boss); out of it, its label and vignette go too.
+      if (tr.id && (tr.id !== 'weapon' || here !== this.weaponRoomNow())) tr.leave()
       return
     }
     // The charge lesson waits for a first step toward its drones (or a shot

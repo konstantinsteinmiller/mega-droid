@@ -43,8 +43,8 @@ import { HpGhost, KICK_GAP, claimFirstHit, rateGate } from './hpCues'
  * turn before dying. Under `LOW_HP` the health bar turns red, and in live play it
  * beats in step with the ScreenFx edge vignette (`lowHealthLive`).
  *
- * The Core Master's bar (BossBar.vue) stands in line to the right with the same
- * frame, cap and segment geometry. Keep the two in step.
+ * The Core Master's bar (BossBar.vue) hangs horizontally under the compass,
+ * in the same frame and segment style.
  *
  * A Repair Gel does not jump the bar. The gel drains from its button, an orb of
  * it flows up into the heart, and the missing segments fill GREEN one by one
@@ -251,7 +251,7 @@ onUnmounted(() => offTicker?.())
 
 <style scoped lang="sass">
 .bars
-  // The bar geometry. BossBar.vue repeats it to stand in line: keep in step.
+  // The bar geometry.
   --bw: clamp(14px, 3.4vmin, 22px)
   --gap: clamp(3px, 0.8vmin, 6px)
   position: absolute

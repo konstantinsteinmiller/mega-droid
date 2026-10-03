@@ -1,7 +1,9 @@
 // ElevenLabs (Eleven v4) through its web app, driven in the voice desk's own
-// Chrome (browser.mjs): for LISTENING TESTS. The free plan is 10,000 credits a
-// month (about that many characters), forbids commercial use and asks for
-// attribution, so nothing made here ships in a game without a paid plan.
+// Chrome (browser.mjs). The free plan is 10,000 credits a month (about that
+// many characters), forbids commercial use and asks for attribution; mega-droid
+// ships its takes on the owner's call (2026-10-03). A second free account on
+// the same machine meets ElevenLabs' paywall at once: that is its abuse check,
+// not something to route around.
 //
 //   pnpm voice:gen --engine elevenlabs --jobs samples
 //   pnpm voice:gen --engine elevenlabs --sign-in      (once: opens the plain window)
@@ -24,9 +26,13 @@ export const VOICES = {
   atlas: 'River - Relaxed, Neutral, Informative',
   vex: 'Callum - Husky Trickster',
   flux: 'Liam - Energetic, Social Media Creator',
-  gauss: 'Sarah - Mature, Reassuring, Confident'
+  gauss: 'Sarah - Mature, Reassuring, Confident',
+  // His card: a light, clear tenor in his late twenties, brisk and cheerful.
+  pip: 'Will - Relaxed Optimist'
 }
 const GAP_MS = 3000
+/** Longest one line may take, voice pick to WAV, before the run gives up. */
+const LINE_MS = 180000
 
 /**
  * The delivery as a v4 audio tag: the tone word and the direction's first
@@ -104,14 +110,21 @@ export default {
       const order = items.map((it, i) => [it, i]).sort((x, y) => x[0].voice.id.localeCompare(y[0].voice.id))
       for (const [it, i] of order) {
         try {
-          await setVoice(page, it.voice.id)
-          const mp3 = join(tmp, `${i}.mp3`)
-          writeFileSync(mp3, await speak(page, tagFor(it.directionEn ?? it.direction, it.tone) + it.text))
-          await ffmpeg(['-i', mp3, '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', it.raw])
+          // A window closed mid-run left every call waiting for ever: stop instead.
+          if (page.isClosed()) throw new Error('browser closed: run again')
+          let timer
+          const line = (async () => {
+            await setVoice(page, it.voice.id)
+            const mp3 = join(tmp, `${i}.mp3`)
+            writeFileSync(mp3, await speak(page, tagFor(it.directionEn ?? it.direction, it.tone) + it.text))
+            await ffmpeg(['-i', mp3, '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', it.raw])
+          })()
+          const stuck = new Promise((_, no) => { timer = setTimeout(() => no(new Error('browser stuck: no take in 3 minutes, run again')), LINE_MS) })
+          await Promise.race([line, stuck]).finally(() => clearTimeout(timer))
           out[i] = { ok: true }
         } catch (e) {
           out[i] = { ok: false, error: e.message.split('\n')[0] }
-          if (/signed out|quota|credit|limit/i.test(e.message)) { for (const [, j] of order) out[j] ??= { ok: false, error: 'skipped: ' + out[i].error }; break }
+          if (/signed out|quota|credit|limit|browser closed|browser stuck|Target.*closed|has been closed/i.test(e.message)) { for (const [, j] of order) out[j] ??= { ok: false, error: 'skipped: ' + out[i].error }; break }
           await page.goto(URL, { waitUntil: 'domcontentloaded' }).catch(() => {})
           await ready(page).catch(() => {})
         }

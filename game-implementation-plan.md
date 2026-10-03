@@ -795,6 +795,26 @@ while bars and damage numbers get direct DOM writes.
     hints, scans, `atlas.fortress.bays`); the Volt Tower and Fortress scenes
     don't hold enemies asleep and the hub broadcast doesn't put Vex on the
     Lab's 3D screens (bubble only).
+- **Chunk 23 — Atlas clean-up and the ElevenLabs re-voice (2026-10-03).**
+  - [x] The thirteen hints #122 silenced are gone (cues, never-say list,
+    catalogue, tones, 39 locales, 20 recordings) (bcffa21).
+  - [ ] **Re-voice English with ElevenLabs** through its web app (the user's
+    call: free accounts, shipped at the owner's risk; German later). One take
+    per line, `--retry` for the QA failures. Pip = "Will - Relaxed Optimist"
+    (picked by his card; the user checks his first lines). On a credit or rate
+    limit the run stops and the user signs in to another account; a re-run
+    only speaks the lines with no take yet:
+    `node tools/voice/generate.mjs --engine elevenlabs --lang en --takes 1`
+    (sign-in: add `--sign-in`, sign in, close that window). A passing line
+    replaces its Chatterbox file at once, so the game mixes the two voices
+    until the run is through.
+    Status: the first free account's 10k credits voiced 163 English lines;
+    123 passed QA and ship (Atlas 19, Vex 26, Flux 30, Pip 48), 40 failed
+    (doubled lines, laughs and barks over their length; a retry speaks them
+    again), 147 are not spoken yet. A second free account met ElevenLabs'
+    paywall at once (its free-tier block, not worked around). Open: the
+    user's call between one paid plan, the first account's monthly reset,
+    or Chatterbox for the rest.
 
 ## Resume notes
 

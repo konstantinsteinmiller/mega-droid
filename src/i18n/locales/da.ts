@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: niveau 31 og op.',
       },
       'rotor': {
-        'arrive': 'Landet. Hop af!',
-        'dip': 'Hold fast, vi dykker!',
         'board': 'Alle om bord! Jeg flyver, du skyder.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'For dybt! Ud af vandet!',
         'valve': 'Oversvømmet sluse! Skyd ventilen for at tømme den.',
         'rise': 'Tidevandet kommer. Op ad trappen!',
-        'wade': 'Vand! At vade gør dig langsommere.',
       },
       'gm': {
         'button': 'Vex trykker på noget... Gør dig klar!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Stenskred! Gå ud af skyggerne.',
         'rock': 'Revnet klippe! Et fuldt ladeskud knuser den.',
         'board': 'Malmvognen ruller! Jeg styrer, du skyder muldvarpene.',
-        'dip': 'Stejlt ned! Hold godt fast!',
-        'arrive': 'Sidste stop. Hop af!',
       },
       'magnet': {
         'panel': 'Kan du se den rød-blå plade? Skyd på den for at vende skinnen.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Først hvæs, så ild. Lad brølet passere, og kør så.',
         'barrels': 'Tønder! Hold øje med lamperne, og gå imellem dem.',
         'hammers': 'Smedehamre. Tæl takten, og løb så.',
-        'drop': 'Langt ned. Én afsats ad gangen.'
       },
       'cryo': {
         'ice': 'Is! Slipper du pinden, glider du videre.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Frostkaster. Den gløder og hvæser først. Gå over, når den er stille.',
         'icicles': 'Skygger på gulvet? Istapper. Gå ud af ringen!',
         'pillar': 'Søjlen er revnet. Skyd på den, så har du en genvej.',
-        'stairs': 'Isglat trappe. Stille og roligt — reposen er lille.'
       },
       'volt': {
         'panels': 'Pladerne pulserer. Vent på en mørk række, og gå så.',
         'board': 'Slip styringen — jeg kører, du skyder.',
-        'wave': 'Droner forude! Skyd dem, før de dykker.',
-        'dip': 'Stort fald forude. Hold fast — bliv ved med at skyde!',
-        'arrive': 'Endestation. Hop af!'
       },
       'gale': {
         'leap': 'Hullet er for bredt at gå. Glid ud over kanten — du flyver over.',
-        'down': 'Flot spring. Kig nu ikke ned.',
-        'shuttle': 'Færger. Træd på, når den lægger til, og af i den anden ende.',
         'wind': 'Vent, til vindstødet lægger sig, og gå så. Eller gem dig bag en søjle.',
-        'bob': 'Vippende platforme. Hop på i bunden, og kør med op.'
       }
     },
     'secret': {

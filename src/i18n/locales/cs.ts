@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: od úrovně 31.',
       },
       'rotor': {
-        'arrive': 'Přistání. Vyskoč!',
-        'dip': 'Drž se, padáme dolů!',
         'board': 'Nastupovat! Já letím, ty střílíš.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Moc hluboko! Ven z vody!',
         'valve': 'Zatopené zdymadlo! Střel do ventilu a vypusť ho.',
         'rise': 'Přichází příliv. Nahoru po schodech!',
-        'wade': 'Voda! Brodění tě zpomaluje.'
       },
       'gm': {
         'button': 'Vex něco mačká... Připrav se!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Padají kameny! Vyjdi ze stínů.',
         'rock': 'Popraskaná skála! Plně nabitá rána ji rozbije.',
         'board': 'Důlní vozík jede! Já řídím, ty střílej krtky.',
-        'dip': 'Prudký sjezd! Drž se pevně!',
-        'arrive': 'Konečná. Vyskoč!'
       },
       'magnet': {
         'panel': 'Vidíš tu červeno-modrou desku? Střel do ní a přepólovaš kolejnici.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Syčení, pak oheň. Nech řev přejít a jdi.',
         'barrels': 'Sudy! Sleduj lampy a projdi mezi nimi.',
         'hammers': 'Kovářská kladiva. Počítej rytmus, pak běž.',
-        'drop': 'Dlouhá cesta dolů. Římsa po římse.'
       },
       'cryo': {
         'ice': 'Led! Pustíš páčku a budeš klouzat dál.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Mrazomet. Nejdřív září a syčí. Přejdi, až ztichne.',
         'icicles': 'Stíny na podlaze? Rampouchy. Vyjdi z kruhu!',
         'pillar': 'Ten sloup je popraskaný. Střel do něj a máš zkratku.',
-        'stairs': 'Zledovatělé schody. Pomalu — odpočívadlo je malé.'
       },
       'volt': {
         'panels': 'Ty desky pulzují. Počkej na tmavé řadě, pak krok.',
         'board': 'Ruce pryč od řízení — já řídím, ty střílíš.',
-        'wave': 'Drony před námi! Sestřel je, než se vrhnou dolů.',
-        'dip': 'Velký sjezd před námi. Drž se — a střílej dál!',
-        'arrive': 'Konečná. Vyskoč!'
       },
       'gale': {
         'leap': 'Mezera je moc široká na chůzi. Sklouzni z okraje — přeneseš se.',
-        'down': 'Pěkný skok. Teď se nedívej dolů.',
-        'shuttle': 'Raketoplánky. Nastup, když přirazí, vystup na druhém konci.',
         'wind': 'Počkej, až poryv utichne, pak jdi. Nebo se schovej za sloup.',
-        'bob': 'Houpavé plošiny. Naskoč dole a svez se nahoru.'
       }
     },
     'secret': {

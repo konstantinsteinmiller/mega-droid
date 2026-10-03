@@ -500,9 +500,7 @@ const ATLAS_HINT_BLAZE: VoiceLine[] = ([
   ['barrels', 'Meltdown Descent: the ember barrels cross the stairs', 'Kernschmelze: Glutfässer rollen über die Treppe',
     'Barrels! Watch the lamps, cross between them.', 'Fässer! Achte auf die Lampen, geh zwischen ihnen durch.', 2.4, 'Quick, a little alarmed.', 'Schnell, leicht alarmiert.'],
   ['hammers', 'Meltdown Descent: the forge hammers over the walkway', 'Kernschmelze: die Schmiedehämmer über dem Steg',
-    'Forge hammers. Count the beat, then run.', 'Schmiedehämmer. Zähl den Takt, dann lauf.', 2.2, 'Steady, like a metronome.', 'Gleichmäßig, wie ein Metronom.'],
-  ['drop', 'Meltdown Descent: the top of the big drop shaft', 'Kernschmelze: oben am großen Fallschacht',
-    'Long way down. One ledge at a time.', 'Weit runter. Ein Sims nach dem anderen.', 2, 'Dry understatement.', 'Trockene Untertreibung.']
+    'Forge hammers. Count the beat, then run.', 'Schmiedehämmer. Zähl den Takt, dann lauf.', 2.2, 'Steady, like a metronome.', 'Gleichmäßig, wie ein Metronom.']
 ] as const).map(([id, when, whenDe, en, de, max, dir, dirDe]) => ship(`atlas.hint.blaze.${id}`, 'atlas', 'act1', max, {
   when: [when, whenDe], draft: [en, de], direction: [dir, dirDe]
 }))
@@ -532,11 +530,6 @@ const ATLAS_HINT_CRYO: VoiceLine[] = [
     when: ['Glacier Run: a cracked ice pillar in sight', 'Gletscherlauf: eine rissige Eissäule in Sicht'],
     draft: ['That pillar\'s cracked. Shoot it, and there\'s your shortcut.', 'Die Säule hat Risse. Schieß drauf – schon hast du eine Abkürzung.'],
     direction: ['Sly, pointing out a trick.', 'Schlau, verrät einen Trick.']
-  }),
-  ship('atlas.hint.cryo.stairs', 'atlas', 'fieldWarn', 2, {
-    when: ['Glacier Run: the top of the ice stairs', 'Gletscherlauf: oben an der Eistreppe'],
-    draft: ['Icy stairs. Go slow — the landing\'s small.', 'Eisige Treppe. Langsam – der Absatz ist klein.'],
-    direction: ['Calm warning.', 'Ruhige Warnung.']
   })
 ]
 
@@ -550,20 +543,6 @@ const ATLAS_HINT_VOLT: VoiceLine[] = [
     when: ['Rail Rush: the maglev cart sets off with Flux on it', 'Rail Rush: der Magnetschwebewagen fährt mit Flux los'],
     draft: ['Hands off the controls — I\'ll drive, you shoot.', 'Hände weg vom Steuer — ich fahre, du schießt.'],
     direction: ['Gleeful, taking the wheel.', 'Vergnügt, übernimmt das Steuer.']
-  }),
-  ship('atlas.hint.volt.wave', 'atlas', 'fieldWarn', 2, {
-    when: ['Rail Rush: the first wave of drones comes in ahead of the cart', 'Rail Rush: die erste Drohnenwelle vor dem Wagen'],
-    draft: ['Drones ahead! Shoot them before they swoop.', 'Drohnen voraus! Schieß sie ab, bevor sie herabstoßen.'],
-    direction: ['Quick, alert.', 'Schnell, wachsam.']
-  }),
-  ship('atlas.hint.volt.dip', 'atlas', 'fieldWarn', 2, {
-    when: ['Rail Rush: just before the rail\'s big drop', 'Rail Rush: kurz vor dem großen Gefälle der Schiene'],
-    draft: ['Big drop ahead. Hold on — keep shooting!', 'Gleich geht\'s steil runter. Festhalten — weiterschießen!'],
-    direction: ['Rollercoaster thrill.', 'Achterbahn-Nervenkitzel.']
-  }),
-  ship('atlas.hint.volt.arrive', 'atlas', 'fieldWarn', 1.5, {
-    when: ['Rail Rush: the cart stops at the exit station', 'Rail Rush: der Wagen hält an der Endstation'],
-    draft: ['End of the line. Hop off!', 'Endstation. Steig aus!'], direction: ['Cheerful, a conductor.', 'Fröhlich, wie ein Schaffner.']
   })
 ]
 
@@ -573,25 +552,10 @@ const ATLAS_HINT_GALE: VoiceLine[] = [
     draft: ['Gap\'s too wide to walk. Slide off the edge — you\'ll carry.', 'Zu breit zum Gehen. Rutsch über die Kante – du fliegst mit.'],
     direction: ['Coaching, quick and sure.', 'Wie ein Trainer, schnell und sicher.']
   }),
-  ship('atlas.hint.gale.down', 'atlas', 'fieldWarn', 2, {
-    when: ['Sky Docks: landed across the first gap', 'Himmelsdocks: über die erste Lücke gelandet'],
-    draft: ['Nice leap. Now don\'t look down.', 'Schöner Sprung. Jetzt bloß nicht nach unten schauen.'],
-    direction: ['Pleased, then dry.', 'Erfreut, dann trocken.']
-  }),
-  ship('atlas.hint.gale.shuttle', 'atlas', 'fieldWarn', 2.6, {
-    when: ['Sky Docks: the first shuttle over a wide gap', 'Himmelsdocks: die erste Fähre über eine breite Lücke'],
-    draft: ['Shuttles. Step on when it docks, off at the other end.', 'Fähren. Aufsteigen, wenn sie anlegt, drüben wieder runter.'],
-    direction: ['Coaching.', 'Wie ein Trainer.']
-  }),
   ship('atlas.hint.gale.wind', 'atlas', 'fieldWarn', 3, {
     when: ['Sky Docks: the mouth of the wind tunnel', 'Himmelsdocks: der Eingang des Windkanals'],
     draft: ['Wait for the gust to die, then move. Or hide behind a pillar.', 'Warte, bis die Böe abflaut, dann los. Oder duck dich hinter eine Säule.'],
     direction: ['Calm over the roar of the wind.', 'Ruhig über das Heulen des Windes hinweg.']
-  }),
-  ship('atlas.hint.gale.bob', 'atlas', 'fieldWarn', 2.6, {
-    when: ['Sky Docks: the first bobbing platform', 'Himmelsdocks: die erste schwebende Plattform'],
-    draft: ['Bobbing platforms. Hop on at the bottom, ride it up.', 'Schwebeplattformen. Unten aufsteigen, mit nach oben fahren.'],
-    direction: ['Coaching, a little playful.', 'Wie ein Trainer, ein bisschen verspielt.']
   })
 ]
 
@@ -905,16 +869,6 @@ const FINALE: VoiceLine[] = [
     when: ["Deep Mine: boarding the ore cart", "Tiefe Mine: Einstieg in die Lore"],
     draft: ["Ore cart's rolling! I steer, you shoot the moles.", "Die Lore rollt! Ich lenke, du schießt auf die Maulwürfe."],
     direction: ["Excited.", "Begeistert."]
-  }),
-  ship('atlas.hint.drill.dip', 'atlas', 'act3', 2.4, {
-    when: ["Deep Mine: before the cart's steep drop", "Tiefe Mine: vor dem steilen Gefälle der Lore"],
-    draft: ["Steep drop! Hold on tight!", "Steil bergab! Gut festhalten!"],
-    direction: ["Bracing, thrilled.", "Festhalten, aufgekratzt."]
-  }),
-  ship('atlas.hint.drill.arrive', 'atlas', 'act3', 2.4, {
-    when: ["Deep Mine: the cart stops at the warren", "Tiefe Mine: die Lore hält am Bau"],
-    draft: ["Last stop. Out you hop!", "Letzter Halt. Raus mit dir!"],
-    direction: ["Wry.", "Trocken."]
   }),
   ship('ending.gauss', 'gauss', 'ending', 3.5, {
     when: ["The ending: Gauss steps out of her capsule", "Das Ende: Gauss steigt aus ihrer Kapsel"],

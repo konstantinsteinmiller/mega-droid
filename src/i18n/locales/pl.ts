@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: od poziomu 31.',
       },
       'rotor': {
-        'arrive': 'Lądujemy. Wysiadaj!',
-        'dip': 'Trzymaj się, nurkujemy!',
         'board': 'Wsiadaj! Ja lecę, ty strzelasz.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Za głęboko! Wyjdź z wody!',
         'valve': 'Zalana śluza! Strzel w zawór, żeby ją osuszyć.',
         'rise': 'Nadchodzi przypływ. W górę po schodach!',
-        'wade': 'Woda! Brodzenie cię spowalnia.',
       },
       'drill': {
         'drop': 'Spadające skały! Wyjdź z cieni.',
         'rock': 'Pęknięta skała! Pełny strzał naładowany ją rozbije.',
         'board': 'Wózek rusza! Ja steruję, ty strzelaj do kretów.',
-        'dip': 'Stromy zjazd! Trzymaj się mocno!',
-        'arrive': 'Ostatni przystanek. Wyskakuj!'
       },
       'magnet': {
         'panel': 'Widzisz tę czerwono-niebieską płytę? Strzel w nią, by odwrócić szynę.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Najpierw syk, potem ogień. Poczekaj na ryk i biegnij.',
         'barrels': 'Beczki! Patrz na lampki i przechodź między nimi.',
         'hammers': 'Młoty kuźnicze. Policz rytm, potem biegnij.',
-        'drop': 'Długa droga w dół. Półka po półce.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Miotacz mrozu. Najpierw świeci i syczy. Przechodź, gdy ucichnie.',
         'icicles': 'Cienie na podłodze? Sople. Wyjdź z kręgu!',
         'pillar': 'Ten filar jest pęknięty. Strzel w niego i masz skrót.',
-        'stairs': 'Oblodzone schody. Powoli, podest jest mały.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Te płyty pulsują. Czekaj na ciemnym rzędzie, potem krok.',
         'board': 'Ręce od sterów — ja prowadzę, ty strzelasz.',
-        'wave': 'Drony z przodu! Zestrzel je, zanim zanurkują.',
-        'dip': 'Zaraz ostry zjazd. Trzymaj się — strzelaj dalej!',
-        'arrive': 'Stacja końcowa. Wysiadaj!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Za szeroko, by przejść. Wślizgnij się z krawędzi – pęd cię przeniesie.',
-        'down': 'Ładny skok. Teraz nie patrz w dół.',
-        'shuttle': 'Wahadłowce. Wsiadaj, gdy przybije, wysiadaj po drugiej stronie.',
         'wind': 'Poczekaj, aż podmuch ucichnie, i ruszaj. Albo schowaj się za filarem.',
-        'bob': 'Pływające platformy. Wskocz na dole i daj się wynieść w górę.'
       },
       'vex': {
         'roof': 'Pioruny! Uciekaj, gdy pierścień się zaświeci!',

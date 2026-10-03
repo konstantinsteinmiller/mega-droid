@@ -109,10 +109,8 @@ export class WaterFeature implements StageFeature {
       }
       return { def, level, drained: false, mesh, valve, vx, vy, vz, nx, nz, spin: 0 }
     })
-    // Atlas: the first water, the first tide, the first valve.
-    const first = this.zones[0]
+    // Atlas: the first tide, the first valve.
     const y0 = (z: WaterZone) => t.floor[z.j0 * map.w + z.i0]!
-    if (first) this.cues.push(new AtlasCue(host, 'hint.tide.wade', cellCenter(first.def.i0), cellCenter(first.def.j0), y0(first.def), 5))
     const tide = this.zones.find(z => z.def.period)
     if (tide) this.cues.push(new AtlasCue(host, 'hint.tide.rise', cellCenter(tide.def.i0), cellCenter(tide.def.j0), y0(tide.def), 5))
     const lock = this.zones.find(z => z.valve)

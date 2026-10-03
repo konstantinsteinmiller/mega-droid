@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: 31. szinttől.',
       },
       'rotor': {
-        'arrive': 'Landoltunk. Pattanj le!',
-        'dip': 'Kapaszkodj, zuhanórepülés!',
         'board': 'Mindenki beszállás! Én repülök, te lősz.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Túl mély! Ki a vízből!',
         'valve': 'Elárasztott zsilip! Lőj a szelepre, hogy leengedd.',
         'rise': 'Jön a dagály. Fel a lépcsőn!',
-        'wade': 'Víz! A gázolás lelassít.'
       },
       'gm': {
         'button': 'Vex megnyomott valamit... Készülj!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Hullanak a kövek! Lépj ki az árnyékokból.',
         'rock': 'Repedt szikla! Egy teljes töltés szétveri.',
         'board': 'Gurul a csille! Én kormányzok, te lövöd a vakondokat.',
-        'dip': 'Meredek lejtő! Kapaszkodj!',
-        'arrive': 'Végállomás. Pattanj ki!'
       },
       'magnet': {
         'panel': 'Látod azt a piros-kék lapot? Lőj rá, és átfordítod a sínt.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Sziszegés, aztán tűz. Várd ki a zúgást, aztán menj.',
         'barrels': 'Hordók! Figyeld a lámpákat, és bújj át köztük.',
         'hammers': 'Kovácspörölyök. Számold az ütemet, aztán fuss.',
-        'drop': 'Hosszú az út lefelé. Egyszerre egy perem.'
       },
       'cryo': {
         'ice': 'Jég! Ha elengeded a kart, tovább csúszol.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Fagyszóró. Előbb izzik és sziszeg. Akkor kelj át, ha csend van.',
         'icicles': 'Árnyékok a padlón? Jégcsapok. Lépj ki a körből!',
         'pillar': 'Az az oszlop repedt. Lőj rá, és megvan a rövidítés.',
-        'stairs': 'Jeges lépcső. Lassan — kicsi a forduló.'
       },
       'volt': {
         'panels': 'Azok a panelek lüktetnek. Várj egy sötét soron, aztán lépj.',
         'board': 'Kezeket le a kormányról — én vezetek, te lősz.',
-        'wave': 'Drónok előttünk! Lődd le őket, mielőtt lecsapnak.',
-        'dip': 'Nagy lejtő jön. Kapaszkodj — és lőj tovább!',
-        'arrive': 'Végállomás. Pattanj le!'
       },
       'gale': {
         'leap': 'Gyalog túl széles a rés. Csússz le a peremről — átvisz a lendület.',
-        'down': 'Szép ugrás. Most ne nézz le.',
-        'shuttle': 'Ingajáratok. Szállj fel, amikor kiköt, és szállj le a túloldalon.',
         'wind': 'Várd meg, míg eláll a szél, aztán indulj. Vagy bújj egy oszlop mögé.',
-        'bob': 'Billegő platformok. Szállj fel alul, és utazz fel vele.'
       }
     },
     'secret': {

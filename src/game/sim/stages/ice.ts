@@ -37,21 +37,19 @@ export class IceFeature implements StageFeature {
     this.host = host
     this.ice = t.ice!
     this.W = host.map.w
-    // Atlas's cues: the first ice, the first ice over spikes, the first ice
-    // stairs (in the order of the rooms, then of the cells).
+    // Atlas's cues: the first ice, the first ice over spikes (in the order of
+    // the rooms, then of the cells).
     const map = host.map
     const W = this.W
     let first = -1
     let spiky = -1
-    let stairs = -1
-    const bestRoom = [Infinity, Infinity, Infinity]
+    const bestRoom = [Infinity, Infinity]
     for (let k = 0; k < this.ice.length; k++) {
       if (!this.ice[k] || map.cell[k] === Cell.Void || t.pit[k]) continue
       const r = map.room[k]!
       const i = k % W
       const j = (k - i) / W
       if (r < bestRoom[0]!) { bestRoom[0] = r; first = k }
-      if (t.ramp[k] && r < bestRoom[2]!) { bestRoom[2] = r; stairs = k }
       if (r < bestRoom[1]!) {
         for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
           const ni = i + di
@@ -63,7 +61,7 @@ export class IceFeature implements StageFeature {
         }
       }
     }
-    const cue = (line: 'hint.cryo.ice' | 'hint.cryo.spikes' | 'hint.cryo.stairs', k: number) => {
+    const cue = (line: 'hint.cryo.ice' | 'hint.cryo.spikes', k: number) => {
       if (k < 0) return
       const i = k % W
       const j = (k - i) / W
@@ -71,7 +69,6 @@ export class IceFeature implements StageFeature {
     }
     cue('hint.cryo.ice', first)
     cue('hint.cryo.spikes', spiky)
-    cue('hint.cryo.stairs', stairs)
   }
 
   /** Standing on an ice cell's own floor (not a lift, not a ladder). */

@@ -60,7 +60,6 @@ export class WaveFeature implements StageFeature {
   readonly flyers: Enemy[] = []
   private zap: number[] = []
   private ride = 0
-  private said = false
   private readonly q: RailPoint = { x: 0, y: 0, z: 0, dx: 0, dz: 1, pitch: 0 }
   private readonly low: boolean
 
@@ -151,10 +150,6 @@ export class WaveFeature implements StageFeature {
     }
     if (!sent) return
     host.sfx('alert', q.x, q.z)
-    if (!this.said) {
-      this.said = true
-      host.say('hint.volt.wave')
-    }
   }
 
   /** Zaps on their own rhythm while the ride lasts; the ones left behind

@@ -35,9 +35,6 @@ const SNAP_T = 0.45
 /** Off the cart by more than this (m) mid-ride: something moved Flux (a
  *  checkpoint restart) — the ride is off and the cart goes home. */
 const LOST = 3
-/** Say the drop warning this far (m) before the rail starts down hard. */
-const DIP_WARN = 5
-const DIP_SLOPE = 0.18
 /** Spark crackles along the rail near Flux (s between two). */
 const SPARK_EVERY = 0.09
 const SPARK_NEAR = 26
@@ -84,8 +81,6 @@ export class RailFeature implements StageFeature {
   private snap = 0
   private ox = 0
   private oz = 0
-  private dipAt: number
-  private dipSaid = false
   /** The Rotor Run's flight (a quadcopter, no track). */
   private air = false
   /** The Deep Mine's ore tub on a sleepered track (#111). */
@@ -112,13 +107,6 @@ export class RailFeature implements StageFeature {
     this.length = this.cum[P.length - 1] ?? 0
     this.bi = def.boardAt.i
     this.bj = def.boardAt.j
-    // Where the rail first starts down hard: the drop Atlas warns of.
-    let dip = -1
-    for (let n = 1; n < P.length && dip < 0; n++) {
-      const run = Math.hypot(P[n]!.x - P[n - 1]!.x, P[n]!.z - P[n - 1]!.z)
-      if (run > 1e-4 && (P[n - 1]!.y - P[n]!.y) / run > DIP_SLOPE) dip = this.cum[n - 1]!
-    }
-    this.dipAt = dip < 0 ? Infinity : Math.max(0, dip - DIP_WARN)
     const map = host.map
     const t = map.terrain!
     this.rail = buildRail(host.theme, P, (x, z) => {
@@ -242,10 +230,6 @@ export class RailFeature implements StageFeature {
       const cap = Math.max(CRAWL, Math.sqrt(2 * BRAKE * rem))
       this.v = Math.min(this.def.speed, cap, this.v + ACCEL * dt)
       this.place(this.s + this.v * dt)
-      if (!this.dipSaid && this.s >= this.dipAt) {
-        this.dipSaid = true
-        host.say(`hint.${this.lines}.dip`)
-      }
       if (this.s >= this.length - 1e-3) this.arrive(p)
     }
     // The strips crackle; the magnet pads glow while it rides.
@@ -304,7 +288,6 @@ export class RailFeature implements StageFeature {
     this.host.sfx('deckLand', this.x, this.z)
     this.host.shake(0.1)
     this.host.fx.sparks(this.x, this.y + 0.1, this.z, '#ffe13d', 14, 6, 0.16)
-    this.host.say(`hint.${this.lines}.arrive`)
   }
 
   carry(p: ClimbBody, out: [number, number], dt: number): boolean {
@@ -339,7 +322,6 @@ export class RailFeature implements StageFeature {
   restore(s: unknown): void {
     if (s === 1) {
       this.state = 'done'
-      this.dipSaid = true
       this.place(this.length)
     } else {
       this.reset()

@@ -411,7 +411,7 @@ describe('ice', () => {
     expect(ice.top).toBeGreaterThan(WALK_SPEED * 0.95)
   })
 
-  it('Atlas: the first ice, ice by spikes and ice stairs, each once, and the save keeps them', () => {
+  it('Atlas: the first ice and ice by spikes, each once, and the save keeps them', () => {
     const m = generateGlacier(0)
     const said: AtlasLine[] = []
     const host = hostFor(m, { said, hits: [], marks: 0, sfx: [] })
@@ -423,10 +423,10 @@ describe('ice', () => {
       const j = (k - i) / m.w
       f.update(DT, 0, body(cellCenter(i), cellCenter(j), m.terrain!.floor[k]! + m.terrain!.rise[k]!), true)
     }
-    expect(said.sort()).toEqual(['hint.cryo.ice', 'hint.cryo.spikes', 'hint.cryo.stairs'])
+    expect(said.sort()).toEqual(['hint.cryo.ice', 'hint.cryo.spikes'])
     const g = new IceFeature(hostFor(m), m.terrain!)
     g.restore(f.save())
-    expect(g.save()).toEqual([1, 1, 1])
+    expect(g.save()).toEqual([1, 1])
   })
 })
 

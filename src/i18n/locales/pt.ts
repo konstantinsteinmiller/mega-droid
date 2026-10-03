@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: a partir do nível 31.',
       },
       'rotor': {
-        'arrive': 'Pousamos. Pode descer!',
-        'dip': 'Segure firme, vamos mergulhar!',
         'board': 'Todos a bordo! Eu voo, você atira.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Fundo demais! Saia da água!',
         'valve': 'Eclusa alagada! Atire na válvula para drenar.',
         'rise': 'A maré está subindo. Suba os degraus!',
-        'wade': 'Água! Andar nela te deixa lento.',
       },
       'drill': {
         'drop': 'Pedras caindo! Saia das sombras.',
         'rock': 'Rocha rachada! Um tiro com carga total quebra ela.',
         'board': 'O vagonete partiu! Eu dirijo, você atira nas toupeiras.',
-        'dip': 'Descida íngreme! Segure firme!',
-        'arrive': 'Última parada. Pode pular!'
       },
       'magnet': {
         'panel': 'Viu aquela placa vermelha e azul? Atira nela pra inverter o trilho.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Primeiro o chiado, depois o fogo. Espera o rugido e vai.',
         'barrels': 'Barris! Olha as luzes e passa entre eles.',
         'hammers': 'Martelos de forja. Conta o ritmo e corre.',
-        'drop': 'É uma longa descida. Uma saliência de cada vez.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Lança-gelo. Primeiro brilha e chia. Passe quando ficar quieto.',
         'icicles': 'Sombras no chão? Pingentes de gelo. Saia do círculo!',
         'pillar': 'Esse pilar está rachado. Atire nele e aí está o atalho.',
-        'stairs': 'Escada congelada. Devagar: o patamar é pequeno.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Esses painéis pulsam. Espere numa fileira apagada e avance.',
         'board': 'Tire as mãos dos controles — eu dirijo, você atira.',
-        'wave': 'Drones à frente! Derrube-os antes do mergulho.',
-        'dip': 'Vem aí uma grande descida. Segure firme e continue atirando!',
-        'arrive': 'Fim da linha. Pode descer!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Largo demais para andar. Deslize pela borda: o embalo te leva.',
-        'down': 'Belo salto. Agora não olhe para baixo.',
-        'shuttle': 'Plataformas móveis. Suba quando atracar, desça do outro lado.',
         'wind': 'Espere a rajada passar e avance. Ou se esconda atrás de um pilar.',
-        'bob': 'Plataformas flutuantes. Suba embaixo e deixe que ela te leve para cima.'
       },
       'vex': {
         'roof': 'Raios! Saia quando o anel acender!',

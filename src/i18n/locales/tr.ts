@@ -726,8 +726,6 @@ export default {
         'fortress': '{sector}: seviye 31 ve üstü.',
       },
       'rotor': {
-        'arrive': 'İndik. İn bakalım!',
-        'dip': 'Sıkı tutun, dalışa geçiyoruz!',
         'board': 'Herkes binsin! Ben uçarım, sen ateş et.',
       },
       'neon': {
@@ -740,14 +738,11 @@ export default {
         'deep': 'Çok derin! Sudan çık!',
         'valve': 'Su basmış savak! Boşaltmak için vanayı vur.',
         'rise': 'Sular yükseliyor. Basamaklara çık!',
-        'wade': 'Su! İçinde yürümek seni yavaşlatır.',
       },
       'drill': {
         'drop': 'Kaya düşüyor! Gölgelerden çık.',
         'rock': 'Çatlak kaya! Tam şarjlı atış onu kırar.',
         'board': 'Maden arabası yola çıktı! Ben sürerim, sen köstebekleri vur.',
-        'dip': 'Dik iniş! Sıkı tutun!',
-        'arrive': 'Son durak. Atla bakalım!'
       },
       'magnet': {
         'panel': 'Şu kırmızı-mavi plakayı gördün mü? Rayı ters çevirmek için ona ateş et.',
@@ -760,7 +755,6 @@ export default {
         'vents': 'Önce tıslama, sonra ateş. Kükremeyi bekle, sonra geç.',
         'barrels': 'Variller! Lambalara bak, aralarından geç.',
         'hammers': 'Demirci çekiçleri. Ritmi say, sonra koş.',
-        'drop': 'Uzun bir iniş. Her seferinde bir çıkıntı.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -769,23 +763,16 @@ export default {
         'frost': 'Buz püskürtücü. Önce parlar ve tıslar. Sessizleşince geç.',
         'icicles': 'Yerde gölgeler mi? Buz sarkıtları. Halkadan çık!',
         'pillar': 'Şu sütun çatlak. Ateş et, işte sana kestirme.',
-        'stairs': 'Buzlu merdiven. Yavaş ol, sahanlık küçük.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Bu paneller atıyor. Karanlık sırada bekle, sonra ilerle.',
         'board': 'Kumandayı bırak — ben sürerim, sen ateş et.',
-        'wave': 'Önde dronlar var! Dalış yapmadan vur onları.',
-        'dip': 'Büyük iniş geliyor. Sıkı tutun — ateşe devam!',
-        'arrive': 'Son durak. İn bakalım!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Yürümek için çok geniş. Kenardan kay, hızın seni taşır.',
-        'down': 'Güzel sıçrayış. Şimdi aşağı bakma.',
-        'shuttle': 'Mekikler. Yanaşınca bin, öbür tarafta in.',
         'wind': 'Rüzgâr dinene kadar bekle, sonra ilerle. Ya da bir sütunun arkasına saklan.',
-        'bob': 'Salınan platformlar. Aşağıda bin, seni yukarı taşısın.'
       },
       'vex': {
         'roof': 'Yıldırım! Halka yanınca kaç!',

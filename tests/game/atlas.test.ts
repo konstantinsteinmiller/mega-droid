@@ -269,13 +269,11 @@ describe('Atlas: tips keep their distance', () => {
     expect(tl[1]![1] - tl[0]![1]).toBeLessThan(lineSeconds(999) + ATLAS_GAP + 0.2)
   })
 
-  it('a stage hint is said once in a save; what is plain to see, never; a danger as it happens, every mission', () => {
+  it('a stage hint is said once in a save; a danger as it happens, every mission', () => {
     const ever = memory()
     const a = director(info(), ever)
     expect(onceEver('hint.blaze.barrels')).toBe(true)
     expect(a.say('hint.blaze.barrels')).toBe(true)
-    expect(a.say('hint.blaze.drop')).toBe(false)
-    expect(a.say('hint.gale.bob')).toBe(false)
     expect(run(a, 10)).toEqual(['hint.blaze.barrels'])
     const b = director(info(), ever)
     expect(b.say('hint.blaze.barrels')).toBe(false)
@@ -283,12 +281,6 @@ describe('Atlas: tips keep their distance', () => {
     for (const l of ['hint.tide.deep', 'hint.gm.arms', 'hint.vex.roof', 'trap', 'weak.iceLance'] as AtlasLine[]) {
       expect(onceEver(l), l).toBe(false)
       expect(b.say(l), l).toBe(true)
-    }
-  })
-
-  it('every line a stage can be turned down for is still a real line (text in the locale)', () => {
-    for (const l of ['hint.blaze.drop', 'hint.cryo.stairs', 'hint.volt.wave', 'hint.gale.bob', 'hint.tide.wade'] as AtlasLine[]) {
-      expect(typeof lookup(atlasKey(l)), l).toBe('string')
     }
   })
 

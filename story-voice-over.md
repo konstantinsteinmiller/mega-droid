@@ -887,7 +887,8 @@ hand-holding." The rules since (`sim/atlas.ts`):
   boss fight's own calls.
 - **What is plain to see is not said**: "one ledge at a time" where there is
   nowhere else to go, "hop off" at the end of a ride, wading, bobbing
-  platforms, a shuttle. The lines and their recordings stay in the catalogue.
+  platforms, a shuttle. Those thirteen lines are gone from the game, the
+  locales and the recordings (2026-10-03).
 - **The crate golem's scan is not chatter**: it is not what it seems, so it
   comes at once.
 - **One line on the way in** (the landing has none of its own; a job says
@@ -927,10 +928,8 @@ hand-holding." The rules since (`sim/atlas.ts`):
 | `atlas_switch` | `atlas.hint.switch` | "Switch. Try it." | *Reserved until the level kit has levers.* | 1.0 s |
 | `atlas_neon_blackout` | `atlas.hint.neon.blackout` | "Power's failing! Cross when the lights come back." | Calm warning as the lights dip; the second half is the instruction. **Live** (Blackout Boulevard, #110). | 2.6 s |
 | `atlas_drill_board` | `atlas.hint.drill.board` | "Ore cart's rolling! I steer, you shoot the moles." | Cheerful, a little proud to drive. **Live** (Deep Mine cart, #111), like `atlas.hint.volt.board`. | 2.8 s |
-| `atlas_drill_dip` | `atlas.hint.drill.dip` | "Steep drop! Hold on tight!" | A rollercoaster grin, quick. **Live.** | 1.6 s |
-| `atlas_drill_arrive` | `atlas.hint.drill.arrive` | "Last stop. Out you hop!" | Light, a conductor's sign-off. **Live.** | 1.6 s |
 
-These four ride the Atlas chain with the standard dynamics row, like the
+These two ride the Atlas chain with the standard dynamics row, like the
 other stage hints (`atlas.hint.cryo.*`, `atlas.hint.volt.*`), and still
 need adding to `voiceCatalog.ts`.
 

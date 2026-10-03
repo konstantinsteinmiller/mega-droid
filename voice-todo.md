@@ -176,23 +176,15 @@ Every line is short (a speech bubble of 2–3 s; a bark under a second).
 | `atlas_hint_blaze_vents.ogg` | Meltdown Descent: the flame-vent walkway | Hiss, then fire. Let the roar pass, then go. | Erst Zischen, dann Feuer. Warte das Fauchen ab, dann los. |
 | `atlas_hint_blaze_barrels.ogg` | Meltdown Descent: the ember barrels cross the stairs | Barrels! Watch the lamps, cross between them. | Fässer! Achte auf die Lampen, geh zwischen ihnen durch. |
 | `atlas_hint_blaze_hammers.ogg` | Meltdown Descent: the forge hammers over the walkway | Forge hammers. Count the beat, then run. | Schmiedehämmer. Zähl den Takt, dann lauf. |
-| `atlas_hint_blaze_drop.ogg` | Meltdown Descent: the top of the big drop shaft | Long way down. One ledge at a time. | Weit runter. Ein Sims nach dem anderen. |
 | `atlas_hint_cryo_ice.ogg` | Glacier Run: the first ice patch, in the lobby | Ice! Let go of the stick and you'll keep sliding. | Eis! Lass den Stick los, und du rutschst weiter. |
 | `atlas_hint_cryo_spikes.ogg` | Glacier Run: the ice bridge over the spike pit | Spikes under that ice. Walk it straight, no sharp turns. | Stacheln unter dem Eis. Geh geradeaus, keine scharfen Kurven. |
 | `atlas_hint_cryo_frost.ogg` | Glacier Run: the first frost thrower | Frost thrower. It glows and hisses first. Cross when it's quiet. | Frostwerfer. Erst glüht und zischt er. Geh, wenn er still ist. |
 | `atlas_hint_cryo_icicles.ogg` | Glacier Run: the icicle hall | Shadows on the floor? Icicles. Step out of the ring! | Schatten am Boden? Eiszapfen. Raus aus dem Ring! |
 | `atlas_hint_cryo_pillar.ogg` | Glacier Run: a cracked ice pillar in sight | That pillar's cracked. Shoot it, and there's your shortcut. | Die Säule hat Risse. Schieß drauf – schon hast du eine Abkürzung. |
-| `atlas_hint_cryo_stairs.ogg` | Glacier Run: the top of the ice stairs | Icy stairs. Go slow — the landing's small. | Eisige Treppe. Langsam – der Absatz ist klein. |
 | `atlas_hint_volt_panels.ogg` | Rail Rush: first coming up to the electrified floor panels | Those panels pulse. Wait on a dark row, then step. | Die Platten pulsieren. Warte auf einer dunklen Reihe, dann los. |
 | `atlas_hint_volt_board.ogg` | Rail Rush: the maglev cart sets off with Flux on it | Hands off the controls — I'll drive, you shoot. | Hände weg vom Steuer — ich fahre, du schießt. |
-| `atlas_hint_volt_wave.ogg` | Rail Rush: the first wave of drones comes in ahead of the cart | Drones ahead! Shoot them before they swoop. | Drohnen voraus! Schieß sie ab, bevor sie herabstoßen. |
-| `atlas_hint_volt_dip.ogg` | Rail Rush: just before the rail's big drop | Big drop ahead. Hold on — keep shooting! | Gleich geht's steil runter. Festhalten — weiterschießen! |
-| `atlas_hint_volt_arrive.ogg` | Rail Rush: the cart stops at the exit station | End of the line. Hop off! | Endstation. Steig aus! |
 | `atlas_hint_gale_leap.ogg` | Sky Docks: the first one-cell gap between islands | Gap's too wide to walk. Slide off the edge — you'll carry. | Zu breit zum Gehen. Rutsch über die Kante – du fliegst mit. |
-| `atlas_hint_gale_down.ogg` | Sky Docks: landed across the first gap | Nice leap. Now don't look down. | Schöner Sprung. Jetzt bloß nicht nach unten schauen. |
-| `atlas_hint_gale_shuttle.ogg` | Sky Docks: the first shuttle over a wide gap | Shuttles. Step on when it docks, off at the other end. | Fähren. Aufsteigen, wenn sie anlegt, drüben wieder runter. |
 | `atlas_hint_gale_wind.ogg` | Sky Docks: the mouth of the wind tunnel | Wait for the gust to die, then move. Or hide behind a pillar. | Warte, bis die Böe abflaut, dann los. Oder duck dich hinter eine Säule. |
-| `atlas_hint_gale_bob.ogg` | Sky Docks: the first bobbing platform | Bobbing platforms. Hop on at the bottom, ride it up. | Schwebeplattformen. Unten aufsteigen, mit nach oben fahren. |
 | `atlas_secret_lights.ogg` | First time near a lamp puzzle (copy the panel's on/off pattern) | That panel shows a pattern. The lamps on the wall don't. Yet. | Das Schild zeigt ein Muster. Die Lampen an der Wand noch nicht. |
 | `atlas_secret_color.ogg` | First time near a colour puzzle (only the frame's colour lit) | That frame has a favourite colour. Only its lamps should shine. | Der Rahmen hat eine Lieblingsfarbe. Nur ihre Lampen sollen leuchten. |
 | `atlas_secret_cycle.ogg` | First time near a colour-cycle puzzle (each hit steps the colour) | Every hit changes a lamp's mind. The panel knows what it wants. | Jeder Treffer ändert die Meinung einer Lampe. Das Schild weiß, was es will. |
@@ -290,8 +282,6 @@ Every line is short (a speech bubble of 2–3 s; a bark under a second).
 | `atlas_hint_gm_prism.ogg` | Grand Master: the Prism Cannon charges | Prism Cannon! Shield up! | Prismakanone! Schild hoch! |
 | `atlas_hint_neon_blackout.ogg` | Blackout Boulevard: at the first pulse bridge | Power's failing! Cross when the lights come back. | Der Strom fällt aus! Rüber, wenn das Licht wieder angeht. |
 | `atlas_hint_drill_board.ogg` | Deep Mine: boarding the ore cart | Ore cart's rolling! I steer, you shoot the moles. | Die Lore rollt! Ich lenke, du schießt auf die Maulwürfe. |
-| `atlas_hint_drill_dip.ogg` | Deep Mine: before the cart's steep drop | Steep drop! Hold on tight! | Steil bergab! Gut festhalten! |
-| `atlas_hint_drill_arrive.ogg` | Deep Mine: the cart stops at the warren | Last stop. Out you hop! | Letzter Halt. Raus mit dir! |
 | `ending_gauss.ogg` | The ending: Gauss steps out of her capsule | Flux... you did it. You brought them all back. | Flux... du hast es geschafft. Du hast sie alle zurückgebracht. |
 | `ending_atlas.ogg` | The ending: Atlas and the empty Spire | The Spire is empty. I could run this city now. I won't. It's theirs. | Der Turm ist leer. Ich könnte diese Stadt jetzt lenken. Tu ich nicht. Sie gehört ihnen. |
 | `ending_spark.ogg` | The ending: the sunrise, the last line | Flux... did you see that spark? | Flux... hast du den Funken gesehen? |

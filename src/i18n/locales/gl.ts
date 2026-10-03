@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: a partir do nivel 31.',
       },
       'rotor': {
-        'arrive': 'Aterramos. Baixa!',
-        'dip': 'Agárrate, que baixamos en picado!',
         'board': 'Todos a bordo! Eu voo, ti disparas.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Demasiado fondo! Sae da auga!',
         'valve': 'Comporta asolagada! Dispara á válvula para baleirala.',
         'rise': 'Sobe a marea. Arriba polos chanzos!',
-        'wade': 'Auga! Vadear frénate.',
       },
       'gm': {
         'button': 'Vex está a premer algo... Prepárate!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Caen rochas! Sae das sombras.',
         'rock': 'Rocha fendida! Un disparo cargado ao máximo romperaa.',
         'board': 'A vagoneta arranca! Eu conduzo, ti dispara ás toupas.',
-        'dip': 'Baixada empinada! Agárrate forte!',
-        'arrive': 'Última parada. Abaixo!',
       },
       'magnet': {
         'panel': 'Ves esa placa vermella e azul? Dispáralle para inverter o raíl.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Asubío e logo lume. Deixa pasar o ruxido e vai.',
         'barrels': 'Barrís! Mira as luces e cruza entre eles.',
         'hammers': 'Martelos de forxa. Conta o ritmo e corre.',
-        'drop': 'Hai moita caída. Unha cornixa de cada vez.'
       },
       'cryo': {
         'ice': 'Xeo! Se soltas o stick, segues esvarando.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Lanzaxeada. Primeiro brilla e asubía. Cruza cando cale.',
         'icicles': 'Sombras no chan? Carambelos. Sae do círculo!',
         'pillar': 'Ese piar está fendido. Dispáralle e terás un atallo.',
-        'stairs': 'Escaleiras xeadas. Amodo: o rellano é pequeno.'
       },
       'volt': {
         'panels': 'Eses paneis laten. Agarda nunha fila apagada e avanza.',
         'board': 'Solta os controis: eu conduzo, ti disparas.',
-        'wave': 'Drons diante! Derrúbaos antes de que se lancen.',
-        'dip': 'Vén unha gran baixada. Agárrate e segue disparando!',
-        'arrive': 'Fin do traxecto. Baixa!'
       },
       'gale': {
         'leap': 'Demasiado ancho para cruzar camiñando. Esvara polo bordo: o impulso lévate.',
-        'down': 'Bo salto. Agora non mires abaixo.',
-        'shuttle': 'Lanzadeiras. Sube cando atraque e baixa no outro lado.',
         'wind': 'Agarda a que pase a refachada e avanza. Ou agóchate tras un piar.',
-        'bob': 'Plataformas flotantes. Sube abaixo e deixa que te eleve.'
       }
     },
     'secret': {

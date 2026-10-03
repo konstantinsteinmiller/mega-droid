@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: dal livello 31 in su.',
       },
       'rotor': {
-        'arrive': 'Atterrati. Scendi!',
-        'dip': 'Tieniti forte, si scende in picchiata!',
         'board': 'Tutti a bordo! Volo io, tu spari.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Troppo profondo! Esci dall’acqua!',
         'valve': 'Chiusa allagata! Spara alla valvola per svuotarla.',
         'rise': 'Arriva la marea. Su per i gradini!',
-        'wade': 'Acqua! Guadare ti rallenta.',
       },
       'drill': {
         'drop': 'Cadono massi! Esci dalle ombre.',
         'rock': 'Roccia crepata! Un colpo a carica piena la spacca.',
         'board': 'Il carrello parte! Guido io, tu spara alle talpe.',
-        'dip': 'Discesa ripida! Tieniti forte!',
-        'arrive': 'Ultima fermata. Giù, salta!'
       },
       'magnet': {
         'panel': 'Vedi quella piastra rossa e blu? Sparale per invertire il binario.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Prima il sibilo, poi il fuoco. Aspetta il ruggito, poi vai.',
         'barrels': "Barili! Guarda le luci e passa tra uno e l'altro.",
         'hammers': 'Magli da forgia. Conta il ritmo, poi corri.',
-        'drop': 'È una bella discesa. Una sporgenza alla volta.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Lanciagelo. Prima brilla e sibila. Passa quando tace.',
         'icicles': 'Ombre sul pavimento? Ghiaccioli. Esci dal cerchio!',
         'pillar': 'Quel pilastro è crepato. Sparagli ed ecco la scorciatoia.',
-        'stairs': 'Scale ghiacciate. Piano: il pianerottolo è piccolo.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Quei pannelli pulsano. Aspetta su una fila spenta, poi avanza.',
         'board': 'Giù le mani dai comandi: guido io, tu spari.',
-        'wave': 'Droni in arrivo! Abbattili prima che piombino giù.',
-        'dip': 'Grande discesa in arrivo. Tieniti forte e continua a sparare!',
-        'arrive': 'Capolinea. Scendi!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Troppo largo per camminare. Scivola oltre il bordo: lo slancio ti porta.',
-        'down': 'Bel salto. Ora non guardare giù.',
-        'shuttle': "Navette. Sali quando attracca, scendi dall'altra parte.",
         'wind': 'Aspetta che la raffica cali, poi muoviti. O riparati dietro un pilastro.',
-        'bob': 'Piattaforme ondeggianti. Sali in basso e fatti portare su.'
       },
       'vex': {
         'roof': 'Fulmini! Spostati quando l’anello si accende!',

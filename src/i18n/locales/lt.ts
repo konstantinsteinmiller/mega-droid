@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: nuo 31 lygio.',
       },
       'rotor': {
-        'arrive': 'Nusileidome. Lipk lauk!',
-        'dip': 'Laikykis, neriame!',
         'board': 'Visi į vidų! Aš skrendu, tu šaudai.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Per gilu! Lipk iš vandens!',
         'valve': 'Užlietas šliuzas! Šauk į sklendę, kad nuleistum vandenį.',
         'rise': 'Vanduo kyla. Lipk laiptais!',
-        'wade': 'Vanduo! Brendant judi lėčiau.'
       },
       'gm': {
         'button': 'Vex kažką spaudžia... Pasiruošk!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Krenta akmenys! Išeik iš šešėlių.',
         'rock': 'Įskilusi uola! Pilnai įkrautas šūvis ją sudaužys.',
         'board': 'Rūdos vagonėlis rieda! Aš vairuoju, tu šaudai kurmius.',
-        'dip': 'Status nuolydis! Laikykis tvirtai!',
-        'arrive': 'Paskutinė stotelė. Išlipk!'
       },
       'magnet': {
         'panel': 'Matai tą raudonai mėlyną plokštę? Šauk į ją, kad perjungtum bėgį.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Šnypštimas, tada ugnis. Praleisk riaumojimą ir eik.',
         'barrels': 'Statinės! Stebėk lempas, pereik tarp jų.',
         'hammers': 'Kalvės kūjai. Skaičiuok taktą, tada bėk.',
-        'drop': 'Ilgas kelias žemyn. Po vieną atbrailą.'
       },
       'cryo': {
         'ice': 'Ledas! Paleisk vairalazdę – ir toliau slysi.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Šalčio svaidyklė. Pirma ji švyti ir šnypščia. Pereik, kai nutils.',
         'icicles': 'Šešėliai ant grindų? Varvekliai. Išeik iš žiedo!',
         'pillar': 'Ta kolona įskilusi. Šauk į ją – štai ir trumpesnis kelias.',
-        'stairs': 'Lediniai laiptai. Lėtai – aikštelė maža.'
       },
       'volt': {
         'panels': 'Tos plokštės pulsuoja. Palauk ant tamsios eilės, tada ženk.',
         'board': 'Rankas nuo pulto – aš vairuoju, tu šaudai.',
-        'wave': 'Priekyje dronai! Nušauk juos, kol nesmigo žemyn.',
-        'dip': 'Priekyje didelis kritimas. Laikykis – ir šaudyk!',
-        'arrive': 'Kelionės pabaiga. Išlipk!'
       },
       'gale': {
         'leap': 'Tarpas per platus pereiti. Nuslysk nuo krašto – perskrisi.',
-        'down': 'Puikus šuolis. Tik nežiūrėk žemyn.',
-        'shuttle': 'Šaudyklės. Lipk, kai prisišvartuoja, išlipk kitame gale.',
         'wind': 'Palauk, kol gūsis nurims, tada judėk. Arba slėpkis už kolonos.',
-        'bob': 'Siūbuojančios platformos. Užlipk apačioje ir pakilk kartu.'
       }
     },
     'secret': {

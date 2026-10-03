@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector} : à partir du niveau 31.',
       },
       'rotor': {
-        'arrive': 'Atterrissage. Descends !',
-        'dip': 'Accroche-toi, on pique !',
         'board': 'En voiture ! Je vole, tu tires.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Trop profond ! Sors de l’eau !',
         'valve': 'Écluse inondée ! Tire sur la vanne pour la vider.',
         'rise': 'La marée monte. Grimpe les marches !',
-        'wade': 'De l’eau ! Patauger te ralentit.',
       },
       'drill': {
         'drop': 'Chute de pierres ! Sors des ombres.',
         'rock': 'Roche fissurée ! Un tir chargé à fond la brisera.',
         'board': 'Le wagonnet roule ! Je conduis, tu tires sur les taupes.',
-        'dip': 'Grosse pente ! Accroche-toi bien !',
-        'arrive': 'Dernier arrêt. Tout le monde descend !'
       },
       'magnet': {
         'panel': 'Tu vois la plaque rouge et bleue ? Tire dessus pour inverser le rail.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Un sifflement, puis le feu. Attends le rugissement, puis fonce.',
         'barrels': 'Des barils ! Surveille les lampes, passe entre eux.',
         'hammers': 'Marteaux de forge. Compte le rythme, puis cours.',
-        'drop': 'Ça descend loin. Une corniche à la fois.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': "Lance-givre. Il brille et siffle d'abord. Passe quand il se tait.",
         'icicles': 'Des ombres au sol ? Des stalactites. Sors du cercle !',
         'pillar': 'Ce pilier est fissuré. Tire dessus : voilà ton raccourci.',
-        'stairs': 'Escalier gelé. Doucement, le palier est petit.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Ces dalles pulsent. Attends sur une rangée éteinte, puis avance.',
         'board': 'Lâche les commandes — je conduis, tu tires.',
-        'wave': "Drones droit devant ! Abats-les avant qu'ils plongent.",
-        'dip': 'Grosse descente en vue. Accroche-toi — continue de tirer !',
-        'arrive': 'Terminus. Descends !'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Trop large pour marcher. Glisse depuis le bord, ton élan fera le reste.',
-        'down': 'Joli saut. Maintenant, ne regarde pas en bas.',
-        'shuttle': "Navettes. Monte quand elle accoste, descends de l'autre côté.",
         'wind': 'Attends que la rafale retombe, puis avance. Ou abrite-toi derrière un pilier.',
-        'bob': 'Plateformes flottantes. Monte en bas, laisse-toi porter.'
       },
       'vex': {
         'roof': 'Foudre ! Bouge quand l’anneau s’allume !',

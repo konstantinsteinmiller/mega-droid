@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: səviyyə 31 və yuxarı.',
       },
       'rotor': {
-        'arrive': 'Endik. Düş aşağı!',
-        'dip': 'Möhkəm tut, şığıyırıq!',
         'board': 'Hamı minsin! Mən uçuram, sən atəş aç.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Çox dərindir! Sudan çıx!',
         'valve': 'Su basmış şlüz! Boşaltmaq üçün ventili vur.',
         'rise': 'Su qalxır. Pilləkənlə yuxarı!',
-        'wade': 'Su! Suda yerimək səni yavaşladır.'
       },
       'gm': {
         'button': 'Vex nəyisə basır... Hazırlaş!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Daşlar düşür! Kölgələrdən çıx.',
         'rock': 'Çatlamış qaya! Tam yüklü atəş onu sındırar.',
         'board': 'Filiz vaqonu yola düşdü! Mən sürürəm, sən köstəbəkləri vur.',
-        'dip': 'Sıldırım eniş! Möhkəm tut!',
-        'arrive': 'Son dayanacaq. Düş aşağı!'
       },
       'magnet': {
         'panel': 'O qırmızı-mavi lövhəni görürsən? Relsi çevirmək üçün onu vur.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Əvvəl fısıltı, sonra od. Gurultu keçsin, sonra get.',
         'barrels': 'Çəlləklər! Lampalara bax, aralarından keç.',
         'hammers': 'Dəmirçi çəkicləri. Ritmi say, sonra qaç.',
-        'drop': 'Uzun eniş. Hər dəfə bir çıxıntı.'
       },
       'cryo': {
         'ice': 'Buz! Çubuğu buraxsan, sürüşməyə davam edəcəksən.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Şaxta atıcısı. Əvvəl parlayır və fısıldayır. Susanda keç.',
         'icicles': 'Yerdə kölgələr? Buz sırsıraları. Halqadan çıx!',
         'pillar': 'O sütun çatlayıb. Vur onu — budur sənə qısa yol.',
-        'stairs': 'Buzlu pilləkən. Yavaş — meydança kiçikdir.'
       },
       'volt': {
         'panels': 'O panellər döyünür. Qaranlıq cərgədə gözlə, sonra addımla.',
         'board': 'Əllərini idarədən çək — mən sürürəm, sən atəş aç.',
-        'wave': 'Qarşıda dronlar! Şığımadan onları vur.',
-        'dip': 'Qarşıda böyük eniş. Möhkəm tut — atəşə davam!',
-        'arrive': 'Xəttin sonu. Düş aşağı!'
       },
       'gale': {
         'leap': 'Boşluq yeriyib keçmək üçün çox genişdir. Kənardan sürüş — uçub keçəcəksən.',
-        'down': 'Gözəl tullanış. İndi aşağı baxma.',
-        'shuttle': 'Mekiklər. Yanaşanda min, o biri başda düş.',
         'wind': 'Külək sakitləşənə qədər gözlə, sonra tərpən. Ya da sütunun arxasında gizlən.',
-        'bob': 'Yırğalanan platformalar. Aşağıda min, yuxarı qalx.'
       }
     },
     'secret': {

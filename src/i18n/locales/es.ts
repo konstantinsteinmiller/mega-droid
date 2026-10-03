@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: a partir del nivel 31.',
       },
       'rotor': {
-        'arrive': 'Aterrizamos. ¡Bájate!',
-        'dip': '¡Agárrate, que bajamos en picado!',
         'board': '¡Todos a bordo! Yo vuelo, tú disparas.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': '¡Demasiado hondo! ¡Sal del agua!',
         'valve': '¡Esclusa inundada! Dispara a la válvula para vaciarla.',
         'rise': '¡Sube la marea! ¡Arriba por los escalones!',
-        'wade': '¡Agua! Vadear te frena.',
       },
       'drill': {
         'drop': '¡Caen rocas! Sal de las sombras.',
         'rock': '¡Roca agrietada! Un disparo cargado al máximo la rompe.',
         'board': '¡La vagoneta arranca! Yo conduzco, tú dispara a los topos.',
-        'dip': '¡Bajada empinada! ¡Agárrate fuerte!',
-        'arrive': 'Última parada. ¡Abajo!'
       },
       'magnet': {
         'panel': '¿Ves esa placa roja y azul? Dispárale para invertir el raíl.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Silbido y luego fuego. Espera el rugido y pasa.',
         'barrels': '¡Barriles! Mira las luces y cruza entre ellos.',
         'hammers': 'Martillos de forja. Cuenta el ritmo y corre.',
-        'drop': 'Hay mucha caída. Una cornisa cada vez.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Lanzaescarcha. Primero brilla y sisea. Cruza cuando calle.',
         'icicles': '¿Sombras en el suelo? Carámbanos. ¡Sal del círculo!',
         'pillar': 'Ese pilar está agrietado. Dispárale y tendrás un atajo.',
-        'stairs': 'Escaleras heladas. Despacio: el rellano es pequeño.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Esos paneles laten. Espera en una fila apagada y avanza.',
         'board': 'Suelta los controles: yo conduzco, tú disparas.',
-        'wave': '¡Drones delante! Derríbalos antes de que se lancen.',
-        'dip': 'Se viene una gran bajada. ¡Agárrate y sigue disparando!',
-        'arrive': 'Fin del trayecto. ¡Bájate!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Demasiado ancho para cruzar andando. Deslízate por el borde: el impulso te lleva.',
-        'down': 'Buen salto. Ahora no mires abajo.',
-        'shuttle': 'Lanzaderas. Sube cuando atraque y baja al otro lado.',
         'wind': 'Espera a que pase la ráfaga y avanza. O escóndete tras un pilar.',
-        'bob': 'Plataformas flotantes. Súbete abajo y deja que te eleve.'
       },
       'vex': {
         'roof': '¡Rayos! ¡Muévete cuando se encienda el anillo!',

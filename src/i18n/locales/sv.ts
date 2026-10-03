@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: nivå 31 och uppåt.',
       },
       'rotor': {
-        'arrive': 'Landat. Hoppa av!',
-        'dip': 'Håll i dig, vi dyker!',
         'board': 'Alla ombord! Jag flyger, du skjuter.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'För djupt! Ut ur vattnet!',
         'valve': 'Översvämmad sluss! Skjut på ventilen för att tömma den.',
         'rise': 'Tidvattnet stiger. Upp för trappan!',
-        'wade': 'Vatten! Att vada saktar ner dig.',
       },
       'gm': {
         'button': 'Vex trycker på något... Gör dig redo!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Stenras! Kliv ut ur skuggorna.',
         'rock': 'Sprucken sten! En full laddning spräcker den.',
         'board': 'Malmvagnen rullar! Jag styr, du skjuter mullvadarna.',
-        'dip': 'Brant nedför! Håll i dig!',
-        'arrive': 'Sista stoppet. Hoppa av!',
       },
       'magnet': {
         'panel': 'Ser du den röd-blå plattan? Skjut på den för att vända rälsen.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Först väs, sedan eld. Låt dånet passera, sedan kör.',
         'barrels': 'Tunnor! Håll koll på lamporna, gå emellan dem.',
         'hammers': 'Smideshammare. Räkna takten, spring sedan.',
-        'drop': 'Långt ner. En avsats i taget.'
       },
       'cryo': {
         'ice': 'Is! Släpper du spaken glider du vidare.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Frostkastare. Den lyser och väser först. Gå över när den är tyst.',
         'icicles': 'Skuggor på golvet? Istappar. Kliv ut ur ringen!',
         'pillar': 'Pelaren är sprucken. Skjut på den, så har du en genväg.',
-        'stairs': 'Isig trappa. Ta det lugnt — avsatsen är liten.'
       },
       'volt': {
         'panels': 'Plattorna pulserar. Vänta på en mörk rad, kliv sedan.',
         'board': 'Släpp spakarna — jag kör, du skjuter.',
-        'wave': 'Drönare framför! Skjut dem innan de dyker.',
-        'dip': 'Stort fall framför. Håll i dig — fortsätt skjuta!',
-        'arrive': 'Slutstation. Hoppa av!'
       },
       'gale': {
         'leap': 'Gapet är för brett att gå. Glid över kanten — du flyger över.',
-        'down': 'Snyggt hopp. Titta inte ner nu.',
-        'shuttle': 'Skyttlar. Kliv på när den lägger till, av i andra änden.',
         'wind': 'Vänta tills vindbyn lägger sig, rör dig sedan. Eller göm dig bakom en pelare.',
-        'bob': 'Guppande plattformar. Hoppa på längst ner, åk med upp.'
       }
     },
     'secret': {

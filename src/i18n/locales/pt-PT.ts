@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: a partir do nível 31.',
       },
       'rotor': {
-        'arrive': 'Aterrámos. Salta cá para fora!',
-        'dip': 'Agarra-te, vamos mergulhar!',
         'board': 'Todos a bordo! Eu voo, tu disparas.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Fundo demais! Sai da água!',
         'valve': 'Eclusa inundada! Dispara contra a válvula para a esvaziar.',
         'rise': 'A maré está a subir. Sobe os degraus!',
-        'wade': 'Água! Andar dentro dela abranda-te.',
       },
       'gm': {
         'button': 'O Vex está a carregar em alguma coisa... Prepara-te!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Pedras a cair! Sai das sombras.',
         'rock': 'Rocha rachada! Um tiro com carga total parte-a.',
         'board': 'O vagonete arrancou! Eu conduzo, tu disparas às toupeiras.',
-        'dip': 'Descida íngreme! Agarra-te bem!',
-        'arrive': 'Última paragem. Salta cá para fora!',
       },
       'magnet': {
         'panel': 'Vês aquela placa vermelha e azul? Dispara contra ela para inverter o carril.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Primeiro o silvo, depois o fogo. Deixa passar o rugido e vai.',
         'barrels': 'Barris! Olha para as luzes e passa entre eles.',
         'hammers': 'Martelos de forja. Conta o ritmo e corre.',
-        'drop': 'Que descida tão longa. Uma saliência de cada vez.'
       },
       'cryo': {
         'ice': 'Gelo! Larga o manípulo e continuas a deslizar.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Lança-gelo. Primeiro brilha e sibila. Passa quando estiver calado.',
         'icicles': 'Sombras no chão? Pingentes de gelo. Sai do círculo!',
         'pillar': 'Esse pilar está rachado. Dispara contra ele e tens um atalho.',
-        'stairs': 'Escadas geladas. Devagar — o patamar é pequeno.'
       },
       'volt': {
         'panels': 'Esses painéis pulsam. Espera numa fila apagada e avança.',
         'board': 'Tira as mãos dos comandos — eu conduzo, tu disparas.',
-        'wave': 'Drones à frente! Abate-os antes de mergulharem.',
-        'dip': 'Grande descida à frente. Agarra-te — continua a disparar!',
-        'arrive': 'Fim da linha. Salta cá para fora!'
       },
       'gale': {
         'leap': 'Largo demais para ir a pé. Desliza pela borda — o embalo leva-te.',
-        'down': 'Belo salto. Agora não olhes para baixo.',
-        'shuttle': 'Plataformas móveis. Sobe quando atracar, sai do outro lado.',
         'wind': 'Espera que a rajada passe e avança. Ou esconde-te atrás de um pilar.',
-        'bob': 'Plataformas flutuantes. Sobe cá em baixo e deixa-te levar para cima.'
       }
     },
     'secret': {

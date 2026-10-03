@@ -9,8 +9,7 @@ import { cueFeature, type StageFeature } from '../stageFeatures'
  *
  * One line per new danger, said once, the first time Flux stands where it
  * starts (`world/stages/blaze.ts`): the lava under the first catwalks, the
- * leap gap, the vent walkway, the ember barrels, the forge hammers, the
- * big drop. Pinned to the terrain, not to numbers — each at its section's
+ * leap gap, the vent walkway, the ember barrels, the forge hammers. Pinned to the terrain, not to numbers — each at its section's
  * entry checkpoint (the leap at its take-off cell) — so the mirror and any
  * change to the layout carry them along.
  */
@@ -33,6 +32,5 @@ export const meltdownCues = (host: Pick<ClimbHost, 'say' | 'map'>, t: Terrain): 
   at('hint.blaze.vents', t.vents?.find(v => v.kind === 'fire')?.room)
   at('hint.blaze.barrels', t.lanes[0]?.room)
   at('hint.blaze.hammers', t.crushers[0]?.room)
-  at('hint.blaze.drop', t.sections.indexOf('drop'))
   return cueFeature(host, cues)
 }

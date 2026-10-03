@@ -817,8 +817,6 @@ export default {
         'fortress': '{sector} runs level 31 and up.',
       },
       'rotor': {
-        'arrive': 'Touchdown. Hop off!',
-        'dip': "Hold on, we're diving!",
         'board': 'All aboard! I fly, you shoot.',
       },
       'neon': {
@@ -832,7 +830,6 @@ export default {
         'deep': 'Too deep! Get out of the water!',
         'valve': 'Flooded lock! Shoot the valve to drain it.',
         'rise': "The tide's coming in. Up the steps!",
-        'wade': 'Water! Wading slows you down.',
       },
       // The Grand Master Bot (#101): Atlas through the fight, part by part.
       'gm': {
@@ -854,8 +851,6 @@ export default {
         'rock': 'Cracked rock! A full charge will break it.',
         // The mine cart (#111).
         'board': "Ore cart's rolling! I steer, you shoot the moles.",
-        'dip': 'Steep drop! Hold on tight!',
-        'arrive': 'Last stop. Out you hop!',
       },
       'magnet': {
         'panel': 'See that red-blue plate? Shoot it to flip the rail.',
@@ -868,7 +863,6 @@ export default {
         'vents': 'Hiss, then fire. Let the roar pass, then go.',
         'barrels': 'Barrels! Watch the lamps, cross between them.',
         'hammers': 'Forge hammers. Count the beat, then run.',
-        'drop': 'Long way down. One ledge at a time.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -877,23 +871,16 @@ export default {
         'frost': "Frost thrower. It glows and hisses first. Cross when it's quiet.",
         'icicles': 'Shadows on the floor? Icicles. Step out of the ring!',
         'pillar': "That pillar's cracked. Shoot it, and there's your shortcut.",
-        'stairs': "Icy stairs. Go slow — the landing's small."
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Those panels pulse. Wait on a dark row, then step.',
         'board': "Hands off the controls — I'll drive, you shoot.",
-        'wave': 'Drones ahead! Shoot them before they swoop.',
-        'dip': 'Big drop ahead. Hold on — keep shooting!',
-        'arrive': 'End of the line. Hop off!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': "Gap's too wide to walk. Slide off the edge — you'll carry.",
-        'down': "Nice leap. Now don't look down.",
-        'shuttle': 'Shuttles. Step on when it docks, off at the other end.',
         'wind': 'Wait for the gust to die, then move. Or hide behind a pillar.',
-        'bob': 'Bobbing platforms. Hop on at the bottom, ride it up.'
       }
     },
     'secret': {

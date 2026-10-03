@@ -1823,7 +1823,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const a = this.atlas
     if (!a) return
     // The story's first-time warnings from the stage itself (a crusher, a ladder, a lift over
-    // a pit): once ever, and not where the stage has its own tip for the same thing.
+    // a pit): once ever. Not in Meltdown Descent, whose hammers have their own tip, nor on the
+    // Sky Docks, where the shuttles over the gaps are plain to see (#122).
     if (line === 'warn.crusher' || line === 'warn.ladder' || line === 'warn.pit') {
       if ((line === 'warn.crusher' && this.setup.sector === 'blaze') || (line === 'warn.pit' && this.setup.sector === 'gale')) return
       if (!a.first(`atlas:${line}`)) return

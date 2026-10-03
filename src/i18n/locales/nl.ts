@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: vanaf level 31.',
       },
       'rotor': {
-        'arrive': 'Geland. Stap maar uit!',
-        'dip': 'Hou je vast, we duiken!',
         'board': 'Instappen! Ik vlieg, jij schiet.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Te diep! Uit het water!',
         'valve': 'Ondergelopen sluis! Schiet op de klep om hem leeg te laten lopen.',
         'rise': 'Het tij komt op. De trap op!',
-        'wade': 'Water! Waden remt je af.',
       },
       'drill': {
         'drop': 'Vallende stenen! Stap uit de schaduwen.',
         'rock': 'Gebarsten rots! Een volledig geladen schot breekt hem.',
         'board': 'Het mijnkarretje rolt! Ik stuur, jij schiet de mollen.',
-        'dip': 'Steile afdaling! Hou je goed vast!',
-        'arrive': 'Laatste halte. Spring er maar uit!'
       },
       'magnet': {
         'panel': 'Zie je die rood-blauwe plaat? Schiet erop om de rail om te polen.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Eerst gesis, dan vuur. Wacht op het gebrul en ga dan.',
         'barrels': 'Vaten! Let op de lampjes en steek ertussendoor over.',
         'hammers': 'Smeedhamers. Tel de maat en ren dan.',
-        'drop': 'Het is diep. Eén richel tegelijk.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Vorstwerper. Eerst gloeit en sist hij. Ga als hij stil is.',
         'icicles': 'Schaduwen op de vloer? IJspegels. Stap uit de ring!',
         'pillar': 'Die pilaar is gebarsten. Schiet erop en je hebt een kortere weg.',
-        'stairs': 'IJzige trap. Rustig aan, het bordes is klein.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Die panelen pulseren. Wacht op een donkere rij en stap dan door.',
         'board': 'Handen van de besturing — ik rijd, jij schiet.',
-        'wave': 'Drones vooruit! Schiet ze neer voordat ze duiken.',
-        'dip': 'Grote afdaling in zicht. Hou je vast — blijf schieten!',
-        'arrive': 'Eindstation. Stap maar uit!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Te breed om te lopen. Glij over de rand – je vaart draagt je.',
-        'down': 'Mooie sprong. Nu niet naar beneden kijken.',
-        'shuttle': 'Pendels. Stap op als hij aanmeert, aan de overkant eraf.',
         'wind': 'Wacht tot de windvlaag gaat liggen, dan lopen. Of schuil achter een pilaar.',
-        'bob': 'Deinende platforms. Stap onderaan op en ga mee omhoog.'
       },
       'vex': {
         'roof': 'Bliksem! Beweeg als de ring oplicht!',

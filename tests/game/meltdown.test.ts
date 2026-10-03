@@ -371,9 +371,9 @@ describe('generateMeltdown', () => {
     const spots = [...t.checkpoints.map(c => [c.x, c.y, c.z]), ...(t.links ?? []).map(l => [cellCenter(l.from[0]), t.floor[l.from[1] * m.w + l.from[0]]!, cellCenter(l.from[1])])]
     for (const [x, y, z] of spots) cues.update(DT, 0, body(x!, z!, y!), true)
     for (const [x, y, z] of spots) cues.update(DT, 0, body(x!, z!, y!), true)
-    expect(new Set(said)).toEqual(new Set(['hint.blaze.lava', 'hint.blaze.leap', 'hint.blaze.vents', 'hint.blaze.barrels', 'hint.blaze.hammers', 'hint.blaze.drop']))
-    expect(said).toHaveLength(6)
-    expect(cues.save!()).toEqual([1, 1, 1, 1, 1, 1])
+    expect(new Set(said)).toEqual(new Set(['hint.blaze.lava', 'hint.blaze.leap', 'hint.blaze.vents', 'hint.blaze.barrels', 'hint.blaze.hammers']))
+    expect(said).toHaveLength(5)
+    expect(cues.save!()).toEqual([1, 1, 1, 1, 1])
   })
 
   it('runs under ClimbRun: the features ride in its save', () => {

@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: level 31 ke atas.',
       },
       'rotor': {
-        'arrive': 'Mendarat. Turun!',
-        'dip': 'Pegangan, kita menukik!',
         'board': 'Ayo naik! Aku terbang, kamu menembak.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Terlalu dalam! Keluar dari air!',
         'valve': 'Pintu air banjir! Tembak katupnya untuk mengurasnya.',
         'rise': 'Air pasang datang. Naik tangga!',
-        'wade': 'Air! Mengarungi air bikin kamu lambat.',
       },
       'drill': {
         'drop': 'Batu berjatuhan! Keluar dari bayangan.',
         'rock': 'Batu retak! Tembakan bermuatan penuh bisa menghancurkannya.',
         'board': 'Lori tambang melaju! Aku menyetir, kamu tembak tikus tanahnya.',
-        'dip': 'Turunan curam! Pegangan erat!',
-        'arrive': 'Pemberhentian terakhir. Ayo turun!'
       },
       'magnet': {
         'panel': 'Lihat pelat merah-biru itu? Tembak untuk membalik relnya.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Desis dulu, lalu api. Tunggu raungannya, lalu jalan.',
         'barrels': 'Tong! Perhatikan lampunya, menyeberang di sela-selanya.',
         'hammers': 'Palu tempa. Hitung iramanya, lalu lari.',
-        'drop': 'Jalan turunnya jauh. Satu pijakan setiap kali.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Penyembur beku. Ia menyala dan mendesis dulu. Lewat saat ia diam.',
         'icicles': 'Bayangan di lantai? Es runcing. Keluar dari lingkaran!',
         'pillar': 'Pilar itu retak. Tembak, dan itulah jalan pintasmu.',
-        'stairs': 'Tangga licin. Pelan-pelan, bordesnya kecil.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Panel itu berdenyut. Tunggu di baris yang gelap, lalu melangkah.',
         'board': 'Lepaskan kemudi — aku yang menyetir, kamu yang menembak.',
-        'wave': 'Drone di depan! Tembak sebelum mereka menukik.',
-        'dip': 'Turunan besar di depan. Pegangan — terus menembak!',
-        'arrive': 'Stasiun terakhir. Turun!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Terlalu lebar untuk dilewati. Meluncurlah dari tepi, momentummu akan membawamu.',
-        'down': 'Lompatan bagus. Sekarang jangan lihat ke bawah.',
-        'shuttle': 'Platform antar. Naik saat merapat, turun di seberang.',
         'wind': 'Tunggu embusan reda, lalu maju. Atau sembunyi di balik pilar.',
-        'bob': 'Platform naik-turun. Naik di bawah, biarkan ia mengangkatmu.'
       },
       'vex': {
         'roof': 'Petir! Bergerak saat cincinnya menyala!',

@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: od razine 31.',
       },
       'rotor': {
-        'arrive': 'Slijetanje. Skači van!',
-        'dip': 'Drži se, poniremo!',
         'board': 'Ukrcaj! Ja letim, ti pucaš.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Preduboko! Izađi iz vode!',
         'valve': 'Poplavljena ustava! Pucaj u ventil da je isušiš.',
         'rise': 'Plima nadolazi. Uz stube!',
-        'wade': 'Voda! Gaženje kroz nju te usporava.'
       },
       'gm': {
         'button': 'Vex nešto pritišće... Pripremi se!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Kamenje pada! Izađi iz sjena.',
         'rock': 'Napukla stijena! Potpuno nabijeni hitac razbit će je.',
         'board': 'Rudarska kolica kreću! Ja upravljam, ti pucaj u krtice.',
-        'dip': 'Strmi pad! Drži se čvrsto!',
-        'arrive': 'Zadnja stanica. Van!'
       },
       'magnet': {
         'panel': 'Vidiš onu crveno-plavu ploču? Pucaj u nju da okreneš tračnicu.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Šištanje, pa vatra. Pusti da huk prođe, pa kreni.',
         'barrels': 'Bačve! Prati svjetla i prođi između njih.',
         'hammers': 'Kovački čekići. Broji ritam, pa trči.',
-        'drop': 'Dug put dolje. Izbočina po izbočina.'
       },
       'cryo': {
         'ice': 'Led! Pusti palicu i nastavit ćeš kliziti.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Bacač mraza. Prvo zasja i zašišti. Prijeđi kad utihne.',
         'icicles': 'Sjene na podu? Ledenice. Izađi iz kruga!',
         'pillar': 'Taj stup je napukao. Pucaj u njega i eto prečaca.',
-        'stairs': 'Zaleđene stube. Polako — odmorište je malo.'
       },
       'volt': {
         'panels': 'Te ploče pulsiraju. Čekaj na tamnom redu, pa zakorači.',
         'board': 'Ruke dalje od upravljača — ja vozim, ti pucaš.',
-        'wave': 'Dronovi ispred! Obori ih prije nego zarone.',
-        'dip': 'Veliki pad ispred. Drži se — i nastavi pucati!',
-        'arrive': 'Kraj pruge. Skači van!'
       },
       'gale': {
         'leap': 'Procjep je preširok za hodanje. Klizni s ruba — prenijet će te.',
-        'down': 'Lijep skok. Sad ne gledaj dolje.',
-        'shuttle': 'Šatlovi. Ukrcaj se kad pristane, iskrcaj na drugom kraju.',
         'wind': 'Čekaj da nalet vjetra utihne, pa kreni. Ili se sakrij iza stupa.',
-        'bob': 'Plutajuće platforme. Uskoči dolje i vozi se gore.'
       }
     },
     'secret': {

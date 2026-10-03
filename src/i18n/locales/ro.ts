@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: de la nivelul 31 în sus.',
       },
       'rotor': {
-        'arrive': 'Am aterizat. Sari jos!',
-        'dip': 'Ține-te bine, coborâm în picaj!',
         'board': 'Toată lumea la bord! Eu zbor, tu tragi.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Prea adânc! Ieși din apă!',
         'valve': 'Ecluză inundată! Trage în supapă ca s-o golești.',
         'rise': 'Vine fluxul. Sus pe trepte!',
-        'wade': 'Apă! Prin apă mergi mai încet.'
       },
       'gm': {
         'button': 'Vex apasă ceva... Pregătește-te!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Cad pietre! Ieși din umbre.',
         'rock': 'Stâncă crăpată! O lovitură încărcată complet o sparge.',
         'board': 'Vagonetul pornește! Eu conduc, tu tragi în cârtițe.',
-        'dip': 'Pantă abruptă! Ține-te bine!',
-        'arrive': 'Ultima stație. Sari jos!'
       },
       'magnet': {
         'panel': 'Vezi placa aia roșu-albastră? Trage în ea ca să întorci șina.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Întâi șuieră, apoi foc. Lasă vuietul să treacă, apoi pornește.',
         'barrels': 'Butoaie! Urmărește lămpile și treci printre ele.',
         'hammers': 'Ciocane de forjă. Numără ritmul, apoi fugi.',
-        'drop': 'E mult până jos. Câte o margine pe rând.'
       },
       'cryo': {
         'ice': 'Gheață! Dacă dai drumul la stick, aluneci mai departe.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Aruncător de ger. Întâi strălucește și șuieră. Treci când tace.',
         'icicles': 'Umbre pe podea? Țurțuri. Ieși din cerc!',
         'pillar': 'Stâlpul ăla e crăpat. Trage în el și ai scurtătura.',
-        'stairs': 'Scări înghețate. Încet — palierul e mic.'
       },
       'volt': {
         'panels': 'Panourile alea pulsează. Așteaptă pe un rând stins, apoi pășește.',
         'board': 'Jos mâinile de pe comenzi — eu conduc, tu tragi.',
-        'wave': 'Drone în față! Doboară-le înainte să plonjeze.',
-        'dip': 'Coborâre mare în față. Ține-te bine — trage în continuare!',
-        'arrive': 'Capăt de linie. Sari jos!'
       },
       'gale': {
         'leap': 'Groapa e prea lată ca s-o treci pe jos. Alunecă de pe margine — avântul te duce.',
-        'down': 'Frumos salt. Acum nu te uita în jos.',
-        'shuttle': 'Navete. Urcă când acostează, coboară la celălalt capăt.',
         'wind': 'Așteaptă să se oprească rafala, apoi mișcă-te. Sau ascunde-te după un stâlp.',
-        'bob': 'Platforme care plutesc. Urcă jos și lasă-te dus în sus.'
       }
     },
     'secret': {

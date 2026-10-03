@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: từ cấp 31 trở lên.',
       },
       'rotor': {
-        'arrive': 'Hạ cánh. Xuống thôi!',
-        'dip': 'Bám chắc, ta bổ nhào đây!',
         'board': 'Lên nào! Tôi bay, cậu bắn.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Sâu quá! Ra khỏi nước mau!',
         'valve': 'Âu thuyền ngập nước! Bắn van để rút nước.',
         'rise': 'Thủy triều đang lên. Leo lên bậc thang!',
-        'wade': 'Nước! Lội nước làm cậu chậm lại.',
       },
       'drill': {
         'drop': 'Đá rơi! Ra khỏi vùng bóng!',
         'rock': 'Đá nứt! Phát tụ lực đầy sẽ phá được nó.',
         'board': 'Xe goòng chạy rồi! Tôi lái, cậu bắn lũ chuột chũi.',
-        'dip': 'Dốc đứng! Bám chặt vào!',
-        'arrive': 'Trạm cuối. Nhảy xuống thôi!'
       },
       'magnet': {
         'panel': 'Thấy tấm đỏ-xanh kia không? Bắn nó để đảo chiều ray.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Xì trước, lửa sau. Đợi tiếng gầm dứt rồi đi.',
         'barrels': 'Thùng lăn! Nhìn đèn, băng qua giữa chúng.',
         'hammers': 'Búa rèn. Đếm nhịp rồi chạy.',
-        'drop': 'Xuống sâu lắm đấy. Từng gờ một.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Máy phun băng. Nó sáng lên và xì xì trước. Qua khi nó im.',
         'icicles': 'Bóng trên sàn à? Nhũ băng đấy. Ra khỏi vòng tròn!',
         'pillar': 'Cột đó nứt rồi. Bắn nó là có đường tắt.',
-        'stairs': 'Cầu thang đóng băng. Đi chậm thôi, chiếu nghỉ nhỏ lắm.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Mấy tấm sàn đó đang phóng điện. Đợi ở hàng tối rồi bước tiếp.',
         'board': 'Bỏ tay khỏi cần lái — tôi lái, cậu bắn.',
-        'wave': 'Phía trước có drone! Bắn hạ trước khi chúng lao xuống.',
-        'dip': 'Sắp có dốc lớn. Bám chắc — cứ bắn tiếp!',
-        'arrive': 'Hết đường ray. Xuống thôi!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Quá rộng để đi bộ qua. Trượt khỏi mép, đà sẽ đưa cậu qua.',
-        'down': 'Nhảy đẹp lắm. Giờ đừng nhìn xuống nhé.',
-        'shuttle': 'Tàu con thoi. Lên khi nó cập bến, xuống ở bờ bên kia.',
         'wind': 'Đợi cơn gió lặng rồi hãy đi. Hoặc nấp sau cột.',
-        'bob': 'Bệ nhấp nhô. Lên ở dưới, nó sẽ đưa cậu lên.'
       },
       'vex': {
         'roof': 'Sét! Vòng sáng lên thì né ngay!',

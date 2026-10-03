@@ -23,9 +23,8 @@
  *   talk): it waits for a long quiet (CHATTER_GAP), only one of it waits at
  *   a time, and a scan that would come late is dropped;
  * - a tip is said once in a save, not once a mission (`ONCE_EVER`): a
- *   machine's scan, a stage's hint, the relay count. What is plain to see is
- *   not said at all (`OBVIOUS`: "one ledge at a time" where there is nowhere
- *   else to go);
+ *   machine's scan, a stage's hint, the relay count. What is plain to see has
+ *   no line at all ("one ledge at a time" where there is nowhere else to go);
  * - one line on the way in, a level-up line every second level;
  * - a cooldown per line; warnings re-arm only once their cause has cleared;
  * - a long quiet stretch in play (no fight) may earn one line of small talk.
@@ -108,15 +107,6 @@ const CHATTER = /^(scan|arc|idle)\.|^(levelUp|hint\.levelUp|hint\.locator|hint\.
 const IMPORTANT: ReadonlySet<string> = new Set(['scan.golem'])
 export const isChatter = (l: AtlasLine): boolean => CHATTER.test(l) && !IMPORTANT.has(l)
 
-/**
- * A stage's hints that say what the player can see for himself: never said
- * (their text and recordings stay, for a stage that wants one back).
- */
-const OBVIOUS: ReadonlySet<string> = new Set([
-  'hint.blaze.drop', 'hint.cryo.stairs', 'hint.volt.wave', 'hint.volt.dip', 'hint.volt.arrive', 'hint.gale.down',
-  'hint.gale.shuttle', 'hint.gale.bob', 'hint.drill.dip', 'hint.drill.arrive', 'hint.tide.wade', 'hint.rotor.dip',
-  'hint.rotor.arrive'
-])
 /** Stage hints that warn of a danger as it happens: every mission, not once in a save. */
 const EVERY_MISSION: ReadonlySet<string> = new Set(['hint.tide.deep', 'hint.tide.rise', 'hint.neon.blackout'])
 /** The sectors whose stages give hints (`hint.<sector>.<id>`); a boss fight's (`gm`, `vex`) are its own. */
@@ -267,11 +257,10 @@ export class AtlasDirector {
 
   /**
    * Ask for a line (it waits its turn). False when it will not be said: on
-   * cooldown, plain to see, said before in this save, or one tip too many
+   * cooldown, said before in this save, or one tip too many
    * (only one line of chatter waits at a time; the more urgent one stays).
    */
   say(id: AtlasLine): boolean {
-    if (OBVIOUS.has(id)) return false
     const last = this.said.get(id)
     // A lesson's hint repeats while the player stays stuck (`training.ts`).
     const cd = cooldownOf(id)

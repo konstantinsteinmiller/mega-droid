@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector}: 31-darajadan boshlab.',
       },
       'rotor': {
-        'arrive': 'Qoʻndik. Tush!',
-        'dip': 'Mahkam ushla, shoʻngʻiyapmiz!',
         'board': 'Hamma bortga! Men uchaman, sen otasan.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Juda chuqur! Suvdan chiq!',
         'valve': 'Suv bosgan shlyuz! Suvni chiqarish uchun klapanni ot.',
         'rise': 'Suv koʻtarilyapti. Zinapoyaga chiq!',
-        'wade': 'Suv! Suvda yurish seni sekinlashtiradi.',
       },
       'drill': {
         'drop': 'Toshlar tushyapti! Soyalardan chiq.',
         'rock': 'Yorilgan tosh! Toʻliq zaryadli oʻq uni sindiradi.',
         'board': 'Ruda aravasi yurdi! Men boshqaraman, sen koʻrsichqonlarni ot.',
-        'dip': 'Tik pastlik! Mahkam ushla!',
-        'arrive': 'Oxirgi bekat. Sakrab tush!'
       },
       'magnet': {
         'panel': 'Anavi qizil-koʻk plitani koʻryapsanmi? Relsni aylantirish uchun unga oʻq uz.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Avval vishillash, keyin olov. Guvillash tinishini kut, keyin yur.',
         'barrels': 'Bochkalar! Chiroqlarga qara, oralaridan o‘t.',
         'hammers': 'Temirchilik bolg‘alari. Ritmni sana, keyin yugur.',
-        'drop': 'Pastga uzoq yo‘l. Bittadan tokchaga.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Sovuq purkagich. Avval yonib, vishillaydi. Tinchiganda oʻt.',
         'icicles': 'Polda soyalar? Muz sumalaklari. Doiradan chiq!',
         'pillar': 'Anavi ustun yorilgan. Otib tashla — mana senga qisqa yoʻl.',
-        'stairs': 'Muzli zinapoya. Sekin — maydonchasi kichkina.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Bu panellar urib turibdi. Qorongʻi qatorda kut, keyin qadam bos.',
         'board': 'Boshqaruvni qoʻyib yubor — men haydayman, sen otasan.',
-        'wave': 'Oldinda dronlar! Shoʻngʻishidan oldin urib tushir.',
-        'dip': 'Oldinda katta pastlik. Mahkam ushla — otishda davom et!',
-        'arrive': 'Oxirgi bekat. Tush!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Yurib oʻtish uchun juda keng. Chetidan sirpan — tezliging olib oʻtadi.',
-        'down': 'Zoʻr sakrash. Endi pastga qarama.',
-        'shuttle': 'Shattllar. Toʻxtaganda min, narigi tomonda tush.',
         'wind': 'Shamol tinguncha kut, keyin yur. Yoki ustun ortiga yashirin.',
-        'bob': 'Tebranuvchi platformalar. Pastda min, u seni tepaga olib chiqadi.'
       },
       'vex': {
         'roof': 'Chaqmoq! Halqa yonganda qoch!',

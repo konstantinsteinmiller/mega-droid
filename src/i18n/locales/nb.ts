@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: nivå 31 og oppover.',
       },
       'rotor': {
-        'arrive': 'Landet. Hopp av!',
-        'dip': 'Hold deg fast, vi stuper!',
         'board': 'Alle om bord! Jeg flyr, du skyter.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'For dypt! Kom deg opp av vannet!',
         'valve': 'Oversvømt sluse! Skyt ventilen for å tømme den.',
         'rise': 'Tidevannet kommer. Opp trappa!',
-        'wade': 'Vann! Å vade bremser deg.',
       },
       'gm': {
         'button': 'Vex trykker på noe... Gjør deg klar!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Steinras! Gå ut av skyggene.',
         'rock': 'Sprukket stein! Et fullt ladeskudd knuser den.',
         'board': 'Malmvogna ruller! Jeg styrer, du skyter moldvarpene.',
-        'dip': 'Bratt nedover! Hold godt fast!',
-        'arrive': 'Siste stopp. Hopp av!',
       },
       'magnet': {
         'panel': 'Ser du den rød-blå plata? Skyt den for å snu skinnen.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Først hvesing, så ild. La brølet passere, og så kjør.',
         'barrels': 'Tønner! Følg med på lampene, gå mellom dem.',
         'hammers': 'Smiehammere. Tell takten, og løp.',
-        'drop': 'Langt ned. Én hylle om gangen.'
       },
       'cryo': {
         'ice': 'Is! Slipper du spaken, sklir du videre.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Frostkaster. Den gløder og hveser først. Kryss når den er stille.',
         'icicles': 'Skygger på gulvet? Istapper. Gå ut av ringen!',
         'pillar': 'Søylen har sprekker. Skyt den, så har du en snarvei.',
-        'stairs': 'Isete trapp. Rolig nå — avsatsen er liten.'
       },
       'volt': {
         'panels': 'Platene pulserer. Vent på en mørk rad, og gå.',
         'board': 'Slipp spakene — jeg kjører, du skyter.',
-        'wave': 'Droner foran! Skyt dem før de stuper.',
-        'dip': 'Stort fall foran. Hold deg fast — fortsett å skyte!',
-        'arrive': 'Endestasjon. Hopp av!'
       },
       'gale': {
         'leap': 'Gapet er for bredt å gå. Skli over kanten — du flyr over.',
-        'down': 'Fint hopp. Ikke se ned nå.',
-        'shuttle': 'Ferger. Gå på når den legger til, av i andre enden.',
         'wind': 'Vent til vindkastet gir seg, og gå. Eller gjem deg bak en søyle.',
-        'bob': 'Duppende plattformer. Hopp på nederst, bli med opp.'
       }
     },
     'secret': {

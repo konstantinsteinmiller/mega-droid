@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: a partir del nivell 31.',
       },
       'rotor': {
-        'arrive': 'Hem aterrat. Baixa!',
-        'dip': 'Agafa\'t, que baixem en picat!',
         'board': 'Tothom a bord! Jo volo, tu dispares.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Massa fondo! Surt de l\'aigua!',
         'valve': 'Resclosa inundada! Dispara a la vàlvula per buidar-la.',
         'rise': 'Puja la marea. Amunt pels graons!',
-        'wade': 'Aigua! Caminar-hi t\'alenteix.',
       },
       'gm': {
         'button': 'En Vex està prement alguna cosa... Prepara\'t!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Cauen roques! Surt de les ombres.',
         'rock': 'Roca esquerdada! Un tret carregat al màxim la trencarà.',
         'board': 'La vagoneta arrenca! Jo condueixo, tu dispara als talps.',
-        'dip': 'Baixada costeruda! Agafa\'t fort!',
-        'arrive': 'Última parada. Baixa!',
       },
       'magnet': {
         'panel': 'Veus aquella placa vermella i blava? Dispara-hi per invertir el rail.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Xiulet i després foc. Deixa passar el rugit i vés.',
         'barrels': 'Barrils! Mira els llums i creua entre ells.',
         'hammers': 'Martells de forja. Compta el ritme i corre.',
-        'drop': 'Hi ha molta caiguda. Una cornisa cada vegada.'
       },
       'cryo': {
         'ice': 'Gel! Si deixes anar l\'estic, continues lliscant.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Llançagebre. Primer brilla i xiula. Creua quan calli.',
         'icicles': 'Ombres a terra? Caramells. Surt del cercle!',
         'pillar': 'Aquest pilar està esquerdat. Dispara-hi i tindràs una drecera.',
-        'stairs': 'Escales gelades. A poc a poc: el replà és petit.'
       },
       'volt': {
         'panels': 'Aquests panells bateguen. Espera en una fila apagada i avança.',
         'board': 'Deixa els controls: jo condueixo, tu dispares.',
-        'wave': 'Drons al davant! Abat-los abans que es llancin.',
-        'dip': 'Ve una gran baixada. Agafa\'t i continua disparant!',
-        'arrive': 'Final del trajecte. Baixa!'
       },
       'gale': {
         'leap': 'Massa ample per passar caminant. Llisca per la vora: l\'impuls et porta.',
-        'down': 'Bon salt. Ara no miris avall.',
-        'shuttle': 'Llançadores. Puja quan atraqui i baixa a l\'altra banda.',
         'wind': 'Espera que passi la ràfega i avança. O amaga\'t darrere d\'un pilar.',
-        'bob': 'Plataformes que suren. Puja-hi a baix i deixa que t\'enlairi.'
       }
     },
     'secret': {

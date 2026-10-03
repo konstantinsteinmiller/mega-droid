@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: ekde nivelo 31.',
       },
       'rotor': {
-        'arrive': 'Surteriĝo. Saltu eksteren!',
-        'dip': 'Tenu vin, ni plonĝas!',
         'board': 'Ĉiuj enen! Mi flugas, vi pafas.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Tro profunde! Eliru el la akvo!',
         'valve': 'Inundita kluzo! Pafu la valvon por malplenigi ĝin.',
         'rise': 'La tajdo venas. Supren laŭ la ŝtupoj!',
-        'wade': 'Akvo! Vadi malrapidigas vin.'
       },
       'gm': {
         'button': 'Vex premas ion... Pretiĝu!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Ŝtonoj falas! Eliru el la ombroj.',
         'rock': 'Fendita roko! Plena ŝarĝo rompos ĝin.',
         'board': 'La erca vagoneto ruliĝas! Mi stiras, vi pafas la talpojn.',
-        'dip': 'Kruta descendo! Tenu vin forte!',
-        'arrive': 'Lasta haltejo. Saltu eksteren!'
       },
       'magnet': {
         'panel': 'Ĉu vi vidas tiun ruĝe-bluan platon? Pafu ĝin por inversigi la relon.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Sibilo, poste fajro. Lasu la muĝon pasi, poste iru.',
         'barrels': 'Bareloj! Rigardu la lampojn, transiru inter ili.',
         'hammers': 'Forĝaj martelegoj. Kalkulu la takton, poste kuru.',
-        'drop': 'Longa vojo malsupren. Po unu kornico.'
       },
       'cryo': {
         'ice': 'Glacio! Lasu la stirstangon, kaj vi plu glitos.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Frostoĵetilo. Ĝi unue brilas kaj sibilas. Transiru, kiam ĝi silentas.',
         'icicles': 'Ombroj sur la planko? Glacipendaĵoj. Eliru el la ringo!',
         'pillar': 'Tiu kolono estas fendita. Pafu ĝin, kaj jen via ŝparvojo.',
-        'stairs': 'Glaciaj ŝtupoj. Malrapide — la podesto estas malgranda.'
       },
       'volt': {
         'panels': 'Tiuj paneloj pulsas. Atendu sur malhela vico, poste paŝu.',
         'board': 'For la manojn de la regiloj — mi stiras, vi pafas.',
-        'wave': 'Dronoj antaŭe! Pafu ilin, antaŭ ol ili plonĝas.',
-        'dip': 'Granda descendo antaŭe. Tenu vin — plu pafu!',
-        'arrive': 'Fino de la linio. Saltu eksteren!'
       },
       'gale': {
         'leap': 'La truo estas tro larĝa por iri. Glitu de la rando — vi flugos trans.',
-        'down': 'Bela salto. Nun ne rigardu malsupren.',
-        'shuttle': 'Navetoj. Suriru, kiam ĝi albordiĝas, deiru ĉe la alia fino.',
         'wind': 'Atendu, ĝis la ventoblovo kvietiĝas, poste moviĝu. Aŭ kaŝu vin malantaŭ kolono.',
-        'bob': 'Ŝvebantaj platformoj. Suriru malsupre, veturu supren.'
       }
     },
     'secret': {

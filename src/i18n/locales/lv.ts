@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: no 31. līmeņa.',
       },
       'rotor': {
-        'arrive': 'Nolaišanās. Lec ārā!',
-        'dip': 'Turies, mēs nirstam!',
         'board': 'Visi uz klāja! Es lidoju, tu šauj.'
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Pārāk dziļi! Ārā no ūdens!',
         'valve': 'Applūdusi slūža! Šauj vārstā, lai to iztukšotu.',
         'rise': 'Nāk paisums. Augšā pa pakāpieniem!',
-        'wade': 'Ūdens! Brišana tevi palēnina.'
       },
       'gm': {
         'button': 'Vex kaut ko spiež... Sagatavojies!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Krīt akmeņi! Izej no ēnām.',
         'rock': 'Ieplaisājusi klints! Pilnībā lādēts šāviens to salauzīs.',
         'board': 'Rūdas vagonete brauc! Es stūrēju, tu šauj kurmjus.',
-        'dip': 'Stāvs kritums! Turies cieši!',
-        'arrive': 'Galapunkts. Lec ārā!'
       },
       'magnet': {
         'panel': 'Redzi to sarkanzilo plāksni? Šauj tajā, lai apgrieztu sliedi.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Šņāciens, tad uguns. Ļauj rūcienam pāriet, tad ej.',
         'barrels': 'Mucas! Vēro lampas, šķērso starp tām.',
         'hammers': 'Kalves āmuri. Skaiti ritmu, tad skrien.',
-        'drop': 'Garš ceļš lejup. Pa vienai dzegai.'
       },
       'cryo': {
         'ice': 'Ledus! Atlaid kursorsviru, un tu slīdēsi tālāk.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Sala metējs. Vispirms tas spīd un šņāc. Šķērso, kad tas apklust.',
         'icicles': 'Ēnas uz grīdas? Lāstekas. Izej no apļa!',
         'pillar': 'Tā kolonna ir ieplaisājusi. Šauj tajā, un tev ir īsceļš.',
-        'stairs': 'Apledojušas kāpnes. Lēnām — laukumiņš ir mazs.'
       },
       'volt': {
         'panels': 'Tās plāksnes pulsē. Gaidi uz tumšās rindas, tad sper soli.',
         'board': 'Rokas nost no vadības — es braucu, tu šauj.',
-        'wave': 'Priekšā droni! Notriec tos, pirms tie uzbrūk.',
-        'dip': 'Priekšā liels kritums. Turies — un šauj tālāk!',
-        'arrive': 'Līnijas gals. Lec ārā!'
       },
       'gale': {
         'leap': 'Sprauga par platu, lai pārietu. Noslīdi no malas — tevi aiznesīs.',
-        'down': 'Labs lēciens. Tagad neskaties lejā.',
-        'shuttle': 'Šatli. Kāp iekšā, kad tas piestāj, izkāp otrā galā.',
         'wind': 'Pagaidi, līdz brāzma norimst, tad ej. Vai paslēpies aiz kolonnas.',
-        'bob': 'Šūpojošās platformas. Uzlec apakšā un brauc augšā.'
       }
     },
     'secret': {

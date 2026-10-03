@@ -724,8 +724,6 @@ export default {
         'fortress': '{sector} beginnt ab Stufe 31.',
       },
       'rotor': {
-        'arrive': 'Aufgesetzt. Steig aus!',
-        'dip': 'Festhalten, Sturzflug!',
         'board': 'Alle einsteigen! Ich fliege, du schießt.',
       },
       'neon': {
@@ -738,14 +736,11 @@ export default {
         'deep': 'Zu tief! Raus aus dem Wasser!',
         'valve': 'Geflutete Schleuse! Schieß aufs Ventil, um sie zu leeren.',
         'rise': 'Die Flut kommt. Rauf auf die Stufen!',
-        'wade': 'Wasser! Waten bremst dich aus.',
       },
       'drill': {
         'drop': 'Steinschlag! Raus aus den Schatten.',
         'rock': 'Rissiger Fels! Ein voller Ladeschuss knackt ihn.',
         'board': 'Die Lore rollt! Ich lenke, du schießt auf die Maulwürfe.',
-        'dip': 'Steil bergab! Gut festhalten!',
-        'arrive': 'Letzter Halt. Raus mit dir!'
       },
       'magnet': {
         'panel': 'Siehst du die rot-blaue Platte? Schieß drauf, um die Schiene umzupolen.',
@@ -758,7 +753,6 @@ export default {
         'vents': 'Erst Zischen, dann Feuer. Warte das Fauchen ab, dann los.',
         'barrels': 'Fässer! Achte auf die Lampen, geh zwischen ihnen durch.',
         'hammers': 'Schmiedehämmer. Zähl den Takt, dann lauf.',
-        'drop': 'Weit runter. Ein Sims nach dem anderen.'
       },
       'cryo': {
         // Glacier Run (cryo stage)
@@ -767,23 +761,16 @@ export default {
         'frost': 'Frostwerfer. Erst glüht und zischt er. Geh, wenn er still ist.',
         'icicles': 'Schatten am Boden? Eiszapfen. Raus aus dem Ring!',
         'pillar': 'Die Säule hat Risse. Schieß drauf – schon hast du eine Abkürzung.',
-        'stairs': 'Eisige Treppe. Langsam – der Absatz ist klein.'
       },
       'volt': {
         // Rail Rush (volt stage)
         'panels': 'Die Platten pulsieren. Warte auf einer dunklen Reihe, dann los.',
         'board': 'Hände weg vom Steuer — ich fahre, du schießt.',
-        'wave': 'Drohnen voraus! Schieß sie ab, bevor sie herabstoßen.',
-        'dip': "Gleich geht's steil runter. Festhalten — weiterschießen!",
-        'arrive': 'Endstation. Steig aus!'
       },
       'gale': {
         // Sky Docks (gale stage)
         'leap': 'Zu breit zum Gehen. Rutsch über die Kante – du fliegst mit.',
-        'down': 'Schöner Sprung. Jetzt bloß nicht nach unten schauen.',
-        'shuttle': 'Fähren. Aufsteigen, wenn sie anlegt, drüben wieder runter.',
         'wind': 'Warte, bis die Böe abflaut, dann los. Oder duck dich hinter eine Säule.',
-        'bob': 'Schwebeplattformen. Unten aufsteigen, mit nach oben fahren.'
       },
       'vex': {
         'roof': 'Blitze! Weg, wenn der Ring aufleuchtet!',

@@ -426,7 +426,7 @@ describe('the rail cart', () => {
     expect(Math.floor(p.x / CELL)).toBe(r.exitAt.i)
     expect(Math.floor(p.z / CELL)).toBe(r.exitAt.j)
     expect(p.y).toBe(groundAt(map, p.x, p.z))
-    expect(host.said).toEqual(expect.arrayContaining(['hint.volt.board', 'hint.volt.wave', 'hint.volt.dip', 'hint.volt.arrive']))
+    expect(host.said).toContain('hint.volt.board')
     // Off it now: the walk is his again, and the exit's checkpoint is taken.
     step(run, p, (time += DT))
     const exitK = r.exitAt.j * map.w + r.exitAt.i

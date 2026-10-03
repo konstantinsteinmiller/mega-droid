@@ -748,8 +748,6 @@ export default {
         'fortress': '{sector}: tasosta 31 ylöspäin.',
       },
       'rotor': {
-        'arrive': 'Laskeuduttu. Hyppää kyydistä!',
-        'dip': 'Pidä kiinni, sukellamme!',
         'board': 'Kaikki kyytiin! Minä lennän, sinä ammut.',
       },
       'neon': {
@@ -762,7 +760,6 @@ export default {
         'deep': 'Liian syvää! Pois vedestä!',
         'valve': 'Tulvinut sulku! Ammu venttiiliä tyhjentääksesi sen.',
         'rise': 'Vesi nousee. Portaita ylös!',
-        'wade': 'Vettä! Kahlaaminen hidastaa.',
       },
       'gm': {
         'button': 'Vex painaa jotain... Valmistaudu!',
@@ -781,8 +778,6 @@ export default {
         'drop': 'Kiviä putoaa! Pois varjoista.',
         'rock': 'Haljennut kivi! Täysi lataus rikkoo sen.',
         'board': 'Malmivaunu liikkuu! Minä ohjaan, sinä ammut myyriä.',
-        'dip': 'Jyrkkä pudotus! Pidä kiinni!',
-        'arrive': 'Pääteasema. Hyppää pois!',
       },
       'magnet': {
         'panel': 'Näetkö tuon punasinisen levyn? Ammu sitä kääntääksesi kiskon.',
@@ -794,7 +789,6 @@ export default {
         'vents': 'Sihinä, sitten tuli. Anna jyrinän mennä ohi ja mene.',
         'barrels': 'Tynnyreitä! Seuraa lamppuja ja ylitä niiden välistä.',
         'hammers': 'Takovasarat. Laske tahti ja juokse.',
-        'drop': 'Pitkä matka alas. Yksi reunus kerrallaan.'
       },
       'cryo': {
         'ice': 'Jäätä! Päästä tikusta irti, niin liu\'ut eteenpäin.',
@@ -802,21 +796,14 @@ export default {
         'frost': 'Hallasuihku. Se hehkuu ja sihisee ensin. Ylitä, kun on hiljaista.',
         'icicles': 'Varjoja lattialla? Jääpuikkoja. Pois renkaasta!',
         'pillar': 'Tuo pylväs on haljennut. Ammu sitä, niin saat oikotien.',
-        'stairs': 'Jäiset portaat. Hitaasti – tasanne on pieni.'
       },
       'volt': {
         'panels': 'Paneelit sykkivät. Odota pimeällä rivillä ja astu sitten.',
         'board': 'Kädet irti ohjaimista – minä ajan, sinä ammut.',
-        'wave': 'Drooneja edessä! Ammu ne ennen kuin ne syöksyvät.',
-        'dip': 'Iso pudotus edessä. Pidä kiinni – ammu koko ajan!',
-        'arrive': 'Pääteasema. Hyppää pois!'
       },
       'gale': {
         'leap': 'Rako on liian leveä käveltäväksi. Liu\'u reunan yli – vauhti kantaa.',
-        'down': 'Hieno hyppy. Älä nyt katso alas.',
-        'shuttle': 'Sukkulat. Astu kyytiin, kun se telakoituu, ja pois toisessa päässä.',
         'wind': 'Odota, että puuska laantuu, ja liiku. Tai piiloudu pylvään taakse.',
-        'bob': 'Keinuvat tasot. Hyppää kyytiin alhaalla ja nouse ylös.'
       }
     },
     'secret': {

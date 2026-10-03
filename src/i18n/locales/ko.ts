@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} 레슨을 끝내세요',
     'finishTutorial': '먼저 튜토리얼을 끝내세요',
-    'finishLesson': '레슨을 마치세요'
+    'finishLesson': '레슨을 마치세요',
+    'finishLessonNamed': '먼저 완료하세요: {lesson}'
   },
   'hubLesson': {
     'earnBolts': '나사가 부족해? 짧은 영상을 보고 채워.',

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} сабағын аяқта',
     'finishTutorial': 'Алдымен жаттығуды аяқта',
-    'finishLesson': 'Сабақты аяқтаңыз'
+    'finishLesson': 'Сабақты аяқтаңыз',
+    'finishLessonNamed': 'Алдымен аяқта: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Болт жетпей ме? Толтыру үшін қысқа бейне көр.',

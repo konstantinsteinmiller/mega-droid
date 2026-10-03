@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Завърши урока за {weapon}',
     'finishTutorial': 'Първо завърши обучението',
-    'finishLesson': 'Завърши урока'
+    'finishLesson': 'Завърши урока',
+    'finishLessonNamed': 'Първо завърши: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Нямаш достатъчно болтове? Гледай кратко видео за попълване.',

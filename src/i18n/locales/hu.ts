@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Fejezd be a leckét: {weapon}',
     'finishTutorial': 'Előbb fejezd be az oktatást',
-    'finishLesson': 'Fejezd be a leckét'
+    'finishLesson': 'Fejezd be a leckét',
+    'finishLessonNamed': 'Előbb fejezd be: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Nincs elég csavarod? Nézz meg egy rövid videót, és kapsz még.',

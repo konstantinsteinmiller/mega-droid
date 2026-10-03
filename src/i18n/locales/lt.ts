@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Užbaik pamoką: {weapon}',
     'finishTutorial': 'Pirmiausia užbaik mokymą',
-    'finishLesson': 'Užbaik pamoką'
+    'finishLesson': 'Užbaik pamoką',
+    'finishLessonNamed': 'Pirmiausia užbaik: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Trūksta varžtų? Pažiūrėk trumpą vaizdo įrašą ir gauk papildomų.',

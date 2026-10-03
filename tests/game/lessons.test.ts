@@ -279,6 +279,21 @@ describe('the crate lesson (second room, once quiet)', () => {
     expect(d.crateBroken).toBe(true)
   })
 
+  it('in the tutorial a crate broken before the lesson lit counts (no second crate beamed in)', () => {
+    const { host, map, crates } = makeHost(true)
+    const d = new LessonDirector(host, { guided: true })
+    run(d, host, 0.1)
+    const { room, cx, cz } = otherRoom(map)
+    host.player.x = cx
+    host.player.z = cz
+    // A charged shot broke the room's crate on the way in.
+    crates.push({ kind: 'crate', x: cx, y: 0, z: cz, broken: true } as unknown as (typeof crates)[number])
+    expect(d.startCrate(room.id)).toBe(true)
+    run(d, host, 0.1)
+    expect(d.crateBroken).toBe(true)
+    expect(crates.filter(c => !c.broken)).toHaveLength(0)
+  })
+
   it('in the tutorial it is taught again, even to a player who learned it before', () => {
     profile.tips['lesson:crate'] = true
     const { host, map } = makeHost(true)

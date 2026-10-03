@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Пройди урок: {weapon}',
     'finishTutorial': 'Спершу пройди навчання',
-    'finishLesson': 'Завершіть урок'
+    'finishLesson': 'Завершіть урок',
+    'finishLessonNamed': 'Спершу пройди: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Бракує болтів? Переглянь коротке відео, щоб поповнити.',

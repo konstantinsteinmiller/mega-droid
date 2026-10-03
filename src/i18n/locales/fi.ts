@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Suorita oppitunti: {weapon}',
     'finishTutorial': 'Suorita ensin opetus',
-    'finishLesson': 'Suorita oppitunti'
+    'finishLesson': 'Suorita oppitunti',
+    'finishLessonNamed': 'Suorita ensin: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Pultit lopussa? Katso lyhyt video saadaksesi lisää.',

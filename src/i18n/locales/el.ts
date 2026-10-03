@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Ολοκλήρωσε το μάθημα: {weapon}',
     'finishTutorial': 'Ολοκλήρωσε πρώτα την εκπαίδευση',
-    'finishLesson': 'Ολοκλήρωσε το μάθημα'
+    'finishLesson': 'Ολοκλήρωσε το μάθημα',
+    'finishLessonNamed': 'Ολοκλήρωσε πρώτα: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Δεν φτάνουν τα μπουλόνια; Δες ένα σύντομο βίντεο για συμπλήρωμα.',

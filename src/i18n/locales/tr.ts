@@ -230,7 +230,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} dersini bitir',
     'finishTutorial': 'Önce eğitimi bitir',
-    'finishLesson': 'Dersi tamamla'
+    'finishLesson': 'Dersi tamamla',
+    'finishLessonNamed': 'Önce tamamla: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Cıvata yetmiyor mu? Takviye için kısa bir video izle.',

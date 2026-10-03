@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Selesaikan pelajaran {weapon}',
     'finishTutorial': 'Selesaikan tutorial dulu',
-    'finishLesson': 'Selesaikan pelajarannya'
+    'finishLesson': 'Selesaikan pelajarannya',
+    'finishLessonNamed': 'Selesaikan dulu: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Baut kurang? Tonton video singkat untuk tambahan.',

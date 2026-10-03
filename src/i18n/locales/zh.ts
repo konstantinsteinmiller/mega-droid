@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '完成{weapon}的课程',
     'finishTutorial': '请先完成教程',
-    'finishLesson': '完成这一课'
+    'finishLesson': '完成这一课',
+    'finishLessonNamed': '请先完成：{lesson}'
   },
   'hubLesson': {
     'earnBolts': '螺丝不够？看一段短视频来补充。',

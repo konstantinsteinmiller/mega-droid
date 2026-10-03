@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Finu la lecionon pri {weapon}',
     'finishTutorial': 'Unue finu la lernilon',
-    'finishLesson': 'Finu la lecionon'
+    'finishLesson': 'Finu la lecionon',
+    'finishLessonNamed': 'Unue finu: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Ne sufiĉas boltoj? Spektu mallongan videon por ricevi pliajn.',

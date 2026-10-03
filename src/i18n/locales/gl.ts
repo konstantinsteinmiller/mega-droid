@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Remata a lección de {weapon}',
     'finishTutorial': 'Remata primeiro o titorial',
-    'finishLesson': 'Remata a lección'
+    'finishLesson': 'Remata a lección',
+    'finishLessonNamed': 'Remata primeiro: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Fáltanche parafusos? Mira un vídeo curto para recargar.',

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Fullfør leksjonen om {weapon}',
     'finishTutorial': 'Fullfør opplæringen først',
-    'finishLesson': 'Fullfør leksjonen'
+    'finishLesson': 'Fullfør leksjonen',
+    'finishLessonNamed': 'Fullfør først: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'For få bolter? Se en kort video for påfyll.',

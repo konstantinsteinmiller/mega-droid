@@ -259,7 +259,9 @@ export interface World {
   shots?: readonly Shot[]
   /** What a machine can read of Flux's kit: how long his charge takes. */
   stats?: { readonly chargeTimeMul: number }
-  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean): void
+  /** `worldY`: the shot is already aimed in world heights (the crate golem's
+   *  rock), so a climb must not lift and tip it again. */
+  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean, worldY?: boolean): void
   lobShell(e: Enemy, tx: number, tz: number, dur: number, dmg: number): void
   /** Boss hazards (see CombatSystem). */
   spawnWave(e: Enemy, x: number, z: number, dx: number, dz: number, speed: number, halfWidth: number, range: number, dmg: number, color: string): void

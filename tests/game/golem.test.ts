@@ -111,6 +111,19 @@ const awake = (r: Rig): void => {
 }
 
 /** In the middle of a hop (`attack` stays 'dodge' after one, so the state says it). */
+describe('the crate golem\'s throw', () => {
+  it('is aimed in world heights, so a climb does not lift it a second time (it flew over Flux)', () => {
+    const r = setup(9)
+    awake(r)
+    r.e.cd = 0
+    for (let i = 0; i < 300 && !(r.w.fireEnemyShot as ReturnType<typeof vi.fn>).mock.calls.length; i++) tick(r.w, r.e)
+    const calls = (r.w.fireEnemyShot as ReturnType<typeof vi.fn>).mock.calls
+    expect(calls.length).toBeGreaterThan(0)
+    expect(calls[0]![10]).toBe(true)
+  })
+})
+
+
 const hopping = (e: Enemy): boolean => e.state === 'act' && e.attack === 'dodge'
 
 /** A charged shot from Flux, flying straight at the golem. */

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Pabeidz nodarbību: {weapon}',
     'finishTutorial': 'Vispirms pabeidz apmācību',
-    'finishLesson': 'Pabeidz nodarbību'
+    'finishLesson': 'Pabeidz nodarbību',
+    'finishLessonNamed': 'Vispirms pabeidz: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Par maz skrūvju? Noskaties īsu video un papildini tās.',

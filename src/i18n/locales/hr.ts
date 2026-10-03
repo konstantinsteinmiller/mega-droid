@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Završi lekciju: {weapon}',
     'finishTutorial': 'Najprije završi vodič',
-    'finishLesson': 'Završi lekciju'
+    'finishLesson': 'Završi lekciju',
+    'finishLessonNamed': 'Prvo završi: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Premalo vijaka? Pogledaj kratki video i nadopuni ih.',

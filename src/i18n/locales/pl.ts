@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Ukończ lekcję: {weapon}',
     'finishTutorial': 'Najpierw ukończ samouczek',
-    'finishLesson': 'Ukończ lekcję'
+    'finishLesson': 'Ukończ lekcję',
+    'finishLessonNamed': 'Najpierw ukończ: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Za mało śrub? Obejrzyj krótki film, by je uzupełnić.',

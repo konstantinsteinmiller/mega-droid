@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Termină lecția despre {weapon}',
     'finishTutorial': 'Termină mai întâi tutorialul',
-    'finishLesson': 'Termină lecția'
+    'finishLesson': 'Termină lecția',
+    'finishLessonNamed': 'Termină mai întâi: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Nu ai destule șuruburi? Uită-te la un clip scurt ca să primești mai multe.',

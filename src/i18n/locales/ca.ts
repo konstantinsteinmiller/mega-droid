@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Acaba la lliçó de {weapon}',
     'finishTutorial': 'Acaba primer el tutorial',
-    'finishLesson': 'Acaba la lliçó'
+    'finishLesson': 'Acaba la lliçó',
+    'finishLessonNamed': 'Acaba primer: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Et falten cargols? Mira un vídeo curt per recarregar.',

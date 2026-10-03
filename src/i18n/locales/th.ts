@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'เรียนบทเรียน {weapon} ให้จบ',
     'finishTutorial': 'ทำบทฝึกให้จบก่อน',
-    'finishLesson': 'ทำบทเรียนให้จบ'
+    'finishLesson': 'ทำบทเรียนให้จบ',
+    'finishLessonNamed': 'ทำให้เสร็จก่อน: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'โบลต์ไม่พอ? ดูวิดีโอสั้น ๆ เพื่อรับเพิ่ม',

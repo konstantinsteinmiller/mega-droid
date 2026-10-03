@@ -253,7 +253,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Finish the lesson on {weapon}',
     'finishTutorial': 'Finish the Tutorial first',
-    'finishLesson': 'Finish the lesson'
+    'finishLesson': 'Finish the lesson',
+    'finishLessonNamed': 'Finish first: {lesson}'
   },
   // Screen-reader sentences behind the first-visit upgrade tour (HubLesson).
   'hubLesson': {

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'أكمل درس {weapon}',
     'finishTutorial': 'أكمل التدريب أولًا',
-    'finishLesson': 'أكمل الدرس'
+    'finishLesson': 'أكمل الدرس',
+    'finishLessonNamed': 'أكمل أولًا: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'لا تكفي البراغي؟ شاهد فيديو قصيرًا لتحصل على المزيد.',

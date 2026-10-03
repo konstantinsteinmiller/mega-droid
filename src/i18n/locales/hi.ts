@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} का पाठ पूरा करें',
     'finishTutorial': 'पहले ट्यूटोरियल पूरा करें',
-    'finishLesson': 'पाठ पूरा करें'
+    'finishLesson': 'पाठ पूरा करें',
+    'finishLessonNamed': 'पहले पूरा करें: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'बोल्ट कम हैं? कुछ पाने के लिए एक छोटा वीडियो देखें।',

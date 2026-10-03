@@ -1127,6 +1127,35 @@ describe('the scripted cast', () => {
     return { map, nav, plan, side, chestRooms, enemies }
   }
 
+  it('names each gate\'s lesson on its door, in every language ("Finish first: Shield Tutorial")', async () => {
+    const { LESSON_OF } = await import('@/game/sim/walkthrough')
+    const en = (await import('@/i18n/locales/en')).default as unknown as { train: { name: Record<string, string> }; walk: Record<string, string> }
+    const de = (await import('@/i18n/locales/de')).default as unknown as { train: { name: Record<string, string> }; walk: Record<string, string> }
+    for (const [need, id] of Object.entries(LESSON_OF)) {
+      expect(typeof en.train.name[id!], need).toBe('string')
+      expect(typeof de.train.name[id!], need).toBe('string')
+    }
+    expect(en.walk.finishLessonNamed).toContain('{lesson}')
+    expect(de.walk.finishLessonNamed).toContain('{lesson}')
+    // Steps that are not lessons keep the plain label.
+    expect(LESSON_OF.clear).toBeUndefined()
+    expect(LESSON_OF.chest).toBeUndefined()
+  })
+
+  it('holds every machine in its own room (one wandered back and kept a gate shut)', async () => {
+    const { map, enemies } = await cast()
+    expect(enemies.length).toBeGreaterThan(0)
+    for (const e of enemies) {
+      const r = map.rooms[e.room]!
+      const [x0, z0, x1, z1] = e.leash!
+      expect(x0, e.kind).toBeGreaterThanOrEqual(r.x0 * CELL)
+      expect(z0, e.kind).toBeGreaterThanOrEqual(r.z0 * CELL)
+      expect(x1, e.kind).toBeLessThanOrEqual((r.x0 + r.w) * CELL)
+      expect(z1, e.kind).toBeLessThanOrEqual((r.z0 + r.h) * CELL)
+      expect(e.x >= x0 && e.x <= x1 && e.z >= z0 && e.z <= z1, e.kind).toBe(true)
+    }
+  })
+
   it('puts exactly the teaching machine in each walkthrough room', async () => {
     const { plan, enemies } = await cast()
     const kinds = (room: number) => enemies.filter(e => e.room === room).map(e => e.kind)

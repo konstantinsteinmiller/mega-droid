@@ -1,7 +1,7 @@
 import type { EnemyKind } from '../models/enemies'
 import type { Element } from '../data/enemies'
 import type { MapData, Room } from '../world/levelGen'
-import { cellCenter, roomCenter } from '../world/levelGen'
+import { CELL, cellCenter, roomCenter } from '../world/levelGen'
 import { mulberry32, weighted } from '../world/rng'
 import { hasLineOfSight, type Nav } from '../world/nav'
 import { createEnemy } from './enemies'
@@ -171,6 +171,10 @@ export const spawnTutorial = async (
       taken.push(at)
       const e = createEnemy(kind, level, at[0], at[1], room.id)
       e.yaw = Math.atan2(dx - at[0], dz - at[1])
+      // Held in its own room: an unleashed Hardhat wandered back into an
+      // earlier room, and a gate waiting for its room to go quiet sent the
+      // player all the way back (a playtest note).
+      e.leash = roomLeash(room)
       out.push(e)
       await opts.slice?.()
     }
@@ -178,6 +182,10 @@ export const spawnTutorial = async (
   }
   return out
 }
+
+/** A room's floor, less a margin from its walls, as a machine's leash. */
+export const roomLeash = (room: Room): [number, number, number, number] =>
+  [room.x0 * CELL + 0.75, room.z0 * CELL + 0.75, (room.x0 + room.w) * CELL - 0.75, (room.z0 + room.h) * CELL - 0.75]
 
 /** A floor cell about TEACH_DIST from the doorway, in sight of it, clear of
  *  the machines already placed. */

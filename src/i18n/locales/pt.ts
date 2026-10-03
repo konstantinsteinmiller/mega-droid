@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Termine a lição de {weapon}',
     'finishTutorial': 'Termine o tutorial primeiro',
-    'finishLesson': 'Termine a lição'
+    'finishLesson': 'Termine a lição',
+    'finishLessonNamed': 'Termine primeiro: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Parafusos insuficientes? Veja um vídeo curto para recarregar.',

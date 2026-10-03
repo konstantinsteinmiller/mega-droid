@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Hoàn thành bài học về {weapon}',
     'finishTutorial': 'Hãy hoàn thành hướng dẫn trước',
-    'finishLesson': 'Hoàn thành bài học'
+    'finishLesson': 'Hoàn thành bài học',
+    'finishLessonNamed': 'Hoàn thành trước: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Không đủ bu lông? Xem một video ngắn để nạp thêm.',

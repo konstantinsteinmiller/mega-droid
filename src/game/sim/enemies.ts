@@ -531,7 +531,7 @@ const golemThrow = (w: World, e: Enemy): void => {
   const vx = (tx - ox) / T
   const vz = (tz - oz) / T
   const vy = ((w.player.y ?? 0) + EYE_H - 0.45 - oy) / T + 0.5 * ROCK_G * T
-  w.fireEnemyShot(e, ox, oy, oz, vx, vy, vz, Math.hypot(vx, vy, vz), e.dmg, true)
+  w.fireEnemyShot(e, ox, oy, oz, vx, vy, vz, Math.hypot(vx, vy, vz), e.dmg, true, true)
   w.sfx('lob', e.x, e.z)
 }
 

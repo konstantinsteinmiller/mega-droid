@@ -588,6 +588,17 @@ export class LessonDirector {
       const d = Math.hypot(c.x - p.x, c.z - p.z)
       if (d < bestD) { best = c; bestD = d }
     }
+    // Its crate was broken already (a charged shot before the lesson lit):
+    // that counts, the lesson finishes at once instead of beaming in another.
+    if (!best) {
+      const gone = h.crates().find(c => c.broken && c.kind === 'crate' && roomAt(h.map, c.x, c.z) === roomId)
+      if (gone) {
+        this.crate = gone
+        this.crateRoom = roomId
+        this.live = 'crate'
+        return true
+      }
+    }
     if (!best) best = this.bringCrate(roomId)
     if (!best) return false
     this.crate = best

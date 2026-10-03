@@ -54,7 +54,7 @@ import { sfx } from '../audio/sfx'
 import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
 import { LessonDirector, roomAt, type LessonTick } from './lessons'
-import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed } from './walkthrough'
+import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed, LESSON_OF } from './walkthrough'
 import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt'
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
@@ -166,11 +166,11 @@ const ARENA_RED = new Color('#ff5a3a')
 const TRAP_CAM_DUR = 1.5
 /** The pit rescue: its length with a spiked floor and without (s), the
  *  impact before Atlas grabs, the grab, the lift; the footing trail. */
-const RESCUE_SPIKES = 3.9
-const RESCUE_VOID = 2.7
-const RESCUE_IMPACT = 1.2
-const RESCUE_GRAB = 1.9
-const RESCUE_LIFT = 1.5
+export const RESCUE_SPIKES = 3.9
+export const RESCUE_VOID = 2.7
+export const RESCUE_IMPACT = 1.2
+export const RESCUE_GRAB = 1.9
+export const RESCUE_LIFT = 1.5
 const RESCUE_CLEAR = 1.6
 const FOOT_EVERY = 0.25
 const FOOT_KEEP = 24
@@ -988,8 +988,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   // ─── World interface ───────────────────────────────────────────────────────
 
-  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean): void {
-    if (this.climb) {
+  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean, worldY = false): void {
+    // A shot aimed in world heights already (the golem's rock) was lifted twice
+    // here and flew over Flux's head.
+    if (this.climb && !worldY) {
       // The AI fires for a flat floor: lift the shot to the machine's own
       // platform and tip it at the player's height (a turret on a ledge
       // shoots down, a Hardhat below shoots up).
@@ -1347,7 +1349,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const r = this.rescue
     const s = this.freeze.shot
     if (!r || !s || s.kind !== 'rescue') return null
-    const t = this.freeze.t - (r.spikes ? 0 : RESCUE_IMPACT)
+    // On the spikes's clock: a fall into the void has no landing on them, so
+    // it starts RESCUE_IMPACT in (it was minus: Atlas stopped halfway down,
+    // the lift never played and Flux was put back by a cut).
+    const t = this.freeze.t + (r.spikes ? 0 : RESCUE_IMPACT)
     let x = r.fx
     let y = r.bottom
     let z = r.fz
@@ -2012,7 +2017,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     v.need = need
     // The very first gate: "Finish the Tutorial first" (players took the
     // shut door for a dead end); every later one names its lesson.
-    v.label = !walk ? 'walk.finishLessonOn' : walk.passed === 0 ? 'walk.finishTutorial' : 'walk.finishLesson'
+    v.label = !walk ? 'walk.finishLessonOn' : walk.passed === 0 ? 'walk.finishTutorial'
+      : LESSON_OF[need] ? 'walk.finishLessonNamed' : 'walk.finishLesson'
     v.weapon = this.beamTeach ?? ''
     v.x = d.x
     v.y = d.y + 1.35

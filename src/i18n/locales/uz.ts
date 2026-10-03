@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} darsini tugating',
     'finishTutorial': 'Avval mashgʻulotni tugating',
-    'finishLesson': 'Darsni tugating'
+    'finishLesson': 'Darsni tugating',
+    'finishLessonNamed': 'Avval tugating: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Boltlar yetmayaptimi? Toʻldirish uchun qisqa video koʻring.',

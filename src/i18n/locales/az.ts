@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon} dərsini bitir',
     'finishTutorial': 'Əvvəlcə təlimi bitir',
-    'finishLesson': 'Dərsi bitir'
+    'finishLesson': 'Dərsi bitir',
+    'finishLessonNamed': 'Əvvəlcə tamamla: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Bolt çatmır? Əlavə almaq üçün qısa video izlə.',

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Rond de les over {weapon} af',
     'finishTutorial': 'Rond eerst de tutorial af',
-    'finishLesson': 'Maak de les af'
+    'finishLesson': 'Maak de les af',
+    'finishLessonNamed': 'Rond eerst af: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Te weinig bouten? Bekijk een korte video voor een aanvulling.',

@@ -1,7 +1,7 @@
 <template lang="pug">
   div.door-prompt(v-show="!flow.modal && !isGamePaused" ref="rootEl" :aria-hidden="on ? 'false' : 'true'")
     div.dp-head
-      div.dp-label(ref="labelEl" role="status") {{ t(labelKey, { weapon: weaponName }) }}
+      div.dp-label(ref="labelEl" role="status") {{ t(labelKey, { weapon: weaponName, lesson: lessonName }) }}
       div.dp-arrow(ref="arrowEl" aria-hidden="true")
         svg(viewBox="0 0 40 40")
           path.dp-arrow-body(:d="ARROW")
@@ -24,7 +24,7 @@ import { flow } from '@/game/flow'
 import { isGamePaused } from '@/use/useGamePause'
 import { bearingOf } from '@/game/state/damageFeed'
 import { doorInput, promptArrow, type ArrowPose } from '@/game/sim/doorPrompt'
-import type { WalkNeed } from '@/game/sim/walkthrough'
+import { LESSON_OF, type WalkNeed } from '@/game/sim/walkthrough'
 import InputGlyph from './InputGlyph.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 
@@ -58,6 +58,11 @@ const labelKey = ref('walk.finishLesson')
 /** The weapon a beam-in room's lesson is about ("Finish the lesson on …"). */
 const weaponId = ref('')
 const weaponName = computed(() => (weaponId.value ? t(`weapon.${weaponId.value}.name`) : ''))
+/** The lesson a tutorial gate waits for ("Finish first: Shield Tutorial"). */
+const lessonName = computed(() => {
+  const id = need.value ? LESSON_OF[need.value] : undefined
+  return id ? t(`train.name.${id}`) : ''
+})
 /** On screen (the label is read out only then). */
 const on = ref(false)
 const input = computed(() => (need.value ? doorInput(need.value, hud.device) : null))

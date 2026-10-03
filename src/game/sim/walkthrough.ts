@@ -119,6 +119,13 @@ export interface WalkSave extends WalkthroughSave {
  *  corridor's gel (`Walkthrough.needAt`). */
 export type WalkNeed = WalkStep | 'gel' | 'weapon'
 
+/** The lesson a held door waits for, as its `train.name.<id>`: "Finish
+ *  first: Shield Tutorial". Steps that are not a lesson (clear the room, open
+ *  the chest) have none and keep the plain "Finish the lesson". */
+export const LESSON_OF: Readonly<Partial<Record<WalkNeed, string>>> = {
+  charge: 'charge', crate: 'charge', block: 'block', slide: 'slide', gel: 'gel', gap: 'gap', weapon: 'weapon'
+}
+
 /** The rooms after the start teach these, in order (the start: 'charge'). */
 const TEACH: readonly WalkStep[] = ['crate', 'block', 'slide', 'chest']
 /** The one machine that stands in a room for each step (the scripted cast). */

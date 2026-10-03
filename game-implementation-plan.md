@@ -842,7 +842,7 @@ while bars and damage numbers get direct DOM writes.
     (`SPEECH` rules + `deriveVoiceLines`, `VOICE_DETAIL` for the extras),
     voice-todo.md rendered with every line's state and kept current by a
     test, Flux's fumble lines voiced and wired; the skill updated.
-  - [ ] **P2 Bugs from the maps**: golem double-lifted aim, void-pit rescue
+  - [x] **P2 Bugs from the maps**: golem double-lifted aim, void-pit rescue
     sign, unleashed tutorial machines, lesson doors naming their lesson.
   - [ ] **P3 Quick wins**: chests open on any hit (#273), the boss shutter
     opens by itself (#283), enemies fire back across their room (#277), the

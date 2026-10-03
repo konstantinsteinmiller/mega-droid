@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': '{weapon}のレッスンを終えよう',
     'finishTutorial': 'まずチュートリアルを終えよう',
-    'finishLesson': 'レッスンを終わらせよう'
+    'finishLesson': 'レッスンを終わらせよう',
+    'finishLessonNamed': '先に完了しよう：{lesson}'
   },
   'hubLesson': {
     'earnBolts': 'ネジが足りない？短い動画を見て補充しよう。',

@@ -228,7 +228,8 @@ export default {
   'walk': {
     'finishLessonOn': 'Dokonči lekci: {weapon}',
     'finishTutorial': 'Nejdřív dokonči tutoriál',
-    'finishLesson': 'Dokonči lekci'
+    'finishLesson': 'Dokonči lekci',
+    'finishLessonNamed': 'Nejdřív dokonči: {lesson}'
   },
   'hubLesson': {
     'earnBolts': 'Málo šroubů? Podívej se na krátké video a doplň je.',

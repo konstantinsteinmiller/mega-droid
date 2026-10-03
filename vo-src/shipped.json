@@ -79,6 +79,30 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_help_block": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_help_charge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_help_gap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_help_gel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_help_slide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_help_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "de/atlas_hint_blaze_barrels": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -124,6 +148,14 @@
     "at": "2026-10-03"
   },
   "de/atlas_hint_drill_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_drill_drop": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_drill_rock": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -207,11 +239,47 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_hint_magnet_panel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_magnet_rail": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "de/atlas_hint_neon_blackout": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_hint_neon_blink": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_neon_kick": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_neon_switch": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "de/atlas_hint_rescue": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_rotor_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_tide_deep": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_tide_rise": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_hint_tide_valve": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -556,6 +624,30 @@
     "at": "2026-10-03"
   },
   "de/atlas_story_voltFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_block": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_charge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_gap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_gel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_slide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "de/atlas_train_weapon": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -1139,6 +1231,30 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_help_block": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_help_charge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_help_gap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_help_gel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_help_slide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_help_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_hint_blaze_barrels": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -1184,6 +1300,14 @@
     "at": "2026-10-03"
   },
   "en/atlas_hint_drill_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_drill_drop": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_drill_rock": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -1267,11 +1391,47 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_hint_magnet_panel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_magnet_rail": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_hint_neon_blackout": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_hint_neon_blink": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_neon_kick": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_neon_switch": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_hint_rescue": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_rotor_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_tide_deep": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_tide_rise": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_tide_valve": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -1624,6 +1784,30 @@
     "at": "2026-10-03"
   },
   "en/atlas_story_voltFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_block": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_charge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_gap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_gel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_slide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_train_weapon": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },

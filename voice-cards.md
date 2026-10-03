@@ -22,7 +22,7 @@ A calm, precise mission-control navigator who is also your friend: brief, dry, u
 - **Design prompt (DE):** Eine Frau Anfang dreißig, deutsche Muttersprachlerin, mit tiefer, ruhiger Altstimme, die fast geschlechtsneutral klingt, in gemessenem, gleichmäßigem Tempo. Ruhig, präzise und unaufdringlich warm, wie eine vertraute Navigatorin in der Missionskontrolle, die einer Freundin den Weg erklärt, mit trockenem, untertreibendem Humor. Saubere, nah mikrofonierte Studioaufnahme ohne Hall.
 - **Reference text (EN):** Morning check complete. The road ahead runs north past the old water tower, then down into the quiet valley. Keep your pace steady, watch the bridges, and I will tell you the moment anything changes.
 - **Reference text (DE):** Morgendliche Prüfung abgeschlossen. Der Weg führt nach Norden, am alten Wasserturm vorbei und dann hinunter ins stille Tal. Bleib gleichmäßig in Bewegung, achte auf die Brücken, und ich sage dir sofort Bescheid, wenn sich etwas ändert.
-- **Lines:** 184 (neutral 73, warm 29, cheeky 24, urgent 23, calm 18, excited 9, deadpan 6, sad 1, whisper 1)
+- **Lines:** 207 (neutral 77, warm 35, urgent 27, cheeky 25, calm 18, excited 17, deadpan 6, sad 1, whisper 1)
 - **Notes:** 'Gender-neutral to slightly low' (pronoun 'it') is realised as a low female alto rather than a light male tenor: it lands nearer neutral, keeps Atlas apart from the male-coded Vex and Flux, and is separated from Gauss by age, pitch and pace. Its chain adds no pitch shift (band-pass, doubler, 6 % ring-mod), so the designed pitch is the heard pitch; critical warnings are tagged 'urgent', never 'shout'.
 
 ## Dr. Vex

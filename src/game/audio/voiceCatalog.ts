@@ -1178,10 +1178,131 @@ const PIP: VoiceLine[] = [
   })
 ]
 
+// ── Atlas: the lesson rooms and the stage hints the catalogue missed ──
+// Live in the game (their text is in the locales) but never voiced: the gold
+// "Let's train..." intros, the nudges for a stuck player, and eleven stage tips.
+const ATLAS_LESSONS: VoiceLine[] = [
+  live('atlas.train.charge', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: the Charge Shot (the first room of the tutorial)', 'Ein Übungsraum: der Ladeschuss (der erste Raum des Tutorials)'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.4
+  }),
+  live('atlas.train.block', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: the Perfect Block', 'Ein Übungsraum: das Perfekte Blocken'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.4
+  }),
+  live('atlas.train.slide', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: the Slide', 'Ein Übungsraum: das Rutschen'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.2
+  }),
+  live('atlas.train.gel', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: the Repair Gel', 'Ein Übungsraum: das Reparaturgel'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.4
+  }),
+  live('atlas.train.gap', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: leaping a gap', 'Ein Übungsraum: über eine Lücke springen'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.6
+  }),
+  live('atlas.train.weapon', 'atlas', 'fieldWarn', {
+    when: ['A lesson room: the special weapon just copied from a Master', 'Ein Übungsraum: die gerade kopierte Spezialwaffe eines Meisters'],
+    direction: ['Bright, a coach starting practice.', 'Fröhlich, ein Trainer, der das Training beginnt.'],
+    max: 2.4
+  }),
+  live('atlas.help.charge', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player has not managed a Charge Shot for a while', 'Eine Übung: dem Spieler gelingt seit einer Weile kein Ladeschuss'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 3.2
+  }),
+  live('atlas.help.block', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player has not managed a Perfect Block for a while', 'Eine Übung: dem Spieler gelingt seit einer Weile kein Perfektes Blocken'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 3.5
+  }),
+  live('atlas.help.slide', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player keeps getting caught by the ring', 'Eine Übung: der Ring erwischt den Spieler immer wieder'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 3.2
+  }),
+  live('atlas.help.gel', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player has not used the Repair Gel yet', 'Eine Übung: der Spieler hat das Reparaturgel noch nicht benutzt'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 2.4
+  }),
+  live('atlas.help.gap', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player has not leapt the gap yet', 'Eine Übung: der Spieler ist noch nicht über die Lücke gesprungen'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 3.2
+  }),
+  live('atlas.help.weapon', 'atlas', 'fieldWarn', {
+    when: ['A lesson: the player has not fired the new weapon at the drones', 'Eine Übung: der Spieler hat die neue Waffe noch nicht auf die Drohnen gefeuert'],
+    direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
+    max: 3
+  }),
+  live('atlas.hint.rotor.board', 'atlas', 'fieldWarn', {
+    when: ['Rotor Run: the quadcopter lifts off with Flux on it', 'Rotorflug: der Quadrokopter hebt mit Flux ab'],
+    direction: ['Gleeful, taking the controls.', 'Vergnügt, übernimmt die Steuerung.'],
+    max: 2.4
+  }),
+  live('atlas.hint.neon.kick', 'atlas', 'fieldWarn', {
+    when: ['Blackout Boulevard: the first wall-kick shaft', 'Blackout Boulevard: der erste Wandsprung-Schacht'],
+    direction: ['Coaching, picking up speed on "Again!".', 'Wie ein Trainer, bei "Nochmal!" schneller.'],
+    max: 3.5
+  }),
+  live('atlas.hint.neon.switch', 'atlas', 'fieldWarn', {
+    when: ['Blackout Boulevard: the first light switch', 'Blackout Boulevard: der erste Lichtschalter'],
+    direction: ['A quick tip, pointing.', 'Ein schneller Tipp, zeigt hin.'],
+    max: 2.8
+  }),
+  live('atlas.hint.neon.blink', 'atlas', 'fieldWarn', {
+    when: ['Blackout Boulevard: the first blinking light bridge', 'Blackout Boulevard: die erste blinkende Lichtbrücke'],
+    direction: ['Quick, timing is everything.', 'Schnell, es kommt aufs Timing an.'],
+    max: 2.6
+  }),
+  live('atlas.hint.tide.deep', 'atlas', 'fieldWarn', {
+    when: ['Tidewater Locks: Flux wades into deep water', 'Gezeitenschleusen: Flux watet in tiefes Wasser'],
+    direction: ['Alarmed, quick.', 'Alarmiert, schnell.'],
+    max: 2
+  }),
+  live('atlas.hint.tide.valve', 'atlas', 'fieldWarn', {
+    when: ['Tidewater Locks: the first flooded lock with a valve', 'Gezeitenschleusen: die erste geflutete Schleuse mit Ventil'],
+    direction: ['A tactical tip.', 'Ein taktischer Tipp.'],
+    max: 2.8
+  }),
+  live('atlas.hint.tide.rise', 'atlas', 'fieldWarn', {
+    when: ['Tidewater Locks: the tide starts to rise', 'Gezeitenschleusen: die Flut beginnt zu steigen'],
+    direction: ['Urgent, pointing up.', 'Dringend, zeigt nach oben.'],
+    max: 2.4
+  }),
+  live('atlas.hint.drill.drop', 'atlas', 'fieldWarn', {
+    when: ['Deep Mine: the first falling rocks', 'Tiefenmine: der erste Steinschlag'],
+    direction: ['Quick warning, eyes up.', 'Schnelle Warnung, Blick nach oben.'],
+    max: 2.4
+  }),
+  live('atlas.hint.drill.rock', 'atlas', 'fieldWarn', {
+    when: ['Deep Mine: the first cracked rock in the way', 'Tiefenmine: der erste rissige Fels im Weg'],
+    direction: ['A tactical tip.', 'Ein taktischer Tipp.'],
+    max: 2.6
+  }),
+  live('atlas.hint.magnet.panel', 'atlas', 'fieldWarn', {
+    when: ['Polarity Works: the first polarity plate', 'Polaritätswerk: die erste Polaritätsplatte'],
+    direction: ['Sly, pointing out a trick.', 'Schlau, verrät einen Trick.'],
+    max: 3
+  }),
+  live('atlas.hint.magnet.rail', 'atlas', 'fieldWarn', {
+    when: ['Polarity Works: the first magnet rail', 'Polaritätswerk: die erste Magnetschiene'],
+    direction: ['Calm, explaining.', 'Ruhig, erklärend.'],
+    max: 3.5
+  })
+]
+
 export const VOICE_LINES: readonly VoiceLine[] = [
   ...ATLAS_LIVE, ...ATLAS_PLAN,
   ...ATLAS_HINT_BLAZE, ...ATLAS_HINT_CRYO, ...ATLAS_HINT_VOLT, ...ATLAS_HINT_GALE, ...ATLAS_SECRET,
-  ...VEX, ...FLUX, ...FINALE, ...PIP
+  ...VEX, ...FLUX, ...FINALE, ...PIP, ...ATLAS_LESSONS
 ]
 
 /** A key's file name, without the extension: `atlas.bossAhead` → `atlas_bossAhead`. */

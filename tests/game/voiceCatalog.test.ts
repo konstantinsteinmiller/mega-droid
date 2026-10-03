@@ -30,6 +30,15 @@ describe('the voice catalog', () => {
     }
   })
 
+  it('covers every Atlas line the locales hold: the lesson rooms and the stage hints went unvoiced for months', () => {
+    const leaves = (o: unknown, p: string): string[] => Object.entries(o as Record<string, unknown>)
+      .flatMap(([k, v]) => (v && typeof v === 'object' ? leaves(v, `${p}${k}.`) : [`${p}${k}`]))
+    const keys = new Set(VOICE_LINES.map(l => l.key))
+    // `atlas.objective` is retired: no code asks for it any more.
+    const missing = leaves(en.atlas, 'atlas.').filter(k => !keys.has(k) && k !== 'atlas.objective')
+    expect(missing).toEqual([])
+  })
+
   it('live lines have their text in both locales; planned lines carry a draft in both (or are in both locales)', () => {
     for (const l of VOICE_LINES) {
       if (l.speaker === 'flux' || l.key.startsWith('vex.laugh.')) {

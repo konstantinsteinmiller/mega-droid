@@ -337,3 +337,26 @@ Every line is short (a speech bubble of 2–3 s; a bark under a second).
 | `pip_debrief_rotor_boss.ogg` | Debrief after Rotor Run: what the Master of Vex Fortress has done | {boss} can't hide behind a shield now. | {boss} kann sich hinter keinem Schild mehr verstecken. |
 | `pip_debrief_rotor_tip.ogg` | Debrief after Rotor Run: how to beat the next Master | It borrows the Masters' attacks. Pack Repair Gel! | Er nutzt die Angriffe der Meister. Pack Reparaturgel ein! |
 | `pip_debrief_go.ogg` | Every debrief: the last line, then the Lab | Gear up, then go! I'll mind the lab. | Rüste dich aus, dann los! Ich hüte das Labor. |
+| `atlas_train_charge.ogg` | A lesson room: the Charge Shot (the first room of the tutorial) | Let's train the Charge Shot! | Lass uns den Ladeschuss trainieren! |
+| `atlas_train_block.ogg` | A lesson room: the Perfect Block | Let's train the Perfect Block! | Lass uns das Perfekte Blocken trainieren! |
+| `atlas_train_slide.ogg` | A lesson room: the Slide | Let's train the Slide! | Lass uns das Rutschen trainieren! |
+| `atlas_train_gel.ogg` | A lesson room: the Repair Gel | Let's train the Repair Gel! | Lass uns das Reparaturgel trainieren! |
+| `atlas_train_gap.ogg` | A lesson room: leaping a gap | Let's train jumping over gaps! | Lass uns das Springen über Lücken trainieren! |
+| `atlas_train_weapon.ogg` | A lesson room: the special weapon just copied from a Master | Let's train your new weapon! | Lass uns deine neue Waffe trainieren! |
+| `atlas_help_charge.ogg` | A lesson: the player has not managed a Charge Shot for a while | Hold fire until the cannon glows, then let go! | Halte Feuer gedrückt, bis die Kanone glüht, dann lass los! |
+| `atlas_help_block.ogg` | A lesson: the player has not managed a Perfect Block for a while | Hold block when it fires. Just as it hits is perfect! | Halte Blocken gedrückt, wenn er feuert. Genau beim Einschlag ist perfekt! |
+| `atlas_help_slide.ogg` | A lesson: the player keeps getting caught by the ring | Slide away just before the red ring reaches you! | Rutsch weg, kurz bevor der rote Ring dich erreicht! |
+| `atlas_help_gel.ogg` | A lesson: the player has not used the Repair Gel yet | Use a Repair Gel to heal up! | Nutze ein Reparaturgel, um dich zu heilen! |
+| `atlas_help_gap.ogg` | A lesson: the player has not leapt the gap yet | Walk straight at the edge and you'll leap across! | Lauf geradeaus auf die Kante zu, dann springst du automatisch rüber! |
+| `atlas_help_weapon.ogg` | A lesson: the player has not fired the new weapon at the drones | Pick your new weapon and fire at the drones! | Wähl deine neue Waffe und feure auf die Drohnen! |
+| `atlas_hint_rotor_board.ogg` | Rotor Run: the quadcopter lifts off with Flux on it | All aboard! I fly, you shoot. | Alle einsteigen! Ich fliege, du schießt. |
+| `atlas_hint_neon_kick.ogg` | Blackout Boulevard: the first wall-kick shaft | Face the wall and slide. Again! Wall-kick up! | Zur Wand drehen und rutschen. Nochmal! Wandsprung nach oben! |
+| `atlas_hint_neon_switch.ogg` | Blackout Boulevard: the first light switch | A light switch! Shoot it to swap the bridges. | Ein Lichtschalter! Schieß drauf, um die Brücken zu tauschen. |
+| `atlas_hint_neon_blink.ogg` | Blackout Boulevard: the first blinking light bridge | Light bridges blink! Cross while they glow. | Lichtbrücken blinken! Rüber, solange sie leuchten. |
+| `atlas_hint_tide_deep.ogg` | Tidewater Locks: Flux wades into deep water | Too deep! Get out of the water! | Zu tief! Raus aus dem Wasser! |
+| `atlas_hint_tide_valve.ogg` | Tidewater Locks: the first flooded lock with a valve | Flooded lock! Shoot the valve to drain it. | Geflutete Schleuse! Schieß aufs Ventil, um sie zu leeren. |
+| `atlas_hint_tide_rise.ogg` | Tidewater Locks: the tide starts to rise | The tide's coming in. Up the steps! | Die Flut kommt. Rauf auf die Stufen! |
+| `atlas_hint_drill_drop.ogg` | Deep Mine: the first falling rocks | Rocks falling! Step out of the shadows. | Steinschlag! Raus aus den Schatten. |
+| `atlas_hint_drill_rock.ogg` | Deep Mine: the first cracked rock in the way | Cracked rock! A full charge will break it. | Rissiger Fels! Ein voller Ladeschuss knackt ihn. |
+| `atlas_hint_magnet_panel.ogg` | Polarity Works: the first polarity plate | See that red-blue plate? Shoot it to flip the rail. | Siehst du die rot-blaue Platte? Schieß drauf, um die Schiene umzupolen. |
+| `atlas_hint_magnet_rail.ogg` | Polarity Works: the first magnet rail | Magnet rail! The arrows show the pull. Push through, or ride it. | Magnetschiene! Die Pfeile zeigen den Sog. Kämpf dagegen an oder lass dich tragen. |

@@ -14,7 +14,7 @@ vi.mock('@/use/useAdGate', () => ({ canShowInterstitial: () => false, markInters
 vi.mock('@/use/useCrazyGames', () => ({ triggerHappytime: () => {} }))
 vi.mock('@/game/engine/app', () => ({ app: { setMode: () => {}, setWanted: () => {} } }))
 
-import { Mission, RESCUE_GRAB, RESCUE_IMPACT, RESCUE_LIFT, RESCUE_SPIKES, RESCUE_VOID } from '@/game/sim/mission'
+import { Mission, RESCUE_GRAB, RESCUE_IMPACT, RESCUE_LIFT, RESCUE_SPIKES, RESCUE_VOID, RESCUE_ATLAS_Y } from '@/game/sim/mission'
 
 type Pose = { x: number; y: number; z: number; hang: boolean } | null
 
@@ -42,9 +42,9 @@ describe('the pit rescue', () => {
     it(`${spikes ? 'spikes' : 'void'}: Atlas reaches Flux's hands, then carries him all the way to the footing`, () => {
       const { self, pose } = rig(spikes)
       const offset = spikes ? 0 : RESCUE_IMPACT
-      // At the grab: Atlas is down at his hands (2.35 m over his feet).
+      // At the grab: Atlas is down over him (RESCUE_ATLAS_Y over his feet: big, its beam on him).
       const atGrab = pose(RESCUE_GRAB - offset)!
-      expect(self.atlasWorldAt.y).toBeCloseTo(atGrab.y + 2.35, 1)
+      expect(self.atlasWorldAt.y).toBeCloseTo(atGrab.y + RESCUE_ATLAS_Y, 1)
       // Halfway through the lift he hangs, carried on an arc (above the straight
       // line from where he fell to the footing).
       const mid = pose(RESCUE_GRAB + RESCUE_LIFT / 2 - offset)!

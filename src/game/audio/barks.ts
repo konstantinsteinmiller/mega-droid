@@ -32,7 +32,7 @@ export const barkFor = (o: { hazard?: string | null; element?: string | null; ha
     case 'blade': return 'trap'
     case 'ice': return 'ice'
     case 'volt': return 'volt'
-    case 'crush': return 'crusher'
+    case 'crush': case 'barrel': return 'crusher'
     case 'rock': case 'crate': return 'heavy'
   }
   switch (o.element) {

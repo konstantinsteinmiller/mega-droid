@@ -1,7 +1,7 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
 import {
   Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3, Raycaster, Vector2,
-  Mesh, RingGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
+  Mesh, RingGeometry, CylinderGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
   Frustum, Matrix4, Sphere, SphereGeometry, WebGLRenderTarget, Quaternion, Euler, Shape, ShapeGeometry, type Object3D
 } from 'three'
 import type { GameMode } from '../engine/app'
@@ -23,7 +23,7 @@ const CITY_STREAM_MS = 3
 import { getRenderer, fovForAspect } from '../engine/renderer'
 import type { Input } from '../engine/input'
 import { consumeEdges } from '../engine/input'
-import { generateMap, type MapData, type SecretSpec, CELL, WALL_H } from '../world/levelGen'
+import { generateMap, type MapData, type SecretSpec, CELL, WALL_H, pitKindOf } from '../world/levelGen'
 import { createSlicer, type Slice } from '../engine/slicer'
 import { createNav, moveCircle, findPath, smoothPath, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
 import { buildLevel, buildWallPlug, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
@@ -78,6 +78,7 @@ import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
 import { LessonHologram, TargetArrow, ArmHologram } from '../fx/lessonHologram'
+import { tickLava } from '../models/lava'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import {
@@ -144,6 +145,12 @@ export const setupFromQuest = (quest: Quest, snapshot: MissionSnapshot | null): 
 
 /** A held gate's red judder on a refusal (s). */
 const DOOR_SHAKE = 0.45
+/** A rolling barrel flattens Flux this long (s): no moving, the view on the
+ *  floor, a boing as he pops back up. */
+export const FLAT_FOR = 1
+/** The flattened eye height (m). */
+const FLAT_EYE = 0.45
+
 /** The slide lesson's Stomper holds at the top of its leap (s into its 0.7 s
  *  arc) until the player slides. */
 const SLIDE_CUE_AT = 0.33
@@ -173,6 +180,9 @@ export const RESCUE_VOID = 2.7
 export const RESCUE_IMPACT = 1.2
 export const RESCUE_GRAB = 1.9
 export const RESCUE_LIFT = 1.5
+/** In a rescue Atlas is drawn this much bigger, this high over Flux (m). */
+const RESCUE_ATLAS_SCALE = 1.6
+export const RESCUE_ATLAS_Y = 2.9
 const RESCUE_CLEAR = 1.6
 const FOOT_EVERY = 0.25
 const FOOT_KEEP = 24
@@ -337,6 +347,16 @@ interface ExitView {
   droneShadow: Mesh
 }
 
+/** The flattened eye height with `left` seconds of the flatten to go: down in
+ *  a snap, held, then back up with an overshoot (the boing). */
+export const flatEye = (left: number): number => {
+  const t = FLAT_FOR - left
+  if (t < 0.08) return EYE_H + (FLAT_EYE - EYE_H) * (t / 0.08)
+  if (left > 0.3) return FLAT_EYE + Math.sin(t * 30) * 0.03 * Math.max(0, 1 - t * 2)
+  const k = 1 - left / 0.3
+  return FLAT_EYE + (EYE_H - FLAT_EYE) * (k + Math.sin(k * Math.PI) * 0.35)
+}
+
 export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, TrainHost, ArenaHost {
   scene = new Scene()
   camera = new PerspectiveCamera(70, 1, 0.05, SKY_FAR)
@@ -355,6 +375,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   atlas: AtlasDirector | null = null
   private atlasVm: Rig | null = null
   private atlasWorld: Rig | null = null
+  /** Atlas's tractor beam in a pit rescue (#282): a cone of light from it
+   *  down to Flux, from the grab through the lift. */
+  private tractor: Mesh | null = null
   private atlasWorldAt = new Vector3()
   private atlasWorldSet = false
   private atlasTick: AtlasTick = {
@@ -508,6 +531,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private killCamCount = 0
   /** Hazard kinds whose hit has had its freeze-frame this mission. */
   private readonly trapCamSeen = new Set<string>()
+  /** Flattened by a barrel: seconds left (`FLAT_FOR`); and the hazard of the
+   *  trap shot on screen (the barrel's shows him squashed flat). */
+  flatT = 0
+  private trapCamHazard = ''
+  /** The lava pits' cells (x, surface y, z): embers rise off them near Flux. */
+  private lavaCells: Array<[number, number, number]> | null = null
   /** Lesson rooms: intro, try (`sim/training.ts`). */
   readonly training: Training = new Training(this)
   /** The lesson rooms' holograms doing the move on a loop
@@ -885,6 +914,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.vmScene.add(this.atlasVm.root)
     this.atlasWorld = buildAtlas()
     this.atlasWorld.root.visible = false
+    this.tractor = new Mesh(
+      new CylinderGeometry(0.28, 0.95, 1, 24, 1, true),
+      new MeshBasicMaterial({ color: new Color(PAL.glowCyan), transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false })
+    )
+    this.tractor.visible = false
+    this.scene.add(this.tractor)
     this.scene.add(this.atlasWorld.root)
     const q = setup.quest
     this.atlas = new AtlasDirector({
@@ -1134,8 +1169,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     taken = Math.max(1, Math.round(taken))
     c.hp -= taken
     c.iframes = 0.8
-    c.hurtT = 0.25
-    this.shake(0.35)
+    // A barrel flattens him like a cartoon (#280): no jolt, no shake.
+    const flat = o.hazard === 'barrel'
+    c.hurtT = flat ? 0 : 0.25
+    if (flat) {
+      this.flatT = FLAT_FOR
+      c.charging = false
+      c.charge = 0
+      sfx('fumble')
+    } else this.shake(0.35)
     feedDamage(p, e, o.fromX, o.fromZ, taken, c.maxHp) // the hurt sound from its side + the HUD's marker
     pushHud({ t: 'hurt', strength: Math.min(1, taken / (c.maxHp * 0.25)) })
     this.onPlayerHurt(taken)
@@ -1177,9 +1219,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if (o.state !== 'dead' && o.awake && !o.dormant && Math.hypot(o.x - p.x, o.z - p.z) < KILLCAM_ALERT_R * 0.75) return
     }
     this.trapCamSeen.add(hazard)
+    this.trapCamHazard = hazard
     this.startFreeze({
       kind: 'trap', dur: TRAP_CAM_DUR, frame: 'front', skippable: true,
-      fx: hazard === 'volt' ? 'volt' : hazard === 'ice' ? 'ice' : hazard === 'flame' ? 'flame' : 'spikes',
+      fx: hazard === 'volt' ? 'volt' : hazard === 'ice' ? 'ice' : hazard === 'flame' ? 'flame' : hazard === 'barrel' ? 'flat' : 'spikes',
       tx: fromX, ty: p.y + 1, tz: fromZ
     })
   }
@@ -1388,12 +1431,29 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     s.hz = z
     s.hyaw = r.tyaw
     s.tx = x
-    s.ty = y + 1
+    // Framed for both: Flux and Atlas over him.
+    s.ty = y + 1.7
     s.tz = z
-    // Atlas: from high above, down to his hands, then carrying him.
+    // Atlas, big: from high above, down over him, then carrying him up on
+    // its tractor beam.
     const down = Math.min(1, Math.max(0, (t - RESCUE_IMPACT * 0.8) / (RESCUE_GRAB - RESCUE_IMPACT * 0.8)))
-    this.atlasWorldAt.set(x + 0.1, y + 2.35 + (1 - down) * 7, z)
+    const ay = y + RESCUE_ATLAS_Y + (1 - down) * 7
+    this.atlasWorldAt.set(x + 0.1, ay, z)
     this.atlasWorldSet = true
+    this.atlasWorld?.root.scale.setScalar(RESCUE_ATLAS_SCALE)
+    const tr = this.tractor
+    if (tr) {
+      const on = Math.min(1, Math.max(0, (t - (RESCUE_GRAB - 0.3)) / 0.3))
+      tr.visible = on > 0
+      if (on > 0) {
+        const top = ay - 0.5
+        const len = Math.max(0.5, top - y)
+        tr.position.set(x + 0.1, y + len / 2, z)
+        tr.scale.set(1, len, 1)
+        ;(tr.material as MeshBasicMaterial).opacity = on * (0.32 + 0.12 * Math.sin(this.freeze.t * 18))
+        if (Math.random() < 0.6) this.fx.emit({ x: x + (Math.random() - 0.5) * 1.2, y: y + Math.random() * len, z: z + (Math.random() - 0.5) * 1.2, vy: 2.5, color: PAL.glowCyan, size: 0.18, sizeEnd: 0.02, life: 0.5 })
+      }
+    }
     return { x, y, z, hang }
   }
 
@@ -2628,6 +2688,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       else this.fireWeapon((q - 1) as 0 | 1)
     }
     this.system.update(dt)
+    if (first) this.stepLava()
     this.fx.update(dt)
     this.markers.update(dt, this.time)
     this.shocks.update(dt)
@@ -2777,6 +2838,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   private onFreezeEnd(kind: FreezeKind): void {
+    // A barrel's shot left him squashed: whole again for the next one; the
+    // rescue's big Atlas and its beam go.
+    this.exitView?.heroRoot.scale.set(1, 1, 1)
+    if (kind === 'rescue') {
+      this.atlasWorld?.root.scale.setScalar(1)
+      if (this.tractor) this.tractor.visible = false
+    }
     if (kind === 'rescue' && this.rescue) {
       const r = this.rescue
       this.rescue = null
@@ -2806,7 +2874,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (s.fx === 'volt') this.fx.sparks(x, y, z, Math.random() < 0.5 ? '#fff38a' : '#7fe8ff', 3, 4, 0.12)
     else if (s.fx === 'flame') this.fx.emit({ x, y, z, vy: 2.2, color: Math.random() < 0.5 ? '#ffb13c' : '#ff5a2a', size: 0.55, sizeEnd: 0.05, life: 0.45 })
     else if (s.fx === 'ice') this.fx.emit({ x, y, z, vy: 0.4, color: '#bff6ff', size: 0.3, sizeEnd: 0.02, life: 0.6 })
-    else this.fx.sparks(x, y, z, '#ffd84a', 2, 5, 0.1)
+    else if (s.fx === 'flat') {
+      // Flattened: cartoon stars circling over the pancake.
+      const a = this.freeze.t * 9 + Math.random() * 0.4
+      this.fx.emit({ x: s.hx + Math.cos(a) * 0.7, y: s.hy + 0.55, z: s.hz + Math.sin(a) * 0.7, vy: 0, color: '#fff38a', size: 0.28, sizeEnd: 0.05, life: 0.35 })
+    } else this.fx.sparks(x, y, z, '#ffd84a', 2, 5, 0.1)
   }
 
   // ─── Training host (`sim/training.ts`) ──────────────────────────────────
@@ -2887,6 +2959,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.setupBeamLesson()
     this.setupGuards()
     this.setupExitRoom()
+    this.setupLava()
     const walk = this.walk
     if (!walk) return
     for (const g of walk.plan.gates) {
@@ -3002,6 +3075,40 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.beamTeach = null
       this.releaseDoor(beam.door)
       tr.leave()
+    }
+  }
+
+  // ─── Lava (#279: a moving surface, embers rising off it) ────────────────
+
+  private setupLava(): void {
+    const t = this.map.terrain
+    if (!t?.pitKind?.some(k => k === 'lava')) return
+    const cells: Array<[number, number, number]> = []
+    const w = this.map.w
+    for (let k = 0; k < t.pit.length; k++) {
+      if (!t.pit[k]) continue
+      const room = this.map.room[k]!
+      if (pitKindOf(t, room) !== 'lava') continue
+      const i = k % w
+      const j = (k - i) / w
+      cells.push([cellCenter(i), (t.pitBottom[room] ?? 0) + 0.36, cellCenter(j)])
+    }
+    if (cells.length) this.lavaCells = cells
+  }
+
+  /** Per frame: the surface flows; embers drift up off cells near Flux. */
+  private stepLava(): void {
+    const cells = this.lavaCells
+    if (!cells) return
+    tickLava(this.time)
+    const p = this.player
+    for (let n = 0; n < 3; n++) {
+      const c = cells[(Math.random() * cells.length) | 0]!
+      if (Math.abs(c[0] - p.x) > 18 || Math.abs(c[2] - p.z) > 18) continue
+      this.fx.emit({
+        x: c[0] + (Math.random() - 0.5) * CELL, y: c[1] + 0.1, z: c[2] + (Math.random() - 0.5) * CELL,
+        vy: 1.2 + Math.random() * 1.6, color: Math.random() < 0.6 ? '#ffb13c' : '#ff5a2a', size: 0.22, sizeEnd: 0.02, life: 1.4
+      })
     }
   }
 
@@ -3648,6 +3755,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.fireCd -= dt
     c.iframes = Math.max(0, c.iframes - dt)
     c.hurtT = Math.max(0, c.hurtT - dt)
+    if (this.flatT > 0) {
+      this.flatT = Math.max(0, this.flatT - dt)
+      if (this.flatT === 0) sfx('fumble')
+    }
     // Snapped to 0 within float dust of it: 90 steps of 1/60 leave 1.5 s at
     // +3e-16, and that must not push the next slide a whole step late.
     c.slideCd = c.slideCd - dt > 1e-9 ? c.slideCd - dt : 0
@@ -3717,9 +3828,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // while it cools down is dropped with this step's edges, never held: no
     // surprise slide a second later.
     // A wall-kick shaft takes the slide as a kick (at its foot or on it).
-    const kicked = first && inp.slideQueued && !!this.climb && !this.fumble.stunned && this.climb.kick(p)
+    const kicked = first && inp.slideQueued && !!this.climb && !this.fumble.stunned && this.flatT <= 0 && this.climb.kick(p)
     if (first && inp.slideQueued && this.climb && p.ladder >= 0 && !kicked) this.climb.letGo(p)
-    if (first && inp.slideQueued && !kicked && c.slideCd <= 0 && c.slideT <= 0 && c.power >= st.slideCost && !this.fumble.stunned && (!this.climb || this.climb.canSlide(p))) {
+    if (first && inp.slideQueued && !kicked && c.slideCd <= 0 && c.slideT <= 0 && c.power >= st.slideCost && !this.fumble.stunned && this.flatT <= 0 && (!this.climb || this.climb.canSlide(p))) {
       let dx = 0
       let dz = 0
       const stick = Math.hypot(inp.moveX, inp.moveY)
@@ -3768,7 +3879,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Riding (a stage's rail cart): the stick waits, looking and shooting work.
     const riding = !!this.climb?.locksMove()
     if (riding) p.path = null
-    const stick = this.pitHold > 0 || stunned || riding ? 0 : Math.hypot(inp.moveX, inp.moveY)
+    const stick = this.pitHold > 0 || stunned || riding || this.flatT > 0 ? 0 : Math.hypot(inp.moveX, inp.moveY)
     const speedMul = st.moveMul * (c.blocking ? 0.45 : 1) * (c.hurtT > 0 ? 0.5 : 1)
     if (c.slideT > 0) {
       c.slideT -= dt
@@ -4639,6 +4750,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       y = fy + EYE_H - Math.min(1, this.deathT * 1.5) * 0.9
     }
     if (c.slideT > 0) y -= 0.35
+    // Flattened: the eye slaps down to the floor, then springs back up with
+    // a wobble as he pops out.
+    if (this.flatT > 0) y += (fy + flatEye(this.flatT) - y)
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * 1.8)
     const sh = this.shakeAmt * this.shakeAmt
     const cam = this.camera
@@ -4995,8 +5109,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const t = this.freeze.t
     const hr = v.heroRoot
     hr.visible = true
-    // A trap's hold shakes him in place; the other shots stand him still.
-    const shake = s.kind === 'trap' ? 0.035 : 0
+    // A trap's hold shakes him in place; the other shots stand him still. A
+    // barrel's leaves him squashed flat, wide as a pancake.
+    const squashed = s.kind === 'trap' && this.trapCamHazard === 'barrel'
+    hr.scale.set(squashed ? 1.45 : 1, squashed ? 0.28 : 1, squashed ? 1.45 : 1)
+    const shake = s.kind === 'trap' && !squashed ? 0.035 : 0
     hr.position.set(
       s.hx + (shake ? (Math.random() - 0.5) * shake : 0),
       s.hy + (shake ? Math.random() * shake : 0),

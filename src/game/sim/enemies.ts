@@ -361,6 +361,15 @@ const GOLEM_PROP_R = 0.62
 export const ROCK_G = 10
 /** The thrown rock's ground speed (m/s): a readable arc, not a bullet. */
 const GOLEM_THROW_SPEED = 13
+/** The ram (#281): Flux nearer than this (m), and not on top of it, it
+ *  charges him instead of throwing — a red line along its lane for
+ *  GOLEM_RAM_TELE, then a dash of GOLEM_RAM_SPEED for GOLEM_RAM_TIME. A block
+ *  takes the blow at a quarter, a slide's dodge lets it pass, a perfect block
+ *  stuns it (it is melee). */
+export const GOLEM_RAM_R = 5
+export const GOLEM_RAM_TELE = 0.5
+export const GOLEM_RAM_SPEED = 9
+export const GOLEM_RAM_TIME = 0.6
 /** The boulder lob: wind-up (s, red ring) and flight (s). */
 const GOLEM_LOB_TELE = 1.0
 const GOLEM_LOB_DUR = 1.15
@@ -536,6 +545,18 @@ const golemHop = (w: World, e: Enemy, dt: number): void => {
 
 /** The thrown rock: from the fist high over the lid, on an arc that meets
  *  Flux's chest where he stands now (combat.ts flies it under ROCK_G). */
+/** The ram's dash: along its locked lane until it meets Flux (a melee
+ *  blow: blockable, parryable), a wall, or its time. */
+const golemRam = (w: World, e: Enemy, dt: number): void => {
+  const frac = step(w, e, e.tx * GOLEM_RAM_SPEED * dt, e.tz * GOLEM_RAM_SPEED * dt)
+  if (Math.random() < 0.5) w.fx.sparks(e.x - e.tx * 0.6, 0.15, e.z - e.tz * 0.6, '#c9b79a', 2, 2, 0.14)
+  if (!e.hitPlayer && Math.hypot(w.player.x - e.x, w.player.z - e.z) < e.def.radius + PLAYER_R + 0.25) {
+    e.hitPlayer = true
+    w.hitPlayer(e, Math.round(e.dmg * 1.2), { blockable: true, fromX: e.x, fromZ: e.z, kind: 'melee' })
+    enterState(e, 'recover')
+  } else if ((frac < 0.4 && e.st > 0.08) || e.st > GOLEM_RAM_TIME) enterState(e, 'recover')
+}
+
 const golemThrow = (w: World, e: Enemy): void => {
   const sy = Math.sin(e.yaw)
   const cy = Math.cos(e.yaw)
@@ -1794,7 +1815,15 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         faceTo(e, px, pz, 4, dt)
         golemRange(w, e, dt, d)
         if (golemTryDodge(w, e, d)) break
-        if (canAttack && inReach(w, e, d, 16)) {
+        if (canAttack && d < GOLEM_RAM_R && d > 1.4) {
+          // Up close it charges: its lane is drawn on the floor in red first.
+          const dd = d || 1
+          e.tx = (px - e.x) / dd
+          e.tz = (pz - e.z) / dd
+          startTele(e, 'ram', GOLEM_RAM_TELE, true)
+          const reach = GOLEM_RAM_SPEED * GOLEM_RAM_TIME
+          for (let s = 1; s <= 5; s++) w.markers.spawn(e.x + e.tx * reach * s / 5, e.z + e.tz * reach * s / 5, 0.5, GOLEM_RAM_TELE + 0.1)
+        } else if (canAttack && inReach(w, e, d, 16)) {
           if (g.throws >= 2) {
             // The boulder, at where Flux stands now (red: step out)
             g.throws = 0
@@ -1810,9 +1839,14 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
       } else if (e.state === 'tele') {
         // Committed: no hop while it winds up (the other opening)
         if (e.attack === 'lob') faceTo(e, e.tx, e.tz, 4, dt)
+        else if (e.attack === 'ram') faceTo(e, e.x + e.tx, e.z + e.tz, 10, dt)
         else faceTo(e, px, pz, 8, dt)
         if (e.st >= e.teleDur) {
-          if (e.attack === 'lob') {
+          if (e.attack === 'ram') {
+            // The lane was locked when it was drawn: a step aside is the dodge.
+            e.hitPlayer = false
+            w.sfx('dash', e.x, e.z)
+          } else if (e.attack === 'lob') {
             w.lobShell(e, e.tx, e.tz, GOLEM_LOB_DUR, Math.round(e.dmg * 1.35))
             w.sfx('lob', e.x, e.z)
           } else golemThrow(w, e)
@@ -1820,11 +1854,12 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         }
       } else if (e.state === 'act') {
         if (e.attack === 'dodge') golemHop(w, e, dt)
+        else if (e.attack === 'ram') golemRam(w, e, dt)
         else if (e.st > (e.attack === 'lob' ? 0.35 : 0.25)) enterState(e, 'recover')
       } else if (e.state === 'recover') {
         faceTo(e, px, pz, 4, dt)
         if (golemTryDodge(w, e, d)) break
-        if (e.st > (e.attack === 'dodge' ? 0.3 : e.attack === 'lob' ? 0.7 : 0.5)) {
+        if (e.st > (e.attack === 'dodge' ? 0.3 : e.attack === 'lob' || e.attack === 'ram' ? 0.7 : 0.5)) {
           // A hop leaves the attack clock alone: it may throw right after landing
           if (e.attack !== 'dodge') e.cd = cooldown()
           enterState(e, 'engage')

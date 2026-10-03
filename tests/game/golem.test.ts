@@ -22,7 +22,7 @@ vi.mock('@/game/world/textures', async (orig) => {
 import { Scene, Vector3, type Mesh } from 'three'
 import {
   createEnemy, updateEnemy, syncEnemyVisual, wake, golemShielded, shotThreatens, golemColors,
-  GOLEM_UNFOLD, GOLEM_DODGE_MIN, GOLEM_DODGE_CD
+  GOLEM_UNFOLD, GOLEM_DODGE_MIN, GOLEM_DODGE_CD, GOLEM_RAM_R, GOLEM_RAM_TELE, GOLEM_RAM_TIME
 } from '@/game/sim/enemies'
 import { CombatSystem, type CombatHost } from '@/game/sim/combat'
 import { spawnEncounters, spawnTutorial, placeGolems } from '@/game/sim/spawn'
@@ -589,5 +589,47 @@ describe('crate golem: objectives', () => {
     expect(objectiveTarget(src, map, [golem, trooper], 11, 11)).toEqual({ x: 40, z: 40 })
     trooper.state = 'dead'
     expect(objectiveTarget(src, map, [golem, trooper], 11, 11)).toEqual({ x: 10, z: 10 })
+  })
+})
+
+// #281: up close it no longer stands and waits for the next throw: it draws
+// its lane in red and rams Flux down it — a melee blow a block softens, a
+// slide dodges and a perfect block stuns.
+describe('crate golem: the ram', () => {
+  it('within GOLEM_RAM_R it marks its lane in red, then charges down it and lands a blockable melee blow', () => {
+    const r = setup(3.5)
+    awake(r)
+    const spawn = vi.fn()
+    ;(r.w as unknown as { markers: { spawn: typeof spawn } }).markers.spawn = spawn
+    const hits: Array<{ blockable: boolean; kind: string }> = []
+    ;(r.w as unknown as { hitPlayer: (e: Enemy, d: number, o: { blockable: boolean; kind: string }) => string }).hitPlayer = (_e, _d, o) => { hits.push(o); return 'hit' }
+    r.e.cd = 0
+    tick(r.w, r.e, 1)
+    expect(r.e.attack).toBe('ram')
+    expect(r.e.teleRed).toBe(true)
+    // A dotted red lane along the floor, toward where Flux stood.
+    expect(spawn.mock.calls.length).toBeGreaterThanOrEqual(4)
+    const last = spawn.mock.calls.at(-1)!
+    expect(last[1]).toBeGreaterThan(r.e.z + 2)
+    tick(r.w, r.e, Math.ceil((GOLEM_RAM_TELE + GOLEM_RAM_TIME) / DT))
+    expect(hits).toEqual([expect.objectContaining({ blockable: true, kind: 'melee' })])
+  })
+
+  it('a step out of the lane during the red line is the dodge', () => {
+    const r = setup(3.5)
+    awake(r)
+    let hits = 0
+    ;(r.w as unknown as { hitPlayer: () => string }).hitPlayer = () => { hits++; return 'hit' }
+    r.e.cd = 0
+    tick(r.w, r.e, 1)
+    expect(r.e.attack).toBe('ram')
+    r.w.player.x += 3
+    tick(r.w, r.e, Math.ceil((GOLEM_RAM_TELE + GOLEM_RAM_TIME) / DT))
+    expect(hits).toBe(0)
+  })
+
+  it('attacks sooner than it used to (a cooldown of 1.6 s, was 2.3)', () => {
+    expect(ENEMIES.golem.cooldown).toBeLessThanOrEqual(1.6)
+    expect(GOLEM_RAM_R).toBeLessThan(ENEMIES.golem.range[0])
   })
 })

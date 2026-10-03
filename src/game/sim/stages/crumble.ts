@@ -8,15 +8,19 @@ import type { StageFeature } from '../stageFeatures'
 /**
  * ─── Crumbling platforms (Mega Man's falling blocks) ────────────────────────
  *
- * A slab over a pit that holds exactly once: stood on, it shudders for
- * CR_SHAKE (dust, a creak, the slab jittering), then drops away — a real
+ * A slab over a pit that holds exactly once. It rattles faintly as Flux
+ * comes near (CR_RATTLE_R); stood on, it shudders for CR_SHAKE (dust, a
+ * creak, the slab jittering harder), then drops away — a real
  * fall for whoever is still on it — and comes back CR_BACK later with a
  * pop. The slab is a platform in the nav (`nav.plats`, like a lift top), so
  * the body code treats it as floor until it falls. It comes back only when
  * nobody stands in its column. A crumble is part of a level's path, so a
  * player who falls with it is rescued by Atlas like any pit fall.
  */
-export const CR_SHAKE = 0.6
+export const CR_SHAKE = 1
+/** Flux this near (m, across) and about level: the slab already rattles, a
+ *  warning before it is ever stood on (#279). */
+export const CR_RATTLE_R = 4
 export const CR_DROP = 1.1
 export const CR_BACK = 4
 
@@ -31,6 +35,10 @@ interface CrumbleRt {
   stage: Stage
   t: number
 }
+
+/** Is Flux near enough, and about level, for an idle slab to rattle? */
+export const rattles = (x: number, z: number, y: number, p: Pick<ClimbBody, 'x' | 'y' | 'z'>): boolean =>
+  Math.hypot(p.x - x, p.z - z) < CR_RATTLE_R && Math.abs(p.y - y) < 2.5
 
 export class CrumbleFeature implements StageFeature {
   private readonly host: ClimbHost
@@ -75,7 +83,10 @@ export class CrumbleFeature implements StageFeature {
           c.stage = 'shake'
           c.t = 0
           h.sfx('guardCrack', c.x, c.z)
-        }
+        } else if (rattles(c.x, c.z, d.y, p)) {
+          m.position.set(c.x + Math.sin(c.t * 41) * 0.012, d.y + Math.abs(Math.sin(c.t * 29)) * 0.008, c.z)
+          if (Math.random() < 0.04) h.fx.emit({ x: c.x + (Math.random() - 0.5) * CELL * 0.8, y: d.y - CRUMBLE_THICK, z: c.z + (Math.random() - 0.5) * CELL * 0.8, vy: -1, color: '#9a8a74', size: 0.25, sizeEnd: 0.08, life: 0.4 })
+        } else m.position.set(c.x, d.y, c.z)
         break
       case 'shake': {
         const k = c.t / CR_SHAKE

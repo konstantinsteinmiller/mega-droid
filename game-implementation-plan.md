@@ -869,8 +869,13 @@ while bars and damage numbers get direct DOM writes.
     weapon as new on the results. Found on the way: the Flame Wave rolled
     under the lesson drones (they hover at 2.1 m); level-shot weapons get
     low drones (`LOW_SHOT`).
-  - [ ] **P6 Hazards and feel**: barrel flatten (#280), lava and slab rattle
-    (#279), crate golem ram (#281), Atlas's rescue (#282).
+  - [x] **P6 Hazards and feel**: barrel flatten (#280), lava and slab rattle
+    (#279), crate golem ram (#281), Atlas's rescue (#282). Rolling barrels
+    hit with hazard 'barrel' (`Mission.flatT`, `flatEye`, trap fx 'flat');
+    lava is `models/lava.ts` (a DataTexture, no canvas, ticked by
+    `stepLava`); `CR_SHAKE` 1 s and `rattles()`; the golem's `ram`
+    (`GOLEM_RAM_*`); the rescue frames from below (`RESCUE_PULL/RISE` in
+    freezeCam.ts) with `Mission.tractor`.
   - [ ] **P7 Boss bar** horizontal under the compass (#276).
   - [ ] **P8 Intro rework** (#271, #272): new order, synced shots, the
     Mega Man X dash, the score rewritten.

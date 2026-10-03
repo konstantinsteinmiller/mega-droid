@@ -54,6 +54,10 @@ const SHOULDER_BACK = 2.7
 const SHOULDER_SIDE = 0.85
 const SHOULDER_UP = 1.95
 const FRONT_DIST = 2.9
+/** A rescue's front frame: this much further off, and low (m over Flux's
+ *  feet), looking up at him hanging under Atlas in its beam. */
+const RESCUE_PULL = 1
+const RESCUE_RISE = -0.2
 const FRONT_UP = 1.35
 /** The front shot drifts round Flux by this much over its length (rad). */
 const FRONT_ORBIT = 0.35
@@ -150,13 +154,18 @@ export class FreezeDirector {
       ly = headY + (s.ty - headY) * 0.72
       lz = s.hz + (s.tz - s.hz) * 0.72
     } else if (s.frame === 'front') {
-      // In front of Flux looking back at him, drifting slowly round.
+      // In front of Flux looking back at him, drifting slowly round. A rescue
+      // stands further off and higher, framing Atlas over him and its beam;
+      // a barrel's (fx 'flat') stays low, on the pancake he has become.
+      const rescue = s.kind === 'rescue'
+      const flat = s.fx === 'flat'
       const a = s.hyaw + Math.PI + (k - 0.5) * FRONT_ORBIT
-      _want.x = s.hx - Math.sin(a) * FRONT_DIST
-      _want.z = s.hz - Math.cos(a) * FRONT_DIST
-      _want.y = s.hy + FRONT_UP + 0.4 * k
+      const dist = rescue ? FRONT_DIST * RESCUE_PULL : FRONT_DIST
+      _want.x = s.hx - Math.sin(a) * dist
+      _want.z = s.hz - Math.cos(a) * dist
+      _want.y = rescue ? s.hy + RESCUE_RISE : s.hy + (flat ? 0.7 : FRONT_UP + 0.4 * k)
       lx = s.hx
-      ly = s.hy + 1.0
+      ly = rescue ? s.ty : s.hy + (flat ? 0.25 : 1.0)
       lz = s.hz
     } else {
       // Above: high over the subject, looking down into it.

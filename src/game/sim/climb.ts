@@ -759,7 +759,8 @@ export class ClimbRun {
     const reach = BALL_R + PLAYER_R * 0.75
     if (dx * dx + dz * dz < reach * reach && b.y - BALL_R < p.y + BODY_H && b.y + BALL_R > p.y) {
       b.hit = true
-      const r = this.host.hitPlayer(null, Math.round(this.host.combat.maxHp * BALL_COST), { blockable: false, fromX: b.x - d.dx, fromZ: b.z - d.dz, kind: 'aoe', hazard: 'crush' })
+      // A rolling barrel flattens him for a beat (`Mission.flatT`), cartoon-style.
+      const r = this.host.hitPlayer(null, Math.round(this.host.combat.maxHp * BALL_COST), { blockable: false, fromX: b.x - d.dx, fromZ: b.z - d.dz, kind: 'aoe', hazard: 'barrel' })
       if (r === 'hit') {
         // Bowled aside, across the lane.
         const side = (dx * -d.dz + dz * d.dx) >= 0 ? 1 : -1

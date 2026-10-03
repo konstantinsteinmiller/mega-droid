@@ -109,7 +109,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   // backs off faster than it closes; `tele` is the throw's wind-up.
   golem: {
     kind: 'golem', hp: 80, dmg: 12, speed: 2.0, radius: 0.6, hitR: 0.8, aimY: 1.05, fly: 0,
-    aggro: 16, range: [6, 12], xp: 24, bolts: [6, 11], cooldown: 2.3, tele: 0.62, unblockable: false, armor: 1
+    aggro: 16, range: [6, 12], xp: 24, bolts: [6, 11], cooldown: 1.6, tele: 0.62, unblockable: false, armor: 1
   }
 }
 

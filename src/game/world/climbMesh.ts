@@ -10,6 +10,7 @@ import {
   QuadBatch, cellOwners, doorFramePos, buildSky, FLOOR_UV, WALL_UV, PLAIN_UV, type LevelMeshes, type UV8
 } from './levelMesh'
 import { BALL_R } from './climbGen'
+import { lavaCell, lavaMaterial } from '../models/lava'
 import { secretDoorFace } from './stages/builder'
 
 /**
@@ -88,6 +89,7 @@ export const buildClimbLevel = async (
   const batches = Array.from({ length: nRooms }, () => new QuadBatch())
   const decor: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
   const glows: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
+  const lava: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
 
   const cFloor = new Color(theme.floor)
   const cFloorAlt = new Color(theme.floorAlt)
@@ -239,8 +241,8 @@ export const buildClimbLevel = async (
         b.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], PLAIN_UV, cVoid, cVoid, cVoid, cVoid)
         const pk = pitKindAt(k)
         if (pk === 'lava') {
-          // A glowing plane a little over the bottom: lava, not a drop.
-          glows[o]!.push(xform(piece('lava', () => paint(rbox(CELL, 0.12, CELL, 0.04, 6, 4), '#ff6a1a')), [x0 + CELL / 2, y + 0.3, z0 + CELL / 2]))
+          // A moving surface a hand over the bottom: lava, not a drop.
+          lava[o]!.push(lavaCell(x0, z0, CELL, y + 0.36))
         } else if (pk === 'spikes') {
           // A bed of spikes: three rows of three cones, tall, their tips
           // lit — from the edge, far above, the pit has to read as spikes
@@ -692,6 +694,7 @@ export const buildClimbLevel = async (
     }
     await slice()
     if (glows[r]!.length) g.add(new Mesh(merge(glows[r]!), glowVC()))
+    if (lava[r]!.length) g.add(new Mesh(merge(lava[r]!), lavaMaterial()))
     secretWalls.forEach((w, n) => { if (secretOwner[n] === r) g.add(w) })
     rooms.push(g)
     root.add(g)

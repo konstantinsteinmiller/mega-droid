@@ -154,7 +154,11 @@ export const spawnTutorial = async (
     if (room.role === 'start' || room.role === 'boss') continue
     const gate = plan.gates.find(g => g.room === room.id)
     const kinds: EnemyKind[] = []
-    if (gate) {
+    // A built tutorial casts some rooms itself (the fighting rooms after the lessons).
+    const cast = gate ? map.walkCast?.[plan.gates.indexOf(gate)] : undefined
+    if (cast?.length) {
+      kinds.push(...(cast as EnemyKind[]))
+    } else if (gate) {
       for (const s of gate.steps) {
         const k = TEACHER[s]
         if (k) kinds.push(k)
@@ -175,6 +179,8 @@ export const spawnTutorial = async (
       // earlier room, and a gate waiting for its room to go quiet sent the
       // player all the way back (a playtest note).
       e.leash = roomLeash(room)
+      // The block lesson's Trooper keeps its spot: it walked out of the room.
+      if (kind === 'trooper' && gate?.steps.includes('block')) e.rooted = true
       out.push(e)
       await opts.slice?.()
     }

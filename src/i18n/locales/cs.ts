@@ -903,14 +903,6 @@ export default {
     'todo': 'ještě nehotovo',
     'done': 'hotovo',
     'checklist': 'Tutoriály',
-    'watch': 'Podívej se, jak na to',
-    'card': {
-      'weapon': 'Zkopíroval jsi zbraň Mistra jádra! Pal z ní jejím tlačítkem: pohání ji energie zbraně a některé stroje jsou na ni slabé.',
-      'gel': 'Zraněný? Opravný gel ti obnoví zdraví. Použij ho, kdykoli se boj zvrtne.',
-      'slide': 'Červené útoky nejde zablokovat. Sklouzni a uhni z cesty: během skluzu tě nic nezasáhne.',
-      'block': 'Podrž blok a zvedni štít: zastaví střely a údery zepředu. Zvedni ho přesně ve chvíli zásahu a uděláš Perfektní blok, který útočníka omráčí.',
-      'charge': 'Normální střela štít neprorazí. Drž palbu, dokud dělo nezáří, pak pusť: Nabitá rána projde skrz.'
-    },
     'name': {
       'weapon': 'Lekce zbraně',
       'gap': 'Tutoriál: Skok',

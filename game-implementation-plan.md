@@ -847,11 +847,18 @@ while bars and damage numbers get direct DOM writes.
   - [x] **P3 Quick wins**: chests open on any hit (#273), the boss shutter
     opens by itself (#283), enemies fire back across their room (#277), the
     debrief's colours (cleared blue, target red).
-  - [ ] **P4 Hologram lessons** (#266-#270 and the new tutorial points):
+  - [x] **P4 Hologram lessons** (#266-#270 and the new tutorial points):
     hologram engine, no cards, the slide freeze with the yellow-arrow button,
     target arrows, rooted block guard, doors closing behind, the first level's
     new rooms (drones, wheel + guard, golem) and the longer gel stretch, then a
-    headed-Chrome playthrough of the whole tutorial.
+    headed-Chrome playthrough of the whole tutorial. Lessons are intro → try
+    now (`sim/demo.ts`, the cards and the demo overlay are gone); the
+    holograms live in `Mission.holos`, their glyph in `LessonGlyph.vue`
+    (`hudLive.holo*`), the slide freeze in `stepSlideCue`; the walkthrough
+    shuts each door in behind the player (`shutBehind`) and the breather's
+    gate waits for the gel. The playthrough probe drives the real game room
+    by room (teleport to each entry, play the lesson through the input
+    record).
   - [ ] **P5 Weapon lessons after the boss** (#275, #285, the weapon item):
     the arm hologram, a lesson room and exit pedestal behind every boss
     (not the Fortress), the beam-in lesson as a fallback only, Blaze's quiet

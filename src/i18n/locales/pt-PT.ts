@@ -903,14 +903,6 @@ export default {
     'todo': 'ainda por fazer',
     'done': 'concluído',
     'checklist': 'Tutoriais',
-    'watch': 'Vê como se faz',
-    'card': {
-      'weapon': 'Copiaste a arma de um Mestre do Núcleo! Dispara-a com o botão dela: a energia da arma alimenta-a, e algumas máquinas são fracas contra ela.',
-      'gel': 'Ferido? Um Gel de Reparação restaura a tua vida. Usa um sempre que uma luta correr mal.',
-      'slide': 'Os ataques vermelhos não podem ser bloqueados. Desliza para fugir: nada te atinge a meio do deslize.',
-      'block': 'Mantém o bloqueio para levantares o escudo: trava tiros e golpes vindos da frente. Levanta-o mesmo quando um golpe chega para um Bloqueio Perfeito, que deixa o atacante fora de combate.',
-      'charge': 'Um tiro normal não parte um escudo. Mantém o disparo até o canhão brilhar e depois larga: um Tiro Carregado atravessa-o.',
-    },
     'name': {
       'weapon': 'Lição de Arma',
       'gap': 'Tutorial de Salto',

@@ -135,6 +135,9 @@ export interface Enemy {
    *  through. */
   leash?: [number, number, number, number]
   hover?: [number, number]
+  /** Never steps from its spot (it still turns and fights): the tutorial's
+   *  block teacher, which walked out of its lesson. */
+  rooted?: boolean
 }
 
 export type ShotKind = 'pellet' | 'charge1' | 'charge2' | 'charge3' | 'enemy' | 'shell' | 'reflect' | 'special' | 'rock'

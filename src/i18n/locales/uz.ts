@@ -884,14 +884,6 @@ export default {
     'todo': 'hali tayyor emas',
     'done': 'tayyor',
     'checklist': 'Mashgʻulotlar',
-    'watch': 'Qanday qilinishini koʻring',
-    'card': {
-      'weapon': 'Siz Yadro ustasining qurolini nusxaladingiz! Uni oʻz tugmasi bilan oting: qurol energiyasi uni quvvatlaydi, baʼzi mashinalar esa unga qarshi zaif.',
-      'gel': 'Jarohat oldingizmi? Taʼmir geli sogʻligʻingizni toʻliq tiklaydi. Jang yomonlashsa, birini ishlating.',
-      'slide': 'Qizil hujumlarni bloklab boʻlmaydi. Chetga chiqish uchun sirpaning: sirpanish paytida sizga hech narsa tegmaydi.',
-      'block': 'Qalqoningizni koʻtarish uchun blokni bosib turing: u oldindan kelayotgan oʻqlar va zarbalarni toʻxtatadi. Zarba tegayotgan aniq paytda koʻtarsangiz, Mukammal Blok hosil boʻladi va u hujumchini gandiraklatadi.',
-      'charge': 'Oddiy oʻq qalqonni sindira olmaydi. Qoʻl topingiz yorqinlashguncha otishni bosib turing, soʻng qoʻyib yuboring: zaryadli oʻq uni teshib oʻtadi.',
-    },
     'name': {
       'weapon': 'Qurol darsi',
       'gap': 'Sakrash mashgʻuloti',

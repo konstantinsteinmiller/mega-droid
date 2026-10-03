@@ -86,8 +86,8 @@ onUnmounted(() => {
   window.removeEventListener('orientationchange', placeSoon)
   input.joyHomeR = 0
 })
-/** A lesson demo walks with the stick: its resting ring lights gold. */
-const demoMove = computed(() => hud.trainPhase === 'demo' && hud.demoAct === 'move')
+/** A lesson hologram walks (the gap's): the stick's resting ring lights gold. */
+const demoMove = computed(() => hud.holoAct === 'move' && hud.holoDown)
 </script>
 
 <style scoped lang="sass">

@@ -903,14 +903,6 @@ export default {
     'todo': 'aínda non',
     'done': 'feito',
     'checklist': 'Titoriais',
-    'watch': 'Mira como se fai',
-    'card': {
-      'weapon': 'Copiaches a arma dun Mestre do Núcleo! Dispáraa co seu botón: a enerxía de arma aliméntaa, e algunhas máquinas son febles contra ela.',
-      'gel': 'Ferido? Un xel reparador restaura a túa saúde. Usa un cando unha loita se poña difícil.',
-      'slide': 'Os ataques vermellos non se poden bloquear. Esvara para esquivalos: nada pode golpearte mentres esvaras.',
-      'block': 'Mantén o bloqueo para erguer o escudo: detén disparos e golpes de fronte. Érgueo xusto cando chegue un golpe para un Bloqueo Perfecto, que deixa fóra de combate o atacante.',
-      'charge': 'Un disparo normal non pode romper un escudo. Mantén o disparo ata que o canón brille, e solta: un disparo cargado atravésao.',
-    },
     'name': {
       'weapon': 'Lección de armas',
       'gap': 'Titorial de salto',

@@ -84,6 +84,9 @@ export interface MapData {
   /** A built tutorial's lessons per path room, start first (`WalkStep`s;
    *  `sim/walkthrough.ts` reads them instead of spreading its default). */
   walkSteps?: string[][]
+  /** A built tutorial's cast per walkthrough room (by its place on the path),
+   *  where the lesson's own teacher is not enough (`spawnTutorial`). */
+  walkCast?: string[][]
   /** A stage's beam-in room (off its first room, `Builder.beamRoom`): where
    *  Flux lands, and the door into the level it holds until the newest
    *  weapon has had its lesson. */

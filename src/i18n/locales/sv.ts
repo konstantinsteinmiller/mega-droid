@@ -903,14 +903,6 @@ export default {
     'todo': 'inte klar än',
     'done': 'klar',
     'checklist': 'Övningar',
-    'watch': 'Se hur man gör',
-    'card': {
-      'weapon': 'Du har kopierat en Kärnmästares vapen! Avfyra det med dess knapp: vapenenergi driver det, och vissa maskiner är svaga mot det.',
-      'gel': 'Skadad? En Reparationsgel återställer din hälsa. Använd en när en strid går dåligt.',
-      'slide': 'Röda attacker går inte att blockera. Glid för att rusa undan: inget kan träffa dig mitt i en glidning.',
-      'block': 'Håll in block för att höja skölden: den stoppar skott och slag framifrån. Höj den precis när en träff landar för ett Perfekt block, som slår ut angriparen.',
-      'charge': 'Ett vanligt skott bryter inte en sköld. Håll in skjut tills kanonen lyser och släpp sedan: ett Laddskott går rakt igenom.',
-    },
     'name': {
       'weapon': 'Vapenlektion',
       'gap': 'Hoppövning',

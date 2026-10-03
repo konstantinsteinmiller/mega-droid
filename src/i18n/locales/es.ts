@@ -884,14 +884,6 @@ export default {
     'todo': 'aún no',
     'done': 'hecho',
     'checklist': 'Tutoriales',
-    'watch': 'Mira cómo se hace',
-    'card': {
-      'weapon': '¡Copiaste el arma de un Maestro del Núcleo! Dispárala con su botón: la energía de arma la alimenta, y algunas máquinas son débiles contra ella.',
-      'gel': '¿Herido? Un gel reparador restaura tu salud por completo. Usa uno cuando una pelea se ponga difícil.',
-      'slide': 'Los ataques rojos no se pueden bloquear. Desliza para esquivarlos: nada puede golpearte durante el deslizamiento.',
-      'block': 'Mantén bloqueo para levantar tu escudo: detiene disparos y golpes de frente. Levántalo justo cuando llegue un golpe para un Bloqueo Perfecto, que deja fuera de combate al atacante.',
-      'charge': 'Un disparo normal no puede romper un escudo. Mantén disparo hasta que tu cañón brille, y suelta: un disparo cargado lo atraviesa sin problema.',
-    },
     'name': {
       'weapon': 'Lección de armas',
       'gap': 'Tutorial de salto',

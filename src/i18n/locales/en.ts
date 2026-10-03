@@ -981,14 +981,6 @@ export default {
     'todo': 'not done yet',
     'done': 'done',
     'checklist': 'Tutorials',
-    'watch': "Watch how it's done",
-    'card': {
-      'weapon': "You copied a Core Master's weapon! Fire it with its button: weapon energy powers it, and some machines are weak against it.",
-      'gel': 'Hurt? A Repair Gel restores your health. Use one whenever a fight turns bad.',
-      'slide': "Red attacks can't be blocked. Slide to dash out of the way: nothing can hit you mid-slide.",
-      'block': 'Hold block to raise your shield: it stops shots and hits from the front. Raise it just as a hit lands for a Perfect Block, which knocks the attacker out.',
-      'charge': "A normal shot can't break a shield. Hold fire until your cannon glows, then let go: a Charge Shot breaks right through.",
-    },
     'name': {
       'weapon': 'Weapon Lesson',
       'gap': 'Jump Tutorial',

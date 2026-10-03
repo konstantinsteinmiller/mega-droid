@@ -197,6 +197,7 @@ const _out: [number, number] = [0, 0]
 const step = (w: World, e: Enemy, dx: number, dz: number): number => {
   const want = Math.hypot(dx, dz)
   if (want < 1e-5) return 1
+  if (e.rooted) return 0
   moveCircle(w.nav, e.x, e.z, dx, dz, e.def.radius, _out)
   const got = Math.hypot(_out[0] - e.x, _out[1] - e.z)
   e.x = _out[0]

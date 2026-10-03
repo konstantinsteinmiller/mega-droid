@@ -903,14 +903,6 @@ export default {
     'todo': 'još nije gotovo',
     'done': 'gotovo',
     'checklist': 'Vodiči',
-    'watch': 'Pogledaj kako se radi',
-    'card': {
-      'weapon': 'Kopirao si oružje Majstora jezgre! Pucaj njime pomoću njegova gumba: pokreće ga energija oružja, a neki su strojevi slabi na njega.',
-      'gel': 'Ozlijeđen si? Gel za popravak vraća ti zdravlje. Upotrijebi ga kad god borba krene loše.',
-      'slide': 'Crveni napadi ne mogu se blokirati. Klizni da se izmakneš: usred klizanja ništa te ne može pogoditi.',
-      'block': 'Drži blok da podigneš štit: zaustavlja hice i udarce sprijeda. Podigni ga baš kad udarac stigne za Savršeni blok, koji omami napadača.',
-      'charge': 'Običan hitac ne može probiti štit. Drži paljbu dok top ne zasja, pa pusti: Nabijeni hitac probija ga skroz.'
-    },
     'name': {
       'weapon': 'Lekcija oružja',
       'gap': 'Vodič: Skok',

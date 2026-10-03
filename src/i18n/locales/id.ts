@@ -884,14 +884,6 @@ export default {
     'todo': 'belum selesai',
     'done': 'selesai',
     'checklist': 'Tutorial',
-    'watch': 'Lihat caranya',
-    'card': {
-      'weapon': 'Kamu menyalin senjata seorang Master Inti! Tembakkan dengan tombolnya: energi senjata memberinya daya, dan beberapa mesin lemah terhadapnya.',
-      'gel': 'Terluka? Gel Perbaikan memulihkan kesehatanmu sepenuhnya. Gunakan satu kapan pun pertarungan memburuk.',
-      'slide': 'Serangan merah tidak bisa diblok. Meluncurlah untuk menghindar: tidak ada yang bisa mengenaimu saat meluncur.',
-      'block': 'Tahan blok untuk mengangkat perisaimu: ini menahan tembakan dan pukulan dari depan. Angkat tepat saat pukulan mendarat untuk Blok Sempurna, yang merobohkan penyerang.',
-      'charge': 'Tembakan biasa tidak bisa menembus perisai. Tahan tembak sampai meriammu bercahaya, lalu lepas: Tembakan Bermuatan langsung menembusnya.',
-    },
     'name': {
       'weapon': 'Pelajaran Senjata',
       'gap': 'Tutorial Lompatan',

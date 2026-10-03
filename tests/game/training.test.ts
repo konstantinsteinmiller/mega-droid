@@ -1,47 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { Training, INTRO_FOR, HELP_AFTER, CHARGE_STEP, steppedToward, type TrainHost, type TrainId } from '@/game/sim/training'
-import { DemoDriver, chargeDemo, blockDemo, DEMO_SKIP } from '@/game/sim/demo'
-import { createInput } from '@/game/engine/input'
+import { Training, INTRO_FOR, HELP_AFTER, CHARGE_STEP, steppedToward, type TrainHost } from '@/game/sim/training'
+import { HOLO_LOOP, HOLO_PRESS, holoGlyphAt, holoLoopAlpha } from '@/game/fx/lessonHologram'
 
-// Every lesson room runs intro → card (time frozen) → demo → try, a hint
-// every HELP_AFTER while stuck, and a tick once done. The gap has no card.
+// Every lesson room runs intro → try (a hologram does the move on a loop the
+// whole time; no card, no demo), a hint every HELP_AFTER while stuck, and a
+// tick once done.
 const host = () => {
   const log: string[] = []
-  let demo = false
-  const h: TrainHost = {
-    say: (l) => { log.push(`say:${l}`) },
-    freezeForCard: (id) => { log.push(`freeze:${id}`) },
-    unfreeze: () => { log.push('unfreeze') },
-    startDemo: (id: TrainId) => { log.push(`demo:${id}`); demo = id !== 'gel'; return demo },
-    demoOver: () => !demo
-  }
-  return { h, log, endDemo: () => { demo = false } }
+  const h: TrainHost = { say: (l) => { log.push(`say:${l}`) } }
+  return { h, log }
 }
 
 describe('training rooms', () => {
-  it('runs intro, card, demo, try in order', () => {
-    const { h, log, endDemo } = host()
+  it('runs intro, then the try: nothing freezes, nothing plays itself', () => {
+    const { h, log } = host()
     const tr = new Training(h)
     tr.enter('charge', 0)
     expect(tr.phase).toBe('intro')
     expect(log).toEqual(['say:train.charge'])
     tr.update(INTRO_FOR + 0.01, true)
-    expect(tr.phase).toBe('card')
-    expect(log).toContain('freeze:charge')
-    tr.dismissCard(3)
-    expect(log).toContain('unfreeze')
-    expect(tr.phase).toBe('demo')
-    endDemo()
-    tr.update(5, true)
     expect(tr.phase).toBe('try')
+    expect(log).toEqual(['say:train.charge'])
   })
 
   it('hints every HELP_AFTER while the player is stuck, stops once done', () => {
     const { h, log } = host()
     const tr = new Training(h)
     tr.enter('gel', 0)
-    tr.update(INTRO_FOR + 0.1, true)
-    tr.dismissCard(2) // gel's demo is 'none' in this host: straight to try
+    tr.update(2, true)
     expect(tr.phase).toBe('try')
     tr.update(2 + HELP_AFTER + 0.1, true)
     tr.update(2 + 2 * HELP_AFTER + 0.2, true)
@@ -52,42 +38,23 @@ describe('training rooms', () => {
     expect(tr.phase).toBe('done')
   })
 
-  // Playtest: "the slide tutorial shows no automated execution". A slide in
-  // an earlier room had ticked the lesson off before its room was reached.
-  it('a slide counts only on the player\'s turn in its own lesson: the room always teaches first', () => {
-    const { h, log, endDemo } = host()
+  // Playtest: a slide in an earlier room had ticked the lesson off before its
+  // room was reached.
+  it('a slide counts only in its own lesson (or once learned)', () => {
+    const { h } = host()
     const tr = new Training(h)
-    // On the way, in another lesson's room: not the slide lesson's business.
     tr.enter('block', 0)
     expect(tr.counts('slide')).toBe(false)
     tr.leave()
     expect(tr.counts('slide')).toBe(false)
-    // In its room: not before the card and the demo have been shown.
+    // In its room, from the first moment (the hologram shows it from the door).
     tr.enter('slide', 10)
-    expect(tr.counts('slide')).toBe(false)
-    tr.update(10 + INTRO_FOR + 0.01, true)
-    expect(tr.phase).toBe('card')
-    expect(tr.counts('slide')).toBe(false)
-    tr.dismissCard(13)
-    expect(log).toContain('demo:slide')
-    expect(tr.counts('slide')).toBe(false)
-    endDemo()
-    tr.update(16, true)
-    expect(tr.phase).toBe('try')
     expect(tr.counts('slide')).toBe(true)
-    // Learned on an earlier run: it counts wherever it is done.
+    tr.update(10 + INTRO_FOR + 0.01, true)
+    expect(tr.counts('slide')).toBe(true)
     tr.complete('slide')
     tr.leave()
     expect(tr.counts('slide')).toBe(true)
-  })
-
-  it('the gap is wordless: no card', () => {
-    const { h, log } = host()
-    const tr = new Training(h)
-    tr.enter('gap', 0)
-    tr.update(INTRO_FOR + 0.1, true)
-    expect(tr.phase).toBe('try')
-    expect(log.some(l => l.startsWith('freeze'))).toBe(false)
   })
 
   it('a lesson already done only shows its tick', () => {
@@ -100,50 +67,36 @@ describe('training rooms', () => {
   })
 })
 
-describe('demo driver', () => {
-  it('holds fire past the charge, then releases it', () => {
-    const d = new DemoDriver()
-    const inp = createInput()
-    d.start(chargeDemo(null, false))
-    let released = false
-    let held = false
-    for (let i = 0; i < 240 && d.active; i++) {
-      d.step(1 / 60, inp)
-      held ||= inp.fireHeld
-      released ||= inp.fireReleased
-      inp.fireReleased = false
+// The holograms (#266): every loop presses its input once, at the moment the
+// move happens, and fades out and back in at the seam instead of snapping.
+describe('lesson holograms', () => {
+  const ids = Object.keys(HOLO_LOOP) as Array<keyof typeof HOLO_LOOP>
+
+  it('presses its input in one stretch per loop, inside the loop', () => {
+    for (const id of ids) {
+      const [a, b] = HOLO_PRESS[id]
+      expect(a).toBeGreaterThanOrEqual(0)
+      expect(b).toBeLessThan(HOLO_LOOP[id])
+      let edges = 0
+      let was = false
+      for (let u = 0; u < HOLO_LOOP[id]; u += 0.01) {
+        const g = holoGlyphAt(id, u)
+        if (g.down && !was) edges++
+        was = g.down
+      }
+      expect(edges).toBe(1)
     }
-    expect(held).toBe(true)
-    expect(released).toBe(true)
-    expect(d.active).toBe(false)
-    expect(inp.fireHeld).toBe(false)
   })
 
-  it('emits its demo shots and ignores the player\'s stick', () => {
-    const d = new DemoDriver()
-    const inp = createInput()
-    d.start(blockDemo(null, 0.6))
-    let shots = 0
-    for (let i = 0; i < 400 && d.active; i++) {
-      inp.moveY = 1
-      d.step(1 / 60, inp)
-      shots += d.emits.filter(e => e === 'shot').length
-      expect(inp.moveY).toBe(0)
+  it('fades out at the end of a loop and back in at the start', () => {
+    for (const id of ids) {
+      expect(holoLoopAlpha(id, 0)).toBe(0)
+      expect(holoLoopAlpha(id, HOLO_LOOP[id] - 0.001)).toBeLessThan(0.01)
+      expect(holoLoopAlpha(id, HOLO_LOOP[id] / 2)).toBe(1)
+      // The press is always seen at full strength.
+      const [a] = HOLO_PRESS[id]
+      expect(holoLoopAlpha(id, Math.max(a, 0.3))).toBe(1)
     }
-    expect(shots).toBe(4)
-  })
-
-  it('two real presses skip it', () => {
-    const d = new DemoDriver()
-    const inp = createInput()
-    d.start(chargeDemo(null, true))
-    for (let k = 0; k < DEMO_SKIP; k++) {
-      inp.anyPressed = true
-      d.step(1 / 60, inp)
-      inp.anyPressed = false
-    }
-    expect(d.active).toBe(false)
-    expect(inp.fireHeld).toBe(false)
   })
 })
 

@@ -884,14 +884,6 @@ export default {
     'todo': 'pas encore fait',
     'done': 'fait',
     'checklist': 'Tutoriels',
-    'watch': 'Regarde comment on fait',
-    'card': {
-      'weapon': "Tu as copié l'arme d'un Maître du Noyau ! Tire avec son bouton : l'énergie d'arme l'alimente, et certaines machines y sont faibles.",
-      'gel': "Blessé ? Un gel réparateur restaure entièrement ta santé. Utilises-en un dès qu'un combat tourne mal.",
-      'slide': "Les attaques rouges ne peuvent pas être bloquées. Glisse pour t'écarter d'un bond : rien ne peut te toucher pendant la glissade.",
-      'block': "Maintiens bloquer pour lever ton bouclier : il arrête les tirs et les coups de face. Lève-le pile quand un coup arrive pour un Blocage Parfait, qui assomme l'attaquant.",
-      'charge': "Un tir normal ne peut pas briser un bouclier. Maintiens le tir jusqu'à ce que ton canon brille, puis relâche : un tir chargé passe à travers.",
-    },
     'name': {
       'weapon': "Leçon d'arme",
       'gap': 'Tutoriel du saut',

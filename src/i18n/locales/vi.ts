@@ -884,14 +884,6 @@ export default {
     'todo': 'chưa xong',
     'done': 'xong',
     'checklist': 'Hướng Dẫn',
-    'watch': 'Xem cách thực hiện',
-    'card': {
-      'weapon': 'Bạn đã sao chép được vũ khí của một Chúa Tể Lõi! Bắn nó bằng nút riêng: năng lượng vũ khí cấp sức mạnh cho nó, và một số cỗ máy yếu trước nó.',
-      'gel': 'Bị thương à? Gel Sửa Chữa sẽ hồi phục hoàn toàn sức khỏe của bạn. Dùng một cái bất cứ khi nào trận đánh trở nên tồi tệ.',
-      'slide': 'Đòn tấn công đỏ không thể chặn được. Trượt để né tránh: không gì chạm được bạn khi đang trượt.',
-      'block': 'Giữ chặn để giương khiên lên: nó chặn đạn và đòn đánh từ phía trước. Giương lên đúng lúc đòn đánh chạm tới để thực hiện Chặn Hoàn Hảo, khiến kẻ tấn công bị hạ gục.',
-      'charge': 'Phát bắn thường không phá được khiên. Giữ bắn cho tới khi pháo phát sáng, rồi thả ra: phát tụ lực sẽ xuyên thủng ngay.',
-    },
     'name': {
       'weapon': 'Bài Học Vũ Khí',
       'gap': 'Hướng Dẫn Nhảy',

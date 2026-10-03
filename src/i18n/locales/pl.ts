@@ -884,14 +884,6 @@ export default {
     'todo': 'jeszcze nie zrobione',
     'done': 'zrobione',
     'checklist': 'Samouczki',
-    'watch': 'Zobacz, jak to się robi',
-    'card': {
-      'weapon': 'Skopiowałeś broń Mistrza Rdzenia! Strzelaj z niej swoim przyciskiem: napędza ją energia broni, a niektóre maszyny są na nią słabe.',
-      'gel': 'Ranny? Żel naprawczy w pełni przywraca zdrowie. Użyj go, gdy walka zaczyna się źle układać.',
-      'slide': 'Czerwonych ataków nie da się zablokować. Wślizgnij się, by uniknąć trafienia: podczas wślizgu nic cię nie dosięgnie.',
-      'block': 'Przytrzymaj blok, by unieść tarczę: zatrzymuje strzały i ciosy z przodu. Unieś ją dokładnie w momencie trafienia, by wykonać Idealny Blok, który ogłusza napastnika.',
-      'charge': 'Zwykły strzał nie przebije tarczy. Przytrzymaj ogień, aż działo się rozjarzy, potem puść: strzał naładowany przebija ją na wylot.',
-    },
     'name': {
       'weapon': 'Lekcja broni',
       'gap': 'Samouczek: Skok',

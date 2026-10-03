@@ -26,8 +26,7 @@
       ActionButtons
       TutorialChecklist
       LessonPointer
-      DemoOverlay
-      LessonCard
+      LessonGlyph
     HubScreen(v-else-if="flow.screen === 'hub'" @options="optionsOpen = true")
     CutsceneLayer(v-else-if="flow.screen === 'intro'")
     EndingLayer(v-else-if="flow.screen === 'ending'")
@@ -114,8 +113,7 @@ import FreezeOverlay from '@/components/hud/FreezeOverlay.vue'
 import TrainingFrame from '@/components/hud/TrainingFrame.vue'
 import TutorialChecklist from '@/components/hud/TutorialChecklist.vue'
 import LessonPointer from '@/components/hud/LessonPointer.vue'
-import DemoOverlay from '@/components/hud/DemoOverlay.vue'
-import LessonCard from '@/components/hud/LessonCard.vue'
+import LessonGlyph from '@/components/hud/LessonGlyph.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
 import ResultsModal from '@/components/modals/ResultsModal.vue'
 import DefeatModal from '@/components/modals/DefeatModal.vue'

@@ -903,14 +903,6 @@ export default {
     'todo': 'encara no',
     'done': 'fet',
     'checklist': 'Tutorials',
-    'watch': 'Mira com es fa',
-    'card': {
-      'weapon': 'Has copiat l\'arma d\'un Mestre del Nucli! Dispara-la amb el seu botó: l\'energia d\'arma l\'alimenta, i algunes màquines hi són febles.',
-      'gel': 'Ferit? Un gel reparador et restaura la salut. Fes-ne servir un quan una baralla es compliqui.',
-      'slide': 'Els atacs vermells no es poden bloquejar. Llisca per esquivar-los: res no et pot tocar mentre llisques.',
-      'block': 'Mantén el bloqueig per aixecar l\'escut: atura trets i cops de davant. Aixeca\'l just quan arribi un cop per fer un Bloqueig Perfecte, que deixa fora de combat l\'atacant.',
-      'charge': 'Un tret normal no pot trencar un escut. Mantén el tret fins que el canó brilli, i deixa anar: un tret carregat el travessa.',
-    },
     'name': {
       'weapon': 'Lliçó d\'armes',
       'gap': 'Tutorial de salt',

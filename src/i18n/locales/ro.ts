@@ -903,14 +903,6 @@ export default {
     'todo': 'încă nefăcut',
     'done': 'gata',
     'checklist': 'Tutoriale',
-    'watch': 'Vezi cum se face',
-    'card': {
-      'weapon': 'Ai copiat arma unui Maestru al Nucleului! Trage cu ea din butonul ei: energia armei o alimentează, iar unele mașinării sunt slabe în fața ei.',
-      'gel': 'Rănit? Un Gel Reparator îți reface viața. Folosește unul oricând o luptă merge prost.',
-      'slide': 'Atacurile roșii nu pot fi blocate. Alunecă ca să te ferești: nimic nu te poate lovi în timpul alunecării.',
-      'block': 'Ține apăsat pe blocare ca să ridici scutul: oprește gloanțele și loviturile din față. Ridică-l exact când vine lovitura pentru o Blocare Perfectă, care îl face KO pe atacator.',
-      'charge': 'O lovitură normală nu poate sparge un scut. Ține apăsat pe foc până strălucește tunul, apoi eliberează: o Lovitură Încărcată îl străpunge.'
-    },
     'name': {
       'weapon': 'Lecția Armei',
       'gap': 'Tutorial: Săritura',

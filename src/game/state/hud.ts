@@ -109,12 +109,15 @@ export const hud = shallowReactive({
   freezeSkips: 0,
   /** The lesson room Flux is in (`sim/training.ts`): its id and beat. */
   trainId: '' as '' | 'charge' | 'block' | 'slide' | 'gel' | 'gap' | 'weapon',
-  trainPhase: 'off' as 'off' | 'intro' | 'card' | 'demo' | 'try' | 'done',
-  /** The demo's lit input and whether it is pressed right now. */
-  demoAct: '' as '' | 'fire' | 'block' | 'slide' | 'tank' | 'move' | 'look',
-  demoDown: false,
-  /** Presses toward skipping the demo. */
-  demoSkips: 0,
+  trainPhase: 'off' as 'off' | 'intro' | 'try' | 'done',
+  /** The lesson hologram in view (`fx/lessonHologram.ts`): the input it
+   *  presses on its loop and whether it is down right now (where it pins:
+   *  `hudLive.holo*`). */
+  holoAct: '' as '' | 'fire' | 'block' | 'slide' | 'tank' | 'move' | 'weapon',
+  holoDown: false,
+  /** The slide lesson holds the Stomper's leap until a slide: three yellow
+   *  arrows point at the slide input. */
+  slideCue: false,
   /** Atlas's current line is a lesson intro: the gold bubble. */
   atlasGold: false,
   /** The tutorial checklist (mission 1): each lesson, done or not. */
@@ -151,7 +154,12 @@ export const hudLive = {
    *  for its bubble; `atlasIn` = it is in view. */
   atlasX: 0.14,
   atlasY: 0.3,
-  atlasIn: false
+  atlasIn: false,
+  /** Where the lesson hologram's glyph pins, over its head (px, top-left
+   *  origin); `holoOn`: on screen. */
+  holoX: 0,
+  holoY: 0,
+  holoOn: false
 }
 
 export const addHudTicker =(fn: HudTicker): (() => void) => {

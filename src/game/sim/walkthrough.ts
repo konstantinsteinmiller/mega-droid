@@ -189,15 +189,19 @@ export const planWalkthrough = (map: MapData): WalkPlan => {
 }
 
 /**
- * The Repair Gel corridor: the one out of the Stomper's room (by then every
- * fighting control is known, and the chest and the boss lie ahead). Never the
- * boss shutter's corridor — a shorter path, whose Stomper room opens onto the
- * boss, takes the corridor before it — and never the start room's. It needs
- * a cell before the door's own for the plate.
+ * The Repair Gel corridor: the one into the breather before the boss (a
+ * built tutorial: a whole room between the trap and the boss door, so the
+ * lesson never fires while the player is already at the shutter), else the
+ * one out of the Stomper's room (by then every fighting control is known).
+ * Never the boss shutter's corridor — a shorter path, whose Stomper room
+ * opens onto the boss, takes the corridor before it — and never the start
+ * room's. It needs a cell before the door's own for the plate.
  */
 const gelPlan = (map: MapData, gates: WalkGate[]): GelPlan | null => {
+  const rest = gates.findIndex(g => g.steps.includes('rest'))
   const slide = gates.findIndex(g => g.steps.includes('slide'))
-  for (let k = slide; k >= 1; k--) {
+  const from = rest > slide && slide >= 0 ? rest - 1 : slide
+  for (let k = from; k >= 1; k--) {
     const g = gates[k]!
     if (map.doors[g.door]?.boss) continue
     const spot = plateSpot(map, g.door)
@@ -283,6 +287,9 @@ export interface WalkHost {
   holdDoor(id: number): void
   /** Open it for good: a yellow lamp, a chime, a pulse at the door. */
   releaseDoor(id: number): void
+  /** Slide an open path door shut behind the player and hold it (optional:
+   *  a host without it leaves the way back open). */
+  shutDoor?(id: number): void
   /** Beam a stand-in teacher into `room`, in view of the player. */
   bringIn(kind: 'heli' | 'hopper', room: number): boolean
   /** Progress worth a checkpoint (the resume snapshot). */
@@ -323,6 +330,8 @@ export class Walkthrough {
   private readyAt = -1
   private retryAt = -1
   private lit = false
+  /** Gates whose door in has been shut behind the player (one way forward). */
+  private shut = 0
   /** The gel corridor: waiting for its gate, the plate armed, gone off (the
    *  lesson on, its door held), or done with. */
   private gel: 'wait' | 'armed' | 'sprung' | 'done'
@@ -423,6 +432,7 @@ export class Walkthrough {
     const g = this.plan.gates[this.gate]
     if (!g) return
     const h = this.h
+    if (playing) this.shutBehind(g)
     // The chest step's chest glows on the floor until it is open.
     const c = this.chest
     const glow = !!c && g.steps.includes('chest') && !this.chestOpen()
@@ -484,8 +494,11 @@ export class Walkthrough {
       case 'chest':
         return this.chestOpen()
       case 'clear':
-      case 'rest':
         return true
+      case 'rest':
+        // The breather before the boss: its door (the shutter) waits for the
+        // gel lesson, so it never fires while Flux is at the boss door.
+        return !this.plan.gel || this.gel === 'done'
       case 'gap':
         return this.leapt
     }
@@ -538,6 +551,24 @@ export class Walkthrough {
       h.releaseDoor(gel.door)
       h.checkpoint()
     }
+  }
+
+  /**
+   * The door the player came in by slides shut behind him once he is well
+   * inside the gate's room (#270): one way forward, never a walk back to an
+   * earlier room. The start room has none; the gel corridor's door shuts the
+   * same way once he is through into the breather.
+   */
+  private shutBehind(g: WalkGate): void {
+    const k = this.gate
+    if (k < 1 || this.shut >= k || !this.h.shutDoor) return
+    const h = this.h
+    if (roomAt(h.map, h.player.x, h.player.z) !== g.room) return
+    const prev = this.plan.gates[k - 1]!
+    const d = h.map.doors[prev.door]
+    if (!d || Math.hypot(h.player.x - cellCenter(d.i), h.player.z - cellCenter(d.j)) < CELL * 1.6) return
+    this.shut = k
+    h.shutDoor?.(prev.door)
   }
 
   private pass(g: WalkGate): void {
@@ -661,7 +692,7 @@ export class Walkthrough {
     let quiet = false
     for (let k = 0; k < g.steps.length; k++) {
       const s = g.steps[k]!
-      if (!this.learned(s)) return s
+      if (!this.learned(s)) return s === 'rest' ? 'gel' : s
       if (quietStep(s)) quiet = true
     }
     return quiet && !roomEmpty(this.h.enemies, g.room) ? 'clear' : null

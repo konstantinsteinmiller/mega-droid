@@ -903,14 +903,6 @@ export default {
     'todo': 'ei vielä tehty',
     'done': 'tehty',
     'checklist': 'Opetukset',
-    'watch': 'Katso, miten se tehdään',
-    'card': {
-      'weapon': 'Kopioit Ydinmestarin aseen! Ammu sillä sen omasta painikkeesta: aseenergia antaa sille voimaa, ja jotkut koneet ovat heikkoja sitä vastaan.',
-      'gel': 'Sattuiko? Korjausgeeli palauttaa terveytesi. Käytä sitä aina, kun taistelu kääntyy huonoksi.',
-      'slide': 'Punaisia hyökkäyksiä ei voi torjua. Liu\'u syöksyen pois tieltä: mikään ei osu sinuun kesken liu\'un.',
-      'block': 'Pidä suojaa nostaaksesi kilven: se pysäyttää laukaukset ja iskut edestä. Nosta se juuri osuman hetkellä, niin saat täydellisen suojauksen, joka tainnuttaa hyökkääjän.',
-      'charge': 'Tavallinen laukaus ei riko kilpeä. Pidä liipaisinta, kunnes tykkisi hehkuu, ja päästä irti: latauslaukaus menee suoraan läpi.',
-    },
     'name': {
       'weapon': 'Aseoppitunti',
       'gap': 'Hyppyopetus',

@@ -5,22 +5,29 @@ import { createNav, floorAt } from '@/game/world/nav'
 import { CELL, Cell, cellCenter, corridorMouth } from '@/game/world/levelGen'
 
 // Mission 1 is a built stage: its lessons in a fixed order (charge, crate,
-// block, the gap, the chest, the slide, a breather), the Repair Gel corridor
-// out of the slide room, and a spiked one-cell gap that only an edge-leap
-// crosses.
+// block, the gap, the chest, the slide), three fighting rooms (two rotor
+// drones; a running wheel and a Shield Trooper; a crate golem), the Repair
+// Gel corridor into the breather (a whole room between its trap and the boss
+// door), and a spiked one-cell gap that only an edge-leap crosses.
 describe('Wake-Up Call (the built tutorial)', () => {
   const map = generateWakeUpCall(1)
 
-  it('teaches its rooms in order, the slide right before the boss', () => {
+  it('teaches its rooms in order, then three fighting rooms, the breather right before the boss', () => {
     const plan = planWalkthrough(map)
     expect(plan.gates.map(g => g.steps)).toEqual(TUTORIAL_STEPS)
     expect(map.doors[plan.gates[plan.gates.length - 1]!.door]!.boss).toBe(true)
+    expect(map.walkCast!.slice(6, 9)).toEqual([['heli', 'heli'], ['roller', 'trooper'], ['golem']])
   })
 
-  it('puts the Repair Gel corridor out of the slide room, before the breather', () => {
+  it('puts the Repair Gel corridor into the breather, a whole room before the boss door', () => {
     const plan = planWalkthrough(map)
     expect(plan.gel).not.toBeNull()
-    expect(plan.gates[plan.gel!.gate]!.steps).toContain('slide')
+    const g = plan.gates[plan.gel!.gate]!
+    expect(plan.gates[plan.gel!.gate + 1]!.steps).toContain('rest')
+    // The corridor runs long: the plate is well before the door into the breather.
+    const door = map.doors[g.door]!
+    expect(Math.hypot(cellCenter(door.i) - cellCenter(plan.gel!.spot.i), cellCenter(door.j) - cellCenter(plan.gel!.spot.j))).toBeGreaterThanOrEqual(CELL)
+    expect(map.doors[g.door]!.boss).toBeFalsy()
   })
 
   it('has a spiked one-cell gap with a leap link across it', () => {

@@ -903,14 +903,6 @@ export default {
     'todo': 'még nincs kész',
     'done': 'kész',
     'checklist': 'Oktatások',
-    'watch': 'Nézd meg, hogyan kell',
-    'card': {
-      'weapon': 'Lemásoltad egy Magmester fegyverét! A saját gombjával lőhetsz vele: fegyverenergiából működik, és néhány gép gyenge ellene.',
-      'gel': 'Megsérültél? A Javítózselé visszatölti az életerődet. Használj egyet, ha rosszul áll a harc.',
-      'slide': 'A piros támadásokat nem lehet kivédeni. Csússz ki az útjukból: csúszás közben semmi sem találhat el.',
-      'block': 'Tartsd lenyomva a védést a pajzs felemeléséhez: megállítja az elölről jövő lövéseket és ütéseket. Emeld fel épp a találat pillanatában egy Tökéletes Védésért, ami kiüti a támadót.',
-      'charge': 'Egy sima lövés nem töri át a pajzsot. Tartsd lenyomva a tüzet, amíg az ágyú izzik, aztán engedd el: a Töltött Lövés átüti.'
-    },
     'name': {
       'weapon': 'Fegyverlecke',
       'gap': 'Ugrás-oktatás',

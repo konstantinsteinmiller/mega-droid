@@ -903,14 +903,6 @@ export default {
     'todo': 'ikke klaret endnu',
     'done': 'klaret',
     'checklist': 'Træning',
-    'watch': 'Se, hvordan man gør',
-    'card': {
-      'weapon': 'Du har kopieret en Kernemesters våben! Affyr det med dets knap: våbenenergi driver det, og nogle maskiner er svage over for det.',
-      'gel': 'Såret? En Reparationsgel genopretter dit helbred. Brug en, når en kamp går skævt.',
-      'slide': 'Røde angreb kan ikke blokeres. Glid for at suse af vejen: intet kan ramme dig midt i et glid.',
-      'block': 'Hold blokering for at løfte dit skjold: det stopper skud og slag forfra. Løft det, præcis når et slag lander, for en Perfekt blokering, der slår angriberen ud.',
-      'charge': 'Et normalt skud kan ikke bryde et skjold. Hold skyd, til din kanon gløder, og slip så: et Ladeskud går lige igennem.',
-    },
     'name': {
       'weapon': 'Våbenlektion',
       'gap': 'Springtræning',

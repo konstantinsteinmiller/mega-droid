@@ -903,14 +903,6 @@ export default {
     'todo': 'ikke ferdig ennå',
     'done': 'ferdig',
     'checklist': 'Opplæring',
-    'watch': 'Se hvordan det gjøres',
-    'card': {
-      'weapon': 'Du har kopiert våpenet til en Kjernemester! Avfyr det med knappen sin: våpenenergi driver det, og noen maskiner er svake mot det.',
-      'gel': 'Skadet? En Reparasjonsgel gjenoppretter helsa di. Bruk en når en kamp går dårlig.',
-      'slide': 'Røde angrep kan ikke blokkeres. Skli for å rase unna: ingenting kan treffe deg midt i en skli.',
-      'block': 'Hold blokk for å løfte skjoldet: det stopper skudd og slag forfra. Løft det akkurat idet et treff lander for en Perfekt blokk, som slår ut angriperen.',
-      'charge': 'Et vanlig skudd knuser ikke et skjold. Hold skyt til kanonen gløder, og slipp: et Ladeskudd går rett gjennom.',
-    },
     'name': {
       'weapon': 'Våpenleksjon',
       'gap': 'Hoppøvelse',

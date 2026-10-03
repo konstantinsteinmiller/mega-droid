@@ -884,14 +884,6 @@ export default {
     'todo': 'non ancora fatto',
     'done': 'fatto',
     'checklist': 'Tutorial',
-    'watch': 'Guarda come si fa',
-    'card': {
-      'weapon': "Hai copiato l'arma di un Maestro del Nucleo! Sparala col suo pulsante: l'energia arma la alimenta, e alcune macchine ne sono deboli.",
-      'gel': 'Ferito? Un Gel Riparatore ripristina completamente la tua salute. Usane uno ogni volta che un combattimento va male.',
-      'slide': 'Gli attacchi rossi non si possono bloccare. Scivola per schivarli: niente può colpirti durante la scivolata.',
-      'block': "Tieni premuto blocca per alzare il tuo scudo: ferma colpi e attacchi frontali. Alzalo proprio quando arriva un colpo per un Blocco Perfetto, che mette KO l'attaccante.",
-      'charge': 'Un colpo normale non può rompere uno scudo. Tieni premuto il fuoco finché il cannone non brilla, poi rilascia: un colpo caricato lo sfonda.',
-    },
     'name': {
       'weapon': "Lezione sull'Arma",
       'gap': 'Tutorial: Salto',

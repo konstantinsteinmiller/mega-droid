@@ -884,14 +884,6 @@ export default {
     'todo': 'noch nicht erledigt',
     'done': 'erledigt',
     'checklist': 'Tutorials',
-    'watch': 'Schau zu, wie es geht',
-    'card': {
-      'weapon': 'Du hast die Waffe eines Kernmeisters kopiert! Feuere sie mit ihrem Knopf ab: Waffenenergie treibt sie an, und manche Maschinen sind schwach dagegen.',
-      'gel': 'Verletzt? Reparaturgel stellt deine Gesundheit vollständig wieder her. Nutze eins, wann immer ein Kampf schlecht läuft.',
-      'slide': 'Rote Angriffe lassen sich nicht blocken. Rutsch zur Seite, um auszuweichen: Während des Rutschens kann dich nichts treffen.',
-      'block': 'Halte Blocken gedrückt, um dein Schild zu heben: Es stoppt Schüsse und Treffer von vorne. Heb es genau in dem Moment, in dem ein Treffer einschlägt, für ein Perfektes Blocken, das den Angreifer ausschaltet.',
-      'charge': 'Ein normaler Schuss durchbricht kein Schild. Halte Feuer gedrückt, bis deine Kanone glüht, dann lass los: Ein Ladeschuss bricht glatt durch.',
-    },
     'name': {
       'weapon': 'Waffen-Lektion',
       'gap': 'Sprung-Tutorial',

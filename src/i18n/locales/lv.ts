@@ -903,14 +903,6 @@ export default {
     'todo': 'vēl nav izdarīts',
     'done': 'izdarīts',
     'checklist': 'Apmācības',
-    'watch': 'Skaties, kā to dara',
-    'card': {
-      'weapon': 'Tu nokopēji Kodola meistara ieroci! Šauj ar to, izmantojot tā pogu: to darbina ieroča enerģija, un dažas mašīnas pret to ir vājas.',
-      'gel': 'Ievainots? Remonta gels atjauno tavu veselību. Izmanto to, kad cīņa sāk iet slikti.',
-      'slide': 'Sarkanos uzbrukumus nevar nobloķēt. Slīdi, lai izvairītos: slīdiena laikā tev nekas nevar trāpīt.',
-      'block': 'Turi bloku, lai paceltu vairogu: tas aptur šāvienus un sitienus no priekšas. Pacel to tieši trieciena brīdī, lai izdarītu Ideālo bloku, kas apdullina uzbrucēju.',
-      'charge': 'Parasts šāviens nevar salauzt vairogu. Turi šaušanu, līdz lielgabals iemirdzas, tad atlaid: Lādēts šāviens izsitas cauri.'
-    },
     'name': {
       'weapon': 'Ieroča nodarbība',
       'gap': 'Apmācība: Lēciens',

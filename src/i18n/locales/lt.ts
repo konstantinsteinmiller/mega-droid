@@ -903,14 +903,6 @@ export default {
     'todo': 'dar neatlikta',
     'done': 'atlikta',
     'checklist': 'Mokymai',
-    'watch': 'Pažiūrėk, kaip tai daroma',
-    'card': {
-      'weapon': 'Nukopijavai šerdies meistro ginklą! Šauk juo jo mygtuku: jį maitina ginklo energija, o kai kurios mašinos prieš jį silpnos.',
-      'gel': 'Sužeistas? Remonto gelis atkuria sveikatą. Naudok jį, kai kova pakrypsta blogai.',
-      'slide': 'Raudonų atakų blokuoti negalima. Nuslysk į šalį: slystant tavęs niekas nepataikys.',
-      'block': 'Laikyk blokavimą, kad pakeltum skydą: jis sustabdo šūvius ir smūgius iš priekio. Pakelk jį tiksliai smūgio akimirką – tai tobulas blokavimas, kuris apsvaigina užpuoliką.',
-      'charge': 'Paprastas šūvis skydo nepramuša. Laikyk šūvį, kol patranka sužibs, tada atleisk: įkrautas šūvis pramuša kiaurai.'
-    },
     'name': {
       'weapon': 'Ginklo pamoka',
       'gap': 'Šuolio mokymas',

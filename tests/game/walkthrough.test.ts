@@ -595,6 +595,65 @@ describe('resume', () => {
   })
 })
 
+// #270: the door the player came in by shuts behind him, one way forward.
+describe('doors shut behind', () => {
+  it('shuts the door in to each gate once the player is well inside the next room, never before', () => {
+    const r = makeWalk()
+    r.host.shutDoor = (id) => { r.doors.set(id, 'held') }
+    r.walk.start()
+    passTo(r, 1)
+    // Gate 0's door opened; standing in the start room it stays open.
+    expect(isOpen(r, 0)).toBe(true)
+    enter(r, r.gate(1).room)
+    run(r, 0.2)
+    expect(r.doors.get(r.gate(0).door)).toBe('held')
+    // The next one too, once through it.
+    run(r, 1.5)
+    r.s.crateBroken = true
+    run(r, 1)
+    expect(isOpen(r, 1)).toBe(true)
+    enter(r, r.gate(2).room)
+    run(r, 0.2)
+    expect(r.doors.get(r.gate(1).door)).toBe('held')
+  })
+
+  it('a host without the hook leaves the way back open', () => {
+    const r = makeWalk()
+    r.walk.start()
+    passTo(r, 2)
+    expect(isOpen(r, 0)).toBe(true)
+    expect(isOpen(r, 1)).toBe(true)
+  })
+})
+
+// The built tutorial's breather before the boss (#D29): its door, the boss
+// shutter, waits for the Repair Gel lesson, so the lesson never fires while
+// the player is already at the boss door.
+describe('the breather waits for the gel', () => {
+  it('holds the boss shutter until the gel lesson is over, and names the gel', async () => {
+    const { generateWakeUpCall } = await import('@/game/world/stages/tutorial')
+    const r = makeWalk(generateWakeUpCall(1), { gel: true })
+    const last = r.plan.gates.length - 1
+    expect(r.gate(last).steps).toEqual(['rest'])
+    // Resumed in the breather with the plate never stepped on.
+    r.walk.restore({ gate: last, crate: true, block: true, slide: true, leap: true })
+    r.walk.start()
+    enter(r, r.gate(last).room)
+    run(r, 3)
+    expect(r.walk.passed).toBe(last)
+    expect(r.walk.needAt(r.gate(last).door)).toBe('gel')
+    // The plate, the lesson, the gel used: the shutter's gate passes.
+    r.host.player.x = r.plan.gel!.spot.x
+    r.host.player.z = r.plan.gel!.spot.z
+    run(r, GEL_DELAY + 0.5)
+    r.s.gelOver = true
+    run(r, 0.2)
+    enter(r, r.gate(last).room)
+    run(r, 2)
+    expect(r.walk.passed).toBe(last + 1)
+  })
+})
+
 describe('the Repair Gel corridor', () => {
   /** Stand on the gel plate's cell. */
   const onPlate = (r: Rig) => {
@@ -1140,6 +1199,22 @@ describe('the scripted cast', () => {
     // Steps that are not lessons keep the plain label.
     expect(LESSON_OF.clear).toBeUndefined()
     expect(LESSON_OF.chest).toBeUndefined()
+  })
+
+  it('the built tutorial casts its fighting rooms itself: two rotor drones, a wheel and a Trooper, a crate golem', async () => {
+    const { generateWakeUpCall } = await import('@/game/world/stages/tutorial')
+    const map = generateWakeUpCall(1)
+    const plan = planWalkthrough(map)
+    const enemies = await spawnTutorial(map, createNav(map), plan, 1)
+    const kinds = (k: number) => enemies.filter(e => e.room === plan.gates[k]!.room).map(e => e.kind).sort()
+    expect(kinds(6)).toEqual(['heli', 'heli'])
+    expect(kinds(7)).toEqual(['roller', 'trooper'])
+    expect(kinds(8)).toEqual(['golem'])
+    expect(kinds(9)).toEqual([])
+    // The block lesson's Trooper keeps its spot (#270); nothing else is rooted.
+    const rooted = enemies.filter(e => e.rooted)
+    expect(rooted.map(e => e.kind)).toEqual(['trooper'])
+    expect(rooted[0]!.room).toBe(plan.gates.find(g => g.steps.includes('block'))!.room)
   })
 
   it('holds every machine in its own room (one wandered back and kept a gate shut)', async () => {

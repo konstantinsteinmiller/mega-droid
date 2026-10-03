@@ -904,7 +904,7 @@ export class CombatSystem {
     const kx = e.x - o.fromX
     const kz = e.z - o.fromZ
     const kl = Math.hypot(kx, kz) || 1
-    if (e.def.speed > 0) {
+    if (e.def.speed > 0 && !e.rooted) {
       e.x += (kx / kl) * kb
       e.z += (kz / kl) * kb
     }

@@ -886,14 +886,6 @@ export default {
     'todo': 'henüz tamamlanmadı',
     'done': 'tamamlandı',
     'checklist': 'Eğitimler',
-    'watch': 'Nasıl yapıldığını izle',
-    'card': {
-      'weapon': "Bir Çekirdek Usta'nın silahını kopyaladın! Kendi düğmesiyle ateşle: silah enerjisi onu besler ve bazı makineler ona karşı zayıftır.",
-      'gel': 'Yaralandın mı? Tamir Jeli canını tamamen yeniler. Çarpışma kötüye giderse bir tane kullan.',
-      'slide': 'Kırmızı saldırılar bloklanamaz. Yoldan çıkmak için kay: kayış sırasında hiçbir şey sana vuramaz.',
-      'block': 'Kalkanını kaldırmak için blokla tuşunu basılı tut: önden gelen atışları ve vuruşları durdurur. Tam vuruş anında kaldırırsan Mükemmel Blok yaparsın, bu da saldırganı sersemletir.',
-      'charge': 'Normal atış kalkanı kıramaz. Kol topun parlayana kadar ateşi basılı tut, sonra bırak: şarjlı atış onu doğrudan deler.',
-    },
     'name': {
       'weapon': 'Silah Dersi',
       'gap': 'Sıçrayış Eğitimi',

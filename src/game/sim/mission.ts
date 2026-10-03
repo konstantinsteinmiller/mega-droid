@@ -77,7 +77,7 @@ import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
-import { DemoDriver, chargeDemo, blockDemo, slideDemo, gapDemo, gelDemo, type DemoScript } from './demo'
+import { LessonHologram, TargetArrow } from '../fx/lessonHologram'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import {
@@ -144,11 +144,11 @@ export const setupFromQuest = (quest: Quest, snapshot: MissionSnapshot | null): 
 
 /** A held gate's red judder on a refusal (s). */
 const DOOR_SHAKE = 0.45
-/** The demos' blockable shot speed (m/s), and the slide demo's ring: how far
- *  ahead it starts (m) and how fast it rolls (m/s). */
-const DEMO_SHOT_SPEED = 9
-const DEMO_RING_DIST = 6
-const DEMO_RING_SPEED = 7
+/** The slide lesson's Stomper holds at the top of its leap (s into its 0.7 s
+ *  arc) until the player slides. */
+const SLIDE_CUE_AT = 0.33
+/** The gel hologram shows within this of its spot (m), once its lesson began. */
+const GEL_HOLO_NEAR = 9
 /** The checklist's arrow toward a lesson stays up this long (s). */
 const LESSON_POINT_FOR = 6
 /** The tutorial's false wall sinks over this long (s). */
@@ -236,6 +236,9 @@ const _e = new Euler()
 const _up = new Vector3(0, 1, 0)
 /** Scratch for Atlas (`renderAtlas`, `followAtlas`). */
 const _v = new Vector3()
+/** The lesson hologram's glyph spot (world, then screen). */
+const _holoAt = { x: 0, y: 0, z: 0 }
+const _holoPt = { x: 0, y: 0, visible: false }
 // Portal-culling scratch (no per-frame allocation).
 const _frustum = new Frustum()
 const _pv = new Matrix4()
@@ -505,18 +508,22 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private killCamCount = 0
   /** Hazard kinds whose hit has had its freeze-frame this mission. */
   private readonly trapCamSeen = new Set<string>()
-  /** Lesson rooms: intro, card, demo, try (`sim/training.ts`). */
+  /** Lesson rooms: intro, try (`sim/training.ts`). */
   readonly training: Training = new Training(this)
-  /** A lesson's demo, played through the real controls (`sim/demo.ts`). */
-  readonly demo = new DemoDriver()
-  /** Where the lesson's subject is (the card's spotlight, the demo's aim);
+  /** The lesson rooms' holograms doing the move on a loop
+   *  (`fx/lessonHologram.ts`), each up while Flux is in its room (`room` -1:
+   *  the gel's, near its spot once its lesson began). */
+  private holos: Array<{ holo: LessonHologram; room: number; x: number; z: number }> = []
+  /** The big yellow arrows over the lesson targets (two at most at once). */
+  private readonly targetArrows: TargetArrow[] = []
+  /** The slide lesson's freeze: the Stomper held at the top of its leap until
+   *  the player slides; and the leap already held (once per leap). */
+  private slideCue: Enemy | null = null
+  private slideCued: Enemy | null = null
+  private gelHoloOn = false
+  /** Where the lesson's subject is (the target arrow, the slide freeze's view);
    *  set by whoever runs the room (the walkthrough, a weapon lesson). */
   trainSpot: { x: number; y: number; z: number } | null = null
-  /** The demo's own target and its shooter (a second drone, the teacher). */
-  demoAim: { x: number; y: number; z: number } | null = null
-  demoSource: Enemy | null = null
-  /** Sim time since the demo's last step (it steps once a frame). */
-  private demoDt = 0
   /** Each lesson room's middle in this mission (the checklist's arrows and
    *  the lesson's spotlight fall back to it). */
   readonly lessonSpots = new Map<TrainId, { x: number; y: number; z: number }>()
@@ -566,8 +573,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private readonly falseWalls = new Map<number, { mesh: Object3D; slab: Slab; t: number; x: number; y: number; z: number; tall: number }>()
   /** The gap lesson's take-off and landing arrows (the built tutorial). */
   private gapArrows: Mesh[] = []
-  /** Flux's health before the gel lesson's demo used its (free) gel; null outside it. */
-  private gelDemoHp: number | null = null
   /** A stage's beam-in room: the weapon it teaches before its door opens
    *  (the newest one not yet taught), whether its drones came, its door. */
   private beamTeach: WeaponId | null = null
@@ -1067,7 +1072,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         pushHud({ t: 'text', x: p.x - Math.sin(p.yaw) * 1.4, y: p.y + EYE_H + 0.2, z: p.z - Math.cos(p.yaw) * 1.4, key: 'combat.parry', color: '#7ff4ff' })
         this.fx.sparks(p.x - Math.sin(p.yaw) * 0.8, p.y + EYE_H - 0.3, p.z - Math.cos(p.yaw) * 0.8, '#bff6ff', 18, 7, 0.2)
         sfx('parry')
-        if (!this.demo.active) bark('parry')
+        bark('parry')
         if (e && o.kind === 'melee') {
           e.state = 'stun'
           e.st = 0
@@ -1083,7 +1088,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         c.blocking = false
         this.vm.barrier.impact('parry')
         this.coach.use('parry')
-        if (!this.demo.active) { this.walk?.noteBlock(); this.trainDone('block') }
+        this.walk?.noteBlock()
+        this.trainDone('block')
         return 'parry'
       }
       // ── BLOCK ──
@@ -1108,7 +1114,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         pushHud({ t: 'text', x: p.x - Math.sin(p.yaw) * 1.4, y: p.y + EYE_H + 0.1, z: p.z - Math.cos(p.yaw) * 1.4, key: 'combat.guardCracked', color: '#ff8a5a' })
       }
       this.coach.use('block')
-      if (!this.demo.active) { this.walk?.noteBlock(); this.trainDone('block') }
+      this.walk?.noteBlock()
+      this.trainDone('block')
       this.checkDown()
       return 'block'
     }
@@ -1133,7 +1140,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     p.vz += (kz / kl) * kb
     this.checkDown()
     // Flux yelps: what hit him, or a groan the moment health drops under 30 %.
-    if (!c.dead && !this.demo.active) {
+    if (!c.dead) {
       const crossedLow = c.hp / c.maxHp < 0.3 && (c.hp + taken) / c.maxHp >= 0.3
       bark(crossedLow ? 'lowHp' : barkFor({ hazard: o.hazard, element: e?.element, hard: o.kind === 'aoe' || isHardHit(taken, c.maxHp, !!e?.boss) }))
     }
@@ -2184,10 +2191,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (c.dead) return
     c.dead = true
     c.charging = false
-    if (!this.demo.active) {
-      bark('down')
-      this.atlas?.sayNow('warn.down')
-    }
+    bark('down')
+    this.atlas?.sayNow('warn.down')
     this.fumble.reset()
     this.deathT = 0
     hud.phase = 'dead'
@@ -2336,12 +2341,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       sfx('denied')
       return false
     }
-    // The lesson's demo shows a gel used; it costs none and teaches nothing
-    // yet: the health it gave goes back when the demo ends (`stepTraining`),
-    // so the player has a gel and a reason to use it.
-    const demo = this.demo.active
-    if (demo) this.gelDemoHp = Math.min(this.gelDemoHp ?? c.hp, c.hp)
-    else profile.inv.tanks--
+    profile.inv.tanks--
     // The HUD drains the gel from its button and pours it into the bar from
     // where health stood (`ActionButtons`, `HudBars`); the repair itself is
     // instant, the animation only catches up.
@@ -2352,7 +2352,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.fx.riseRing(this.player.x, this.player.y + 0.1, this.player.z, '#8dff7a', 0.9, 20)
     pushHud({ t: 'flash', color: '#8dff7a', strength: 0.35 })
     sfx('tank')
-    if (demo) return true
     bark('gel')
     this.coach.use('tank')
     this.lessons.gelUsed()
@@ -2546,15 +2545,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (hud.phase === 'beamIn') {
       this.stepBeamIn(dt, first)
     } else if (hud.phase === 'play') {
-      // The demo writes the input record like a hand does: once a frame (its
-      // presses are edges, read on the frame's first step and then cleared).
-      if (this.demo.active) {
-        this.demoDt += dt
-        if (first) {
-          this.stepDemo(this.demoDt)
-          this.demoDt = 0
-        }
-      }
       this.updatePlayer(dt, first)
     } else if (hud.phase === 'dead') {
       this.stepDead(dt, rawDt)
@@ -2645,7 +2635,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     lt.tanks = profile.inv.tanks
     this.lessons.update(dt, lt)
     this.walk?.update(lt.playing, hud.combat)
-    this.stepTraining(lt.playing)
+    this.stepTraining(lt.playing, dt)
     this.training.update(this.time, lt.playing)
     this.updateDoorPrompt(dt, lt.playing)
     this.stepGuards()
@@ -2705,9 +2695,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  shot's own clock move. */
   private stepFreeze(dt: number, first: boolean): void {
     const pressed = first && this.input.anyPressed
-    // A lesson card: any press continues (to the demo).
-    if (pressed && this.freeze.shot?.kind === 'lesson' && this.training.phase === 'card') {
-      this.training.dismissCard(this.time)
+    // The slide lesson's held leap: only a slide lets it land (the slide
+    // itself happens on the next step, its press kept for it).
+    if (this.slideCue && this.freeze.shot?.kind === 'lesson') {
+      if (first && this.input.slideQueued) {
+        // The slide must happen: no cooldown or empty power can eat it.
+        this.combat.slideCd = 0
+        this.combat.power = this.combat.maxPower
+        this.slideCue = null
+        hud.slideCue = false
+        this.freeze.end()
+        this.writeHud()
+        return
+      }
     }
     const ended = this.freeze.update(dt, pressed)
     this.fx.update(dt)
@@ -2797,88 +2797,29 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   // ─── Training host (`sim/training.ts`) ──────────────────────────────────
 
-  freezeForCard(_id: TrainId): void {
-    const at = this.trainSpot
+  /**
+   * The slide lesson's held leap (#266): while the slide is still to learn,
+   * every leap of the room's Stomper that would land on Flux freezes at its
+   * top, the view on it, and only a slide lets it come down (`stepFreeze`).
+   * The HUD points three yellow arrows at the slide input meanwhile
+   * (`hud.slideCue`).
+   */
+  private stepSlideCue(e: Enemy): void {
+    if (this.slideCued && this.slideCued.state !== 'act') this.slideCued = null
+    if (e.state !== 'act' || e.st < SLIDE_CUE_AT || this.slideCued === e || this.training.done.has('slide')) return
+    if (Math.hypot(e.tx - this.player.x, e.tz - this.player.z) > 3) return
+    this.slideCued = e
+    this.slideCue = e
+    hud.slideCue = true
+    // The view goes up to it: the leap, held overhead, is the lesson.
+    const p = this.player
+    const ey = e.y + (e.floor ?? 0) + e.def.aimY
+    p.yaw = Math.atan2(-(e.x - p.x), -(e.z - p.z))
+    p.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.atan2(ey - (p.y + EYE_H), Math.max(0.8, Math.hypot(e.x - p.x, e.z - p.z)))))
     this.startFreeze({
       kind: 'lesson', dur: Infinity, frame: 'fp', skippable: false, fx: '',
-      tx: at?.x ?? this.player.x, ty: at?.y ?? this.player.y + 1, tz: at?.z ?? this.player.z
+      tx: e.x, ty: e.y + (e.floor ?? 0) + e.def.aimY, tz: e.z
     })
-  }
-
-  unfreeze(): void {
-    if (this.freeze.shot?.kind === 'lesson') {
-      this.freeze.end()
-      this.writeHud()
-    }
-  }
-
-  /** The card was dismissed from the HUD (a tap or click on it). */
-  dismissTrainingCard(): void {
-    this.training.dismissCard(this.time)
-  }
-
-  startDemo(id: TrainId): boolean {
-    const touch = this.input.device === 'touch'
-    const aimAt = () => this.demoAim ?? this.trainSpot
-    let s: DemoScript | null = null
-    // A demo shot's flight time from its shooter (m / (m/s)).
-    const lead = (): number => {
-      const a = this.demoSource
-      return a ? Math.max(0.4, Math.hypot(a.x - this.player.x, a.z - this.player.z) / DEMO_SHOT_SPEED) : 0.7
-    }
-    switch (id) {
-      case 'charge': s = this.demoAim ? chargeDemo(aimAt, touch) : null; break
-      case 'block': s = this.demoSource ? blockDemo(aimAt, lead()) : null; break
-      case 'slide': s = this.demoSource ? slideDemo(aimAt, DEMO_RING_DIST / DEMO_RING_SPEED) : null; break
-      case 'gap': s = this.trainSpot ? gapDemo(aimAt, 1.6) : null; break
-      case 'gel': s = gelDemo(); break
-      default: s = null
-    }
-    if (!s) return false
-    this.demo.start(s)
-    return true
-  }
-
-  demoOver(): boolean {
-    return !this.demo.active
-  }
-
-  /** A demo step: the script drives the input record; the view turns to its
-   *  target; the scene events it asks for happen. */
-  private stepDemo(dt: number): void {
-    const d = this.demo
-    d.step(dt, this.input)
-    const p = this.player
-    const aim = d.script?.aim?.()
-    if (aim) {
-      const want = Math.atan2(-(aim.x - p.x), -(aim.z - p.z))
-      const dist = Math.hypot(aim.x - p.x, aim.z - p.z)
-      const wantPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.atan2(aim.y - (p.y + EYE_H), Math.max(0.5, dist))))
-      const k = Math.min(1, dt * 6)
-      if (d.turnRate === 0) p.yaw += angDiff(want, p.yaw) * k
-      p.pitch += (wantPitch - p.pitch) * k
-    }
-    if (d.turnRate) p.yaw -= d.turnRate * dt
-    const src = this.demoSource
-    for (const tag of d.emits) {
-      if (!src) continue
-      if (tag === 'shot') {
-        // A slow blockable shot from the teacher's middle, at Flux's chest.
-        const sx = src.x
-        const sy = src.y + (src.floor ?? 0) + src.def.aimY
-        const sz = src.z
-        const tx = p.x - sx
-        const ty = p.y + EYE_H - 0.4 - sy
-        const tz = p.z - sz
-        const l = Math.hypot(tx, ty, tz) || 1
-        this.system.spawnEnemyShot(src, sx, sy, sz, tx / l, ty / l, tz / l, DEMO_SHOT_SPEED, 1, true)
-      } else if (tag === 'ring') {
-        // A red ring rolling at Flux from a few metres ahead of him.
-        const fx = -Math.sin(p.yaw)
-        const fz = -Math.cos(p.yaw)
-        this.system.spawnRing(src, p.x + fx * DEMO_RING_DIST, p.z + fz * DEMO_RING_DIST, DEMO_RING_SPEED, DEMO_RING_DIST + 2, 1, '#ff3a3a')
-      }
-    }
   }
 
   /** The checklist's tap on an open lesson: point the way for a while. */
@@ -2917,7 +2858,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** An edge-leap happened: the gap lesson's proof. */
   private onEdgeLeap(): void {
-    if (this.demo.active) return
     this.walk?.noteLeap()
     this.trainDone('gap')
   }
@@ -2946,6 +2886,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     const gel = walk.plan.gel
     if (gel) this.lessonSpots.set('gel', { x: cellCenter(gel.spot.i), y: 0, z: cellCenter(gel.spot.j) })
+    this.buildHolograms()
     // A built tutorial walls its first room in: the way on (the corridor
     // and its door) is behind a wall like any other until the charge lesson
     // is done, then that wall sinks (players took a shut door for the way on
@@ -3030,7 +2971,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       tr.enter('weapon', this.time)
     }
     const at = this.lessons.weaponDronesAt
-    if (at) this.trainSpot = { x: at.x, y: at.y, z: at.z }
+    this.trainSpot = at ? { x: at.x, y: at.y, z: at.z } : null
     this.combat.we = Math.max(this.combat.we, Math.min(this.combat.maxWe, this.weaponCost(id) * 2))
     if (this.lessons.weaponLearned === id) {
       markTip(`train:weapon:${id}`)
@@ -3124,11 +3065,17 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /**
    * Per step: the lesson room Flux is in runs its beats (`sim/training.ts`),
-   * with the subject the card spotlights and the demo uses; leaving it stops
-   * a demo and takes the vignette away. The gel lesson (a corridor) runs
-   * from its trap to its end.
+   * with the subject its arrow marks; leaving it takes the vignette away. The
+   * gel lesson (a corridor) runs from its trap to its end. The holograms and
+   * the arrows follow (`stepHolograms`).
    */
-  private stepTraining(playing: boolean): void {
+  private stepTraining(playing: boolean, dt: number): void {
+    this.trainSpot = null
+    this.stepTrainingBeats(playing)
+    if (playing) this.stepHolograms(dt)
+  }
+
+  private stepTrainingBeats(playing: boolean): void {
     const walk = this.walk
     const tr = this.training
     const p = this.player
@@ -3140,13 +3087,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ;(a.material as MeshBasicMaterial).opacity = 0.45 + 0.4 * Math.sin(this.time * 4)
     }
     if (tr.id === 'gel') {
-      this.trainSpot = { x: p.x - Math.sin(p.yaw) * 2, y: p.y + EYE_H - 0.4, z: p.z - Math.cos(p.yaw) * 2 }
-      // The demo's gel was only shown: Flux is hurt again for his own try.
-      if (this.gelDemoHp !== null && !this.demo.active) {
-        this.combat.hp = Math.min(this.combat.hp, this.gelDemoHp)
-        this.gelDemoHp = null
-        pushHud({ t: 'flash', color: '#ffa23a', strength: 0.25 })
-      }
+      this.gelHoloOn = true
       if (this.lessons.gelEnded) {
         this.trainDone('gel')
         tr.leave()
@@ -3164,10 +3105,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (!id) {
-      if (tr.id && tr.phase !== 'card') {
-        tr.leave()
-        if (this.demo.active) this.demo.stop()
-      }
+      if (tr.id && tr.id !== 'weapon') tr.leave()
       return
     }
     // The charge lesson waits for a first step toward its drones (or a shot
@@ -3175,23 +3113,126 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (id === 'charge' && tr.id !== id && !this.chargeLessonDue()) return
     if (tr.id !== id) tr.enter(id, this.time)
     // The subject, fresh every step (a machine walks).
-    this.demoAim = null
-    this.demoSource = null
     if (id === 'charge') {
       const a = this.lessons.targetAt
       this.trainSpot = a ? { x: a.x, y: a.y, z: a.z } : null
-      const b = this.lessons.demoTargetAt
-      this.demoAim = b ? { x: b.x, y: b.y, z: b.z } : null
       if (!this.lessons.droneUp) this.trainDone('charge')
     } else if (id === 'block' || id === 'slide') {
       const e = walk.teacher()
       if (e && e.state !== 'dead') {
-        this.trainSpot = { x: e.x, y: e.y + (e.floor ?? 0) + e.def.aimY, z: e.z }
-        this.demoSource = e
+        this.trainSpot = { x: e.x, y: e.y + (e.floor ?? 0) + e.def.aimY + e.def.hitR, z: e.z }
+        if (id === 'slide') this.stepSlideCue(e)
       }
-    } else if (id === 'gap') {
-      this.trainSpot = this.lessonSpots.get('gap') ?? null
     }
+  }
+
+  /**
+   * Build time: a hologram in every lesson room of the walkthrough, one on
+   * the gap's leap (walking the very path the player must take), one by the
+   * gel plate. Each plays side-on to the way the player comes in.
+   */
+  private buildHolograms(): void {
+    const walk = this.walk
+    if (!walk) return
+    const t = this.map.terrain
+    for (const g of walk.plan.gates) {
+      for (const st of g.steps) {
+        const id = TRAIN_OF[st]
+        if (!id) continue
+        const r = this.map.rooms[g.room]!
+        let x = (r.x0 + r.w / 2) * CELL
+        let z = (r.z0 + r.h / 2) * CELL
+        let yaw: number
+        if (id === 'gap') {
+          const link = t?.links?.find(l => l.kind === 'leap' && this.map.room[l.from[1] * this.map.w + l.from[0]] === g.room)
+          if (!link) continue
+          const fx = cellCenter(link.from[0])
+          const fz = cellCenter(link.from[1])
+          const tx = cellCenter(link.to[0])
+          const tz = cellCenter(link.to[1])
+          x = (fx + tx) / 2
+          z = (fz + tz) / 2
+          yaw = Math.atan2(-(tz - fz), tx - fx)
+        } else {
+          // Off to one side of the room's middle, where its machines stand,
+          // and playing away from the way in (the start room: from the pad):
+          // seen from behind, the way the player sees his own Flux do it.
+          const [dx, dz] = g.room === walk.plan.gates[0]!.room ? [this.map.start.x, this.map.start.z] : doorwayOf(this.map, g.room)
+          const ix = x - dx
+          const iz = z - dz
+          const il = Math.hypot(ix, iz) || 1
+          const ux = ix / il
+          const uz = iz / il
+          const side = Math.min(2.8, Math.max(0, Math.min(r.w, r.h) * CELL / 2 - 2.2))
+          // Its Flux (2 m behind its middle) stands level with the room's middle.
+          x += -uz * side + ux * 2
+          z += ux * side + uz * 2
+          yaw = Math.atan2(-uz, ux)
+        }
+        this.addHolo(id, g.room, x, z, yaw)
+      }
+    }
+    const gel = walk.plan.gel
+    const gd = gel ? this.doors[gel.door] : undefined
+    if (gel && gd) {
+      // A few metres on from the plate toward the door it shuts: where he looks.
+      const sx = cellCenter(gel.spot.i)
+      const sz = cellCenter(gel.spot.j)
+      const l = Math.hypot(gd.x - sx, gd.z - sz) || 1
+      const k = Math.min(2.6, l * 0.6) / l
+      this.addHolo('gel', -1, sx + (gd.x - sx) * k, sz + (gd.z - sz) * k, Math.atan2(-(gd.z - sz), gd.x - sx) + Math.PI / 2)
+    }
+  }
+
+  private addHolo(id: TrainId, room: number, x: number, z: number, yaw: number, weaponColor?: string): void {
+    const holo = new LessonHologram(id, { weaponColor })
+    holo.place(this.scene, x, Math.max(0, floorAt(this.nav, x, z)), z, yaw)
+    this.holos.push({ holo, room, x, z })
+  }
+
+  /** Per step: each hologram up while Flux is in its room (#269: even with
+   *  its lesson learned, until he walks out), its input pinned over it on
+   *  the HUD; the yellow arrows over what the lessons want hit (#D31). */
+  private stepHolograms(dt: number): void {
+    const p = this.player
+    const here = roomAt(this.map, p.x, p.z)
+    let glyph: LessonHologram | null = null
+    for (const h of this.holos) {
+      const show = h.room >= 0 ? here === h.room : this.gelHoloOn && Math.hypot(p.x - h.x, p.z - h.z) < GEL_HOLO_NEAR
+      h.holo.update(dt, show)
+      if (show && !glyph) glyph = h.holo
+    }
+    const g = glyph?.glyph()
+    hud.holoAct = g?.act ?? ''
+    hud.holoDown = !!g?.down
+    if (glyph && g?.act) {
+      glyph.headAt(_holoAt)
+      this.project(_holoAt.x, _holoAt.y, _holoAt.z, _holoPt)
+      hudLive.holoX = _holoPt.x
+      hudLive.holoY = _holoPt.y
+      hudLive.holoOn = _holoPt.visible
+    } else hudLive.holoOn = false
+    // The arrows: the lesson's subject, and the crate lesson's crate.
+    let n = 0
+    const at = this.trainSpot
+    const tr = this.training
+    if (at && tr.id && tr.phase !== 'done') {
+      const top = tr.id === 'charge' || tr.id === 'weapon' ? at.y + 0.7 : at.y
+      this.arrow(n++).update(dt, true, at.x, top, at.z)
+    }
+    const crate = this.walk?.current?.steps.includes('crate') ? this.lessons.crateAt : null
+    if (crate) this.arrow(n++).update(dt, true, crate.x, Math.max(0, floorAt(this.nav, crate.x, crate.z)) + 1.5, crate.z)
+    for (let k = n; k < this.targetArrows.length; k++) this.targetArrows[k]!.update(dt, false, 0, 0, 0)
+  }
+
+  private arrow(k: number): TargetArrow {
+    let a = this.targetArrows[k]
+    if (!a) {
+      a = new TargetArrow()
+      this.scene.add(a.root)
+      this.targetArrows.push(a)
+    }
+    return a
   }
 
   /** The charge lesson's start: Flux is a step closer to the training drone
@@ -3211,7 +3252,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** A lesson done by the player's own hand: ticked off for good. */
   private trainDone(id: TrainId): void {
-    if (this.demo.active) return
     if (!this.training.done.has(id)) markTip(`train:${id}`)
     this.training.complete(id)
   }
@@ -3584,7 +3624,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       p.path = null
       sfx('slide')
       this.coach.use('slide')
-      if (!this.demo.active && this.slideCounts()) { this.walk?.noteSlide(); this.trainDone('slide') }
+      if (this.slideCounts()) {
+        this.walk?.noteSlide()
+        this.trainDone('slide')
+      }
       this.fx.emit({ x: p.x, y: p.y + 0.2, z: p.z, color: '#dfefff', size: 0.9, sizeEnd: 1.6, life: 0.3 })
     }
 
@@ -4301,9 +4344,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const tr = this.training
     hud.trainId = tr.id ?? ''
     hud.trainPhase = tr.phase
-    hud.demoAct = this.demo.act
-    hud.demoDown = this.demo.down
-    hud.demoSkips = this.demo.presses
     // The first mission's checklist: every lesson this map teaches.
     if (this.setup.tutorial) {
       let sig = ''

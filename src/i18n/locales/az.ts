@@ -903,14 +903,6 @@ export default {
     'todo': 'hələ edilməyib',
     'done': 'edildi',
     'checklist': 'Təlimlər',
-    'watch': 'Necə edildiyinə bax',
-    'card': {
-      'weapon': 'Bir Nüvə Ustasının silahını kopyaladın! Onu öz düyməsi ilə atəşə tut: onu silah enerjisi işlədir və bəzi maşınlar ona qarşı zəifdir.',
-      'gel': 'Yaralandın? Təmir Geli canını bərpa edir. Döyüş pis gedəndə birini işlət.',
-      'slide': 'Qırmızı hücumları blok etmək olmur. Yoldan çəkilmək üçün sürüş: sürüşərkən heç nə səni vura bilməz.',
-      'block': 'Qalxanı qaldırmaq üçün bloku basılı saxla: o, öndən gələn atəşləri və zərbələri dayandırır. Zərbə dəyən anda qaldırsan, Mükəmməl Blok alınır və hücumçu sərsəmləyir.',
-      'charge': 'Adi atəş qalxanı sındıra bilmir. Topun parlayana qədər atəşi basılı saxla, sonra burax: Yüklü Atəş onu deşib keçir.'
-    },
     'name': {
       'weapon': 'Silah Dərsi',
       'gap': 'Tullanma Təlimi',

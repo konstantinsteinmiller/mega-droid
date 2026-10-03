@@ -18,7 +18,7 @@
       //- Crosshair ticks round the buster: "this one shoots", at a glance.
       span.fire-ticks(aria-hidden="true")
       span.demo-finger(v-if="demoOn('fire')" aria-hidden="true")
-        InputGlyph(kind="finger" :mode="hud.demoDown ? 'hold' : 'tap'")
+        InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
     button.act.block(
       type="button"
       :class="[{ held: hud.blockHeld }, demoClass('block')]"
@@ -31,7 +31,7 @@
       GameIcon(name="shield")
       KeyCap.kc(v-if="desk" code="MouseRight")
       span.demo-finger(v-if="demoOn('block')" aria-hidden="true")
-        InputGlyph(kind="finger" :mode="hud.demoDown ? 'hold' : 'tap'")
+        InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
       CoachRing(:hint="touchHint('parry') ?? touchHint('block') ?? urgentBlock" side="rim")
     //- The cooldown is a clock wipe that shrinks away with the seconds left in
     //- the middle, and the button pops when it is back — the same on a phone
@@ -40,7 +40,7 @@
     button.act.slide(
       ref="slideBtn"
       type="button"
-      :class="[{ cooling: slideCooling, low: hud.slidePowerLow, ready: slideFlash }, demoClass('slide')]"
+      :class="[{ cooling: slideCooling, low: hud.slidePowerLow, ready: slideFlash, cue: hud.slideCue }, demoClass('slide')]"
       :aria-label="t('combat.slide')"
       @pointerdown.prevent.stop="slide"
     )
@@ -53,6 +53,10 @@
       CoachRing(:hint="touchHint('slide')")
       span.demo-finger(v-if="demoOn('slide')" aria-hidden="true")
         InputGlyph(kind="finger" mode="tap")
+      //- The slide lesson holds the Stomper's leap: three yellow arrows point
+      //- here until the slide is pressed.
+      span.cue-arrows(v-if="hud.slideCue" aria-hidden="true")
+        span.cue-arrow(v-for="i in 3" :key="i" :class="`a${i}`")
     //- The Repair Gel: always on screen, as the resource it is. The gel in
     //- the flask and a pip per gel carried (hollow pips: room for more);
     //- dimmed while there is nothing to repair, glowing once there is.
@@ -150,16 +154,16 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
  * profile takes is taught the coach's way: a pulsing ring on the button, its
  * key or a tapping finger over it (not during a fight), a check once fired.
  */
-/** A lesson demo presses this button (`sim/demo.ts`): it lights, and on a
- *  phone a finger shows on it — where the player's thumb will go. */
-const demoNow = (act: string): boolean => hud.trainPhase === 'demo' && hud.demoAct === act && !desk.value
+/** A lesson hologram presses this button on its loop (`fx/lessonHologram.ts`):
+ *  on a phone it lights in step, a finger on it — where the player's thumb
+ *  will go (a desktop shows the key over the hologram, `LessonGlyph`). */
+const demoNow = (act: string): boolean => hud.holoAct === act && hud.holoDown && !desk.value
 /** The player's turn (the lesson's try): the button the lesson is about
- *  stays lit until they have done it — with the finger on a phone, and with
- *  its key on a desktop (`DemoOverlay` shows it big). The gel has its own ring. */
+ *  breathes until they have done it. The gel has its own ring. */
 const TRY_ACT: Record<string, string> = { charge: 'fire', block: 'block', slide: 'slide' }
-const tryNow = (act: string): boolean => hud.trainPhase === 'try' && TRY_ACT[hud.trainId] === act
+const tryNow = (act: string): boolean => (hud.trainPhase === 'try' || hud.trainPhase === 'intro') && TRY_ACT[hud.trainId] === act
 const demoOn = (act: string): boolean => demoNow(act) || (tryNow(act) && !desk.value)
-const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': hud.demoDown } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
+const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': true } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
 /** A weapon's mark inside its orb (the same glyph as the results screen). */
 const weaponIcon = (id: string) => WEAPON_ICON[id as WeaponId] ?? 'buster'
 const { t } = useI18n()
@@ -779,6 +783,43 @@ watch(() => hud.borrowed.teach, (on, was) => {
     box-shadow: 0 0 0 7px #ffd84a, 0 0 34px rgba(255, 216, 74, 1), inset 0 -5px 0 rgba(0, 0, 0, 0.18)
 @media (prefers-reduced-motion: reduce)
   .act.demo-try
+    animation: none
+// The slide lesson's held leap: the button bounces, three arrows at it.
+.act.slide.cue
+  animation: cue-bounce 0.6s ease-in-out infinite
+  z-index: 3
+@keyframes cue-bounce
+  50%
+    transform: translateY(-8px) scale(1.08)
+.cue-arrows
+  position: absolute
+  inset: 0
+  pointer-events: none
+.cue-arrow
+  position: absolute
+  left: 50%
+  top: 50%
+  width: 0
+  height: 0
+  border-left: 17px solid transparent
+  border-right: 17px solid transparent
+  border-top: 30px solid #ffd84a
+  filter: drop-shadow(0 0 6px rgba(255, 216, 74, 0.95)) drop-shadow(0 2px 0 rgba(20, 26, 51, 0.7))
+  // Each arrow stands off the button on its own side, tip toward it.
+  --r: rotate(0deg)
+  transform: translate(-50%, -50%) var(--r) translateY(-70px)
+  animation: cue-point 0.6s ease-in-out infinite
+  &.a1
+    --r: rotate(-50deg)
+  &.a2
+    --r: rotate(0deg)
+  &.a3
+    --r: rotate(50deg)
+@keyframes cue-point
+  50%
+    transform: translate(-50%, -50%) var(--r) translateY(-56px)
+@media (prefers-reduced-motion: reduce)
+  .act.slide.cue, .cue-arrow
     animation: none
 .demo-finger
   position: absolute

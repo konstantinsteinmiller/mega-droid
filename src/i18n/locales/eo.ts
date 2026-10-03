@@ -903,14 +903,6 @@ export default {
     'todo': 'ankoraŭ ne farita',
     'done': 'farita',
     'checklist': 'Lerniloj',
-    'watch': 'Rigardu, kiel oni faras',
-    'card': {
-      'weapon': 'Vi kopiis la armilon de Kerna Majstro! Pafu ĝin per ĝia butono: armila energio funkciigas ĝin, kaj kelkaj maŝinoj estas malfortaj kontraŭ ĝi.',
-      'gel': 'Vundita? Ripara Ĝelo restarigas vian sanon. Uzu unu, kiam ajn batalo malboniĝas.',
-      'slide': 'Ruĝaj atakoj ne estas blokeblaj. Glitu por forŝoviĝi: nenio povas trafi vin dum glito.',
-      'block': 'Tenu blokon por levi vian ŝildon: ĝi haltigas pafojn kaj batojn de antaŭe. Levu ĝin ĝuste kiam bato trafas por Perfekta Bloko, kiu senkonsciigas la atakanton.',
-      'charge': 'Normala pafo ne povas rompi ŝildon. Tenu pafon, ĝis via kanono brilas, poste lasu: Ŝarĝita Pafo trarompas ĝin.'
-    },
     'name': {
       'weapon': 'Armila Leciono',
       'gap': 'Salta Lernilo',

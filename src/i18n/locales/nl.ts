@@ -884,14 +884,6 @@ export default {
     'todo': 'nog niet klaar',
     'done': 'klaar',
     'checklist': 'Tutorials',
-    'watch': 'Kijk hoe het moet',
-    'card': {
-      'weapon': 'Je hebt het wapen van een Kernmeester gekopieerd! Vuur het af met zijn knop: wapenenergie voedt het aan, en sommige machines zijn er zwak tegen.',
-      'gel': 'Gewond? Reparatiegel herstelt je gezondheid volledig. Gebruik er een zodra een gevecht slecht gaat.',
-      'slide': 'Rode aanvallen kun je niet blokkeren. Glij weg om te ontwijken: tijdens het glijden kan niets je raken.',
-      'block': 'Houd blokkeren ingedrukt om je schild te heffen: het stopt schoten en klappen van voren. Hef het precies als een klap landt voor een Perfecte Blok, die de aanvaller uitschakelt.',
-      'charge': 'Een normaal schot doorbreekt geen schild. Houd vuren ingedrukt tot je kanon gloeit, laat dan los: een Geladen Schot breekt er dwars doorheen.',
-    },
     'name': {
       'weapon': 'Wapenles',
       'gap': 'Tutorial: Sprong',

@@ -1,5 +1,5 @@
 import { cellCenter, type MapData } from '../levelGen'
-import { Builder, finish, YAW_PX, YAW_NX } from './builder'
+import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
 
 /**
  * ─── "Wake-Up Call": the first mission as a built stage ─────────────────────
@@ -23,19 +23,30 @@ import { Builder, finish, YAW_PX, YAW_NX } from './builder'
  *                      the edge-leap carries Flux over (arrows mark it)
  *   4 Store room       a chest: open it
  *   5 Stomper yard     the Stomper's red ring: slide out of it
- *      (the corridor out: the Repair Gel plate and its lesson)
- *   6 Antechamber      a breather before the gate
+ *   6 Drone room       two rotor drones: lock on and shoot (a playtest ask:
+ *                      the level had shrunk to its lessons)
+ *   7 Wheel hall       a running wheel and a Shield Trooper together
+ *   8 Golem room       one crate golem, asleep as a crate
+ *      (the long corridor out: the Repair Gel plate and its lesson, with a
+ *      whole room between it and the boss door, so the lesson never fires
+ *      while the player is already at the shutter)
+ *   9 Antechamber      a breather before the gate
  *   Arena              the Scrapper, 7 × 7
  *
- * Two rows: east along the top, back west along the bottom. Every floor at
- * y = 0 but the gap's pit. The seed changes nothing (a replay is the same
- * lesson); it only names the map.
+ * Three rows: east along the top, back west through the middle, east again
+ * along the bottom. Every floor at y = 0 but the gap's pit. The seed changes
+ * nothing (a replay is the same lesson); it only names the map.
  */
 
 const W = 38
-const H = 19
+const H = 27
 
-export const TUTORIAL_STEPS: string[][] = [['charge'], ['crate'], ['block'], ['gap'], ['chest'], ['slide'], ['rest']]
+export const TUTORIAL_STEPS: string[][] = [
+  ['charge'], ['crate'], ['block'], ['gap'], ['chest'], ['slide'], ['clear'], ['clear'], ['clear'], ['rest']
+]
+/** Who stands in each walkthrough room (by its place on the path), where the
+ *  lesson's own teacher is not enough: the fighting rooms after the lessons. */
+export const TUTORIAL_CAST: string[][] = [[], [], [], [], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
 
 export const generateWakeUpCall = (seed: number): MapData => {
   const b = new Builder(W, H)
@@ -74,21 +85,37 @@ export const generateWakeUpCall = (seed: number): MapData => {
   // ── 5 Stomper yard ────────────────────────────────────────────────────────
   b.addRoom(19, 9, 8, 8, 'combat', 'hall', y)
   b.checkpoint(25, 12, YAW_NX, [[26, 11], [26, 12], [26, 13], [25, 12]])
-  // The gel corridor: three cells, so the plate has a cell before the door.
-  b.corridor(18, 12, -1, 0, 3, y)
+  b.corridor(18, 12, -1, 0, 2, y)
 
-  // ── 6 Antechamber ─────────────────────────────────────────────────────────
-  b.addRoom(11, 10, 5, 5, 'combat', 'hall', y)
-  b.checkpoint(14, 12, YAW_NX, [[15, 11], [15, 12], [15, 13], [14, 12]])
-  b.corridor(10, 12, -1, 0, 2, y, true)
+  // ── 6 Drone room ──────────────────────────────────────────────────────────
+  b.addRoom(11, 10, 6, 6, 'combat', 'hall', y)
+  b.checkpoint(16, 12, YAW_NX, [[16, 11], [16, 12], [16, 13], [15, 12]])
+  b.corridor(10, 12, -1, 0, 2, y)
+
+  // ── 7 Wheel hall ──────────────────────────────────────────────────────────
+  b.addRoom(2, 9, 7, 7, 'combat', 'hall', y)
+  b.checkpoint(8, 12, YAW_NX, [[8, 11], [8, 12], [8, 13], [7, 12]])
+  b.corridor(5, 16, 0, 1, 2, y)
+
+  // ── 8 Golem room ──────────────────────────────────────────────────────────
+  b.addRoom(2, 18, 7, 6, 'combat', 'hall', y)
+  b.checkpoint(5, 18, YAW_PZ, [[4, 18], [5, 18], [6, 18], [5, 19]])
+  // The gel corridor: six cells, the plate well before the door.
+  b.corridor(9, 21, 1, 0, 6, y)
+
+  // ── 9 Antechamber ─────────────────────────────────────────────────────────
+  b.addRoom(15, 19, 5, 5, 'combat', 'hall', y)
+  b.checkpoint(15, 21, YAW_PX, [[15, 20], [15, 21], [15, 22], [16, 21]])
+  b.corridor(20, 21, 1, 0, 2, y, true)
 
   // ── Arena ─────────────────────────────────────────────────────────────────
-  b.addRoom(2, 9, 7, 7, 'boss', 'arena', y)
+  b.addRoom(22, 18, 7, 7, 'boss', 'arena', y)
 
   // Start: on the pad, facing the drones and the (hidden) way on.
   const start = { x: cellCenter(2), z: cellCenter(4), yaw: YAW_PX }
   const map = finish(b, start, seed)
   map.walkSteps = TUTORIAL_STEPS
+  map.walkCast = TUTORIAL_CAST
   // A built stage lists no spots; the scripted cast and the crate lesson
   // need them: every floor cell of a room, less its doorways.
   const doorCells = new Set<number>()

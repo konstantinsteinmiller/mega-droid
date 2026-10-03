@@ -127,8 +127,13 @@ for (const r of results) {
   r.best = best?.take ?? null
   if (!best) { fixer.push(r); continue }
   const out = ship ? join(ROOT, r.job.out) : join(VO_SRC, 'compare', engineName, r.job.lang, `${r.job.file}.ogg`)
-  await encode(best.master, out)
-  r.shipped = relative(ROOT, out).replaceAll('\\', '/')
+  const shipped = relative(ROOT, out).replaceAll('\\', '/')
+  // The same take already shipped there: leave the file be. An Ogg stream gets a
+  // random serial number on every encode, so a re-encode changes every byte of
+  // an unchanged line and fills the commit with noise.
+  const prev = before.find(p => p.job.id === r.job.id)
+  if (!(prev?.best === best.take && prev.shipped === shipped && existsSync(out))) await encode(best.master, out)
+  r.shipped = shipped
 }
 
 // The shipped files carry no mark of their own (the encode strips metadata, the

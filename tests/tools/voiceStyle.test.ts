@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import { styleFor } from '../../tools/voice/style.mjs'
 // @ts-expect-error plain .mjs tool module, no types
 import { tagFor } from '../../tools/voice/engines/elevenlabs.mjs'
+// @ts-expect-error plain .mjs tool module, no types
+import { normalize } from '../../tools/voice/normalize.mjs'
 
 const job = { lang: 'en', direction: 'Worried, quick, not loud.', tone: 'urgent', situation: 'Health under 30 %', emphasis: [], max: 3 }
 
@@ -18,10 +20,25 @@ describe('the delivery a line is spoken with', () => {
     expect(de).toContain('höchstens 3 Sekunden')
   })
 
-  it("gives ElevenLabs a short audio tag: the tone and the direction's first clause, never the whole note", () => {
-    expect(tagFor('Soft: the first words he ever hears. Warm on "Flux".', 'warm')).toBe('[warm, soft] ')
-    expect(tagFor('Worried, quick, not loud.', 'urgent')).toBe('[urgent, worried, quick, not loud] ')
-    expect(tagFor('A full boxing-announcer build.', 'neutral')).toBe('[a full boxing-announcer build] ')
+  it('gives ElevenLabs the tone word alone: a clause in the tag was read out loud', () => {
+    expect(tagFor('The score so far, with a hint of pride.', 'warm')).toBe('[warm] ')
+    expect(tagFor('Worried, quick, not loud.', 'urgent')).toBe('[urgent] ')
+    expect(tagFor('A full boxing-announcer build.', 'neutral')).toBe('')
     expect(tagFor('', 'neutral')).toBe('')
+  })
+
+  it('brings the first clause back on request (EL_TAG=clause), for a listening test', () => {
+    process.env.EL_TAG = 'clause'
+    try {
+      expect(tagFor('Soft: the first words he ever hears. Warm on "Flux".', 'warm')).toBe('[warm, soft] ')
+      expect(tagFor('A full boxing-announcer build.', 'neutral')).toBe('[a full boxing-announcer build] ')
+    } finally {
+      delete process.env.EL_TAG
+    }
+  })
+
+  it('says Vex\'s first body as a word, in each language', () => {
+    expect(normalize('Dr. Vex Mk-I can\'t hide.', 'en').text).toBe('Dr. Vex Mark One can\'t hide.')
+    expect(normalize('Dr. Vex Mk-I ist da.', 'de').text).toBe('Dr. Vex Mark Eins ist da.')
   })
 })

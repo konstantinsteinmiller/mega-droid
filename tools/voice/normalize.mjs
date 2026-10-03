@@ -37,6 +37,8 @@ export const numberWords = (n, lang) => {
 }
 
 const PERCENT = { en: 'percent', de: 'Prozent' }
+/** Vex's first body, "Dr. Vex Mk-I": said as a word, not spelled. */
+const MARK_ONE = { en: 'Mark One', de: 'Mark Eins' }
 
 /** A word in capitals (two letters or more, any script with case), maybe hyphenated: "SICK", "Im-POSSIBLE". */
 const CAPS = /\p{Lu}{2,}(?:-\p{Lu}{2,})*/gu
@@ -50,6 +52,7 @@ export const normalize = (text, lang) => {
   const emphasis = []
   let t = text
     .replace(/…|\.{3}/g, '...')
+    .replace(/\bMk-I\b/g, MARK_ONE[lang] ?? MARK_ONE.en)
     .replace(/(\d+)\s*%/g, (_, n) => `${numberWords(+n, lang)} ${PERCENT[lang]}`)
     .replace(/\d+/g, (n) => numberWords(+n, lang))
   t = t.replace(CAPS, (w, offset) => {

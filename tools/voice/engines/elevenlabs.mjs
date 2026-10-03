@@ -35,12 +35,17 @@ const GAP_MS = 3000
 const LINE_MS = 180000
 
 /**
- * The delivery as a v4 audio tag: the tone word and the direction's first
- * clause, short and lower case. A whole stage direction in the tag ("the first
- * words he ever hears") makes the model repeat or read it.
+ * The delivery as a v4 audio tag: the tone word alone ("[cheeky] "). The
+ * direction's first clause rode along at first, and the model read it out:
+ * "[warm, the score so far, with a hint of pride] One relay lit" came back as
+ * "The score so far... One relay lit", and a tag before a short line made it
+ * say the line twice (the English run, 2026-10-03). `EL_TAG=clause` brings the
+ * clause back for a test.
  */
 export const tagFor = (direction, tone) => {
-  const first = (direction ?? '').replace(/"[^"]*"/g, '').split(/[.:;!?]/)[0].replace(/\s+/g, ' ').trim().toLowerCase()
+  const first = process.env.EL_TAG === 'clause'
+    ? (direction ?? '').replace(/"[^"]*"/g, '').split(/[.:;!?]/)[0].replace(/\s+/g, ' ').trim().toLowerCase()
+    : ''
   const parts = [...new Set([tone, first].filter(Boolean).filter(p => p !== 'neutral'))]
   return parts.length ? `[${parts.join(', ').slice(0, 48)}] ` : ''
 }

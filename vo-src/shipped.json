@@ -3,7 +3,15 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_boss_signalFirst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_bossAhead": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_bossDown": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -23,7 +31,203 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_exit": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_fortress_bays": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_guardDown": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_blaze_barrels": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_blaze_hammers": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_blaze_lava": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_blaze_leap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_blaze_vents": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_cryo_frost": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_cryo_ice": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_cryo_icicles": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_cryo_pillar": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_cryo_spikes": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_done": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_drill_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_blaze": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_cryo": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_drill": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_fortress": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_gale": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_magnet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_neon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_tide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_floor_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gale_leap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gale_wind": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_arms": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_body": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_button": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_feet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_head": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_gm_prism": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_levelUp": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_locator": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_neon_blackout": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_rescue": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_underLevel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_upgrade": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_vex_core": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_vex_fall": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_vex_roof": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_volt_board": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_hint_volt_panels": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_idle_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_idle_2": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_idle_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_idle_4": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_landed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_levelUp": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -31,7 +235,227 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_lowHpGel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_lowWe": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_fire": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_free": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_intro": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_scrap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_mk1_wind": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_noWeak": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_plate": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_brute": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_elite": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_fire": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_golem": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_hardhat": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_heli": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_hopper": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_hornet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_ice": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_mole": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_polar": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_puffer": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_roller": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_stalker": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_trooper": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_turret": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_warden": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_scan_wind": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_secret_color": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_secret_cycle": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_secret_lights": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_secret_solved": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_blaze": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_cryo": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_drill": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_gale": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_magnet": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_neon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_sector_tide": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_body": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_breach": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_bubbleLance": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_drillBomb": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_droneSwarm": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_flameWave": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_galeGuard": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_iceLance": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_magnetPull": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_neonBlade": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_scrapBurst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_copied_thunderArc": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_story_cryo": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_dataCore": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_drillFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_firstDraft": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -39,11 +463,147 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_story_galeFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_magnetFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_neon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_neonFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_story_rotor": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_story_rotorFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/atlas_story_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_story_voltFreed": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_trap": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_vexDown": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_volt_hack": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_volt_thanks": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_blade": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_bubbleLance": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_drillBomb": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_droneSwarm": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_flameWave": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_galeGuard": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_iceLance": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_magnetPull": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_neonBlade": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_scrapBurst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_borrowedLast_thunderArc": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_boss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_critical": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_criticalFirst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_crusher": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_down": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_flame": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_gel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_gelFirst": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_ladder": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_noGel": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_pit": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_warn_weLow": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/atlas_weak_droneSwarm": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -60,6 +620,18 @@
     "at": "2026-10-03"
   },
   "en/atlas_weak_thunderArc": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/ending_atlas": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/ending_gauss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/ending_spark": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -132,6 +704,18 @@
     "at": "2026-10-03"
   },
   "en/flux_hurt_light_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_lowHp_3": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_parry_1": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/flux_hurt_parry_2": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -351,7 +935,15 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/pip_debrief_tide_tip": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
   "en/pip_debrief_tide_weapon": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/pip_debrief_tide_won": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
@@ -420,6 +1012,10 @@
     "at": "2026-10-03"
   },
   "en/vex_hub_scrapper": {
+    "engine": "elevenlabs",
+    "at": "2026-10-03"
+  },
+  "en/vex_hub_tide": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },

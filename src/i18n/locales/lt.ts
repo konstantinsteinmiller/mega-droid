@@ -487,6 +487,8 @@ export default {
     'equipped': 'Uždėta',
     'new': 'NAUJA',
     'salvage': 'Išardyti',
+    'salvageAsk': 'Išardyti šį daiktą?',
+    'salvageBody': '{item} bus sunaikintas visam laikui. To atšaukti negalima.',
     'noAffixes': 'Jokių papildomų modulių',
     'emptySlot': 'Šiam lizdui dar nieko nėra – atidaryk skrynias ir atlik darbus.'
   },

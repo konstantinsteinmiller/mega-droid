@@ -462,6 +462,8 @@ export default {
     'equipped': '装備中',
     'new': '新着',
     'salvage': '分解',
+    'salvageAsk': 'このアイテムを分解しますか？',
+    'salvageBody': '{item}は完全に失われます。元に戻せません。',
     'noAffixes': 'ボーナスモジュールなし',
     'emptySlot': 'このソケットの装備はまだない — チェストを開けて依頼をこなそう。'
   },

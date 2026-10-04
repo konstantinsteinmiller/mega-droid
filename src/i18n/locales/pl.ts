@@ -462,6 +462,8 @@ export default {
     'equipped': 'Założone',
     'new': 'NOWOŚĆ',
     'salvage': 'Rozmontuj',
+    'salvageAsk': 'Rozmontować ten przedmiot?',
+    'salvageBody': '{item} zostanie zniszczony na zawsze. Tego nie da się cofnąć.',
     'noAffixes': 'Brak modułów bonusowych',
     'emptySlot': 'Nic jeszcze nie pasuje do tego gniazda — otwieraj skrzynie i wykonuj zlecenia.'
   },

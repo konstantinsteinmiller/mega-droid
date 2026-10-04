@@ -487,6 +487,8 @@ export default {
     'equipped': 'Equipat',
     'new': 'NOU',
     'salvage': 'Desballesta',
+    'salvageAsk': 'Vols desballestar aquest objecte?',
+    'salvageBody': '{item} es destruirà per sempre. No es pot desfer.',
     'noAffixes': 'Sense mòduls extra',
     'emptySlot': 'Encara no hi ha res per a aquesta ranura: obre cofres i completa encàrrecs.'
   },

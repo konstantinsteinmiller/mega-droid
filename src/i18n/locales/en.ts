@@ -540,6 +540,8 @@ export default {
     'equipped': 'Equipped',
     'new': 'NEW',
     'salvage': 'Salvage',
+    'salvageAsk': 'Salvage this item?',
+    'salvageBody': "{item} will be destroyed for good. This can't be undone.",
     'noAffixes': 'No bonus modules',
     'emptySlot': 'Nothing for this socket yet — open chests and finish jobs.'
   },

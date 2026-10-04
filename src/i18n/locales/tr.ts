@@ -464,6 +464,8 @@ export default {
     'equipped': 'Takılı',
     'new': 'YENİ',
     'salvage': 'Sök',
+    'salvageAsk': 'Bu eşya sökülsün mü?',
+    'salvageBody': '{item} kalıcı olarak yok edilecek. Bu geri alınamaz.',
     'noAffixes': 'Bonus modül yok',
     'emptySlot': 'Bu yuva için henüz bir şey yok — sandıkları aç, işleri bitir.'
   },

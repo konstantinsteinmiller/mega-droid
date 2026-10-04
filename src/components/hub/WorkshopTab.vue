@@ -88,6 +88,10 @@
                   | {{ t('workshop.upgradeBtn') }}
                   GameIcon.bi(name="nut")
                   | {{ upgradeCost(selected) }}
+              //- Upgraded something not worn: put it on right here (a playtester
+              //- looked for this button and had to go to the Hero tab).
+              button.btn.equip(v-if="!isEquipped(selected.id)" type="button" @click="equip") {{ t('gear.equip') }}
+              div.eq-tag(v-else) {{ t('gear.equipped') }}
 </template>
 
 <script setup lang="ts">
@@ -97,7 +101,8 @@ import RewardAdIcon from '@/components/atoms/RewardAdIcon.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import ItemDetail from './ItemDetail.vue'
 import { SLOT_ICON } from './gearFormat'
-import { profile, saveProfile, computeStats, isEquipped, upgradeItem, itemById, supplyDropBolts } from '@/game/state/profile'
+import { profile, saveProfile, computeStats, isEquipped, upgradeItem, itemById, supplyDropBolts, equipItem } from '@/game/state/profile'
+import { currentHub } from '@/game/boot'
 import { itemPower, mainStat, upgradeCost, MAX_UPG } from '@/game/data/items'
 import { RARITY_COLOR } from '@/game/models/palette'
 import { sfx } from '@/game/audio/sfx'
@@ -171,6 +176,12 @@ const nextMain = computed(() => {
   if (!s) return 0
   return mainStat({ ...s, upg: Math.min(MAX_UPG, s.upg + 1) })
 })
+const equip = () => {
+  if (!selected.value) return
+  equipItem(selected.value.id)
+  currentHub()?.refreshHero()
+  sfx('weapon')
+}
 const buyTank = () => {
   if (profile.bolts < TANK_PRICE || profile.inv.tanks >= stats.value.tanksMax) { sfx('denied'); return }
   profile.bolts -= TANK_PRICE
@@ -312,6 +323,14 @@ const upgrade = () => {
 .upgrade
   background: linear-gradient(#ffd23a, #e08a00)
   color: #141a33
+// The Hero tab's equip button, under the upgrade.
+.equip
+  background: linear-gradient(#7ff4ff, #1f7fd0)
+.eq-tag
+  text-align: center
+  font-family: var(--font-ui)
+  font-size: clamp(12px, 2.6vmin, 14px)
+  color: #8dff7a
 @media (orientation: portrait)
   .cols
     flex-direction: column

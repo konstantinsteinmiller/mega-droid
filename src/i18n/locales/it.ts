@@ -462,6 +462,8 @@ export default {
     'equipped': 'Equipaggiato',
     'new': 'NUOVO',
     'salvage': 'Smonta',
+    'salvageAsk': 'Smontare questo oggetto?',
+    'salvageBody': '{item} verrà distrutto per sempre. Non si può annullare.',
     'noAffixes': 'Nessun modulo bonus',
     'emptySlot': 'Ancora niente per questo slot — apri casse e completa incarichi.'
   },

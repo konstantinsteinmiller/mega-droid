@@ -487,6 +487,8 @@ export default {
     'equipped': 'Echipat',
     'new': 'NOU',
     'salvage': 'Dezmembrează',
+    'salvageAsk': 'Dezmembrezi acest obiect?',
+    'salvageBody': '{item} va fi distrus definitiv. Nu se poate anula.',
     'noAffixes': 'Fără module bonus',
     'emptySlot': 'Încă nimic pentru acest slot — deschide lăzi și termină sarcini.'
   },

@@ -487,6 +487,8 @@ export default {
     'equipped': 'Utrustad',
     'new': 'NY',
     'salvage': 'Skrota',
+    'salvageAsk': 'Skrota det här föremålet?',
+    'salvageBody': '{item} förstörs för gott. Det går inte att ångra.',
     'noAffixes': 'Inga bonusmoduler',
     'emptySlot': 'Inget för den här sockeln än — öppna kistor och klara jobb.'
   },

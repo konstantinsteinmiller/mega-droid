@@ -487,6 +487,8 @@ export default {
     'equipped': 'Udstyret',
     'new': 'NY',
     'salvage': 'Skrot',
+    'salvageAsk': 'Skrot denne genstand?',
+    'salvageBody': '{item} bliver ødelagt for altid. Det kan ikke fortrydes.',
     'noAffixes': 'Ingen bonusmoduler',
     'emptySlot': 'Intet til denne sokkel endnu — åbn kister og klar opgaver.'
   },

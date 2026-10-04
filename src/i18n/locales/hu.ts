@@ -487,6 +487,8 @@ export default {
     'equipped': 'Felszerelve',
     'new': 'ÚJ',
     'salvage': 'Szétszerel',
+    'salvageAsk': 'Szétszereled ezt a tárgyat?',
+    'salvageBody': '{item} végleg megsemmisül. Ez nem vonható vissza.',
     'noAffixes': 'Nincs bónuszmodul',
     'emptySlot': 'Ide még nincs semmi — nyiss ládákat, és teljesíts megbízásokat.'
   },

@@ -462,6 +462,8 @@ export default {
     'equipped': 'Ausgerüstet',
     'new': 'NEU',
     'salvage': 'Verschrotten',
+    'salvageAsk': 'Diesen Gegenstand verschrotten?',
+    'salvageBody': '{item} wird endgültig zerstört. Das lässt sich nicht rückgängig machen.',
     'noAffixes': 'Keine Bonusmodule',
     'emptySlot': 'Noch nichts für diesen Sockel – öffne Kisten und erledige Aufträge.'
   },

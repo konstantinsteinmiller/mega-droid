@@ -462,6 +462,8 @@ export default {
     'equipped': 'Dipakai',
     'new': 'BARU',
     'salvage': 'Daur ulang',
+    'salvageAsk': 'Daur ulang barang ini?',
+    'salvageBody': '{item} akan hancur selamanya. Ini tidak bisa dibatalkan.',
     'noAffixes': 'Tanpa modul bonus',
     'emptySlot': 'Belum ada untuk soket ini — buka peti dan selesaikan tugas.'
   },

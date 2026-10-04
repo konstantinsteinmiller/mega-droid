@@ -487,6 +487,8 @@ export default {
     'equipped': '已裝備',
     'new': '新',
     'salvage': '拆解',
+    'salvageAsk': '要拆解這件物品嗎？',
+    'salvageBody': '{item}將永久消失，無法復原。',
     'noAffixes': '無加成模組',
     'emptySlot': '這個插槽還沒有裝備——去開補給箱或完成委託吧。'
   },

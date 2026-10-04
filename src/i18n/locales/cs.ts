@@ -487,6 +487,8 @@ export default {
     'equipped': 'Nasazeno',
     'new': 'NOVÉ',
     'salvage': 'Rozebrat',
+    'salvageAsk': 'Rozebrat tento předmět?',
+    'salvageBody': '{item} bude navždy zničen. Nelze to vrátit zpět.',
     'noAffixes': 'Žádné bonusové moduly',
     'emptySlot': 'Do této patice zatím nic nemáš — otevírej bedny a plň zakázky.'
   },

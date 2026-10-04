@@ -462,6 +462,8 @@ export default {
     'equipped': 'Uitgerust',
     'new': 'NIEUW',
     'salvage': 'Slopen',
+    'salvageAsk': 'Dit voorwerp slopen?',
+    'salvageBody': '{item} wordt voorgoed vernietigd. Dit kan niet ongedaan worden gemaakt.',
     'noAffixes': 'Geen bonusmodules',
     'emptySlot': 'Nog niets voor deze sleuf — open kisten en voltooi klussen.'
   },

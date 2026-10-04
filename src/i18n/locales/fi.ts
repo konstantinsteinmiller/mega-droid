@@ -487,6 +487,8 @@ export default {
     'equipped': 'Varustettu',
     'new': 'UUSI',
     'salvage': 'Romuta',
+    'salvageAsk': 'Romutetaanko tämä esine?',
+    'salvageBody': '{item} tuhoutuu lopullisesti. Tätä ei voi perua.',
     'noAffixes': 'Ei bonusmoduuleja',
     'emptySlot': 'Tähän paikkaan ei ole vielä mitään – avaa arkkuja ja suorita keikkoja.'
   },

@@ -487,6 +487,8 @@ export default {
     'equipped': 'Taxılıb',
     'new': 'YENİ',
     'salvage': 'Sök',
+    'salvageAsk': 'Bu əşya sökülsün?',
+    'salvageBody': '{item} həmişəlik məhv ediləcək. Bunu geri qaytarmaq olmaz.',
     'noAffixes': 'Bonus modul yoxdur',
     'emptySlot': 'Bu yuva üçün hələ heç nə yoxdur — sandıqları aç, tapşırıqları bitir.'
   },

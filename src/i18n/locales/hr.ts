@@ -487,6 +487,8 @@ export default {
     'equipped': 'Opremljeno',
     'new': 'NOVO',
     'salvage': 'Rastavi',
+    'salvageAsk': 'Rastaviti ovaj predmet?',
+    'salvageBody': '{item} bit će zauvijek uništen. To se ne može poništiti.',
     'noAffixes': 'Nema bonus modula',
     'emptySlot': 'Za ovaj utor još nemaš ništa — otvaraj sanduke i završavaj poslove.'
   },

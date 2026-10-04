@@ -462,6 +462,8 @@ export default {
     'equipped': 'Kiyilgan',
     'new': 'YANGI',
     'salvage': 'Parchalash',
+    'salvageAsk': 'Bu buyum parchalansinmi?',
+    'salvageBody': "{item} butunlay yo'q qilinadi. Buni qaytarib bo'lmaydi.",
     'noAffixes': 'Bonus modullar yoʻq',
     'emptySlot': 'Bu uyacha uchun hozircha hech narsa yoʻq — sandiqlarni oching va topshiriqlarni bajaring.'
   },

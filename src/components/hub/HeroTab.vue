@@ -74,7 +74,7 @@
               button.btn.unequip(v-else-if="selected.slot === 'chip'" type="button" @click="unequip") {{ t('gear.unequip') }}
               //- What salvaging pays, signed and wearing the nut like every
               //- Bolts reward.
-              button.btn.salvage(v-if="!isEquipped(selected.id)" type="button" @click="salvage")
+              button.btn.salvage(v-if="!isEquipped(selected.id)" type="button" @click="salvaging = true")
                 span {{ t('gear.salvage') }}
                 span.gain
                   | +{{ salvageValue(selected) }}
@@ -90,6 +90,14 @@
           GameIcon.ai(:name="ATTR_ICON[a]")
           span.an {{ t(`attr.${a}.name`) }}
           span.av {{ profile.hero.attrs[a] }}
+    ConfirmDialog(
+      v-if="salvaging && selected"
+      :title="t('gear.salvageAsk')"
+      :confirm-label="t('gear.salvage')"
+      danger
+      @confirm="salvage"
+      @cancel="salvaging = false"
+    ) {{ t('gear.salvageBody', { item: t(`item.${selected.base}`), n: salvageValue(selected) }) }}
 </template>
 
 <script setup lang="ts">
@@ -103,6 +111,7 @@ import {
 } from '@/game/state/profile'
 import { ATTR_ICON, type Attr } from '@/game/data/progression'
 import { EQUIP_SLOTS, itemPower, salvageValue, type EquipSlot, type Slot } from '@/game/data/items'
+import ConfirmDialog from '@/components/atoms/ConfirmDialog.vue'
 import { RARITY_COLOR } from '@/game/models/palette'
 import { flow } from '@/game/flow'
 import { currentHub } from '@/game/boot'
@@ -154,7 +163,10 @@ const unequip = () => {
   if (s === 'chip1' || s === 'chip2') unequipChip(s)
   sfx('uiClick')
 }
+/** Salvage asks first: the item is gone for good (a playtest note). */
+const salvaging = ref(false)
 const salvage = () => {
+  salvaging.value = false
   const s = selected.value
   if (!s) return
   if (salvageItem(s.id, salvageValue(s))) {

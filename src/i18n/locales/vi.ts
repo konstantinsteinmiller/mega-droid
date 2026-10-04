@@ -462,6 +462,8 @@ export default {
     'equipped': 'Đang dùng',
     'new': 'MỚI',
     'salvage': 'Tháo dỡ',
+    'salvageAsk': 'Tháo dỡ vật phẩm này?',
+    'salvageBody': '{item} sẽ bị phá hủy vĩnh viễn. Không thể hoàn tác.',
     'noAffixes': 'Không có mô-đun thưởng',
     'emptySlot': 'Chưa có gì cho ô này — hãy mở rương và làm nhiệm vụ.'
   },

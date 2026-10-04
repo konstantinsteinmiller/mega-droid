@@ -487,6 +487,8 @@ export default {
     'equipped': 'Equipado',
     'new': 'NOVO',
     'salvage': 'Desmontar',
+    'salvageAsk': 'Desmontar este obxecto?',
+    'salvageBody': '{item} destruirase para sempre. Non se pode desfacer.',
     'noAffixes': 'Sen módulos extra',
     'emptySlot': 'Aínda non hai nada para esta rañura: abre cofres e completa encargas.'
   },

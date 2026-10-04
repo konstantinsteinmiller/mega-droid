@@ -462,6 +462,8 @@ export default {
     'equipped': 'Equipado',
     'new': 'NUEVO',
     'salvage': 'Desguazar',
+    'salvageAsk': '¿Desguazar este objeto?',
+    'salvageBody': '{item} se destruirá para siempre. No se puede deshacer.',
     'noAffixes': 'Sin módulos extra',
     'emptySlot': 'Aún no hay nada para esta ranura: abre cofres y completa encargos.'
   },

@@ -462,6 +462,8 @@ export default {
     'equipped': '已装备',
     'new': '新',
     'salvage': '拆解',
+    'salvageAsk': '要拆解这件物品吗？',
+    'salvageBody': '{item}将永久消失，无法撤销。',
     'noAffixes': '无加成模块',
     'emptySlot': '此插槽暂无装备——去开补给箱或完成委托吧。'
   },

@@ -487,6 +487,8 @@ export default {
     'equipped': 'Uzvilkts',
     'new': 'JAUNS',
     'salvage': 'Izjaukt',
+    'salvageAsk': 'Izjaukt šo priekšmetu?',
+    'salvageBody': '{item} tiks iznīcināts uz visiem laikiem. To nevar atsaukt.',
     'noAffixes': 'Nav bonusa moduļu',
     'emptySlot': 'Šai ligzdai vēl nekā nav — atver lādes un pabeidz darbus.'
   },

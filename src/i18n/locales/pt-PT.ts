@@ -487,6 +487,8 @@ export default {
     'equipped': 'Equipado',
     'new': 'NOVO',
     'salvage': 'Desmontar',
+    'salvageAsk': 'Desmontar este objeto?',
+    'salvageBody': '{item} será destruído para sempre. Não é possível anular.',
     'noAffixes': 'Sem módulos de bónus',
     'emptySlot': 'Ainda nada para este encaixe — abre baús e conclui contratos.'
   },

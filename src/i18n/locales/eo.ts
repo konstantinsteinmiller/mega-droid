@@ -487,6 +487,8 @@ export default {
     'equipped': 'Ekipita',
     'new': 'NOVA',
     'salvage': 'Malmunti',
+    'salvageAsk': 'Ĉu malmunti ĉi tiun aĵon?',
+    'salvageBody': '{item} estos detruita por ĉiam. Tio ne malfareblas.',
     'noAffixes': 'Neniuj bonusaj moduloj',
     'emptySlot': 'Ankoraŭ nenio por ĉi tiu ingo — malfermu kestojn kaj finu taskojn.'
   },

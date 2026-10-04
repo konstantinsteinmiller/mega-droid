@@ -487,6 +487,8 @@ export default {
     'equipped': 'Utstyrt',
     'new': 'NY',
     'salvage': 'Skrap',
+    'salvageAsk': 'Skrap denne gjenstanden?',
+    'salvageBody': '{item} blir ødelagt for godt. Det kan ikke angres.',
     'noAffixes': 'Ingen bonusmoduler',
     'emptySlot': 'Ingenting til denne sokkelen ennå — åpne kister og fullfør jobber.'
   },

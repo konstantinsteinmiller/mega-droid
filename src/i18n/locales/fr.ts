@@ -462,6 +462,8 @@ export default {
     'equipped': 'Équipé',
     'new': 'NOUVEAU',
     'salvage': 'Recycler',
+    'salvageAsk': 'Recycler cet objet ?',
+    'salvageBody': "{item} sera détruit pour de bon. C'est irréversible.",
     'noAffixes': 'Aucun module bonus',
     'emptySlot': 'Rien pour cet emplacement — ouvre des coffres et termine des contrats.'
   },

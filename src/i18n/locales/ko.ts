@@ -462,6 +462,8 @@ export default {
     'equipped': '장착 중',
     'new': '신규',
     'salvage': '분해',
+    'salvageAsk': '이 아이템을 분해할까요?',
+    'salvageBody': '{item}은(는) 영구히 사라집니다. 되돌릴 수 없습니다.',
     'noAffixes': '보너스 모듈 없음',
     'emptySlot': '아직 이 소켓에 맞는 장비가 없습니다 — 상자를 열고 의뢰를 완료하세요.'
   },

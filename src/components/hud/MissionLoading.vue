@@ -1,6 +1,10 @@
 <template lang="pug">
   Transition(name="beam")
     div.mission-loading.no-os-ui(v-if="flow.loading")
+      //- The boot loader's night blue and grid (#117), opaque: the intro's
+      //- last frame (its white beam flash) showed through when the
+      //- tutorial was still building behind it.
+      SplashBackdrop
       div.beam(aria-hidden="true")
       div.card
         //- The boss splash (#103, Mega Man's stage-select intro): the Master
@@ -27,6 +31,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { flow } from '@/game/flow'
 import MasterPortrait from '@/components/atoms/MasterPortrait.vue'
+import SplashBackdrop from '@/components/atoms/SplashBackdrop.vue'
 import type { BossId } from '@/game/models/bosses'
 
 /**
@@ -46,7 +51,7 @@ const loadingBoss = computed(() => flow.loadingBoss as BossId)
   z-index: 60
   display: grid
   place-items: center
-  background: radial-gradient(ellipse at 50% 45%, rgba(18, 48, 110, 0.72), rgba(8, 14, 32, 0.92) 70%)
+  background: #111d42
   pointer-events: auto
 .beam
   position: absolute

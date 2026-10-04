@@ -2,6 +2,7 @@
   //- While the film loads (#111): the logo, and Atlas's line in its bubble
   //- (Atlas itself flies in the 3D loader, `story/debriefLoader.ts`).
   div.loader-veil(v-if="loaderUi.on" aria-live="polite")
+    SplashBackdrop(:solid="false")
     img.logo(src="/images/logo/logo_256x256.webp" :alt="t('gameName')")
     Transition(name="card" mode="out-in")
       div.say(v-if="loaderUi.line" :key="loaderUi.line") {{ t(loaderUi.line) }}
@@ -33,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import SplashBackdrop from '@/components/atoms/SplashBackdrop.vue'
 import { loaderUi } from '@/game/story/debriefLoader'
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -80,6 +82,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   justify-content: space-between
   padding: calc(env(safe-area-inset-top, 0px) + 6vh) 16px calc(env(safe-area-inset-bottom, 0px) + 10vh)
   pointer-events: none
+  .logo, .say
+    position: relative
   .logo
     width: clamp(110px, 22vmin, 190px)
     height: auto

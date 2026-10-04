@@ -330,11 +330,19 @@ export class Coach {
     if (t > 6) {
       if (t - this.lastLook > LOOK_IDLE && !c.combat) this.recall('look')
       if (t - this.lastMove > MOVE_IDLE && !c.combat) this.recall('move')
-      if (c.combat && !this.quiet && !c.veteran && t - this.lastFire > FIRE_IDLE) this.recall('fire')
+      // Never for a player who has shot enough already: the glyph came back
+      // in every fight of the tutorial once he paused to dodge or block.
+      if (c.combat && !this.quiet && !c.veteran && !this.mastered('fire') && t - this.lastFire > FIRE_IDLE) this.recall('fire')
     }
     for (const id of Object.keys(this.st) as HintId[]) {
       const s = this.st[id]
-      if (s.recall > 0 && this.open(id) && (id !== 'block' && id !== 'slide' || c.teleBlock || c.teleRed || t < this.helpUntil)) {
+      // A recall shows only while it can be acted on: the shield and slide
+      // under a wind-up, shooting in a fight or with something to shoot at
+      // (a recalled shoot glyph stayed up over an empty corridor).
+      const now = id === 'block' || id === 'slide' ? c.teleBlock || c.teleRed
+        : id === 'fire' || id === 'charge' ? c.combat || c.aimCandidate
+          : true
+      if (s.recall > 0 && this.open(id) && (now || t < this.helpUntil)) {
         s.wantedUntil = Math.max(s.wantedUntil, t + 0.5)
       }
     }

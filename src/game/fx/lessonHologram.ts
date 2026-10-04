@@ -9,6 +9,11 @@ import { newMotion } from '../models/motion'
 import { buildChargedShot, type ChargedShotFx } from './chargedShot'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
 import type { TrainId } from '../sim/training'
+import { dashPose } from '../models/dash'
+
+/** What a hologram shows: a lesson's move, or the crate and the chest rooms'
+ *  (shoot the crate with a charge, shoot the chest open). */
+export type HoloId = TrainId | 'crate' | 'chest'
 
 /**
  * ─── Lesson holograms: show, don't tell ──────────────────────────────────────
@@ -33,25 +38,25 @@ export type HoloAct = '' | 'fire' | 'block' | 'slide' | 'tank' | 'move' | 'weapo
 export interface HoloGlyph { act: HoloAct; down: boolean }
 
 /** Each lesson's loop (s). */
-export const HOLO_LOOP: Readonly<Record<TrainId, number>> = { charge: 4.2, block: 4, slide: 4.2, gap: 4.6, gel: 3.6, weapon: 3.6 }
+export const HOLO_LOOP: Readonly<Record<HoloId, number>> = { charge: 4.2, block: 4.2, slide: 4.2, gap: 4.6, gel: 3.6, weapon: 3.6, crate: 4.6, chest: 3.8 }
 
 /** The moment each loop's input is down: [from, to) in loop seconds. */
-export const HOLO_PRESS: Readonly<Record<TrainId, readonly [number, number]>> = {
-  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0, 2.8], gel: [1, 1.2], weapon: [0.5, 0.7]
+export const HOLO_PRESS: Readonly<Record<HoloId, readonly [number, number]>> = {
+  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0, 2.8], gel: [1, 1.2], weapon: [0.5, 0.7], crate: [0.6, 1.9], chest: [0.55, 0.7]
 }
-const ACT: Readonly<Record<TrainId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon' }
+const ACT: Readonly<Record<HoloId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon', crate: 'fire', chest: 'fire' }
 
 /** The last part of a loop fades out and back in, so the reset never snaps. */
 export const HOLO_RESET = 0.45
 
 /** The glyph at loop time `u` (0 ≤ u < HOLO_LOOP[id]). */
-export const holoGlyphAt = (id: TrainId, u: number): HoloGlyph => {
+export const holoGlyphAt = (id: HoloId, u: number): HoloGlyph => {
   const [a, b] = HOLO_PRESS[id]
   return { act: ACT[id], down: u >= a && u < b }
 }
 
 /** The loop's own fade (0..1): out over the last HOLO_RESET, in over the first. */
-export const holoLoopAlpha = (id: TrainId, u: number): number => {
+export const holoLoopAlpha = (id: HoloId, u: number): number => {
   const L = HOLO_LOOP[id]
   if (u > L - HOLO_RESET) return Math.max(0, (L - u) / HOLO_RESET)
   if (u < HOLO_RESET * 0.5) return u / (HOLO_RESET * 0.5)
@@ -88,7 +93,7 @@ const FACE_NX = -Math.PI / 2
 
 export class LessonHologram {
   readonly root = new Group()
-  readonly id: TrainId
+  readonly id: HoloId
   private readonly mat: MeshBasicMaterial
   private readonly fx: MeshBasicMaterial
   private readonly flux: Rig
@@ -104,7 +109,13 @@ export class LessonHologram {
   /** How far in view (0..1): the room's own fade. */
   private shown = 0
 
-  constructor(id: TrainId, opts: { weaponColor?: string } = {}) {
+  /** The crate room's crate, and the chest room's chest (its lid on a hinge). */
+  private readonly crate: Mesh | null = null
+  private readonly chips: Mesh[] = []
+  private readonly chest: Group | null = null
+  private readonly lid: Group | null = null
+
+  constructor(id: HoloId, opts: { weaponColor?: string } = {}) {
     this.id = id
     this.mat = holoMaterial()
     this.fx = holoMaterial(id === 'weapon' ? opts.weaponColor ?? '#ffd84a' : id === 'slide' ? '#ff4a4a' : id === 'gel' ? '#8dff7a' : '#9ff4ff')
@@ -113,7 +124,7 @@ export class LessonHologram {
     const kind = id === 'charge' || id === 'weapon' ? 'heli' : id === 'block' ? 'trooper' : id === 'slide' ? 'hopper' : null
     this.foe = kind ? holoRig(buildEnemyRig(kind), this.mat) : null
     if (this.foe) this.root.add(this.foe.root)
-    this.shot = id === 'charge' ? buildChargedShot('charge2') : null
+    this.shot = id === 'charge' || id === 'crate' ? buildChargedShot('charge2') : null
     if (this.shot) this.root.add(this.shot.root)
     this.barrier = id === 'block' ? buildBarrier({ free: 0.62 }) : null
     if (this.barrier) this.root.add(this.barrier.root)
@@ -126,6 +137,30 @@ export class LessonHologram {
     this.ring.rotation.x = -Math.PI / 2
     this.ring.visible = false
     this.root.add(this.ring)
+    // The crate: a box a charged shot breaks into a few chips.
+    if (id === 'crate') {
+      this.crate = new Mesh(new BoxGeometry(1, 1, 1), this.mat)
+      this.root.add(this.crate)
+      for (let k = 0; k < 6; k++) {
+        const c = new Mesh(new BoxGeometry(0.25, 0.25, 0.25), this.fx)
+        c.visible = false
+        this.chips.push(c)
+        this.root.add(c)
+      }
+    }
+    // The chest: a box and a lid hinged at its back edge.
+    if (id === 'chest') {
+      this.chest = new Group()
+      const base = new Mesh(new BoxGeometry(1.0, 0.55, 0.7), this.mat)
+      base.position.y = 0.275
+      this.lid = new Group()
+      this.lid.position.set(0.5, 0.55, 0)
+      const top = new Mesh(new BoxGeometry(1.0, 0.18, 0.72), this.mat)
+      top.position.set(-0.5, 0.09, 0)
+      this.lid.add(top)
+      this.chest.add(base, this.lid)
+      this.root.add(this.chest)
+    }
     // The gap: two ledges with a gap between, in the hologram's own light.
     if (id === 'gap') {
       for (const x of [-2.05, 2.05]) {
@@ -182,6 +217,8 @@ export class LessonHologram {
       case 'gap': this.poseGap(u, t); break
       case 'gel': this.poseGel(u, t); break
       case 'weapon': this.poseWeapon(u, t); break
+      case 'crate': this.poseCrate(u, t); break
+      case 'chest': this.poseChest(u, t); break
     }
   }
 
@@ -258,30 +295,41 @@ export class LessonHologram {
     if (u >= 1.8 && u - dt < 1.8) b.impact('parry')
     const trooper = this.foe!
     trooper.root.position.set(2.6, 0, 0)
-    trooper.root.rotation.y = FACE_NX
+    trooper.root.rotation.set(0, FACE_NX, 0)
     const aim = smooth(span(u, 0.4, 1.0)) * (1 - smooth(span(u, 1.8, 2.2)))
-    // Knocked back by the perfect block for a moment.
-    trooper.root.position.x += u >= 1.8 && u < 2.6 ? Math.sin(span(u, 1.8, 2.6) * Math.PI) * 0.5 : 0
+    // The perfect block sends the shot back (1.8–2.2): it hits the Trooper,
+    // which reels back, its guard flung open, and finds its feet by 3.2.
+    const reel = u >= 2.2 && u < 3.2 ? Math.sin(span(u, 2.2, 3.2) * Math.PI) : 0
+    trooper.root.position.x += reel * 0.7
+    trooper.root.rotation.z = -reel * 0.45
     poseTrooper(trooper, 0, aim, t, 0)
-    this.orb.visible = u >= 1.2 && u < 1.8
+    if (reel > 0) {
+      pose(trooper, 'shoulderL', -0.4 - 0.9 * reel, 0, -0.6 * reel)
+      pose(trooper, 'shoulderR', 0.5 * reel, 0, 0.6 * reel)
+      pose(trooper, 'chest', -0.4 * reel, 0, 0)
+    }
+    this.orb.visible = u >= 1.2 && u < 2.2
     const k = span(u, 1.2, 1.8)
-    this.orb.position.set(2.1 - k * 3.5, 1.15, 0)
+    const back = span(u, 1.8, 2.2)
+    this.orb.position.set(u < 1.8 ? 2.1 - k * 3.5 : -1.4 + back * 3.8, 1.15, 0)
+    // The hit: a ring where it lands.
+    this.ring.visible = u >= 2.2 && u < 2.7
+    this.ring.position.set(2.5, 1.1, 0)
+    this.ring.rotation.set(0, Math.PI / 2, 0)
+    this.ring.scale.setScalar(0.3 + 1.2 * span(u, 2.2, 2.7))
   }
 
   private poseSlide(u: number, t: number): void {
-    // Flux slides sideways (+Z) out from under the leap: 1.0–1.35.
+    // Flux dashes sideways (−Z) out from under the leap: 1.0–1.35 — the
+    // intro's Mega Man X dash, turned along the dash and back.
     const k = smooth(span(u, 1.0, 1.35))
-    this.stand(-1.2, -k * 2.8)
+    const turn = smooth(span(u, 0.85, 1.0)) * (1 - smooth(span(u, 1.5, 1.8)))
+    this.stand(-1.2, -k * 2.8, FACE_PX - turn * (Math.PI / 2))
     animateHeroIdle(this.flux, t)
-    if (u >= 0.95 && u < 1.6) {
-      const s = Math.sin(span(u, 0.95, 1.6) * Math.PI)
-      this.flux.root.position.y = -0.3 * s
-      this.flux.root.rotation.x = -0.35 * s
-      pose(this.flux, 'hipL', -1.2 * s, 0, 0)
-      pose(this.flux, 'kneeL', 1.1 * s, 0, 0)
-      pose(this.flux, 'hipR', 0.5 * s, 0, 0)
-      pose(this.flux, 'chest', 0.3 * s, 0, 0)
-    }
+    const d = dashPose(this.flux, u, 1.0, 1.35)
+    this.flux.root.position.y = -d.drop
+    this.flux.root.rotation.x = d.lean
+    this.flux.root.scale.set(1, 1 - d.stretch * 0.5, 1 + d.stretch)
     const st = this.foe!
     st.root.rotation.y = FACE_NX
     if (u < 0.8) {
@@ -354,6 +402,60 @@ export class LessonHologram {
     this.ring.position.set(2.4, 1.3, 0)
     this.ring.rotation.set(0, 0, 0)
     this.ring.scale.setScalar(0.3 + 1.5 * span(u, 1.1, 1.6))
+  }
+
+  /** The crate room: the charge on the muzzle, the charged shot, the crate
+   *  bursts into chips; it builds itself again for the next loop. */
+  private poseCrate(u: number, t: number): void {
+    this.stand(-2)
+    animateHeroIdle(this.flux, t)
+    this.aim(smooth(span(u, 0.2, 0.6)))
+    const m = this.muzzle()
+    const crate = this.crate!
+    const broken = u >= 2.3 && u < 3.8
+    crate.visible = !broken
+    crate.position.set(2.4, 0.5, 0)
+    crate.scale.setScalar(u >= 3.8 ? smooth(span(u, 3.8, 4.1)) : 1)
+    const shot = this.shot!
+    if (u >= 1.9 && u < 2.3) {
+      const k = span(u, 1.9, 2.3)
+      shot.fly(m.x + k * (2.4 - m.x), m.y + k * (0.6 - m.y), m.z * (1 - k), 1, 0, 0, t, 1)
+    } else shot.hide()
+    this.orb.visible = u >= 0.6 && u < 1.9
+    this.orb.position.copy(m)
+    this.orb.scale.setScalar(0.3 + 0.5 * span(u, 0.6, 1.9))
+    const k = span(u, 2.3, 3.2)
+    this.chips.forEach((c, n) => {
+      c.visible = broken && u < 3.2
+      const a = (n / this.chips.length) * Math.PI * 2
+      c.position.set(2.4 + Math.cos(a) * 1.2 * k, 0.5 + 2.2 * k - 3.2 * k * k, Math.sin(a) * 1.2 * k)
+      c.rotation.set(k * 6 + n, k * 4, 0)
+    })
+    this.ring.visible = u >= 2.3 && u < 2.8
+    this.ring.position.set(2.4, 0.6, 0)
+    this.ring.rotation.set(0, Math.PI / 2, 0)
+    this.ring.scale.setScalar(0.3 + 1.4 * span(u, 2.3, 2.8))
+  }
+
+  /** The chest room: one shot at the chest and its lid flies open; it
+   *  closes again for the next loop. */
+  private poseChest(u: number, t: number): void {
+    this.stand(-1.8)
+    animateHeroIdle(this.flux, t)
+    this.aim(smooth(span(u, 0.1, 0.45)) * (1 - smooth(span(u, 1.4, 1.8))))
+    const m = this.muzzle()
+    this.chest!.position.set(1.8, 0, 0)
+    this.chest!.rotation.y = FACE_NX
+    this.orb.visible = u >= 0.6 && u < 0.9
+    const k = span(u, 0.6, 0.9)
+    this.orb.scale.setScalar(0.6)
+    this.orb.position.set(m.x + k * (1.8 - m.x), m.y + k * (0.45 - m.y), m.z * (1 - k))
+    const open = smooth(span(u, 0.9, 1.25)) * (1 - smooth(span(u, 3.0, 3.4)))
+    this.lid!.rotation.z = -1.9 * open
+    this.ring.visible = u >= 0.9 && u < 1.5
+    this.ring.position.set(1.8, 0.9, 0)
+    this.ring.rotation.set(-Math.PI / 2, 0, 0)
+    this.ring.scale.setScalar(0.3 + 0.8 * span(u, 0.9, 1.5))
   }
 }
 

@@ -247,7 +247,10 @@ export const helperSpot = (
 
 /** The steps done only with the room's machines down too (the drone and the
  *  chest need no quiet room). */
-const quietStep = (s: WalkStep): boolean => s !== 'charge' && s !== 'chest'
+/** Steps whose door also waits for the room's machines to be down. Not the
+ *  shield and slide lessons: their door opens the moment the move is learned
+ *  (a playtester learned the slide and the door stayed shut). */
+const quietStep = (s: WalkStep): boolean => s !== 'charge' && s !== 'chest' && s !== 'block' && s !== 'slide'
 
 /** None of the room's own machines is standing (a boss never counts). */
 const roomEmpty = (enemies: Enemy[], room: number): boolean => {
@@ -441,7 +444,9 @@ export class Walkthrough {
       if (c) h.lessons.spotlight(c.x, c.z, glow)
     }
     if (!playing) return
-    const clear = !fighting && roomEmpty(h.enemies, g.room)
+    // Only this room's machines: a fight next door (machines that saw Flux
+    // through the doorway) used to hold the gate shut until he walked away.
+    const clear = roomEmpty(h.enemies, g.room)
     if (!clear) this.clearAt = -1
     else if (this.clearAt < 0) this.clearAt = h.time
     for (let k = 0; k < g.steps.length; k++) {

@@ -360,3 +360,22 @@ describe('after the charge lesson', () => {
     expect(ids(run(c, 0, 20, { combat: true, quiet: true }))).not.toContain('fire')
   })
 })
+
+// Playtest: a recalled shoot glyph stayed up over an empty corridor after
+// the drones were down. A recall shows only while it can be acted on.
+describe('recalls', () => {
+  it('a recalled shoot glyph shows in a fight and goes once the fight is over', () => {
+    const c = new Coach()
+    for (const id of ['move', 'look'] as HintId[]) { c.use(id); c.use(id); c.use(id) }
+    c.use('fire')
+    expect(ids(run(c, 0, 12, { combat: true }))).toContain('fire')
+    expect(ids(run(c, 12, 18, { combat: false }))).not.toContain('fire')
+  })
+
+  it('never comes back for a player who has shot enough', () => {
+    const c = new Coach()
+    for (const id of ['move', 'look'] as HintId[]) { c.use(id); c.use(id); c.use(id) }
+    for (let k = 0; k < 4; k++) c.use('fire')
+    expect(ids(run(c, 0, 20, { combat: true }))).not.toContain('fire')
+  })
+})

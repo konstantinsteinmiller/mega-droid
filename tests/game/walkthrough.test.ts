@@ -300,18 +300,19 @@ describe('each room', () => {
     expect(r.s.crateRooms).toEqual([r.gate(1).room])
   })
 
-  it('third: the Trooper down AND a block — a block from the room before counts', () => {
+  // A playtester learned the slide and the door stayed shut: the shield and
+  // slide rooms open the moment the move is learned, the teacher standing or not.
+  it('third: a block opens it, the Trooper still standing', () => {
     const r = makeWalk()
     r.walk.start()
     passTo(r, 2)
     const room = r.gate(2).room
-    const trooper = machine(r, room, 'trooper')
+    machine(r, room, 'trooper')
     enter(r, room)
-    r.walk.noteBlock()
     run(r, 2, true)
     expect(isOpen(r, 2)).toBe(false)
-    trooper.state = 'dead'
-    run(r, 1)
+    r.walk.noteBlock()
+    run(r, 1, true)
     expect(isOpen(r, 2)).toBe(true)
     expect(r.s.brought).toEqual([])
   })
@@ -403,10 +404,8 @@ describe('each room', () => {
     enter(r, room)
     run(r, 2)
     expect(r.s.brought).toEqual(['hopper'])
+    // The newcomer still stands: the slide alone opens the door.
     r.walk.noteSlide()
-    run(r, 2)
-    expect(isOpen(r, 3)).toBe(false) // the newcomer still stands
-    r.enemies[r.enemies.length - 1]!.state = 'dead'
     run(r, 1)
     expect(isOpen(r, 3)).toBe(true)
   })
@@ -486,16 +485,17 @@ describe('each room', () => {
     expect(r.walk.needAt(r.gate(2).door)).toBe('slide')
   })
 
-  it('a machine of another room still fighting holds the gate', () => {
+  // A fight next door (machines that saw Flux through the doorway) used to
+  // hold the gate shut until he walked away: only this room's machines count.
+  it('a fight in another room never holds the gate', () => {
     const r = makeWalk()
     r.walk.start()
-    passTo(r, 2)
-    r.walk.noteBlock()
-    enter(r, r.gate(2).room)
-    run(r, 2, true)
-    expect(isOpen(r, 2)).toBe(false)
-    run(r, 1)
-    expect(isOpen(r, 2)).toBe(true)
+    passTo(r, 1)
+    enter(r, r.gate(1).room)
+    run(r, 1.5, true)
+    r.s.crateBroken = true
+    run(r, 1, true)
+    expect(isOpen(r, 1)).toBe(true)
   })
 })
 
@@ -1089,11 +1089,9 @@ describe('the held door\'s prompt: what a door waits on, who teaches', () => {
     hardhat.state = 'dead'
     passTo(r, 2)
     expect(r.walk.needAt(r.gate(2).door)).toBe('block')
-    // Blocked, but the Trooper still stands: shoot it.
-    const trooper = machine(r, r.gate(2).room, 'trooper')
+    // Blocked: done, the Trooper standing or not.
+    machine(r, r.gate(2).room, 'trooper')
     r.walk.noteBlock()
-    expect(r.walk.needAt(r.gate(2).door)).toBe('clear')
-    trooper.state = 'dead'
     expect(r.walk.needAt(r.gate(2).door)).toBeNull()
     passTo(r, 3)
     expect(r.walk.needAt(r.gate(3).door)).toBe('slide')

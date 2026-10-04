@@ -78,7 +78,7 @@ import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
-import { LessonHologram, TargetArrow, ArmHologram } from '../fx/lessonHologram'
+import { LessonHologram, TargetArrow, ArmHologram, type HoloId } from '../fx/lessonHologram'
 import { tickLava } from '../models/lava'
 import { Shatter } from '../fx/shatter'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
@@ -166,6 +166,10 @@ const FALSE_WALL_SINK = 1.2
 const BEAM_MOVE = 1.2
 /** Which walkthrough step runs which lesson room. */
 const TRAIN_OF: Partial<Record<string, TrainId>> = { charge: 'charge', block: 'block', slide: 'slide', gap: 'gap' }
+/** …and which hologram stands in it (the crate and chest rooms have one too). */
+const HOLO_OF: Partial<Record<string, HoloId>> = { ...TRAIN_OF, crate: 'crate', chest: 'chest' }
+/** A shot opens a closed (not held) door within this reach (m) it is aimed at. */
+const SHOT_DOOR_R = 10
 /** Hazards on machines: half the share they take from Flux, once a burst. */
 const HAZARD_MACHINE_SHARE = 0.5
 const HAZARD_CD = 0.8
@@ -554,6 +558,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The slide lesson's freeze: the Stomper held at the top of its leap until
    *  the player slides; and the leap already held (once per leap). */
   private slideCue: Enemy | null = null
+  /** The held leap has been answered once: from then a slide counts. */
+  private slideCueDone = false
   private slideCued: Enemy | null = null
   private gelHoloOn = false
   /** The weapon lesson room behind the boss (`map.exit`): its pedestal (lit
@@ -2351,6 +2357,28 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.dirty = true
   }
 
+  /** A shot at a closed door that is not held (by a lesson, a guard, the
+   *  boss): it opens, like walking up to it. Within SHOT_DOOR_R, aimed at
+   *  it, in sight. */
+  private shotOpensDoor(dx: number, dz: number): void {
+    const p = this.player
+    const l = Math.hypot(dx, dz) || 1
+    for (const d of this.doors) {
+      if (d.locked || d.held || d.opening || d.mesh.boss) continue
+      const ox = d.x - p.x
+      const oz = d.z - p.z
+      const dist = Math.hypot(ox, oz)
+      if (dist > SHOT_DOOR_R || dist < 0.5) continue
+      // Within a door's half-width of the line of fire.
+      const along = (ox * dx + oz * dz) / l
+      const off = Math.abs(ox * dz - oz * dx) / l
+      if (along <= 0 || off > 1.4) continue
+      if (!hasLineOfSight(this.nav, p.x, p.z, d.x - (ox / dist) * 1.6, d.z - (oz / dist) * 1.6)) continue
+      d.opening = true
+      this.sfx('door', d.x, d.z)
+    }
+  }
+
   /** Static props hang under their room's mesh group, so portal culling
    *  hides them with the room (ObjectiveHost). */
   propParent(x: number, z: number): Object3D {
@@ -2828,6 +2856,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         this.combat.slideCd = 0
         this.combat.power = this.combat.maxPower
         this.slideCue = null
+        this.slideCueDone = true
         hud.slideCue = false
         this.freeze.end()
         this.writeHud()
@@ -2948,7 +2977,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private stepSlideCue(e: Enemy): void {
     if (this.slideCued && this.slideCued.state !== 'act') this.slideCued = null
     if (e.state !== 'act' || e.st < SLIDE_CUE_AT || this.slideCued === e || this.training.done.has('slide')) return
-    if (Math.hypot(e.tx - this.player.x, e.tz - this.player.z) > 3) return
     this.slideCued = e
     this.slideCue = e
     hud.slideCue = true
@@ -3460,7 +3488,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const t = this.map.terrain
     for (const g of walk.plan.gates) {
       for (const st of g.steps) {
-        const id = TRAIN_OF[st]
+        const id = HOLO_OF[st]
         if (!id) continue
         const r = this.map.rooms[g.room]!
         let x = (r.x0 + r.w / 2) * CELL
@@ -3507,7 +3535,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
-  private addHolo(id: TrainId, room: number, x: number, z: number, yaw: number, weaponColor?: string): void {
+  private addHolo(id: HoloId, room: number, x: number, z: number, yaw: number, weaponColor?: string): void {
     const holo = new LessonHologram(id, { weaponColor })
     holo.place(this.scene, x, Math.max(0, floorAt(this.nav, x, z)), z, yaw)
     this.holos.push({ holo, room, x, z })
@@ -3570,6 +3598,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** Does a slide tick the slide lesson off? In the tutorial, only one made
    *  in the lesson (`Training.counts`); anywhere else, any. */
   private slideCounts(): boolean {
+    // In the lesson, only the slide that answers the held leap (#105 note:
+    // a slide made before any leap ticked it off, so it never froze).
+    if (this.walk && this.training.id === 'slide' && !this.training.done.has('slide')) return this.slideCueDone
     return !this.walk || this.training.counts('slide')
   }
 
@@ -3808,10 +3839,23 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.playing = hud.phase === 'play' && !flow.modal
     c.combat = hud.combat
     c.aimCandidate = this.aimCandidate
-    c.teleBlock = teleBlock
-    c.teleRed = teleRed
+    // The tutorial teaches the shield and the slide in their own rooms: their
+    // glyphs wait for those lessons (the shield glyph came up at the crate
+    // room's Hardhat, a room before the shield lesson).
+    const walk = this.walk?.active ? this.training : null
+    c.teleBlock = teleBlock && (!walk || walk.done.has('block'))
+    c.teleRed = teleRed && (!walk || walk.done.has('slide'))
     c.hp01 = this.combat.hp / this.combat.maxHp
-    c.tanks = profile.inv.tanks
+    // The tutorial keeps the gel's glyph for its own lesson (a playtester took
+    // the plain heal glyph in the slide room for that lesson).
+    c.tanks = this.setup.tutorial && !this.training.done.has('gel') ? 0 : profile.inv.tanks
+    // The charge lesson taught shooting and charging, on this run or one
+    // before: their glyphs stay retired (a save that had learned it kept
+    // showing both mice in the next rooms).
+    if (this.training.done.has('charge')) {
+      if (!this.coach.mastered('fire')) this.coach.master('fire')
+      if (!this.coach.mastered('charge')) this.coach.master('charge')
+    }
     c.hasWeapon = !!profile.hero.slots[0] || !!profile.hero.slots[1]
     c.canInteract = !!this.interact
     // A lesson hologram shows its own input: the coach hushes all but the
@@ -4210,6 +4254,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const crit = Math.random() < st.critChance
     const dmg = Math.round(st.busterDmg * st.pelletMul * (crit ? st.critMul : 1))
     this.system.spawnPlayerShot('pellet', m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak)
+    this.shotOpensDoor(dx, dz)
     c.fireCd = 0.2
     c.recoil = Math.min(1, c.recoil + 0.45)
     this.fx.flash(m[0] + dx * 0.5, m[1] + dy * 0.5, m[2] + dz * 0.5, '#fff39a', 0.22, 0.06)
@@ -4241,6 +4286,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const dmg = Math.round(st.busterDmg * mul * st.chargeDmgMul * (crit ? st.critMul : 1))
     const kind = level === 3 ? 'charge3' : level === 2 ? 'charge2' : 'charge1'
     this.system.spawnPlayerShot(kind, m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak)
+    this.shotOpensDoor(dx, dz)
     c.fireCd = 0.25
     c.recoil = 1
     this.shake(level >= 2 ? 0.16 : 0.06)

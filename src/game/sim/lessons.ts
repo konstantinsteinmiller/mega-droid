@@ -88,6 +88,8 @@ export interface LessonHost {
   shake(a: number): void
   crates(): Crate[]
   addCrate(x: number, z: number, yaw: number): Crate | null
+  /** A room's crane delivers the crate (true), or nothing does. */
+  craneDrop?(c: Crate): boolean
   addEnemy(e: Enemy): void
   spawnPickup(kind: PickupKind, value: number, x: number, y: number, z: number): void
   weaponCost(id: WeaponId): number
@@ -636,7 +638,8 @@ export class LessonDirector {
     }
     if (!pick) return null
     const c = h.addCrate(pick[0], pick[1], Math.atan2(p.x - pick[0], p.z - pick[1]))
-    if (c) {
+    // The room's crane brings it down (#114); else it beams in.
+    if (c && !h.craneDrop?.(c)) {
       h.fx.riseRing(c.x, 0.1, c.z, PAL.glowCyan, 0.8, 18)
       h.sfx('beamIn', c.x, c.z)
     }

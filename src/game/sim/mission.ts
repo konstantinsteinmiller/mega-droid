@@ -1,4 +1,6 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
+import { planDecor } from '../world/decor'
+import { RoomCrane, CRANE_G } from './roomCrane'
 import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, SQUASH_FLAT_Y, squashY } from './squash'
 import {
   Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3, Raycaster, Vector2,
@@ -35,6 +37,7 @@ import {
 } from '../models/hero'
 import { buildExitDrone, poseExitDrone, type ExitDroneView } from '../models/exitDrone'
 import { pose, type Rig } from '../models/kit'
+import { GOLEM_CRATE } from '../models/enemies'
 import { newMotion, type EnemyMotion } from '../models/motion'
 import { PAL, RARITY_COLOR as RARITY_HEX } from '../models/palette'
 import {
@@ -614,6 +617,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   arena: BossArena | null = null
   /** The Scrapper's magnet crane (`sim/bossCrane.ts`), in his arena only. */
   crane: BossCrane | null = null
+  /** The level's room cranes (#114, `sim/roomCrane.ts`). */
+  private roomCranes: RoomCrane[] = []
+  /** The tutorial's golem, held up by its room's crane until Flux comes. */
+  private golemDrop: { e: Enemy; crane: RoomCrane; falling: boolean; vy: number } | null = null
   /** Vex's Core Descent (`sim/coreDescent.ts`), in the Fortress only. */
   descent: CoreDescent | null = null
   /** The Grand Master Bot (`sim/grandMaster.ts`): after Vex, on the roof. */
@@ -915,6 +922,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.walk?.start()
     this.setupTraining()
     this.buildTraps()
+    this.setupDressing()
 
     await slice()
     // Viewmodel
@@ -2807,6 +2815,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const live = this.bossStarted && boss.state !== 'dead' && hud.phase === 'play' && boss.hp <= boss.maxHp * 0.5
       this.crane.update(dt, boss, live, hud.phase === 'play' && !flow.modal)
     }
+    for (const c of this.roomCranes) c.update(dt, this.time)
+    this.stepGolemDrop(dt)
     this.arenaDressing(dt)
     this.applyStageLight(dt)
     // Low health: a heartbeat, quicker the lower it gets (#114 sound pass).
@@ -3932,6 +3942,63 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     this.trail.update(dt, ti)
     this.updateLocator(dt, playing, ti.enabled && (!walk || after) ? ti.target : undefined)
+  }
+
+  /**
+   * The level's set dressing (#114, `world/decor.ts`): its floor props get a
+   * body on the floor (after every other prop: their nav slots come last),
+   * and its rooms' cranes go to work — the tutorial's golem room holding its
+   * golem up until Flux walks in.
+   */
+  private setupDressing(): void {
+    if (!this.map.terrain) return
+    const plan = planDecor(this.map, this.setup.sector)
+    for (const p of plan.props) if (p.r > 0) this.nav.props.push({ x: p.x, z: p.z, r: p.r, active: true })
+    this.roomCranes = plan.cranes.map(s => new RoomCrane(this, s, this.theme))
+    for (const c of this.roomCranes) {
+      const e = this.enemies.find(o => o.golem && o.dormant && o.room === c.spot.room && o.state !== 'dead')
+      if (!e) continue
+      c.park(e.x, e.z)
+      e.offstage = true
+      e.hang = c.hookAt().y - GOLEM_CRATE - 0.02 - floorAt(this.nav, e.x, e.z)
+      e.y = e.py = e.hang
+      this.golemDrop = { e, crane: c, falling: false, vy: 0 }
+    }
+  }
+
+  /** The held golem: Flux walks into its room, the crane lets go; it lands
+   *  with a thud (and is a sleeping crate on the floor again). */
+  private stepGolemDrop(dt: number): void {
+    const g = this.golemDrop
+    if (!g) return
+    const e = g.e
+    if (e.state === 'dead') { this.golemDrop = null; return }
+    if (!g.falling) {
+      const p = this.player
+      const k = Math.floor(p.z / CELL) * this.map.w + Math.floor(p.x / CELL)
+      if (this.map.room[k] !== e.room && Math.hypot(p.x - e.x, p.z - e.z) > 9) return
+      g.falling = true
+      g.crane.unpark()
+      sfx('alert')
+      return
+    }
+    g.vy += CRANE_G * dt
+    e.hang = Math.max(0, (e.hang ?? 0) - g.vy * dt)
+    if (e.hang > 0) return
+    e.hang = undefined
+    e.offstage = false
+    e.y = 0
+    g.crane.landed(e.x, floorAt(this.nav, e.x, e.z), e.z)
+    this.golemDrop = null
+  }
+
+  /** The tutorial's crate lesson brings its crate down from the room's crane
+   *  (`LessonDirector.bringCrate`): true when a crane took it. */
+  craneDrop(c: Crate): boolean {
+    const cr = this.roomCranes.find(r => r.covers(c.x, c.z))
+    if (!cr) return false
+    cr.deliver(c.mesh.root, c.x, c.z, c.y, 1.15)
+    return true
   }
 
   /** Feed the control coach what is happening right now (see `sim/coach.ts`). */
@@ -5528,6 +5595,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   dispose(): void {
+    for (const c of this.roomCranes) c.dispose()
+    this.roomCranes = []
     this.storyScene?.skip()
     this.crane?.dispose()
     this.city?.dispose()

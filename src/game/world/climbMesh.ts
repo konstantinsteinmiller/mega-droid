@@ -12,6 +12,8 @@ import {
 import { BALL_R } from './climbGen'
 import { lavaCell, lavaMaterial } from '../models/lava'
 import { secretDoorFace } from './stages/builder'
+import { planDecor } from './decor'
+import { decorParts } from '../models/decorProps'
 
 /**
  * ─── The climb's static geometry ─────────────────────────────────────────────
@@ -108,6 +110,10 @@ export const buildClimbLevel = async (
   // Wall faces a secret's button or hint panel sits on: no pipe or light
   // strip is drawn over them (a Sky Docks pipe hid a blue button).
   const busy = secretWallFaces(t, W)
+  // The level's set dressing (#114): its wall props' faces get no pipe or
+  // light strip of their own; the props join each room's decor below.
+  const dressing = planDecor(map, theme.id)
+  const propFaces = new Set(dressing.props.flatMap(p => [...(p.face ? [p.face] : []), ...(p.backs ?? [])]))
   /** The room a cell's walls take their height from (a corridor: its own). */
   const roomOf = (k: number) => map.room[k]!
   const corridorTop = (k: number) => t.floor[k]! + WALL_H + 0.8
@@ -378,8 +384,8 @@ export const buildClimbLevel = async (
           if (!t.pit[k]) {
             const fy = t.floor[k]!
             if (!ramp) decor[o]!.push(xform(piece('baseboard', () => paint(cap(0.13, CELL - 0.3, 8, 2), theme.wallLow)), [mx + e.n[0] * 0.06, fy + 0.14, mz + e.n[2] * 0.06], rotAlong))
-            if (busy.has(`${k}:${e.di},${e.dj}`)) {
-              // A secret's wall: kept bare for its button / hint.
+            if (busy.has(`${k}:${e.di},${e.dj}`) || propFaces.has(`${k}:${e.di},${e.dj}`)) {
+              // A secret's wall: kept bare for its button / hint (or a prop's).
             } else if (c === Cell.Room && rng() < 0.45) {
               glows[o]!.push(xform(piece('strip', () => paint(cap(0.07, 1.1, 8, 2), theme.accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
             } else if (rng() < 0.25) {
@@ -464,6 +470,17 @@ export const buildClimbLevel = async (
     const h = hi - lo + 0.25
     decor[o]!.push(xform(piece(`pil${Math.round(h * 4)}`, () => paint(rcyl(0.3, h, 0.12, 14), theme.pilaster)), [x, lo + h / 2, z]))
     decor[o]!.push(xform(piece('pilasterCap', () => paint(sph(0.34, 14, 8), theme.trim)), [x, hi + 0.25, z]))
+  }
+  await slice()
+
+  // ── Set dressing: each prop into its room's decor and glow (#114) ──
+  for (const p of dressing.props) {
+    // A wall prop's origin is on the wall's line: its own cell is its face's.
+    const o = owner[p.face ? Number(p.face.split(':')[0]) : K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))]!
+    if (o < 0) continue
+    const parts = decorParts(p.kind)
+    for (const g of parts.toon) decor[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
+    for (const g of parts.glow) glows[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
   }
   await slice()
 

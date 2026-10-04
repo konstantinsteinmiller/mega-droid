@@ -434,8 +434,10 @@ const golemSleep = (w: World, e: Enemy): void => {
   e.stunT = 0
   e.frozenT = 0
   e.burnT = 0
-  e.y = 0
+  // Held up by a crane (#114): it hangs there, and has no body on the floor yet.
+  e.y = e.hang ?? 0
   e.ring.visible = false
+  if (e.hang !== undefined) return
   if (g.navIdx < 0) {
     g.navIdx = w.nav.props.length
     w.nav.props.push({ x: e.x, z: e.z, r: GOLEM_PROP_R, active: true })

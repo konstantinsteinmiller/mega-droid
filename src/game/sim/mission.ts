@@ -3921,6 +3921,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.veteran = profile.world.tutorialDone
     c.gelLesson = this.lessons.gelLive || !!this.walk?.gelPending
     c.blockLesson = !!this.walk?.blockPending(p.x, p.z)
+    c.lessonsTeach = !!this.setup.tutorial
+    c.fireLesson = this.lessons.shootLive || (this.training.id === 'charge' && (this.training.phase === 'intro' || this.training.phase === 'try'))
     this.coach.update(c)
   }
 

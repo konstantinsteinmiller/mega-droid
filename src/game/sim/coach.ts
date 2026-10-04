@@ -136,6 +136,14 @@ export interface CoachContext {
    *  block glyph stays up, emphasised, until a block lands — not only while
    *  a ring winds up, which on a diving drone is gone before it is read. */
   blockLesson?: boolean
+  /** A lesson that is about shooting is running (the charge shot, the crate
+   *  and the chest): the only time a "stuck" shoot glyph comes back. In a
+   *  plain fight it pointed at nothing to hit, or at what the player already
+   *  knew. */
+  fireLesson?: boolean
+  /** The tutorial: it has lessons for shooting, so the shoot glyphs keep to
+   *  them (taught or recalled) and never point at a plain fight's drones. */
+  lessonsTeach?: boolean
 }
 
 interface HintState {
@@ -313,7 +321,8 @@ export class Coach {
     want('move', fresh('move'))
     want('look', fresh('look'))
     want('walk', !c.combat && !fresh('move') && !fresh('look') && fresh('walk'))
-    want('fire', (c.combat || c.aimCandidate) && fresh('fire'))
+    const shootTime = !c.lessonsTeach || !!c.fireLesson
+    want('fire', (c.combat || c.aimCandidate) && fresh('fire') && shootTime)
     want('charge', c.combat && !fresh('fire') && fresh('charge'))
     this.blockLesson = !!c.blockLesson
     want('block', (c.teleBlock && fresh('block')) || this.blockLesson)
@@ -332,7 +341,7 @@ export class Coach {
       if (t - this.lastMove > MOVE_IDLE && !c.combat) this.recall('move')
       // Never for a player who has shot enough already: the glyph came back
       // in every fight of the tutorial once he paused to dodge or block.
-      if (c.combat && !this.quiet && !c.veteran && !this.mastered('fire') && t - this.lastFire > FIRE_IDLE) this.recall('fire')
+      if ((c.fireLesson || (c.combat && !c.lessonsTeach)) && !this.quiet && !c.veteran && !this.mastered('fire') && t - this.lastFire > FIRE_IDLE) this.recall('fire')
     }
     for (const id of Object.keys(this.st) as HintId[]) {
       const s = this.st[id]
@@ -340,7 +349,7 @@ export class Coach {
       // under a wind-up, shooting in a fight or with something to shoot at
       // (a recalled shoot glyph stayed up over an empty corridor).
       const now = id === 'block' || id === 'slide' ? c.teleBlock || c.teleRed
-        : id === 'fire' || id === 'charge' ? c.combat || c.aimCandidate
+        : id === 'fire' || id === 'charge' ? (c.combat || c.aimCandidate) && shootTime
           : true
       if (s.recall > 0 && this.open(id) && (now || t < this.helpUntil)) {
         s.wantedUntil = Math.max(s.wantedUntil, t + 0.5)

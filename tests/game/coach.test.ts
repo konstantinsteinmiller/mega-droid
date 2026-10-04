@@ -379,3 +379,20 @@ describe('recalls', () => {
     expect(ids(run(c, 0, 20, { combat: true }))).not.toContain('fire')
   })
 })
+
+
+describe('the "stuck" shoot glyph', () => {
+  // In the tutorial a plain fight (or an empty room) is no time to point at
+  // the fire button: only its lessons about shooting show it.
+  const learned = (): Coach => {
+    const c = new Coach()
+    for (const id of ['move', 'look'] as HintId[]) { c.use(id); c.use(id); c.use(id) }
+    return c
+  }
+  it('stays away in a plain tutorial fight, however long the player holds fire', () => {
+    expect(ids(run(learned(), 0, 30, { combat: true, aimCandidate: true, lessonsTeach: true }))).not.toContain('fire')
+  })
+  it('shows in a shooting lesson', () => {
+    expect(ids(run(learned(), 0, 30, { combat: true, aimCandidate: true, lessonsTeach: true, fireLesson: true }))).toContain('fire')
+  })
+})

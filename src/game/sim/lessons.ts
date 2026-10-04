@@ -877,6 +877,11 @@ export class LessonDirector {
     return this.crateRoom
   }
 
+  /** A shooting lesson is on: the charge drone, the crate, the chest. */
+  get shootLive(): boolean {
+    return this.live === 'charge' || this.live === 'crate'
+  }
+
   /** The Repair Gel lesson is on screen (the coach drops its own tank glyph). */
   get gelLive(): boolean {
     return this.live === 'gel'

@@ -270,6 +270,7 @@ export default {
     'useTank': 'أعد التشغيل بجل إصلاح ({n})',
     'rebootAd': 'أعد التشغيل الآن',
     'retreat': 'انسحب إلى المختبر',
+    'respawnIn': 'العودة إلى نقطة الحفظ خلال {n} ث',
     'retryCheckpoint': 'أعد المحاولة من نقطة الحفظ'
   },
   'banner': {

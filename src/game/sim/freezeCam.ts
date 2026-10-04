@@ -22,7 +22,7 @@ import { placeCamera, type CamSpot, type CineWorld } from './cineCam'
  * rules without a scene.
  */
 
-export type FreezeKind = 'kill' | 'trap' | 'rescue' | 'lesson'
+export type FreezeKind = 'kill' | 'trap' | 'rescue' | 'lesson' | 'sink'
 /** Where the camera goes: behind Flux toward the subject, in front of him
  *  looking back at him, high above a pit, or nowhere (first person). */
 export type FreezeFrame = 'shoulder' | 'front' | 'above' | 'fp'

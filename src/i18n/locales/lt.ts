@@ -270,6 +270,7 @@ export default {
     'useTank': 'Paleisti iš naujo su remonto geliu ({n})',
     'rebootAd': 'Paleisti iš naujo dabar',
     'retreat': 'Trauktis į laboratoriją',
+    'respawnIn': 'Grįžtama į kontrolinį tašką po {n} s',
     'retryCheckpoint': 'Kartoti nuo kontrolinio taško'
   },
   'ending': {

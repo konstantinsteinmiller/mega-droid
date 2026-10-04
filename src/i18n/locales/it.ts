@@ -270,6 +270,7 @@ export default {
     'useTank': 'Usa Gel Riparatore ({n})',
     'rebootAd': 'Riavvia ora',
     'retreat': 'Ritirati al laboratorio',
+    'respawnIn': 'Di nuovo al checkpoint tra {n} s',
     'retryCheckpoint': 'Riprova dal checkpoint'
   },
   'banner': {

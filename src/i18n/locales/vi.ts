@@ -270,6 +270,7 @@ export default {
     'useTank': 'Khởi động lại bằng Gel Sửa Chữa ({n})',
     'rebootAd': 'Khởi động lại ngay',
     'retreat': 'Rút về phòng thí nghiệm',
+    'respawnIn': 'Trở lại điểm kiểm tra sau {n} giây',
     'retryCheckpoint': 'Thử lại từ điểm lưu'
   },
   'banner': {

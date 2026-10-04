@@ -270,6 +270,7 @@ export default {
     'useTank': '수리 젤로 재가동 ({n})',
     'rebootAd': '지금 재가동',
     'retreat': '연구소로 후퇴',
+    'respawnIn': '{n}초 후 체크포인트로 복귀',
     'retryCheckpoint': '체크포인트부터 재도전'
   },
   'banner': {

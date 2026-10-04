@@ -270,6 +270,7 @@ export default {
     'useTank': 'Neustart mit Reparaturgel ({n})',
     'rebootAd': 'Jetzt neu starten',
     'retreat': 'Rückzug ins Labor',
+    'respawnIn': 'Zurück am Kontrollpunkt in {n} s',
     'retryCheckpoint': 'Ab Checkpoint neu starten'
   },
   'banner': {

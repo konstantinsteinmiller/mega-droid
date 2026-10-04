@@ -270,6 +270,7 @@ export default {
     'useTank': '用修理凝胶重启（{n}）',
     'rebootAd': '立即重启',
     'retreat': '撤回实验室',
+    'respawnIn': '{n} 秒后回到检查点',
     'retryCheckpoint': '从检查点重试'
   },
   'banner': {

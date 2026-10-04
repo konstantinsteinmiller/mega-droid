@@ -270,6 +270,7 @@ export default {
     'useTank': 'Redémarrer avec un gel ({n})',
     'rebootAd': 'Redémarrer maintenant',
     'retreat': 'Retour au labo',
+    'respawnIn': 'Retour au point de contrôle dans {n} s',
     'retryCheckpoint': 'Reprendre au checkpoint'
   },
   'banner': {

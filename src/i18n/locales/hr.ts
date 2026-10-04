@@ -270,6 +270,7 @@ export default {
     'useTank': 'Ponovno pokreni gelom za popravak ({n})',
     'rebootAd': 'Ponovno pokreni sada',
     'retreat': 'Povlačenje u laboratorij',
+    'respawnIn': 'Natrag na kontrolnoj točki za {n} s',
     'retryCheckpoint': 'Ponovi od kontrolne točke'
   },
   'ending': {

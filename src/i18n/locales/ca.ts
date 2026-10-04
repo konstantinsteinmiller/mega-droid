@@ -270,6 +270,7 @@ export default {
     'useTank': 'Reinicia amb gel ({n})',
     'rebootAd': 'Reinicia ara',
     'retreat': 'Torna al laboratori',
+    'respawnIn': 'De tornada al punt de control en {n} s',
     'retryCheckpoint': 'Torna-hi des del punt de control'
   },
   'ending': {

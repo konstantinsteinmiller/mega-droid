@@ -270,6 +270,7 @@ export default {
     'useTank': 'Taʼmir geli bilan qayta yoqish ({n})',
     'rebootAd': 'Hozir qayta yoqish',
     'retreat': 'Laboratoriyaga chekinish',
+    'respawnIn': "{n} soniyadan so'ng nazorat nuqtasiga qaytish",
     'retryCheckpoint': 'Nazorat nuqtasidan qayta'
   },
   'banner': {

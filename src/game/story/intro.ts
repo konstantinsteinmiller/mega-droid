@@ -41,6 +41,7 @@ import { cine, cineLive, resetCine, setGateHandler, setSkipHandler, skipHold } f
 import { holdProgress, stepHold } from './holdSkip'
 import { sceneQuality, type SceneQuality } from '../engine/quality'
 import { buildAtlas, animateAtlas } from '../models/atlas'
+import { Shatter } from '../fx/shatter'
 
 /** The street's two slides (action s): under the Trooper's swing, and under
  *  its shock ring. */
@@ -400,6 +401,11 @@ export class IntroMode implements GameMode {
    *  last checked. */
   private dashOn = 0
   private lastDust = -Infinity
+  /** The Shield Trooper's gait and guard, through the game's own motion layer
+   *  (the old direct pose held the shield up like an umbrella), and its
+   *  pieces once the finish takes it apart (#105). */
+  private readonly trooperMotion = newMotion(3, 'trooper')
+  private shatter: Shatter | null = null
   private jobs: Array<() => Group> = []
   private jobAt = 0
   private readonly low: boolean
@@ -696,6 +702,7 @@ export class IntroMode implements GameMode {
     cineLive.hold = holdProgress(skipHold)
     this.emit(dt)
     this.fx.update(dt)
+    this.shatter?.update(dt)
     if (this.t >= INTRO_END) this.end(false)
   }
 
@@ -918,7 +925,12 @@ export class IntroMode implements GameMode {
     const step = ramp(0.85, 1.2, st)
     this.trooperRoot.position.set(3.9 - 3.2 * step, 0, -6.4)
     this.trooperRoot.rotation.y = -Math.PI / 2 + (Math.PI / 2) * ramp(1.45, 1.9, st)
-    poseTrooper(this.trooper, 0.4 + 0.6 * ramp(1.1, 1.3, st), 0, st, step < 1 && step > 0 ? 1 : 0)
+    // The charged shot breaks its guard: the shield comes down and stays down.
+    const guard = (0.4 + 0.6 * ramp(1.1, 1.3, st)) * (1 - ramp(SHOW_HIT + 0.25, SHOW_HIT + 0.8, st))
+    const tm = this.trooperMotion
+    tm.walk = step < 1 && step > 0 ? 1 : 0
+    tm.phase = st * 9
+    poseTrooper(this.trooper, guard, 0, st, tm.walk, tm)
     // Two Rotor Drones swoop in overhead.
     this.drones.forEach((d, i) => {
       const s = i ? 1 : -1
@@ -998,7 +1010,8 @@ export class IntroMode implements GameMode {
     const fall = ramp(SHOW_FINISH_HIT, SHOW_FINISH_HIT + 0.2, st)
     T.position.z = -6.4 - 0.8 * back
     T.rotation.x = -0.35 * stagger - 0.25 * lift + 0.4 * down - 0.6 * fall
-    T.visible = st < SHOW_FINISH_HIT + 0.15
+    // The finish takes it apart: its pieces are the shatter's (`showcaseBursts`).
+    T.visible = st < SHOW_FINISH_HIT
     // The shock ring: out from the Trooper's feet, over Flux as he slides.
     const ringK = st - SHOW_SLAM
     const reach = Math.abs(T.position.z - (-3.6 - 1.4 * ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_TO, SHOW_RING_OVER)))
@@ -1047,7 +1060,8 @@ export class IntroMode implements GameMode {
       return true
     }
     if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(D1_AT), 0.55)) {
-      shotAt(SHOW_FINISH, SHOW_FINISH_HIT, _c.set(T.position.x, 1.1, T.position.z + 0.3), 0.75)
+      // Point blank, a full charge.
+      shotAt(SHOW_FINISH, SHOW_FINISH_HIT, _c.set(T.position.x, 1.1, T.position.z + 0.3), 1)
     }
   }
 
@@ -1089,7 +1103,13 @@ export class IntroMode implements GameMode {
     const d1 = this.droneRoots[1]!.position
     if (passed(SHOW_ANSWER_HIT)) burst(d1.x, d1.y, d1.z, ['#ffb040', '#ff5a20', '#ffffff'], 30 * n, 6, 0.2, 0.7)
     if (passed(SHOW_SLAM)) burst(T.x, 0.15, T.z + 0.4, ['#ff2a36', '#ffb0a0'], 20 * n, 4, 0.14, 0.5)
-    if (passed(SHOW_FINISH_HIT)) burst(T.x, 1.0, T.z, ['#ffb040', '#ff5a20', '#ffffff', '#6a6a78'], 44 * n, 8, 0.24, 0.9)
+    if (passed(SHOW_FINISH_HIT)) {
+      burst(T.x, 1.0, T.z, ['#ffb040', '#ffffff'], 20 * n, 6, 0.2, 0.6)
+      // It falls apart into its own green parts and plating.
+      if (!this.shatter) this.shatter = new Shatter(this.scene, { floorAt: () => S.y })
+      const F = this.runnerRoot.position
+      this.shatter.burst(this.trooperRoot, [PAL.trooper, PAL.trooperDeep, '#6a6a78'], 8, { x: S.x + F.x, z: S.z + F.z }, 1.2)
+    }
     if (passed(SHOW_GEL_BURST)) {
       const F = this.runnerRoot.position
       burst(F.x, 0.9, F.z, ['#5dff8a', '#c8ffd8', '#ffffff'], 36 * n, 3.5, 0.12, 1.0)
@@ -1353,6 +1373,7 @@ export class IntroMode implements GameMode {
   }
 
   dispose(): void {
+    this.shatter?.dispose()
     if (!this.ended) setSkipHandler(null)
     setGateHandler(null)
     resetCine()

@@ -270,6 +270,7 @@ export default {
     'useTank': 'รีบูตด้วยเจลซ่อม ({n})',
     'rebootAd': 'รีบูตเลย',
     'retreat': 'ถอยกลับแล็บ',
+    'respawnIn': 'กลับสู่จุดเช็กพอยต์ใน {n} วินาที',
     'retryCheckpoint': 'เริ่มใหม่จากจุดเช็กพอยต์'
   },
   'banner': {

@@ -270,6 +270,7 @@ export default {
     'useTank': 'Repornește cu Gel Reparator ({n})',
     'rebootAd': 'Repornește acum',
     'retreat': 'Retragere în laborator',
+    'respawnIn': 'Înapoi la punctul de control în {n} s',
     'retryCheckpoint': 'Reia de la checkpoint'
   },
   'ending': {

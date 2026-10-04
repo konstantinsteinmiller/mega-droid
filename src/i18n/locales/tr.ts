@@ -272,6 +272,7 @@ export default {
     'useTank': 'Tamir Jeli kullan ({n})',
     'rebootAd': 'Hemen yeniden başlat',
     'retreat': 'Laboratuvara çekil',
+    'respawnIn': '{n} sn içinde kontrol noktasına dönüş',
     'retryCheckpoint': 'Kontrol noktasından dene'
   },
   'banner': {

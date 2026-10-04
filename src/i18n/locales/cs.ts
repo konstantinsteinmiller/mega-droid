@@ -270,6 +270,7 @@ export default {
     'useTank': 'Restart s opravným gelem ({n})',
     'rebootAd': 'Restartovat hned',
     'retreat': 'Ústup do laboratoře',
+    'respawnIn': 'Zpět na kontrolním bodě za {n} s',
     'retryCheckpoint': 'Znovu od kontrolního bodu'
   },
   'ending': {

@@ -270,6 +270,7 @@ export default {
     'useTank': 'Újraindítás Javítózselével ({n})',
     'rebootAd': 'Újraindítás most',
     'retreat': 'Vissza a laborba',
+    'respawnIn': 'Vissza az ellenőrzőpontnál {n} mp múlva',
     'retryCheckpoint': 'Újra az ellenőrzőponttól'
   },
   'ending': {

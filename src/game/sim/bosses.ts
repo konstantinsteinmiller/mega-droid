@@ -828,7 +828,7 @@ export const syncBossVisual = (e: Enemy, alpha: number): void => {
   const id = e.bossId!
   if (e.state === 'dead') {
     const k = Math.min(1, e.deathT / 1.6)
-    e.root.visible = e.deathT < 1.7
+    e.root.visible = !e.shattered && e.deathT < 1.7
     e.shadow.visible = e.root.visible
     e.root.rotation.z = Math.sin(e.deathT * 30) * 0.05 * k
     return

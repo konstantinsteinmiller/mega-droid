@@ -270,6 +270,7 @@ export default {
     'useTank': 'リペアジェルで再起動（{n}）',
     'rebootAd': '今すぐ再起動',
     'retreat': 'ラボへ撤退',
+    'respawnIn': '{n}秒後にチェックポイントへ',
     'retryCheckpoint': 'チェックポイントから再開'
   },
   'banner': {

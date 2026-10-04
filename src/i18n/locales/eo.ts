@@ -270,6 +270,7 @@ export default {
     'useTank': 'Restartigi per Ripara Ĝelo ({n})',
     'rebootAd': 'Restartigi nun',
     'retreat': 'Retiriĝi al la laboratorio',
+    'respawnIn': 'Reen ĉe la kontrolpunkto post {n} s',
     'retryCheckpoint': 'Reprovi de kontrolpunkto'
   },
   'ending': {

@@ -1897,7 +1897,7 @@ export const syncEnemyVisual = (e: Enemy, alpha: number, time: number): void => 
     // Pop: squash and vanish
     const k = Math.min(1, e.deathT / 0.14)
     e.root.scale.setScalar(Math.max(0.001, 1 + k * 0.25))
-    e.root.visible = e.deathT < 0.14
+    e.root.visible = !e.shattered && e.deathT < 0.14
     e.shadow.visible = e.root.visible
     e.ring.visible = false
     return

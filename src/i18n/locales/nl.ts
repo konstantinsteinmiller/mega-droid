@@ -270,6 +270,7 @@ export default {
     'useTank': 'Herstart met reparatiegel ({n})',
     'rebootAd': 'Nu herstarten',
     'retreat': 'Terug naar het lab',
+    'respawnIn': 'Terug bij het checkpoint over {n} s',
     'retryCheckpoint': 'Opnieuw vanaf checkpoint'
   },
   'banner': {

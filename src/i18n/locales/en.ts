@@ -299,6 +299,7 @@ export default {
     'useTank': 'Reboot with Repair Gel ({n})',
     'rebootAd': 'Reboot now',
     'retreat': 'Retreat to the lab',
+    'respawnIn': 'Back at the checkpoint in {n} s',
     // The Fortress: back to the last checkpoint, free, at full health.
     'retryCheckpoint': 'Retry from checkpoint'
   },

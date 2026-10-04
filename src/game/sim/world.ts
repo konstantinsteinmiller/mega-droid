@@ -138,6 +138,8 @@ export interface Enemy {
   /** Never steps from its spot (it still turns and fights): the tutorial's
    *  block teacher, which walked out of its lesson. */
   rooted?: boolean
+  /** Fallen apart into its parts (`fx/shatter.ts`): its own model hides. */
+  shattered?: boolean
 }
 
 export type ShotKind = 'pellet' | 'charge1' | 'charge2' | 'charge3' | 'enemy' | 'shell' | 'reflect' | 'special' | 'rock'

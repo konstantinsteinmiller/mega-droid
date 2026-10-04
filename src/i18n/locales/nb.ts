@@ -270,6 +270,7 @@ export default {
     'useTank': 'Start på nytt med Reparasjonsgel ({n})',
     'rebootAd': 'Start på nytt nå',
     'retreat': 'Trekk deg tilbake til laben',
+    'respawnIn': 'Tilbake ved sjekkpunktet om {n} s',
     'retryCheckpoint': 'Prøv igjen fra sjekkpunkt'
   },
   'ending': {

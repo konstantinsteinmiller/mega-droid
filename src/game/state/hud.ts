@@ -103,7 +103,7 @@ export const hud = shallowReactive({
   introCine: false,
   /** A freeze-frame shot is running (`sim/freezeCam.ts`): its kind, how it
    *  is framed ('fp' keeps the HUD), whether it skips, presses toward a skip. */
-  freezeKind: '' as '' | 'kill' | 'trap' | 'rescue' | 'lesson',
+  freezeKind: '' as '' | 'kill' | 'trap' | 'rescue' | 'lesson' | 'sink',
   freezeFrame: '' as '' | 'shoulder' | 'front' | 'above' | 'fp',
   freezeSkippable: false,
   freezeSkips: 0,

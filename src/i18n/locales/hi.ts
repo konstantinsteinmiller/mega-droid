@@ -270,6 +270,7 @@ export default {
     'useTank': 'रिपेयर जेल से रीबूट ({n})',
     'rebootAd': 'अभी रीबूट करें',
     'retreat': 'लैब में लौटें',
+    'respawnIn': '{n} सेकंड में चेकपॉइंट पर वापसी',
     'retryCheckpoint': 'चेकपॉइंट से फिर कोशिश करें'
   },
   'banner': {

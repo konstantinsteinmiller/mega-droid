@@ -270,6 +270,7 @@ export default {
     'useTank': 'Käynnistä geelillä ({n})',
     'rebootAd': 'Käynnistä nyt',
     'retreat': 'Vetäydy labraan',
+    'respawnIn': 'Takaisin tarkistuspisteessä {n} s kuluttua',
     'retryCheckpoint': 'Yritä tarkistuspisteestä'
   },
   'ending': {

@@ -935,9 +935,9 @@ export class CombatSystem {
     h.fx.orbBurst(e.x, cy, e.z, col, e.boss ? 2 : e.elite ? 1.4 : e.def.radius > 0.8 ? 1.2 : 1)
     // A golem breaks up into its crate's planks and its stone
     if (e.golem) this.rubble.burst(e.x, cy, e.z, e.golem.wood, e.golem.trim)
-    // Every other machine comes apart too: plates in its colour and dark
-    // chips tumble down (the kill-cam's subject; cheap: pooled, few).
-    else if (!e.boss) this.rubble.burst(e.x, cy, e.z, col, '#2a2d3e', e.def.radius > 0.8 ? 7 : 5, 5)
+    // Every other machine falls apart into its own parts (the host's
+    // `fx/shatter.ts`); a few dark chips fly with them.
+    else if (!e.boss) this.rubble.burst(e.x, cy, e.z, col, '#2a2d3e', 0, 4)
     h.shake(e.boss ? 0.8 : e.elite ? 0.4 : 0.2)
     h.sfx(e.boss ? 'death' : 'explode', e.x, e.z)
     if (e.boss) h.hitStop = Math.max(h.hitStop, 0.35)

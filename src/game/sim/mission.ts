@@ -67,7 +67,8 @@ import {
 } from '../state/profile'
 import { rollItem, type Item } from '../data/items'
 import { flow, finishMission, retryFromSnapshot, copyBossWeapon } from '../flow'
-import { showBanner, clearBanner, BANNER_HOLD } from '../state/banner'
+import { showBanner, clearBanner } from '../state/banner'
+import { DEFEAT_DELAY, SINK_S } from './respawn'
 import { ExitRun, ExitCamera, planExit, newExitPose, PAD_R, type ExitEvent, type ExitHost } from './exitRun'
 import { cineWorld, type CineWorld, type CineBox } from './cineCam'
 import { FreezeDirector, type FreezeKind, type FreezeSpec } from './freezeCam'
@@ -79,6 +80,7 @@ import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
 import { LessonHologram, TargetArrow, ArmHologram } from '../fx/lessonHologram'
 import { tickLava } from '../models/lava'
+import { Shatter } from '../fx/shatter'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import {
@@ -319,7 +321,7 @@ const NO_PORTAL = perfFlag('noportal')
 const PIT_HOLD = 0.55
 /** From Flux going down to the defeat modal (s): never before the GAME
  *  OVER banner has had its hold. */
-const DEFEAT_DELAY = Math.max(1.4, BANNER_HOLD.gameOver)
+export { DEFEAT_DELAY, RESPAWN_AFTER, SINK_S } from './respawn'
 /** Slide cooldown (s), start to start, before the Slide Boosters cut it
  *  (`stats.slideCdMul`). Long enough that the dodge is a read, not a spam. */
 const SLIDE_CD = 1.5
@@ -375,6 +377,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   atlas: AtlasDirector | null = null
   private atlasVm: Rig | null = null
   private atlasWorld: Rig | null = null
+  /** Machines fall apart into their parts, which lie a while and sink (#105). */
+  private shatter: Shatter | null = null
+  /** Flux's body is sinking (the respawn's shot is on). */
+  private sinking = false
   /** Atlas's tractor beam in a pit rescue (#282): a cone of light from it
    *  down to Flux, from the grab through the lift. */
   private tractor: Mesh | null = null
@@ -1474,6 +1480,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   onEnemyKilled(e: Enemy, xp: number): void {
+    // An ordinary machine breaks into its parts at once; a boss at the end
+    // of its death throes (`stepShatter`).
+    if (!e.boss) this.shatterEnemy(e)
     this.xp += xp
     this.kills++
     profile.stats.kills++
@@ -2302,6 +2311,46 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     flow.modal = ''
   }
 
+  /**
+   * Ten seconds down (#105, the defeat modal's countdown): his body sinks
+   * into the floor, filmed from outside, and he comes back at the last
+   * checkpoint at full health — the level, its kills and its doors, as they
+   * were. No rebuild.
+   */
+  respawnAtCheckpoint(): void {
+    if (!this.combat.dead || this.sinking) return
+    flow.modal = ''
+    this.sinking = true
+    const p = this.player
+    this.startFreeze({ kind: 'sink', dur: SINK_S, frame: 'front', skippable: false, fx: '', tx: p.x, ty: p.y + 0.4, tz: p.z })
+  }
+
+  /** Where a respawn puts him: inside the arena's door while its boss
+   *  stands (it keeps the damage done), else the last checkpoint of a
+   *  stage, else the level's start. */
+  respawnSpot(): { x: number; y: number; z: number; yaw: number } {
+    const b = this.boss
+    const d = this.bossStarted && b && b.state !== 'dead' ? this.bossDoor() : null
+    const spec = d ? this.map.doors.find(x => x.id === d.id) : undefined
+    if (spec) {
+      const di = spec.axis === 'x' ? spec.dir : 0
+      const dj = spec.axis === 'z' ? spec.dir : 0
+      const x = cellCenter(spec.i + di * 2)
+      const z = cellCenter(spec.j + dj * 2)
+      return { x, z, y: Math.max(0, floorAt(this.nav, x, z)), yaw: Math.atan2(-di, -dj) }
+    }
+    if (this.climb) return this.climb.respawn()
+    const s = this.map.start
+    return { x: s.x, z: s.z, y: Math.max(0, floorAt(this.nav, s.x, s.z)), yaw: s.yaw }
+  }
+
+  private respawnNow(): void {
+    this.sinking = false
+    this.placeAfterFall(this.respawnSpot())
+    this.revive()
+    this.dirty = true
+  }
+
   /** Static props hang under their room's mesh group, so portal culling
    *  hides them with the room (ObjectiveHost). */
   propParent(x: number, z: number): Object3D {
@@ -2688,6 +2737,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       else this.fireWeapon((q - 1) as 0 | 1)
     }
     this.system.update(dt)
+    this.stepShatter(dt)
     if (first) this.stepLava()
     this.fx.update(dt)
     this.markers.update(dt, this.time)
@@ -2838,6 +2888,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   private onFreezeEnd(kind: FreezeKind): void {
+    if (kind === 'sink') {
+      this.exitView?.heroRoot.scale.set(1, 1, 1)
+      this.respawnNow()
+      return
+    }
     // A barrel's shot left him squashed: whole again for the next one; the
     // rescue's big Atlas and its beam go.
     this.exitView?.heroRoot.scale.set(1, 1, 1)
@@ -3076,6 +3131,32 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.releaseDoor(beam.door)
       tr.leave()
     }
+  }
+
+  // ─── Machines fall apart (#105) ─────────────────────────────────────────
+
+  /** `e` breaks into the parts of its own model, here and now (once). */
+  private shatterEnemy(e: Enemy, power = 1): void {
+    if (e.shattered || !e.root) return
+    if (!this.shatter) {
+      if (!this.scene || !this.nav) return
+      this.shatter = new Shatter(this.scene, {
+        floorAt: (x, z, y) => floorAt(this.nav, x, z, y),
+        solidAt: (x, z) => isSolidAt(this.nav, x, z)
+      })
+    }
+    e.root.scale.setScalar(e.elite ? 1.18 : 1)
+    this.shatter.burst(e.root, [], e.boss ? 12 : 5, { x: this.player.x, z: this.player.z }, power)
+    e.shattered = true
+    e.root.visible = false
+  }
+
+  /** Per step: the pieces; a boss falls apart once its death throes end. */
+  private stepShatter(dt: number): void {
+    for (const e of this.enemies) {
+      if (e.boss && e.state === 'dead' && !e.shattered && e.deathT >= 1.55) this.shatterEnemy(e, 1.5)
+    }
+    this.shatter?.update(dt)
   }
 
   // ─── Lava (#279: a moving surface, embers rising off it) ────────────────
@@ -5141,6 +5222,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       s.hz + (shake ? (Math.random() - 0.5) * shake : 0)
     )
     hr.quaternion.setFromAxisAngle(_up, s.hyaw)
+    // The respawn's sink: he lies on his back and goes down into the floor.
+    if (s.kind === 'sink') {
+      const k = Math.min(1, t / SINK_S)
+      hr.rotateX(-Math.PI / 2)
+      hr.position.y = s.hy + 0.3 - k * k * 1.8
+    }
     const rp = s.kind === 'rescue' ? this.poseRescue() : null
     if (rp) {
       hr.position.set(rp.x, rp.y, rp.z)
@@ -5271,6 +5358,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     hud.lesson = null
     hud.pointerFree = false
     this.fx.dispose()
+    this.shatter?.dispose()
     this.scene.traverse((o) => {
       const m = o as Mesh
       if (m.geometry) m.geometry.dispose()

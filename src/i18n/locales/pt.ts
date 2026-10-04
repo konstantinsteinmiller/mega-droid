@@ -270,6 +270,7 @@ export default {
     'useTank': 'Usar Gel de Reparo ({n})',
     'rebootAd': 'Reiniciar agora',
     'retreat': 'Recuar ao laboratório',
+    'respawnIn': 'De volta ao checkpoint em {n} s',
     'retryCheckpoint': 'Tentar do checkpoint'
   },
   'banner': {

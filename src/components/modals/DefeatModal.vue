@@ -10,6 +10,11 @@
           span.chip.bolt
             | +{{ tally.bolts }}
             GameIcon.mini(name="nut")
+      //- Nothing chosen: he sinks and comes back at the checkpoint (#105).
+      div.respawn(role="timer")
+        span {{ t('defeat.respawnIn', { n: Math.ceil(respawnLeft) }) }}
+        span.bar(aria-hidden="true")
+          span.fill(:style="{ width: (100 * respawnLeft / RESPAWN_WAIT) + '%' }")
     template(#footer)
       div.actions
         //- The Fortress: back to the last checkpoint, free, at full health.
@@ -46,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
@@ -58,6 +63,7 @@ import { profile, saveProfile } from '@/game/state/profile'
 import { claimReward, canOfferReward, adInFlight } from '@/use/useAdGate'
 import { resumeMusicAfterAd } from '@/use/useSound'
 import { platformPolicy } from '@/platforms/capabilities'
+import { RESPAWN_AFTER, DEFEAT_DELAY } from '@/game/sim/respawn'
 
 /**
  * "System down" — Blades' defeat choice, casual-friendly: reboot on the spot
@@ -107,9 +113,55 @@ const retreat = () => {
   flow.modal = ''
   currentMission()?.retreat()
 }
+
+// ─── The countdown to the respawn (#105) ─────────────────────────────────────
+// RESPAWN_AFTER from the fall; the modal opens DEFEAT_DELAY into it. Real
+// time (the world is frozen under the modal), held while an ad plays.
+const RESPAWN_WAIT = Math.max(1, RESPAWN_AFTER - DEFEAT_DELAY)
+const respawnLeft = ref(RESPAWN_WAIT)
+let timer: number | null = null
+let last = 0
+const stopTimer = () => { if (timer !== null) { clearInterval(timer); timer = null } }
+watch(open, (on) => {
+  stopTimer()
+  if (!on) return
+  respawnLeft.value = RESPAWN_WAIT
+  last = performance.now()
+  timer = window.setInterval(() => {
+    const now = performance.now()
+    const dt = (now - last) / 1000
+    last = now
+    if (adInFlight.value || document.hidden) return
+    respawnLeft.value = Math.max(0, respawnLeft.value - dt)
+    if (respawnLeft.value <= 0) {
+      stopTimer()
+      currentMission()?.respawnAtCheckpoint()
+    }
+  }, 100)
+}, { immediate: true })
+onUnmounted(stopTimer)
 </script>
 
 <style scoped lang="sass">
+.respawn
+  margin-top: 12px
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 6px
+  font-size: clamp(12px, 2.6vmin, 15px)
+  color: #9fd6ff
+.bar
+  width: min(70%, 260px)
+  height: 6px
+  border-radius: 3px
+  background: rgba(159, 214, 255, 0.2)
+  overflow: hidden
+.fill
+  display: block
+  height: 100%
+  background: #9fd6ff
+  transition: width 0.1s linear
 .defeat
   text-align: center
   color: #fff

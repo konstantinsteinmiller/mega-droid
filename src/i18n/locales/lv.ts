@@ -270,6 +270,7 @@ export default {
     'useTank': 'Pārstartēt ar remonta gelu ({n})',
     'rebootAd': 'Pārstartēt tagad',
     'retreat': 'Atkāpties uz laboratoriju',
+    'respawnIn': 'Atpakaļ kontrolpunktā pēc {n} s',
     'retryCheckpoint': 'Atsākt no kontrolpunkta'
   },
   'ending': {

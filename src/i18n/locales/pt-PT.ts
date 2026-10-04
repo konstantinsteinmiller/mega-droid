@@ -270,6 +270,7 @@ export default {
     'useTank': 'Reiniciar com Gel de Reparação ({n})',
     'rebootAd': 'Reiniciar já',
     'retreat': 'Recuar para o laboratório',
+    'respawnIn': 'De volta ao ponto de controlo em {n} s',
     'retryCheckpoint': 'Voltar ao ponto de controlo'
   },
   'ending': {

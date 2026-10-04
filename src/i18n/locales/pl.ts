@@ -270,6 +270,7 @@ export default {
     'useTank': 'Użyj żelu naprawczego ({n})',
     'rebootAd': 'Restartuj teraz',
     'retreat': 'Wróć do laboratorium',
+    'respawnIn': 'Powrót do punktu kontrolnego za {n} s',
     'retryCheckpoint': 'Wznów od punktu kontrolnego'
   },
   'banner': {

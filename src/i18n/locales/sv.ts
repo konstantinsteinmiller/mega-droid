@@ -270,6 +270,7 @@ export default {
     'useTank': 'Starta om med Reparationsgel ({n})',
     'rebootAd': 'Starta om nu',
     'retreat': 'Retirera till labbet',
+    'respawnIn': 'Tillbaka vid kontrollpunkten om {n} s',
     'retryCheckpoint': 'Försök igen från kontrollpunkt'
   },
   'ending': {

@@ -270,6 +270,7 @@ export default {
     'useTank': 'Reiniciar con xel ({n})',
     'rebootAd': 'Reiniciar xa',
     'retreat': 'Volver ao laboratorio',
+    'respawnIn': 'De volta no punto de control en {n} s',
     'retryCheckpoint': 'Reintentar dende o control'
   },
   'ending': {

@@ -270,6 +270,7 @@ export default {
     'useTank': 'Reboot dengan Gel Perbaikan ({n})',
     'rebootAd': 'Reboot sekarang',
     'retreat': 'Mundur ke lab',
+    'respawnIn': 'Kembali ke titik cek dalam {n} dtk',
     'retryCheckpoint': 'Ulangi dari checkpoint'
   },
   'banner': {

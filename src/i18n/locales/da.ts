@@ -270,6 +270,7 @@ export default {
     'useTank': 'Genstart med Reparationsgel ({n})',
     'rebootAd': 'Genstart nu',
     'retreat': 'Træk dig tilbage til laboratoriet',
+    'respawnIn': 'Tilbage ved checkpointet om {n} s',
     'retryCheckpoint': 'Prøv igen fra checkpoint'
   },
   'ending': {

@@ -270,6 +270,7 @@ export default {
     'useTank': 'Təmir Geli ilə yenidən başla ({n})',
     'rebootAd': 'İndi yenidən başla',
     'retreat': 'Laboratoriyaya geri çəkil',
+    'respawnIn': '{n} san. sonra yoxlama nöqtəsinə qayıdış',
     'retryCheckpoint': 'Yoxlama nöqtəsindən yenidən başla'
   },
   'ending': {

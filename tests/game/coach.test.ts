@@ -336,3 +336,27 @@ describe('the shield lesson', () => {
     expect(b?.urgent).toBeFalsy()
   })
 })
+
+// Playtest: on a desktop the mouse "fire" glyph stayed up after the charge
+// lesson and kept coming back in the shield and slide lessons, pointing at
+// the wrong button. The charge lesson masters shooting; a lesson hologram
+// (which shows its own input) hushes the coach.
+describe('after the charge lesson', () => {
+  it('master() retires the fire and charge glyphs for good', () => {
+    const c = new Coach()
+    for (const id of ['move', 'look'] as HintId[]) { c.use(id); c.use(id); c.use(id) }
+    expect(ids(run(c, 0, 1, { combat: true }))).toContain('fire')
+    c.master('fire')
+    c.master('charge')
+    expect(hintProgress('fire', 'mouse')).toBe(4)
+    // Gone (its check fades), and not wanted again while he keeps fighting.
+    expect(ids(run(c, 1, 6, { combat: true }))).not.toContain('fire')
+    expect(ids(run(c, 6, 6.5, { combat: true }))).not.toContain('charge')
+  })
+
+  it('a quiet coach never calls the fire glyph back in a fight', () => {
+    const c = new Coach()
+    for (const id of ['move', 'look'] as HintId[]) { c.use(id); c.use(id); c.use(id) }
+    expect(ids(run(c, 0, 20, { combat: true, quiet: true }))).not.toContain('fire')
+  })
+})

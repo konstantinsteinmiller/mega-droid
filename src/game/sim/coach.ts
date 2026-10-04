@@ -228,6 +228,21 @@ export class Coach {
     }
   }
 
+  /** A lesson taught it outright (the charge lesson: shooting and charging):
+   *  learned for good on this hand, its glyph retired at once. */
+  master(id: HintId): void {
+    const k = key(id, this.family)
+    if (hintProgress(id, this.family) < HINTS[id].goal) {
+      profile.tips[k] = HINTS[id].goal
+      saveProfile()
+    }
+    const s = this.st[id]
+    s.recall = 0
+    s.wantedUntil = -1
+    if (s.shown && s.doneAt < 0) s.doneAt = this.now
+    if (id === 'fire' || id === 'charge') this.lastFire = this.now
+  }
+
   /** Camera turned by `rad` (drag or keys): every 35° counts as one use. */
   looked(rad: number): void {
     this.lastLook = this.now

@@ -3495,6 +3495,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** A lesson done by the player's own hand: ticked off for good. */
   private trainDone(id: TrainId): void {
     if (!this.training.done.has(id)) markTip(`train:${id}`)
+    // The charge lesson has taught shooting and charging: their glyphs retire.
+    if (id === 'charge') {
+      this.coach.master('fire')
+      this.coach.master('charge')
+    }
     this.training.complete(id)
   }
 
@@ -3728,7 +3733,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.tanks = profile.inv.tanks
     c.hasWeapon = !!profile.hero.slots[0] || !!profile.hero.slots[1]
     c.canInteract = !!this.interact
-    c.quiet = this.lessons.focus(p.x, p.z, p.yaw)
+    // A lesson hologram shows its own input: the coach hushes all but the
+    // thumbs and survival (a fire glyph kept coming back in the shield and
+    // slide lessons, pointing at the wrong button).
+    c.quiet = this.lessons.focus(p.x, p.z, p.yaw) || hud.holoAct !== ''
     c.veteran = profile.world.tutorialDone
     c.gelLesson = this.lessons.gelLive || !!this.walk?.gelPending
     c.blockLesson = !!this.walk?.blockPending(p.x, p.z)

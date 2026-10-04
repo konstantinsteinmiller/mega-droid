@@ -342,10 +342,13 @@ describe('the special-weapon lesson (sleeping drones)', () => {
 
   it('is learned by using the weapon on them', () => {
     const { d, host, enemies } = intoQuietRoom()
+    // While it runs the mission keeps the Weapon Energy full (#125).
+    expect(d.weaponLive).toBe(true)
     d.weaponFired()
     for (const e of enemies) e.state = 'dead'
     run(d, host, 0.1)
     expect(lessonDone('weapon')).toBe(true)
+    expect(d.weaponLive).toBe(false)
   })
 
   it('shot down with the buster is not learned: it tries again later, then gives up', () => {

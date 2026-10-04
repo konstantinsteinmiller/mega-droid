@@ -2809,6 +2809,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     lt.hp01 = this.combat.hp / this.combat.maxHp
     lt.tanks = profile.inv.tanks
     this.lessons.update(dt, lt)
+    // A weapon lesson never runs the tank dry (#125: a player who missed into
+    // the walls could not finish it, and so never beam out).
+    if (this.lessons.weaponLive) this.combat.we = this.combat.maxWe
     this.walk?.update(lt.playing, hud.combat)
     this.stepTraining(lt.playing, dt)
     this.training.update(this.time, lt.playing)

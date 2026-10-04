@@ -877,6 +877,11 @@ export class LessonDirector {
     return this.crateRoom
   }
 
+  /** A special-weapon lesson is on (its Weapon Energy never runs dry, #125). */
+  get weaponLive(): boolean {
+    return this.live === 'weapon'
+  }
+
   /** A shooting lesson is on: the charge drone, the crate, the chest. */
   get shootLive(): boolean {
     return this.live === 'charge' || this.live === 'crate'

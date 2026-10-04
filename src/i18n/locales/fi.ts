@@ -175,6 +175,7 @@ export default {
     'title': 'Tavoite',
     'complete': 'Tavoite suoritettu',
     'beamOutHint': 'Teleporttaa pois, kun olet valmis.',
+    'learnWeapon': 'Opettele uusi aseesi: {weapon}',
     'tutorial': 'Kukista {boss}',
     'boss': 'Kukista {boss}',
     'kill': 'Tuhoa {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Hienoa! Taas yksi kaatui.',
+      'toLab': 'Mennään laboratorioon.',
+    },
     'boss': {
       'signalFirst': 'Ydinmestarin signaali. Se on… iso.',
     },

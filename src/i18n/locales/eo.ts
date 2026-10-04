@@ -175,6 +175,7 @@ export default {
     'title': 'Celo',
     'complete': 'Celo plenumita',
     'beamOutHint': 'Teleportiĝu, kiam vi pretas.',
+    'learnWeapon': 'Lernu vian novan armilon: {weapon}',
     'tutorial': 'Venku: {boss}',
     'boss': 'Venku: {boss}',
     'kill': 'Detruu {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Bonege! Ankoraŭ unu falis.',
+      'toLab': 'Ni iru al la laboratorio.',
+    },
     'boss': {
       'signalFirst': 'Signalo de Kerna Majstro. Ĝi estas… granda.',
     },

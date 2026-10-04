@@ -175,6 +175,7 @@ export default {
     'title': 'Cíl',
     'complete': 'Cíl splněn',
     'beamOutHint': 'Teleportuj se, až budeš připraven.',
+    'learnWeapon': 'Nauč se novou zbraň: {weapon}',
     'tutorial': 'Poraz bosse: {boss}',
     'boss': 'Poraz bosse: {boss}',
     'kill': 'Zničeno {n}/{total} {target}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Skvělá práce! Další je dole.',
+      'toLab': 'Jdeme do laboratoře.',
+    },
     'boss': {
       'signalFirst': 'Signál Mistra jádra. Je… velký.',
     },

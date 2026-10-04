@@ -175,6 +175,7 @@ export default {
     'title': 'Objetivo',
     'complete': 'Objetivo concluído',
     'beamOutHint': 'Teleporte-se quando estiver pronto.',
+    'learnWeapon': 'Aprenda sua nova arma: {weapon}',
     'tutorial': 'Derrote o {boss}',
     'boss': 'Derrote o {boss}',
     'kill': 'Destrua {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Bom trabalho! Menos um.',
+      'toLab': 'Vamos para o laboratório.',
+    },
     'boss': {
       'signalFirst': 'Sinal de Mestre do Núcleo. Ele é… grande.',
     },

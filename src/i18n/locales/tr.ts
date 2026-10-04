@@ -177,6 +177,7 @@ export default {
     'title': 'Hedef',
     'complete': 'Hedef tamamlandı',
     'beamOutHint': 'Hazır olduğunda ışınlan.',
+    'learnWeapon': 'Yeni silahını öğren: {weapon}',
     'tutorial': 'Patronu yen: {boss}',
     'boss': 'Patronu yen: {boss}',
     'kill': 'Yok edilen {target}: {n}/{total}',
@@ -615,6 +616,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Harika iş! Biri daha gitti.',
+      'toLab': 'Laboratuvara gidelim.',
+    },
     'boss': {
       'signalFirst': 'Çekirdek Ustası sinyali. Epey… büyük.',
     },

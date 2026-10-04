@@ -5,12 +5,14 @@
       :key="sceneUi.seq"
       :class="[sceneUi.speaker, sceneUi.place]"
     )
+      //- His face with his words (#112: Vex spoke with no face on screen).
+      img.face(v-if="sceneUi.speaker === 'vex' && vexFace" :src="vexFace" alt="" aria-hidden="true")
       span.who(v-if="sceneUi.speaker !== 'vex'") {{ t(`ending.speaker.${sceneUi.speaker}`) }}
       span.text {{ text }}
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { sceneUi, setSceneTextLookup } from '@/game/story/vexScene'
 
@@ -25,11 +27,28 @@ const fill = (params: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(params).map(([k, v]) => [k, t(v)]))
 const text = computed(() => (sceneUi.key ? t(sceneUi.key, fill(sceneUi.params)) : ''))
 
-onMounted(() => setSceneTextLookup((key, params) => t(key, fill(params))))
+/** Dr. Vex's red skull face, the same picture as his holograms (once). */
+const vexFace = ref('')
+onMounted(async () => {
+  setSceneTextLookup((key, params) => t(key, fill(params)))
+  try {
+    const { vexFaceTexture } = await import('@/game/models/street')
+    const img = vexFaceTexture().image as HTMLCanvasElement | undefined
+    vexFace.value = img?.toDataURL?.('image/png') ?? ''
+  } catch { vexFace.value = '' }
+})
 onUnmounted(() => setSceneTextLookup(null))
 </script>
 
 <style scoped lang="sass">
+.face
+  float: left
+  width: clamp(44px, 9vmin, 64px)
+  height: auto
+  margin: -4px 10px 0 -4px
+  border-radius: 10px
+  background: #1a0508
+  box-shadow: 0 0 10px rgba(255, 45, 63, 0.6)
 .scene-say
   position: absolute
   inset: 0

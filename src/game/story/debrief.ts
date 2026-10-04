@@ -1,10 +1,11 @@
 import {
   AdditiveBlending, Color, CylinderGeometry, DirectionalLight, Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial,
-  PerspectiveCamera, Scene, Vector3
+  PerspectiveCamera, Scene, Vector3, PlaneGeometry, DoubleSide
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
 import { buildDiorama, type Diorama } from '../models/diorama'
+import { vexFaceTexture } from '../models/street'
 import { buildPip, animatePip } from '../models/npc'
 import { buildBossRig, type BossId } from '../models/bosses'
 import { MASTER_COLOR } from '../data/signature'
@@ -65,6 +66,11 @@ export class DebriefMode implements GameMode {
   private readonly holoMat: MeshBasicMaterial
   private readonly holoBeam: Mesh
   private holoOn = 0
+  /** Dr. Vex's face over the Spire while his part plays (#112: he spoke
+   *  with no face on screen; the intro shows it the same way). */
+  private readonly vexMat: MeshBasicMaterial
+  private readonly vexHolo: Mesh
+  private vexOn = 0
   private readonly story: StoryScene
   private readonly freed: Set<SectorId>
   /** Where the camera is, and where it is going (eased). */
@@ -110,6 +116,14 @@ export class DebriefMode implements GameMode {
     this.holo.position.set(to.x, to.y + HOLO_LIFT, to.z)
     this.holo.visible = false
     s.add(this.holo)
+    this.vexMat = new MeshBasicMaterial({
+      map: vexFaceTexture(), transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false
+    })
+    this.vexHolo = new Mesh(new PlaneGeometry(6.4, 4), this.vexMat)
+    const tip = this.valley.spireTip
+    this.vexHolo.position.set(tip.x, tip.y + 3, tip.z)
+    this.vexHolo.visible = false
+    s.add(this.vexHolo)
     this.freed = new Set(SECTORS.filter(x => profile.world.bosses.includes(x.boss)).map(x => x.id))
     const beats = debriefBeats(p, (st) => () => this.setStage(st), opts.hello)
     prefetchScene(beats)
@@ -195,6 +209,15 @@ export class DebriefMode implements GameMode {
     v.animate(t)
     // The freed sector flares for its first seconds; the next target pulses red all along.
     v.setProgress(this.freed, t < 4.5 ? p.from : null, p.to, t)
+    // Vex's face: up for his part, a glitchy transmission like the intro's.
+    this.vexOn = Math.min(1, Math.max(0, this.vexOn + (this.stage === 'vex' ? dt * 2.5 : -dt * 3)))
+    this.vexHolo.visible = this.vexOn > 0.01
+    if (this.vexHolo.visible) {
+      const glitch = Math.random() < 0.06
+      this.vexMat.opacity = this.vexOn * (glitch ? 0.4 + Math.random() * 0.5 : 0.85 + Math.sin(t * 40) * 0.08)
+      this.vexHolo.scale.set(1 + (glitch ? (Math.random() - 0.5) * 0.3 : 0), Math.max(0.01, this.vexOn), 1)
+      this.vexHolo.lookAt(this.camera.position)
+    }
     const k = Math.min(1, dt * EASE)
     this.pos.lerp(this.toPos, k)
     this.look.lerp(this.toLook, k)

@@ -175,6 +175,7 @@ export default {
     'title': '목표',
     'complete': '목표 달성',
     'beamOutHint': '준비되면 귀환하세요.',
+    'learnWeapon': '새 무기를 익히세요: {weapon}',
     'tutorial': '{boss} 처치',
     'boss': '{boss} 처치',
     'kill': '{target} 파괴: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': '잘했어! 하나 더 쓰러뜨렸어.',
+      'toLab': '연구소로 가자.',
+    },
     'boss': {
       'signalFirst': '코어 마스터 신호. 이건… 크네.',
     },

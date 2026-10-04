@@ -10,6 +10,7 @@ import { buildChargedShot, type ChargedShotFx } from './chargedShot'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
 import type { TrainId } from '../sim/training'
 import { dashPose } from '../models/dash'
+import type { WeaponId } from '../data/weapons'
 
 /** What a hologram shows: a lesson's move, or the crate and the chest rooms'
  *  (shoot the crate with a charge, shoot the chest open). */
@@ -42,7 +43,7 @@ export const HOLO_LOOP: Readonly<Record<HoloId, number>> = { charge: 4.2, block:
 
 /** The moment each loop's input is down: [from, to) in loop seconds. */
 export const HOLO_PRESS: Readonly<Record<HoloId, readonly [number, number]>> = {
-  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0, 2.8], gel: [1, 1.2], weapon: [0.5, 0.7], crate: [0.6, 1.9], chest: [0.55, 0.7]
+  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0, 2.8], gel: [1, 1.2], weapon: [0.3, 0.8], crate: [0.6, 1.9], chest: [0.55, 0.7]
 }
 const ACT: Readonly<Record<HoloId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon', crate: 'fire', chest: 'fire' }
 
@@ -86,6 +87,7 @@ const span = (u: number, a: number, b: number): number => Math.min(1, Math.max(0
 /** The buster's muzzle in the right forearm's space (`models/hero.ts`). */
 const MUZZLE = new Vector3(0, -0.34, 0)
 const _m = new Vector3()
+const _look = new Vector3()
 
 /** Yaw that turns a rig (which faces +Z) toward +X. */
 const FACE_PX = Math.PI / 2
@@ -115,13 +117,23 @@ export class LessonHologram {
   private readonly chest: Group | null = null
   private readonly lid: Group | null = null
 
-  constructor(id: HoloId, opts: { weaponColor?: string } = {}) {
+  /** The weapon lesson's three drones, its shots, its hit halos (two rings
+   *  crossed at 90°, so the burst reads in 3D), Thunder Arc's bolts and Gale
+   *  Guard's leaves. */
+  private readonly weapon: WeaponId | null = null
+  private readonly drones: Rig[] = []
+  private readonly shots: Mesh[] = []
+  private readonly halos: Mesh[] = []
+  private readonly bolts: Mesh[] = []
+  private readonly leaves: Mesh[] = []
+
+  constructor(id: HoloId, opts: { weaponColor?: string; weapon?: WeaponId } = {}) {
     this.id = id
     this.mat = holoMaterial()
     this.fx = holoMaterial(id === 'weapon' ? opts.weaponColor ?? '#ffd84a' : id === 'slide' ? '#ff4a4a' : id === 'gel' ? '#8dff7a' : '#9ff4ff')
     this.flux = holoRig(buildHero(), this.mat)
     this.root.add(this.flux.root)
-    const kind = id === 'charge' || id === 'weapon' ? 'heli' : id === 'block' ? 'trooper' : id === 'slide' ? 'hopper' : null
+    const kind = id === 'charge' ? 'heli' : id === 'block' ? 'trooper' : id === 'slide' ? 'hopper' : null
     this.foe = kind ? holoRig(buildEnemyRig(kind), this.mat) : null
     if (this.foe) this.root.add(this.foe.root)
     this.shot = id === 'charge' || id === 'crate' ? buildChargedShot('charge2') : null
@@ -137,6 +149,36 @@ export class LessonHologram {
     this.ring.rotation.x = -Math.PI / 2
     this.ring.visible = false
     this.root.add(this.ring)
+    // The weapon lesson: three drones, as the real lesson places them.
+    if (id === 'weapon') {
+      this.weapon = opts.weapon ?? 'scrapBurst'
+      for (let k = 0; k < 3; k++) {
+        const d = holoRig(buildEnemyRig('heli'), this.mat)
+        this.drones.push(d)
+        this.root.add(d.root)
+        const s = new Mesh(new SphereGeometry(0.16, 12, 8), this.fx)
+        s.visible = false
+        this.shots.push(s)
+        this.root.add(s)
+        for (let r = 0; r < 2; r++) {
+          const h = new Mesh(new RingGeometry(0.55, 0.7, 32, 1), this.fx)
+          h.visible = false
+          this.halos.push(h)
+          this.root.add(h)
+        }
+        const b = new Mesh(new CylinderGeometry(0.05, 0.05, 1, 6, 1, true), this.fx)
+        b.visible = false
+        this.bolts.push(b)
+        this.root.add(b)
+      }
+      if (this.weapon === 'galeGuard') {
+        for (let k = 0; k < 4; k++) {
+          const l = new Mesh(new BoxGeometry(0.35, 0.06, 0.18), this.fx)
+          this.leaves.push(l)
+          this.root.add(l)
+        }
+      }
+    }
     // The crate: a box a charged shot breaks into a few chips.
     if (id === 'crate') {
       this.crate = new Mesh(new BoxGeometry(1, 1, 1), this.mat)
@@ -383,25 +425,157 @@ export class LessonHologram {
     this.ring.scale.setScalar(0.4 + 1.6 * span(u, 1.15, 1.8))
   }
 
+  /**
+   * The weapon lesson (#109): the weapon as it really fires, at three drones
+   * placed as the lesson places them — a fan, or a line down the lane for
+   * the Flame Wave and the Ice Lance. Each drone pops where its shot meets it
+   * (two crossed halos), and builds itself again for the next loop.
+   */
   private poseWeapon(u: number, t: number): void {
+    const w = this.weapon!
     this.stand(-2)
     animateHeroIdle(this.flux, t)
-    this.aim(smooth(span(u, 0.1, 0.45)))
-    const drone = this.foe!
-    const popped = u >= 1.1 && u < 2.6
-    drone.root.visible = !popped
-    drone.root.position.set(2.4, 1.3 + Math.sin(t * 2.2) * 0.12, 0)
-    drone.root.rotation.y = FACE_NX
-    drone.root.scale.setScalar(u >= 2.6 ? smooth(span(u, 2.6, 3)) : 1)
-    poseHeli(drone, t, 0, 1)
-    this.orb.visible = u >= 0.6 && u < 1.1
-    const k = span(u, 0.6, 1.1)
+    const guard = w === 'galeGuard'
+    this.aim(guard ? 0 : smooth(span(u, 0.1, 0.45)))
     const m = this.muzzle()
-    this.orb.position.set(m.x + k * (2.4 - m.x), m.y + k * (1.3 - m.y), m.z * (1 - k))
-    this.ring.visible = popped && u < 1.6
-    this.ring.position.set(2.4, 1.3, 0)
-    this.ring.rotation.set(0, 0, 0)
-    this.ring.scale.setScalar(0.3 + 1.5 * span(u, 1.1, 1.6))
+    const line = w === 'flameWave' || w === 'iceLance'
+    const low = w === 'flameWave' || w === 'bubbleLance' || w === 'galeGuard'
+    const dy = low ? 1.0 : 1.3
+    // Where each drone hovers, and when its shot reaches it (−1: never).
+    const at = (k: number): [number, number, number] => line ? [1.6 + k * 1.1, dy, 0] : [2.6, dy, (k - 1) * 1.3]
+    const hitAt = [-1, -1, -1]
+    for (const s of this.shots) s.visible = false
+    for (const b of this.bolts) b.visible = false
+    const fly = (s: Mesh, k: number, a: number, b: number, sx = 1, sy = 1, sz = 1, bend = 0): void => {
+      if (u < a || u >= b) return
+      const q = span(u, a, b)
+      const [x, y, z] = at(k)
+      s.visible = true
+      s.scale.set(sx, sy, sz)
+      s.position.set(m.x + q * (x - m.x), m.y + q * (y - m.y), m.z + q * (z - m.z) + Math.sin(q * Math.PI) * bend)
+    }
+    switch (w) {
+      case 'scrapBurst':
+        // Three scrap pellets fanned out, one at each drone, at once.
+        for (let k = 0; k < 3; k++) { fly(this.shots[k]!, k, 0.6, 1.0); hitAt[k] = 1.0 }
+        break
+      case 'droneSwarm':
+        // Three little drones swinging out and homing in, one each.
+        for (let k = 0; k < 3; k++) { fly(this.shots[k]!, k, 0.6, 1.3, 0.8, 0.8, 0.8, (k - 1) * 1.2); hitAt[k] = 1.3 }
+        break
+      case 'flameWave':
+      case 'bubbleLance': {
+        // A low wall of fire (a slow bubble) rolling down the lane, through
+        // everything in it.
+        const s = this.shots[0]!
+        const a = 0.6
+        const b = w === 'flameWave' ? 1.6 : 1.9
+        if (u >= a && u < b) {
+          const q = span(u, a, b)
+          s.visible = true
+          if (w === 'flameWave') s.scale.set(1.2, 2.2, 4.5)
+          else s.scale.setScalar(1.8 + Math.sin(t * 9) * 0.1)
+          s.position.set(m.x + q * (5.2 - m.x), w === 'flameWave' ? 0.45 : 0.7, 0)
+        }
+        for (let k = 0; k < 3; k++) {
+          const x = at(k)[0]
+          if (Math.abs(at(k)[2]) < 0.3) hitAt[k] = a + ((x - m.x) / (5.2 - m.x)) * (b - a)
+        }
+        break
+      }
+      case 'iceLance': {
+        // One fast lance, straight through the line.
+        const s = this.shots[0]!
+        if (u >= 0.6 && u < 0.95) {
+          const q = span(u, 0.6, 0.95)
+          s.visible = true
+          s.scale.set(3, 0.5, 0.5)
+          s.position.set(m.x + q * (5.2 - m.x), dy, 0)
+        }
+        for (let k = 0; k < 3; k++) hitAt[k] = 0.6 + ((at(k)[0] - m.x) / (5.2 - m.x)) * 0.35
+        break
+      }
+      case 'thunderArc': {
+        // A bolt from the cannon to the first drone, then jumping on.
+        const from: Array<[number, number, number]> = [[m.x, m.y, m.z], at(0), at(1)]
+        for (let k = 0; k < 3; k++) {
+          const t0 = 0.6 + k * 0.15
+          hitAt[k] = t0
+          const b = this.bolts[k]!
+          if (u >= t0 && u < t0 + 0.35) {
+            const [ax, ay, az] = from[k]!
+            const [bx, by, bz] = at(k)
+            const len = Math.hypot(bx - ax, by - ay, bz - az)
+            b.visible = true
+            b.position.set((ax + bx) / 2, (ay + by) / 2 + Math.sin(t * 60) * 0.05, (az + bz) / 2)
+            b.scale.set(1, len, 1)
+            b.lookAt(this.root.localToWorld(_look.set(bx, by, bz)))
+            b.rotateX(Math.PI / 2)
+          }
+        }
+        break
+      }
+      case 'magnetPull':
+      case 'drillBomb':
+      case 'neonBlade': {
+        // One shot at the middle drone: homing (the magnet pulls it in), a
+        // slow lob (the drill), a short slash (the blade).
+        const s = this.shots[0]!
+        if (w === 'drillBomb') {
+          if (u >= 0.6 && u < 1.3) {
+            const q = span(u, 0.6, 1.3)
+            const [x, y, z] = at(1)
+            s.visible = true
+            s.scale.setScalar(1.3)
+            s.position.set(m.x + q * (x - m.x), m.y + q * (y - m.y) + Math.sin(q * Math.PI) * 1.2, z)
+          }
+          hitAt[1] = 1.3
+        } else if (w === 'neonBlade') {
+          fly(s, 1, 0.6, 0.9, 0.4, 1.6, 2.2)
+          hitAt[1] = 0.9
+        } else {
+          fly(s, 1, 0.6, 1.1, 1, 1, 1, 0.6)
+          hitAt[1] = 1.4
+        }
+        break
+      }
+      case 'galeGuard':
+        // Leaves circle him; a drone that closes in is cut down by them.
+        hitAt[1] = 1.6
+        break
+    }
+    this.leaves.forEach((l, k) => {
+      const on = u >= 0.5 && u < 3.0
+      l.visible = on
+      const a = t * 4 + (k / this.leaves.length) * Math.PI * 2
+      l.position.set(-2 + Math.cos(a) * 1.1, 1.0 + Math.sin(t * 3 + k) * 0.1, Math.sin(a) * 1.1)
+      l.rotation.set(0, -a, 0.3)
+    })
+    for (let k = 0; k < 3; k++) {
+      const d = this.drones[k]!
+      let [x, y, z] = at(k)
+      // The magnet pulls its drone in before it pops; the gale's comes in.
+      if (w === 'magnetPull' && k === 1 && u >= 1.1 && u < 1.4) x -= span(u, 1.1, 1.4) * 1.6
+      if (w === 'galeGuard' && k === 1 && u >= 0.7 && u < 1.6) x -= smooth(span(u, 0.7, 1.6)) * 3.3
+      const hit = hitAt[k]!
+      const popped = hit >= 0 && u >= hit && u < 2.6
+      d.root.visible = !popped
+      d.root.position.set(x, y + Math.sin(t * 2.2 + k) * 0.1, z)
+      d.root.rotation.y = FACE_NX
+      d.root.scale.setScalar(hit >= 0 && u >= 2.6 ? smooth(span(u, 2.6, 3)) : 1)
+      poseHeli(d, t + k, 0, 1)
+      for (let r = 0; r < 2; r++) {
+        const h = this.halos[k * 2 + r]!
+        h.visible = popped && u < hit + 0.5
+        if (!h.visible) continue
+        h.position.set(x, y, z)
+        // Two rings crossed at 90°: the burst reads in 3D, not as a flat disc.
+        h.rotation.set(r ? Math.PI / 2 : 0, r ? 0 : Math.PI / 2, 0)
+        h.scale.setScalar(0.4 + 1.6 * span(u, hit, hit + 0.5))
+      }
+    }
+    this.orb.visible = false
+    this.ring.visible = false
   }
 
   /** The crate room: the charge on the muzzle, the charged shot, the crate

@@ -141,16 +141,39 @@ export const buildDiorama = (opts: { holo?: boolean; low?: boolean } = {}): Dior
   // ── The landmarks ──
   const moving: { coil: Group | null; ships: Group[] } = { coil: null, ships: [] }
   {
-    // Scrapyard: a yellow crane over junk heaps.
+    // Scrapyard (#112: it has to read as one from the air): a yellow gantry
+    // crane on two legs with a magnet on its cable, stacks of crushed cars
+    // in faded colours, junk heaps, a conveyor and a chain-link fence.
     const [x, z] = pos.scrapyard
     const c = SECTOR_GLOW.scrapyard
-    toon.push(xform(paint(rbox(0.35, 3.2, 0.35, 0.2), '#c9a227'), [x, 1.6, z]))
-    toon.push(xform(paint(rbox(3.2, 0.25, 0.3, 0.2), '#c9a227'), [x + 1.1, 3.2, z], [0, 0, 0.08]))
-    toon.push(xform(paint(cap(0.03, 1.1), '#9aa7bd'), [x + 2.4, 2.5, z]))
-    for (let k = 0; k < 3; k++) toon.push(xform(paint(rock(0.7, k + 11), '#5d5a52'), [x - 0.8 + k * 0.9, 0.2, z + 0.9 - k * 0.3], [0, k, 0], [1, 0.5, 1]))
-    lamp('scrapyard', c, 'scrapyard', xform(sph(0.14, 8, 6), [x + 2.6, 3.25, z]), x, z)
-    lamp('scrapyard', c, 'scrapyard', xform(sph(0.18, 8, 6), [x, 3.45, z]), x, z)
-    lamp('scrapyard', c, 'scrapyard', xform(torus(0.9, 0.05, 6, 20), [x, 0.08, z], [Math.PI / 2, 0, 0]), x, z)
+    const Y = '#c9a227'
+    for (const lx of [-1.3, 1.3]) {
+      toon.push(xform(paint(rbox(0.22, 3.0, 0.22, 0.2), Y), [x + lx, 1.5, z - 0.6]))
+      toon.push(xform(paint(rbox(0.22, 3.0, 0.22, 0.2), Y), [x + lx, 1.5, z + 0.6]))
+      toon.push(xform(paint(rbox(0.12, 0.12, 1.3, 0.2), Y), [x + lx, 2.2, z]))
+    }
+    toon.push(xform(paint(rbox(3.1, 0.3, 0.3, 0.2), Y), [x, 3.1, z - 0.6]))
+    toon.push(xform(paint(rbox(3.1, 0.3, 0.3, 0.2), Y), [x, 3.1, z + 0.6]))
+    toon.push(xform(paint(rbox(0.6, 0.35, 1.5, 0.2), '#3b4458'), [x + 0.5, 3.35, z]))
+    toon.push(xform(paint(cap(0.025, 1.2), '#9aa7bd'), [x + 0.5, 2.55, z]))
+    toon.push(xform(paint(rcyl(0.38, 0.14, 0.04, 14), '#4a4f5c'), [x + 0.5, 1.9, z]))
+    const cars = ['#7a4a3a', '#3e5a7a', '#6a6a52', '#5a3e6a', '#3e6a5a']
+    for (let k = 0; k < 9; k++) {
+      const sx2 = x - 1.0 + (k % 3) * 0.55
+      const sz2 = z + 1.6 + Math.floor(k / 3) * 0.05
+      const sy = 0.11 + Math.floor(k / 3) * 0.22
+      toon.push(xform(paint(rbox(0.5, 0.2, 0.32, 0.25, 4, 3), cars[k % cars.length]!), [sx2, sy, sz2], [0, (k % 2) * 0.12, 0]))
+    }
+    for (let k = 0; k < 4; k++) toon.push(xform(paint(rock(0.75, k + 11), k % 2 ? '#5d5a52' : '#6b5a44'), [x - 2.0 + k * 1.2, 0.18, z - 1.7 + (k % 2) * 0.4], [0, k, 0], [1.1, 0.5, 1]))
+    toon.push(xform(paint(rbox(2.2, 0.12, 0.35, 0.2), '#3b4458'), [x + 1.6, 0.42, z + 1.6], [0, 0.6, 0.18]))
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2
+      toon.push(xform(paint(rcyl(0.035, 0.55, 0.01, 5), '#8a93a6'), [x + Math.cos(a) * 2.7, 0.28, z + Math.sin(a) * 2.7]))
+    }
+    lamp('scrapyard', c, 'scrapyard', xform(sph(0.14, 8, 6), [x + 0.5, 3.6, z]), x, z)
+    lamp('scrapyard', c, 'scrapyard', xform(sph(0.12, 8, 6), [x - 1.3, 3.35, z - 0.6]), x, z)
+    lamp('scrapyard', c, 'scrapyard', xform(sph(0.12, 8, 6), [x + 1.3, 3.35, z + 0.6]), x, z)
+    lamp('scrapyard', c, 'scrapyard', xform(torus(2.7, 0.04, 6, 32), [x, 0.56, z], [Math.PI / 2, 0, 0]), x, z)
   }
   {
     // The Refinery: three chimneys with flame tips.
@@ -279,9 +302,36 @@ export const buildDiorama = (opts: { holo?: boolean; low?: boolean } = {}): Dior
     const z = Math.sin(a) * r
     if (avoid.some(([ax, az, ar]) => (x - ax) ** 2 + (z - az) ** 2 < ar * ar)) continue
     placed++
-    const h = 0.4 + cr() * cr() * 2.4
+    const h = 0.5 + cr() * cr() * 2.6
     const w = 0.3 + cr() * 0.4
-    toon.push(xform(paint(rbox(w, h, w, 0.25), cr() < 0.5 ? '#2c3566' : '#3a3f6e'), [x, h / 2, z], [0, cr() * 3, 0]))
+    const yaw = cr() * 3
+    const wall = cr() < 0.5 ? '#2c3566' : '#3a3f6e'
+    const trim = '#5a6478'
+    // Four kinds (#112: plain boxes looked cheap): a stepped setback tower
+    // with an antenna, a round tower with balcony rings and a dome, twin
+    // towers with a skybridge, a finned tower with an angled crown.
+    const kind = cr()
+    if (kind < 0.3) {
+      toon.push(xform(paint(rbox(w, h * 0.55, w, 0.15, 6, 4), wall), [x, h * 0.275, z], [0, yaw, 0]))
+      toon.push(xform(paint(rbox(w * 0.78, h * 0.3, w * 0.78, 0.15, 6, 4), wall), [x, h * 0.7, z], [0, yaw, 0]))
+      toon.push(xform(paint(rbox(w * 0.5, h * 0.18, w * 0.5, 0.2, 6, 4), trim), [x, h * 0.94, z], [0, yaw, 0]))
+      toon.push(xform(paint(cap(0.02, h * 0.3), '#9aa7bd'), [x, h * 1.18, z]))
+    } else if (kind < 0.55) {
+      toon.push(xform(paint(rcyl(w * 0.5, h, 0.08, 12, 1), wall), [x, h / 2, z]))
+      for (let k = 1; k <= Math.max(1, Math.floor(h / 0.7)); k++) toon.push(xform(paint(torus(w * 0.53, 0.025, 4, 14), trim), [x, (h * k) / (Math.floor(h / 0.7) + 1), z], [Math.PI / 2, 0, 0]))
+      toon.push(xform(paint(dome(w * 0.5, Math.PI / 2, 12, 5), trim), [x, h, z]))
+    } else if (kind < 0.75) {
+      const off = w * 0.42
+      const cx = Math.cos(yaw) * off
+      const cz = -Math.sin(yaw) * off
+      toon.push(xform(paint(rbox(w * 0.55, h, w * 0.55, 0.15, 6, 4), wall), [x - cx, h / 2, z - cz], [0, yaw, 0]))
+      toon.push(xform(paint(rbox(w * 0.55, h * 0.8, w * 0.55, 0.15, 6, 4), wall), [x + cx, h * 0.4, z + cz], [0, yaw, 0]))
+      toon.push(xform(paint(rbox(off * 2.2, 0.08, w * 0.22, 0.2, 3, 2), trim), [x, h * 0.62, z], [0, yaw, 0]))
+    } else {
+      toon.push(xform(paint(rbox(w * 0.85, h, w * 0.85, 0.15, 6, 4), wall), [x, h / 2, z], [0, yaw, 0]))
+      toon.push(xform(paint(rcone(w * 0.62, 0.04, h * 0.35, 0.05, 4), trim), [x, h + h * 0.175, z], [0, yaw + Math.PI / 4, 0]))
+      for (const s of [-1, 1]) toon.push(xform(paint(rbox(0.05, h * 0.8, w * 0.3, 0.2, 3, 2), trim), [x + Math.cos(yaw) * s * w * 0.46, h * 0.45, z - Math.sin(yaw) * s * w * 0.46], [0, yaw, 0]))
+    }
     // Nearest sector (its colour; the wave reads its distance)
     let best: SectorId = 'scrapyard'
     let bd = Infinity
@@ -293,10 +343,32 @@ export const buildDiorama = (opts: { holo?: boolean; low?: boolean } = {}): Dior
     const col = SECTOR_GLOW[best as Exclude<SectorId, 'fortress'>]
     // Split each sector's windows by distance, so the wave crosses a sector.
     const band = Math.floor(Math.hypot(x - sx, z - sz) / 4)
-    lamp(`city-${best}-${band}`, col, best, xform(rbox(w * 1.08, 0.12, w * 1.08, 0.2), [x, h * (0.55 + cr() * 0.3), z]), x, z)
-    if (h > 0.9) lamp(`city-${best}-${band}`, col, best, xform(rbox(w * 1.08, 0.08, w * 1.08, 0.2), [x, h * 0.3, z]), x, z)
-    if (h > 1.4) lamp(`city-${best}-${band}`, col, best, xform(sph(0.06, 6, 4), [x, h + 0.06, z]), x, z)
+    // Its windows: a band, vertical light strips proud of the two faces the
+    // camera sees most, and a beacon on the tall ones.
+    lamp(`city-${best}-${band}`, col, best, xform(rbox(w * 1.08, 0.08, w * 1.08, 0.2, 4, 2), [x, h * (0.5 + cr() * 0.25), z], [0, yaw, 0]), x, z)
+    if (h > 0.8) {
+      for (const s of [-0.22, 0.22]) {
+        const fx = Math.cos(yaw) * s * w + Math.sin(yaw) * w * 0.47
+        const fz = -Math.sin(yaw) * s * w + Math.cos(yaw) * w * 0.47
+        lamp(`city-${best}-${band}`, col, best, xform(rbox(0.035, h * 0.55, 0.06, 0.3, 3, 2), [x + fx, h * 0.38, z + fz], [0, yaw, 0]), x, z)
+      }
+    }
+    if (h > 1.4) lamp(`city-${best}-${band}`, col, best, xform(sph(0.06, 6, 4), [x, h * (kind < 0.3 ? 1.33 : 1.08) + 0.06, z]), x, z)
   }
+
+  // ── Avenues (#112): dark roads from the lab out to each sector, a lit
+  //    centre line, a ring road; raised off the floor, never on it ──
+  for (const s of SECTORS) {
+    const [px, pz] = pos[s.id]
+    const len = Math.hypot(px, pz) - 2.2
+    if (len <= 0.5) continue
+    const yaw = Math.atan2(px, pz)
+    const mx = (px / Math.hypot(px, pz)) * (2.2 + len / 2)
+    const mz = (pz / Math.hypot(px, pz)) * (2.2 + len / 2)
+    toon.push(xform(paint(rbox(0.5, 0.04, len, 0.3, 3, 2), '#141a33'), [mx, 0.03, mz], [0, yaw, 0]))
+    lamp('roads', '#7fb8ff', 'lab', xform(rbox(0.05, 0.02, len * 0.96, 0.3, 3, 2), [mx, 0.065, mz], [0, yaw, 0]), mx, mz)
+  }
+  toon.push(xform(paint(torus(DIORAMA_R * 0.55, 0.22, 3, 64), '#141a33'), [0, 0.03, 0], [Math.PI / 2, 0, 0], [1, 1, 0.18]))
 
   // ── The relay ring: a pylon by each sector, beams hopping between them ──
   const relays = SECTORS.map(s => {

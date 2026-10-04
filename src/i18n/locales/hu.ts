@@ -175,6 +175,7 @@ export default {
     'title': 'Feladat',
     'complete': 'Feladat teljesítve',
     'beamOutHint': 'Teleportálj ki, ha készen állsz.',
+    'learnWeapon': 'Tanuld meg az új fegyvered: {weapon}',
     'tutorial': 'Győzd le: {boss}',
     'boss': 'Győzd le: {boss}',
     'kill': 'Megsemmisítve, {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Szép munka! Egy újabb lent.',
+      'toLab': 'Irány a labor.',
+    },
     'boss': {
       'signalFirst': 'Magmester-jel. Ez… nagy.',
     },

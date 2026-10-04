@@ -1,4 +1,10 @@
 <template lang="pug">
+  //- While the film loads (#111): the logo, and Atlas's line in its bubble
+  //- (Atlas itself flies in the 3D loader, `story/debriefLoader.ts`).
+  div.loader-veil(v-if="loaderUi.on" aria-live="polite")
+    img.logo(src="/images/logo/logo_256x256.webp" :alt="t('gameName')")
+    Transition(name="card" mode="out-in")
+      div.say(v-if="loaderUi.line" :key="loaderUi.line") {{ t(loaderUi.line) }}
   //- The debrief after a story mission (#119), over the film
   //- (`story/debrief.ts`): Skip, the copied weapon's card, the next sector's
   //- card with its Master. The words are in the scene bubble (SceneBubble.vue).
@@ -27,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { loaderUi } from '@/game/story/debriefLoader'
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
@@ -64,6 +71,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <style scoped lang="sass">
+.loader-veil
+  position: absolute
+  inset: 0
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: space-between
+  padding: calc(env(safe-area-inset-top, 0px) + 6vh) 16px calc(env(safe-area-inset-bottom, 0px) + 10vh)
+  pointer-events: none
+  .logo
+    width: clamp(110px, 22vmin, 190px)
+    height: auto
+    filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35))
+  .say
+    max-width: min(86vw, 520px)
+    padding: 10px 16px
+    border-radius: 16px
+    background: #fff8e6
+    border: 3px solid #141a33
+    color: #141a33
+    font-family: var(--font-ui)
+    font-size: clamp(15px, 3.2vmin, 20px)
+    text-align: center
+    box-shadow: 0 0 0 2px #7ff4ff
 .debrief
   position: absolute
   inset: 0

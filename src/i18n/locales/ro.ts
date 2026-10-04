@@ -175,6 +175,7 @@ export default {
     'title': 'Obiectiv',
     'complete': 'Obiectiv îndeplinit',
     'beamOutHint': 'Teleportează-te când ești gata.',
+    'learnWeapon': 'Învață noua armă: {weapon}',
     'tutorial': 'Învinge-l pe {boss}',
     'boss': 'Învinge-l pe {boss}',
     'kill': 'Distruge: {n}/{total} {target}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Bravo! Încă unul doborât.',
+      'toLab': 'Hai la laborator.',
+    },
     'boss': {
       'signalFirst': 'Semnal de Maestru al Nucleului. E… mare.',
     },

@@ -193,6 +193,7 @@ export default {
     'title': 'Objective',
     'complete': 'Objective complete',
     'beamOutHint': 'Beam out when you are ready.',
+    'learnWeapon': 'Learn your new {weapon}',
     'tutorial': 'Defeat {boss}',
     'boss': 'Defeat {boss}',
     'kill': 'Destroy {target}: {n}/{total}',
@@ -706,6 +707,11 @@ export default {
   // short line each (they sit in a small speech bubble for 2–3 s). Each key is
   // also the name of its optional voice file (voice-todo.md).
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Great job! Another one down.',
+      'toLab': "Let's go to the lab.",
+    },
     'boss': {
       'signalFirst': "Core Master signal. It's… big.",
     },

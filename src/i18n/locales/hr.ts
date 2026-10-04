@@ -175,6 +175,7 @@ export default {
     'title': 'Cilj',
     'complete': 'Cilj ostvaren',
     'beamOutHint': 'Teleportiraj se kad budeš spreman.',
+    'learnWeapon': 'Nauči novo oružje: {weapon}',
     'tutorial': 'Pobijedi bossa: {boss}',
     'boss': 'Pobijedi bossa: {boss}',
     'kill': 'Uništeno {n}/{total} {target}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Odlično! Još jedan je pao.',
+      'toLab': 'Idemo u laboratorij.',
+    },
     'boss': {
       'signalFirst': 'Signal Majstora jezgre. On je… velik.',
     },

@@ -175,6 +175,7 @@ export default {
     'title': 'Mål',
     'complete': 'Mål fullført',
     'beamOutHint': 'Teleporter ut når du er klar.',
+    'learnWeapon': 'Lær det nye våpenet ditt: {weapon}',
     'tutorial': 'Beseir {boss}',
     'boss': 'Beseir {boss}',
     'kill': 'Ødelegg {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Godt jobbet! Enda en nede.',
+      'toLab': 'Vi drar til laboratoriet.',
+    },
     'boss': {
       'signalFirst': 'Kjernemester-signal. Den er… stor.',
     },

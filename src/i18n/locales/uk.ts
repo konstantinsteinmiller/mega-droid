@@ -175,6 +175,7 @@ export default {
     'title': 'Ціль',
     'complete': 'Ціль виконано',
     'beamOutHint': 'Телепортуйтеся, коли будете готові.',
+    'learnWeapon': 'Опануй нову зброю: {weapon}',
     'tutorial': 'Здолайте боса: {boss}',
     'boss': 'Здолайте боса: {boss}',
     'kill': 'Знищено {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Чудово! Ще один готовий.',
+      'toLab': 'Повертаймося до лабораторії.',
+    },
     'boss': {
       'signalFirst': 'Сигнал Майстра ядра. Він… великий.',
     },

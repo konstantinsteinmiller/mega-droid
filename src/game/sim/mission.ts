@@ -570,7 +570,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private exitWeapon: WeaponId | null = null
   private exitLit = false
   private exitStarted = false
+  private exitShut = false
   private armHolo: ArmHologram | null = null
+  /** Where the chevrons lead after the boss (#110), reused. */
+  private readonly exitAim = { x: 0, z: 0, kind: 'objective' as const }
   /** Where the lesson's subject is (the target arrow, the slide freeze's view);
    *  set by whoever runs the room (the walkthrough, a weapon lesson). */
   trainSpot: { x: number; y: number; z: number } | null = null
@@ -1725,6 +1728,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   onObjectiveDone(): void {
     // Vex is down, but the Grand Master is coming: the objective waits for it.
     if (this.finale && this.finale.state !== 'done') return
+    // A Master's copied weapon still to learn: not done yet (#110: Atlas said
+    // "call the drone" over the fallen boss). The pedestal finishes it.
+    if (this.weaponOwed) return
     hud.objectiveDone = true
     pushHud({ t: 'toast', key: 'mission.objectiveDone', color: '#8dff7a' })
     pushHud({ t: 'flash', color: '#8dff7a', strength: 0.3 })
@@ -2402,7 +2408,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * does so for the whole cutscene. Once per mission.
    */
   beamOut(): void {
-    if (hud.phase !== 'play' || !this.objects.objective.done || this.exit.active) return
+    if (hud.phase !== 'play' || !this.objects.objective.done || this.exit.active || this.weaponOwed) return
     // Not while the Grand Master stands (or before it has come).
     if (this.finale && this.finale.state !== 'done') return
     hud.phase = 'beamOut'
@@ -3126,7 +3132,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const cz = (r.z0 + r.h / 2) * CELL
     const along = r.w >= r.h ? [1, 0] : [0, 1]
     const s = d && (d.x - cx) * along[0]! + (d.z - cz) * along[1]! < 0 ? -1 : 1
-    this.addHolo('weapon', beam.room, cx - along[0]! * s * 0.5, cz - along[1]! * s * 0.5, Math.atan2(-along[1]! * s, along[0]! * s), WEAPONS[id].color)
+    this.addHolo('weapon', beam.room, cx - along[0]! * s * 0.5, cz - along[1]! * s * 0.5, Math.atan2(-along[1]! * s, along[0]! * s), WEAPONS[id].color, id)
   }
 
   /** Per step while a beam lesson is owed: the drones come once Flux moves
@@ -3266,8 +3272,35 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const l = Math.hypot(cx - d.x, cz - d.z) || 1
     const ux = (cx - d.x) / l
     const uz = (cz - d.z) / l
-    this.addHolo('weapon', ex.room, cx - uz * 2.4 + ux * 0.5, cz + ux * 2.4 + uz * 0.5, Math.atan2(-uz, ux), w.color)
+    this.addHolo('weapon', ex.room, cx - uz * 2.4 + ux * 0.5, cz + ux * 2.4 + uz * 0.5, Math.atan2(-uz, ux), w.color, w.id)
     if (profile.tips[`train:weapon:${w.id}`]) this.lightExit()
+  }
+
+  /** The boss is down and its weapon still to learn in the room behind the
+   *  arena: no beam-out (B, the button, the pedestal) until it is (#110). */
+  get weaponOwed(): boolean {
+    return !!this.exitWeapon && !this.exitLit && !!this.exitPad
+  }
+
+  /** Where the chevrons lead after the boss: into the lesson room while its
+   *  weapon is owed, then onto the lit pedestal. Null otherwise. */
+  private exitGoal(): { x: number; z: number; kind: 'objective' } | null {
+    const ex = this.map?.exit
+    const pad = this.exitPad
+    if (!ex || !pad || !this.exitWeapon) return null
+    const a = this.exitAim
+    if (this.exitLit) {
+      a.x = pad.root.position.x
+      a.z = pad.root.position.z
+      return a
+    }
+    if (roomAt(this.map, this.player.x, this.player.z) === ex.room) return null
+    const d = this.map.doors[ex.door]!
+    const di = d.axis === 'x' ? d.dir : 0
+    const dj = d.axis === 'z' ? d.dir : 0
+    a.x = cellCenter(d.i + di * 2)
+    a.z = cellCenter(d.j + dj * 2)
+    return a
   }
 
   /** The room a weapon lesson runs in now, or -1. */
@@ -3280,7 +3313,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The lesson is done (or was learned before): the pedestal lights up. */
   private lightExit(): void {
     if (this.exitLit || !this.exitPad) return
+    const owed = this.weaponOwed
     this.exitLit = true
+    // The weapon learned: now the objective is done (it waited, #110).
+    if (owed && this.objects.objective.done) this.onObjectiveDone()
     const at = this.exitPad.root.position
     this.fx.riseRing(at.x, 0.2, at.z, PAL.glowCyan, 1.3, 26)
     this.sfx('beamIn', at.x, at.z)
@@ -3304,6 +3340,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const id = this.exitWeapon
     if (!id || !playing) return
     const tr = this.training
+    // In: the door shuts behind him (the way on is the pedestal).
+    if (!this.exitShut && roomAt(this.map, p.x, p.z) === ex.room) {
+      const d = this.doors[ex.door]
+      if (d && Math.hypot(p.x - d.x, p.z - d.z) > CELL * 1.6) {
+        this.exitShut = true
+        this.shutDoor(ex.door)
+      }
+    }
     if (!this.exitStarted && roomAt(this.map, p.x, p.z) === ex.room) {
       this.exitStarted = true
       if (!this.exitLit) {
@@ -3535,8 +3579,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
-  private addHolo(id: HoloId, room: number, x: number, z: number, yaw: number, weaponColor?: string): void {
-    const holo = new LessonHologram(id, { weaponColor })
+  private addHolo(id: HoloId, room: number, x: number, z: number, yaw: number, weaponColor?: string, weapon?: WeaponId): void {
+    const holo = new LessonHologram(id, { weaponColor, weapon })
     holo.place(this.scene, x, Math.max(0, floorAt(this.nav, x, z)), z, yaw)
     this.holos.push({ holo, room, x, z })
   }
@@ -3798,13 +3842,18 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const p = this.player
     const ti = this.trailIn
     const walk = this.walk?.active ? this.walk : null
+    const after = this.exitGoal()
     ti.px = p.x
     ti.pz = p.z
     ti.time = this.time
     ti.yaw = p.yaw
     // The chevrons pulse in the first two missions, while they are new.
     ti.pulse = !!this.setup.tutorial || profile.world.bosses.length <= 1
-    if (walk) {
+    if (after) {
+      // After the boss (#110): to the lesson room, then the pedestal.
+      ti.enabled = playing && !this.fighting
+      ti.target = ti.enabled ? after : null
+    } else if (walk) {
       // Not before the coach's first glyph is learned: on a phone the first
       // chevrons lay across the stick's ∞ finger, and the first goal (the
       // drone) hovers in plain view in front of the pad anyway.
@@ -3819,7 +3868,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ti.target = ti.enabled ? this.objects.target(p.x, p.z, this.enemies) : null
     }
     this.trail.update(dt, ti)
-    this.updateLocator(dt, playing, ti.enabled && !walk ? ti.target : undefined)
+    this.updateLocator(dt, playing, ti.enabled && (!walk || after) ? ti.target : undefined)
   }
 
   /** Feed the control coach what is happening right now (see `sim/coach.ts`). */
@@ -4777,8 +4826,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       n: ob.progress, total: ob.count,
       target: this.quest?.target ? (ob.template === 'kill' ? `enemyPlural.${this.quest.target}` : `enemy.${this.quest.target}`) : ''
     }
-    // Vex down is not the end while the Grand Master still stands.
-    hud.objectiveDone = ob.done && (!this.finale || this.finale.state === 'done')
+    // Vex down is not the end while the Grand Master still stands; a Master
+    // down is not either while its copied weapon is still to learn (#110):
+    // the objective is the lesson room behind the arena.
+    hud.objectiveDone = ob.done && (!this.finale || this.finale.state === 'done') && !this.weaponOwed
+    if (ob.done && this.weaponOwed) {
+      hud.objectiveKey = 'objective.learnWeapon'
+      hud.objectiveParams = { weapon: `weapon.${this.exitWeapon}.name` }
+    }
     const it = this.interact
     hud.interactKey = !it ? '' : it.kind === 'chest' ? 'interact.chest' : it.kind === 'npc' ? 'interact.rescue' : 'interact.bossDoor'
     const p = this.player

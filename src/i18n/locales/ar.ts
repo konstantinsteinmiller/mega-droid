@@ -175,6 +175,7 @@ export default {
     'title': 'الهدف',
     'complete': 'اكتمل الهدف',
     'beamOutHint': 'عُد بالنقل الآني متى كنت مستعداً.',
+    'learnWeapon': 'تعلّم سلاحك الجديد {weapon}',
     'tutorial': 'اهزم {boss}',
     'boss': 'اهزم {boss}',
     'kill': 'دمّر {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'عمل رائع! سقط واحد آخر.',
+      'toLab': 'هيا إلى المختبر.',
+    },
     'boss': {
       'signalFirst': 'إشارة سيد نواة. إنه… كبير.',
     },

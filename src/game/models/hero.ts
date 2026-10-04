@@ -486,8 +486,11 @@ export const buildHero = (c: HeroColors = DEFAULT_HERO_COLORS): Rig => {
       const k = (v.y + 1) / 2 // root → tip
       v.set(v.x * 0.016 * (1 - 0.5 * k), k * L, v.z * 0.036 * (1 - 0.6 * k) - k * k * SW)
     }, 12, 12)
-    // The bead rides the blade's own transform, so it stays on the tip
-    const place = (g: BufferGeometry): BufferGeometry => xform(g, [at.x, at.y, at.z], [-0.6, 0, 0.42])
+    // The bead rides the blade's own transform, so it stays on the tip. Built
+    // on the other side (x and the tilt mirrored): the whole model is mirrored
+    // once at the end (#113), which puts the blade back where the logo and
+    // the cover art have it.
+    const place = (g: BufferGeometry): BufferGeometry => xform(g, [-at.x, at.y, at.z], [-0.6, 0, -0.42])
     b.part('head', place(blade), c.main)
     b.part('head', place(xform(sph(0.017, 8, 6), [0, L + 0.008, -SW - 0.004])), HERO_EYE, { glow: true, outline: false })
   }
@@ -556,7 +559,19 @@ export const buildHero = (c: HeroColors = DEFAULT_HERO_COLORS): Rig => {
     }, 20, 8), deep, { p: [s * 0.002, -0.336, 0.045] })
   })
 
-  return b.build({ outline: 0.014, height: 1.52 })
+  const rig = b.build({ outline: 0.014, height: 1.52 })
+  // The rig is authored with its "R" bones at +X, which on a body facing +Z
+  // is his LEFT: the 3D Flux carried the buster on his left arm while the
+  // first-person view and the cover art have it on the right (#113). Mirror
+  // the whole model once, here, inside its root: every bone keeps its name
+  // and its pose code, and the buster hangs on his right arm everywhere the
+  // body is drawn (the lab, the exit, the intro, the holograms). three.js
+  // flips the face culling for the mirrored transform itself.
+  const mirror = new Group()
+  mirror.scale.x = -1
+  for (const child of [...rig.root.children]) mirror.add(child)
+  rig.root.add(mirror)
+  return rig
 }
 
 /** Idle breathing + gentle sway. `t` in seconds. */

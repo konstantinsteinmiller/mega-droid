@@ -175,6 +175,7 @@ export default {
     'title': '目標',
     'complete': '目標完成',
     'beamOutHint': '準備好後即可傳送撤離。',
+    'learnWeapon': '學會你的新武器：{weapon}',
     'tutorial': '擊敗{boss}',
     'boss': '擊敗{boss}',
     'kill': '摧毀{target}：{n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': '幹得好！又解決一個。',
+      'toLab': '我們回實驗室吧。',
+    },
     'boss': {
       'signalFirst': '核心大師訊號。它…很大。',
     },

@@ -175,6 +175,7 @@ export default {
     'title': 'Mērķis',
     'complete': 'Mērķis sasniegts',
     'beamOutHint': 'Teleportējies, kad esi gatavs.',
+    'learnWeapon': 'Apgūsti jauno ieroci: {weapon}',
     'tutorial': 'Uzveic bosu: {boss}',
     'boss': 'Uzveic bosu: {boss}',
     'kill': 'Iznīcini {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Lieliski! Vēl viens kritis.',
+      'toLab': 'Ejam uz laboratoriju.',
+    },
     'boss': {
       'signalFirst': 'Kodola meistara signāls. Tas ir… liels.',
     },

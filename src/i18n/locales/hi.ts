@@ -175,6 +175,7 @@ export default {
     'title': 'लक्ष्य',
     'complete': 'लक्ष्य पूरा',
     'beamOutHint': 'तैयार हों तो बीम से लौटें।',
+    'learnWeapon': 'अपना नया हथियार सीखें: {weapon}',
     'tutorial': '{boss} को हराएँ',
     'boss': '{boss} को हराएँ',
     'kill': '{target} नष्ट करें: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'बहुत बढ़िया! एक और गिरा।',
+      'toLab': 'चलो लैब चलते हैं।',
+    },
     'boss': {
       'signalFirst': 'कोर मास्टर का सिग्नल। यह… बड़ा है।',
     },

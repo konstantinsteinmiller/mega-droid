@@ -16,14 +16,14 @@ itself, so a new line shows up here as missing until it is voiced.
 
 | Who | Lines | EN voiced | DE voiced |
 | --- | --- | --- | --- |
-| Atlas | 207 | 206 | 204 |
+| Atlas | 209 | 206 | 204 |
 | Vex | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 |
 | Pip | 52 | 51 | 52 |
-| **All** | **339** | **337** | **336** |
+| **All** | **341** | **337** | **336** |
 
-## Missing (5)
+## Missing (7)
 
 | File | Who | Plays when | English | German | EN | DE |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -32,8 +32,10 @@ itself, so a new line shows up here as missing until it is voiced.
 | `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | elevenlabs | **missing** |
 | `atlas_scan_volt` | Atlas | The first volt-coated machine | Volt-coated. It shrugs off volt. | Voltbeschichtet. Volt prallt ab. | **missing** | elevenlabs |
 | `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | **missing** | elevenlabs |
+| `atlas_debrief_greatJob` | Atlas | A Atlas line with no notes yet (atlas.debrief.greatJob) | Great job! Another one down. | Gute Arbeit! Wieder einer erledigt. | **missing** | **missing** |
+| `atlas_debrief_toLab` | Atlas | A Atlas line with no notes yet (atlas.debrief.toLab) | Let's go to the lab. | Ab ins Labor. | **missing** | **missing** |
 
-## Every line (339)
+## Every line (341)
 
 | File | Who | Plays when | English | German | EN | DE |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -376,3 +378,5 @@ itself, so a new line shows up here as missing until it is voiced.
 | `flux_fumble_4` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Error… wheee! | Fehler… juhuu! | elevenlabs | elevenlabs |
 | `flux_fumble_5` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Butter circuits! | Butter im Schaltkreis! | elevenlabs | elevenlabs |
 | `flux_fumble_6` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Wobble mode ON! | Wackelmodus AN! | elevenlabs | elevenlabs |
+| `atlas_debrief_greatJob` | Atlas | A Atlas line with no notes yet (atlas.debrief.greatJob) | Great job! Another one down. | Gute Arbeit! Wieder einer erledigt. | **missing** | **missing** |
+| `atlas_debrief_toLab` | Atlas | A Atlas line with no notes yet (atlas.debrief.toLab) | Let's go to the lab. | Ab ins Labor. | **missing** | **missing** |

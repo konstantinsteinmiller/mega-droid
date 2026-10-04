@@ -175,6 +175,7 @@ export default {
     'title': 'Mục tiêu',
     'complete': 'Hoàn thành mục tiêu',
     'beamOutHint': 'Dịch chuyển về khi bạn sẵn sàng.',
+    'learnWeapon': 'Học vũ khí mới: {weapon}',
     'tutorial': 'Đánh bại {boss}',
     'boss': 'Đánh bại {boss}',
     'kill': 'Phá hủy {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Làm tốt lắm! Thêm một tên nữa.',
+      'toLab': 'Về phòng thí nghiệm thôi.',
+    },
     'boss': {
       'signalFirst': 'Tín hiệu Chúa Tể Lõi. Nó… to đấy.',
     },

@@ -175,6 +175,7 @@ export default {
     'title': 'Cel',
     'complete': 'Cel osiągnięty',
     'beamOutHint': 'Teleportuj się, kiedy zechcesz.',
+    'learnWeapon': 'Naucz się nowej broni: {weapon}',
     'tutorial': 'Pokonaj bossa: {boss}',
     'boss': 'Pokonaj bossa: {boss}',
     'kill': 'Zniszcz {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Świetna robota! Kolejny padł.',
+      'toLab': 'Idziemy do laboratorium.',
+    },
     'boss': {
       'signalFirst': 'Sygnał Mistrza Rdzenia. Jest… duży.',
     },

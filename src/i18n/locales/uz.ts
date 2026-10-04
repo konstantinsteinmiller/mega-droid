@@ -175,6 +175,7 @@ export default {
     'title': 'Maqsad',
     'complete': 'Maqsad bajarildi',
     'beamOutHint': 'Tayyor boʻlganingizda teleport qiling.',
+    'learnWeapon': "Yangi qurolingni o'rgan: {weapon}",
     'tutorial': 'Asosiy dushmanni yenging: {boss}',
     'boss': 'Asosiy dushmanni yenging: {boss}',
     'kill': '{target}: {n}/{total} yoʻq qilindi',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': "Zo'r ish! Yana biri yiqildi.",
+      'toLab': 'Laboratoriyaga boramiz.',
+    },
     'boss': {
       'signalFirst': 'Yadro ustasi signali. U… katta.',
     },

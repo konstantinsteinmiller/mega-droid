@@ -82,7 +82,7 @@
       button.act.weapon(
         v-if="w.id"
         type="button"
-        :class="[`w${i}`, { off: !w.ready, lesson: hud.lesson?.id === 'weapon' && !hud.lesson.done && hud.lesson.slot === i + 1 }]"
+        :class="[`w${i}`, { off: !w.ready, lesson: hud.lesson?.id === 'weapon' && !hud.lesson.done && hud.lesson.slot === i + 1 }, i === 0 ? demoClass('weapon') : {}]"
         :style="{ '--wc': w.color }"
         :data-lesson="`weapon-${i + 1}`"
         :aria-label="t(`weapon.${w.id}.name`)"
@@ -93,6 +93,9 @@
         span.w-cost {{ w.cost }}
         KeyCap.kc(v-if="desk" :code="`Digit${i + 1}`")
         CoachRing(v-if="i === 0" :hint="touchHint('weapon')")
+        //- The weapon hologram presses this one (#109): a finger on it, in step.
+        span.demo-finger(v-if="i === 0 && demoOn('weapon')" aria-hidden="true")
+          InputGlyph(kind="finger" mode="tap")
     //- The borrowed weapon (a capsule's, this mission only): its colour, a
     //- horseshoe of pips for the charges left, no energy cost. It pops in on
     //- the grant and pops out when its last charge is spent.

@@ -175,6 +175,7 @@ export default {
     'title': 'Tikslas',
     'complete': 'Tikslas įvykdytas',
     'beamOutHint': 'Teleportuokis, kai būsi pasiruošęs.',
+    'learnWeapon': 'Išmok naują ginklą: {weapon}',
     'tutorial': 'Nugalėk: {boss}',
     'boss': 'Nugalėk: {boss}',
     'kill': 'Sunaikink {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Puiku! Dar vienas nugalėtas.',
+      'toLab': 'Einam į laboratoriją.',
+    },
     'boss': {
       'signalFirst': 'Šerdies meistro signalas. Jis… didelis.',
     },

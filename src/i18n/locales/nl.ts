@@ -175,6 +175,7 @@ export default {
     'title': 'Doel',
     'complete': 'Doel voltooid',
     'beamOutHint': 'Teleporteer weg zodra je klaar bent.',
+    'learnWeapon': 'Leer je nieuwe wapen: {weapon}',
     'tutorial': 'Versla {boss}',
     'boss': 'Versla {boss}',
     'kill': 'Vernietig {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Goed gedaan! Weer een minder.',
+      'toLab': 'Op naar het lab.',
+    },
     'boss': {
       'signalFirst': 'Kernmeestersignaal. Hij is… groot.',
     },

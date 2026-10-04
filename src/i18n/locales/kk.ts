@@ -175,6 +175,7 @@ export default {
     'title': 'Мақсат',
     'complete': 'Мақсат орындалды',
     'beamOutHint': 'Дайын болғанда телепортталыңыз.',
+    'learnWeapon': 'Жаңа қаруыңды үйрен: {weapon}',
     'tutorial': 'Басты жауды жеңіңіз: {boss}',
     'boss': 'Басты жауды жеңіңіз: {boss}',
     'kill': '{target} жою: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Жарайсың! Тағы біреуі құлады.',
+      'toLab': 'Зертханаға барайық.',
+    },
     'boss': {
       'signalFirst': 'Ядро шеберінің сигналы. Ол… үлкен.',
     },

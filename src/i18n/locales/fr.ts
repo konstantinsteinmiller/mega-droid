@@ -175,6 +175,7 @@ export default {
     'title': 'Objectif',
     'complete': 'Objectif rempli',
     'beamOutHint': 'Téléporte-toi quand tu es prêt.',
+    'learnWeapon': 'Apprends ta nouvelle arme : {weapon}',
     'tutorial': 'Bats {boss}',
     'boss': 'Bats {boss}',
     'kill': 'Détruis des {target} : {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Bravo ! Encore un de moins.',
+      'toLab': 'Allons au labo.',
+    },
     'boss': {
       'signalFirst': "Signal d'un Maître du Noyau. Il est… grand.",
     },

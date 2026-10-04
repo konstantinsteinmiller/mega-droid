@@ -175,6 +175,7 @@ export default {
     'title': 'Ziel',
     'complete': 'Ziel erfüllt',
     'beamOutHint': 'Beam dich raus, wenn du bereit bist.',
+    'learnWeapon': 'Lerne deine neue Waffe: {weapon}',
     'tutorial': 'Besiege {boss}',
     'boss': 'Besiege {boss}',
     'kill': 'Zerstöre {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Gute Arbeit! Wieder einer erledigt.',
+      'toLab': 'Ab ins Labor.',
+    },
     'boss': {
       'signalFirst': 'Kernmeister-Signal. Er ist… groß.',
     },

@@ -175,6 +175,7 @@ export default {
     'title': 'Objectiu',
     'complete': 'Objectiu complert',
     'beamOutHint': 'Teletransporta\'t quan estiguis a punt.',
+    'learnWeapon': 'Aprèn la nova arma: {weapon}',
     'tutorial': 'Derrota {boss}',
     'boss': 'Derrota {boss}',
     'kill': 'Destrueix {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Molt bé! Un altre a terra.',
+      'toLab': 'Anem al laboratori.',
+    },
     'boss': {
       'signalFirst': 'Senyal de Mestre del Nucli. És… gros.',
     },

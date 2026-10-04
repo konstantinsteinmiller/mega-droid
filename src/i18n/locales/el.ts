@@ -175,6 +175,7 @@ export default {
     'title': 'Στόχος',
     'complete': 'Ο στόχος ολοκληρώθηκε',
     'beamOutHint': 'Τηλεμεταφέρσου όταν είσαι έτοιμος.',
+    'learnWeapon': 'Μάθε το νέο σου όπλο: {weapon}',
     'tutorial': 'Νίκησε: {boss}',
     'boss': 'Νίκησε: {boss}',
     'kill': 'Καταστροφή – {target}: {n}/{total}',
@@ -637,6 +638,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Μπράβο! Έπεσε άλλος ένας.',
+      'toLab': 'Πάμε στο εργαστήριο.',
+    },
     'boss': {
       'signalFirst': 'Σήμα Μάστορα Πυρήνα. Είναι… μεγάλος.',
     },

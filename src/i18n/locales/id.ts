@@ -175,6 +175,7 @@ export default {
     'title': 'Tujuan',
     'complete': 'Tujuan tercapai',
     'beamOutHint': 'Teleport keluar kapan pun kamu siap.',
+    'learnWeapon': 'Pelajari senjata barumu: {weapon}',
     'tutorial': 'Kalahkan {boss}',
     'boss': 'Kalahkan {boss}',
     'kill': 'Hancurkan {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'Kerja bagus! Satu lagi tumbang.',
+      'toLab': 'Ayo ke lab.',
+    },
     'boss': {
       'signalFirst': 'Sinyal Master Inti. Dia… besar.',
     },

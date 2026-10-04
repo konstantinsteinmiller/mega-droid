@@ -175,6 +175,7 @@ export default {
     'title': 'เป้าหมาย',
     'complete': 'สำเร็จเป้าหมาย',
     'beamOutHint': 'พร้อมเมื่อไหร่ก็วาร์ปกลับได้เลย',
+    'learnWeapon': 'ฝึกอาวุธใหม่: {weapon}',
     'tutorial': 'โค่น{boss}',
     'boss': 'โค่น{boss}',
     'kill': 'ทำลาย {target}: {n}/{total}',
@@ -613,6 +614,11 @@ export default {
     }
   },
   'atlas': {
+    // Before a debrief, while it loads (#111).
+    'debrief': {
+      'greatJob': 'เยี่ยมมาก! ล้มไปอีกหนึ่ง',
+      'toLab': 'กลับแล็บกันเถอะ',
+    },
     'boss': {
       'signalFirst': 'สัญญาณคอร์มาสเตอร์ มัน… ใหญ่นะ',
     },

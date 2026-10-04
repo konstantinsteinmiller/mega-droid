@@ -178,6 +178,17 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
   void flushSaveNow()
   const vex = hubSceneFor(plan.boss)
   if (vex) markStorySeen(vex.seen)
+  // While the film builds, Atlas has the screen (#111): the beam-out's last
+  // frame (half a city from above) stayed up all that time.
+  let loader: import('./story/debriefLoader').DebriefLoaderMode | null = null
+  if (!import.meta.env.VITEST) {
+    try {
+      const { DebriefLoaderMode } = await import('./story/debriefLoader')
+      loader = new DebriefLoaderMode()
+      app.setMode(loader)
+      app.setWanted(true)
+    } catch { loader = null }
+  }
   try {
     const m = await debriefFactory({
       plan,
@@ -187,6 +198,8 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
         goHub()
       }
     })
+    // Both of Atlas's lines heard before the film takes over.
+    while (loader && !loader.done) await new Promise(r => setTimeout(r, 100))
     debriefLive = m
     app.setMode(m)
     app.setWanted(true)
@@ -194,6 +207,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
     // The film's chunk did not load: the story is not worth a dead end.
     console.warn('[flow] debrief failed to load', e)
     debriefLive = null
+    loader?.dispose()
     goHub()
   }
 }

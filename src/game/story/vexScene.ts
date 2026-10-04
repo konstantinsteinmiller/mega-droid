@@ -52,6 +52,8 @@ const readFor = (key: string, params: Record<string, string>): number =>
   Math.min(4, lineSeconds((textOf?.(key, params) ?? key).length) / 2 + 0.6)
 
 /** Vex's motif, then his line: the gap between them (s). */
+/** How long a line's bubble waits for its recording to load (s). */
+export const SCENE_VOICE_WAIT = 1.2
 export const MOTIF_LEAD = 0.4
 /** After a line's recording, before the next beat (s). */
 export const LINE_TAIL = 0.4
@@ -80,6 +82,8 @@ export class Scene {
   private laugh: Laugh | null = null
   private motif = false
   private done = false
+  /** Since when this beat waits for its recording (-1: not waiting). */
+  private waitSince = -1
 
   constructor (private readonly beats: readonly Beat[], private readonly place: ScenePlace, private readonly hooks: SceneHooks = {}) {
     prefetchScene(beats)
@@ -139,6 +143,18 @@ export class Scene {
       return
     }
     const key = 'vex' in b ? b.vex : 'atlas' in b ? b.atlas : b.pip
+    // Its recording still loading (a scene that starts at once, like the
+    // hub's floor tip): the bubble waits a moment for it, so the line is not
+    // shown silent and never heard again (#107).
+    if (prefetchVoice(key) === 'loading') {
+      if (this.waitSince < 0) this.waitSince = this.t
+      if (this.t - this.waitSince < SCENE_VOICE_WAIT) {
+        this.i--
+        this.until = this.t + 0.05
+        return
+      }
+    }
+    this.waitSince = -1
     Object.assign(sceneUi, { speaker: 'vex' in b ? 'vex' : 'atlas' in b ? 'atlas' : 'pip', key, params, place: this.place })
     sceneUi.seq++
     const voice = playVoice(key)

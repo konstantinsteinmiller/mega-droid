@@ -9,7 +9,7 @@ import { buildCityscape, type Cityscape } from '../world/cityscape'
 import { weakSpotUnderRay } from '../data/weakspots'
 import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine, type AtlasMemory } from './atlas'
 import { buildAtlas, animateAtlas } from '../models/atlas'
-import { playVoice, prefetchVoice } from '../audio/voice'
+import { playVoice, playVoiceSoon, prefetchVoice } from '../audio/voice'
 import { bark, barkFor, preloadBarks } from '../audio/barks'
 import { compareItems, rivalFor } from '../data/itemCompare'
 import { Scene as StoryScene, markVexSeen, vexSeen, prefetchScene, VEX_BOSS_KEY, type Beat, type ScenePlace } from '../story/vexScene'
@@ -947,6 +947,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       variant: profile.questsDone
     }, (key) => playVoice(key), (key) => prefetchVoice(key), firstEver, ATLAS_MEMORY)
     preloadBarks()
+    // Lines Atlas says at once, with no queue to load in (#107): warm them now.
+    // A lesson's intro (the tutorial's, and the weapon lesson after a Master).
+    prefetchVoice('atlas.warn.down')
+    const lessons: readonly TrainId[] = setup.tutorial ? ['charge', 'block', 'slide', 'gel', 'gap', 'weapon'] : q?.kind === 'story' ? ['weapon'] : []
+    for (const id of lessons) { prefetchVoice(`atlas.train.${id}`); prefetchVoice(`atlas.help.${id}`) }
   }
 
   /**
@@ -1563,13 +1568,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const bid = b.bossId ?? ''
     this.mk1Signal = b.phase2
     if (bid === 'vexMk1') {
+      // Atlas's element call-outs are said at once, mid-fight: load them now.
+      for (const el of new Set(Object.values(MK1_CALL))) prefetchVoice(`atlas.mk1.${el}`)
       if (!vexSeen('mk1:intro')) {
         b.beatHold = MK1_INTRO_HOLD
         this.playScene(mk1IntroBeats(), 'title', 'mk1:intro')
       }
     } else if (VEX_BOSS_KEY[bid]) {
       if (!vexSeen(`present:${bid}`)) this.playScene(presentBeats(bid), 'title', `present:${bid}`)
-      else playVoice('vex.laugh.short')
+      else playVoiceSoon('vex.laugh.short')
     }
   }
 

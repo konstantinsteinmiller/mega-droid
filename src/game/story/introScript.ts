@@ -5,25 +5,29 @@ import type { SfxName } from '../audio/sfx'
  *
  * The six shots of `story-arc.md` § 1 as data and pure functions of time: which
  * shot is on, which one-shot events fire (sounds, lines, the music handover),
- * and every overlay's value (the rewind, the eyelids, the blur, the HUD boot,
- * the white flash). `IntroMode` (`story/intro.ts`) plays it on the game loop's
- * clock; nothing here touches three.js or Vue, so a test can step the whole
+ * and every overlay's value (the eyelids, the blur, the HUD boot, the white
+ * flash). `IntroMode` (`story/intro.ts`) plays it on the game loop's clock;
+ * nothing here touches three.js or Vue, so a test can step the whole
  * cutscene without a GPU.
  *
- *   0   0–25.4   cold open: the neon street, Flux runs in, the slide in slow
- *                motion, the charge — then the showcase at full speed (the
- *                shot lands, a perfect block, the shield against a volley, a
- *                slide under a shock ring, the Repair Gel), the freeze, the
- *                tape rewind
- *   1  25.4–35.4 the valley at dusk, then the Red Signal (Vex's bubble, the
+ *   1   0–10     the valley at dusk, then the Red Signal (Vex's bubble, the
  *                red ring, Blaze's cut-in)
- *   2  35.4–45.4 the lab: the alarm, the Atlas disc's close-up, the lever
- *   3  45.4–50.4 safe mode: Gauss freezes herself
- *   4  50.4–63.4 wake-up, first person: blinks, Pip, the HUD boots, Atlas,
+ *   2  10–20     the lab: the alarm, the Atlas disc's close-up, Gauss pulls
+ *                the lever: Flux revived
+ *   3  20–25     safe mode: Gauss freezes herself
+ *   4  25–38     wake-up, first person: blinks, Pip, the HUD boots, Atlas,
  *                the hologram
- *   5  63.4–71.4 the beam, the flash, the logo
+ *   5  38–46     the beam, the flash, the logo
+ *   0  46–69.5   the street, Flux sent out: "Log start." — he runs in, the
+ *                slide in slow motion, the charge, then the showcase at full
+ *                speed (the shot lands, a perfect block, the shield against a
+ *                volley, a slide under a shock ring, the Repair Gel); the
+ *                tutorial follows
  *
- * (Everything after the cold open is written as its old time `+ SHOW`.)
+ * (#271/#272: the story first — Gauss reviving Flux, Pip, Atlas — then the
+ * action. It used to open on the street as a flash-forward and rewind to the
+ * valley. The shot that plays last keeps its old id, `coldOpen`. Everything
+ * from the valley to the beam is written as its first-cut time `+ AFTER`.)
  *
  * Paced to be followed on a first watch, not to fit a budget: every shot
  * holds its framing while its action plays, each beat gets its own moment
@@ -32,7 +36,7 @@ import type { SfxName } from '../audio/sfx'
  * it (the skip button, `Esc`, or holding `Space`; `cine.ts`).
  */
 
-export type ShotId = 'coldOpen' | 'valley' | 'lab' | 'safeMode' | 'wakeUp' | 'beam'
+export type ShotId = 'valley' | 'lab' | 'safeMode' | 'wakeUp' | 'beam' | 'coldOpen'
 
 export interface Shot {
   id: ShotId
@@ -40,28 +44,36 @@ export interface Shot {
   end: number
 }
 
-/** The showcase inside the cold open (s): after the first charged shot the
+/** The showcase inside the street (s): after the first charged shot the
  *  action runs on — a perfect block, the shield against a volley, a slide
  *  through a red ring, a Repair Gel — so a player has SEEN every move before
- *  playing. Everything after the cold open starts this much later. */
+ *  playing. */
 export const SHOW = 14.4
+/** The valley-to-beam times are written as their first cut's (where the
+ *  valley began at 11 s) plus this: the valley opens the intro now. */
+export const AFTER = -11
 
-/** Where each shot after the cold open starts (s). */
-export const VALLEY_FROM = 11 + SHOW
-export const LAB_FROM = 21 + SHOW
-export const SAFE_FROM = 31 + SHOW
-export const WAKE_FROM = 36 + SHOW
-export const BEAM_FROM = 49 + SHOW
+/** Where each shot starts (s). */
+export const VALLEY_FROM = 11 + AFTER
+export const LAB_FROM = 21 + AFTER
+export const SAFE_FROM = 31 + AFTER
+export const WAKE_FROM = 36 + AFTER
+export const BEAM_FROM = 49 + AFTER
+/** The street, last: Flux sent out (46 s). */
+export const STREET_AT = 57 + AFTER
+/** The street's own length: the run, the slide, the charge and the showcase,
+ *  then a beat on the last pose before the tutorial takes over. */
+export const STREET_HOLD = 1.0
 /** The whole cutscene (s). */
-export const INTRO_END = 57 + SHOW
+export const INTRO_END = STREET_AT + 8.1 + SHOW + STREET_HOLD
 
 export const SHOTS: readonly Shot[] = [
-  { id: 'coldOpen', start: 0, end: VALLEY_FROM },
   { id: 'valley', start: VALLEY_FROM, end: LAB_FROM },
   { id: 'lab', start: LAB_FROM, end: SAFE_FROM },
   { id: 'safeMode', start: SAFE_FROM, end: WAKE_FROM },
   { id: 'wakeUp', start: WAKE_FROM, end: BEAM_FROM },
-  { id: 'beam', start: BEAM_FROM, end: INTRO_END }
+  { id: 'beam', start: BEAM_FROM, end: STREET_AT },
+  { id: 'coldOpen', start: STREET_AT, end: INTRO_END }
 ]
 
 /** The skip button appears, and a skip counts, from here (s). */
@@ -81,14 +93,15 @@ export const shotAt = (t: number): Shot => SHOTS[shotIndexAt(t)]!
 /** Seconds into the shot on at `t`. */
 export const shotTime = (t: number): number => t - shotAt(t).start
 
-// ─── The cold open's action clock ────────────────────────────────────────────
+// ─── The street's action clock ───────────────────────────────────────────────
 //
 // The street's choreography (`renderStreet`) is written in ACTION seconds:
 // Flux runs in until 1.1, slides under the Trooper's swing, plants, charges,
 // and releases at 2.7. The picture plays it through a speed ramp: the run at
 // full speed from far down the street (it starts before 0), the slide — the
 // poster frame — at a third of it, the plant and the charge at under half, so
-// each move reads; then the freeze, and the tape runs it all back.
+// each move reads; then the showcase at full speed. The ramp is written in
+// seconds into the street shot (it starts at STREET_AT).
 
 /** Where the action starts: Flux far down the street, running in. */
 export const STREET_FROM = -2.4
@@ -106,14 +119,10 @@ const STREET_CLOCK: ReadonlyArray<readonly [number, number]> = [
   // volley, the slide and the gel (`STREET_*` beats below).
   [8.1 + SHOW, STREET_RELEASE + SHOW]
 ]
-/** The last frame of the action (the freeze holds it). */
+/** The last frame of the action (held to the end of the intro). */
 export const STREET_END = STREET_RELEASE + SHOW
-/** The freeze frame on the release, then the tape runs the action backwards. */
-export const FREEZE_AT = 8.1 + SHOW
-export const REWIND_FROM = 9.2 + SHOW
-/** How fast the rewind runs the action back (× real time): back to the start
- *  in about 1.6 s, with the tape's tear held a beat on the first frame. */
-export const REWIND_RATE = 11.5
+/** Where the action reaches its last frame (s, absolute). */
+export const STREET_DONE = STREET_AT + 8.1 + SHOW
 
 // ─── The showcase's beats (ACTION s; from the release on it runs 1:1) ───────
 
@@ -150,59 +159,59 @@ export const SHOW_GEL_BURST = 14.2
 // ─── Beats inside the shots (s, absolute) ────────────────────────────────────
 
 /** The valley: the Spire's tip flashes red, and Vex's face glitches on. */
-export const SPIRE_FLASH = 14.6 + SHOW
-export const VEX_ON = 15.0 + SHOW
+export const SPIRE_FLASH = 14.6 + AFTER
+export const VEX_ON = 15.0 + AFTER
 /** The red shock-ring rolls out over the valley (0 → 1 of the valley's reach). */
-export const RING_FROM = 15.8 + SHOW
-export const RING_TO = 18.8 + SHOW
+export const RING_FROM = 15.8 + AFTER
+export const RING_TO = 18.8 + AFTER
 /** Blaze Master's cut-in: gold eyes flicker, then lock red; the cut to the
  *  lab comes straight off it. */
-export const CUTIN_FROM = 19.4 + SHOW
+export const CUTIN_FROM = 19.4 + AFTER
 export const CUTIN_TO = LAB_FROM
 /** The lab: the alarm closes in; Gauss turns to Flux, the Atlas disc's
  *  close-up (it slides home in it), the red crackle, the lever. */
-export const ALARM_TO = 26.0 + SHOW
-export const GAUSS_TURN = 23.0 + SHOW
-export const DISC_FROM = 24.4 + SHOW
-export const DISC_TO = 26.0 + SHOW
-export const STAGGER_AT = 26.4 + SHOW
-export const LEVER_AT = 28.4 + SHOW
+export const ALARM_TO = 26.0 + AFTER
+export const GAUSS_TURN = 23.0 + AFTER
+export const DISC_FROM = 24.4 + AFTER
+export const DISC_TO = 26.0 + AFTER
+export const STAGGER_AT = 26.4 + AFTER
+export const LEVER_AT = 28.4 + AFTER
 /** Safe mode: she walks to her capsule, the glass seals, the frost races up,
  *  the heartbeat light starts. */
-export const SEAL_AT = 32.4 + SHOW
-export const FROST_FROM = 32.7 + SHOW
-export const FROST_TO = 34.2 + SHOW
-export const HEART_FROM = 34.4 + SHOW
+export const SEAL_AT = 32.4 + AFTER
+export const FROST_FROM = 32.7 + AFTER
+export const FROST_TO = 34.2 + AFTER
+export const HEART_FROM = 34.4 + AFTER
 /** Wake-up: Pip pops in, the HUD boots, the hologram opens. */
-export const PIP_POP = 40.2 + SHOW
-export const HUD_BOOT = 41.2 + SHOW
-export const HP_FILL_FROM = 41.4 + SHOW
-export const HP_FILL_TO = 42.8 + SHOW
-export const GLYPH_ON = 42.2 + SHOW
-export const LV_POP = 43.0 + SHOW
-export const HOLO_FROM = 44.0 + SHOW
-export const SCRAP_BLINK = 46.4 + SHOW
+export const PIP_POP = 40.2 + AFTER
+export const HUD_BOOT = 41.2 + AFTER
+export const HP_FILL_FROM = 41.4 + AFTER
+export const HP_FILL_TO = 42.8 + AFTER
+export const GLYPH_ON = 42.2 + AFTER
+export const LV_POP = 43.0 + AFTER
+export const HOLO_FROM = 44.0 + AFTER
+export const SCRAP_BLINK = 46.4 + AFTER
 /** The beam: the view turns to the pad (the hologram folds away) and steps
  *  onto it; the column rises; the flash and the logo. */
 export const TURN_FROM = BEAM_FROM
 export const HOLO_FOLD_FROM = TURN_FROM + 0.4
 export const HOLO_FOLD_TO = TURN_FROM + 1.1
-export const STEP_FROM = 50.4 + SHOW
-export const STEP_TO = 51.9 + SHOW
-export const BEAM_RISE = 52.2 + SHOW
-export const FLASH_FROM = 54.5 + SHOW
-export const FLASH_FULL = 54.9 + SHOW
-export const LOGO_AT = 55.0 + SHOW
+export const STEP_FROM = 50.4 + AFTER
+export const STEP_TO = 51.9 + AFTER
+export const BEAM_RISE = 52.2 + AFTER
+export const FLASH_FROM = 54.5 + AFTER
+export const FLASH_FULL = 54.9 + AFTER
+export const LOGO_AT = 55.0 + AFTER
 
-/** Picture time of an action-clock moment before the freeze (the inverse of
- *  `streetTime` there): the street's sounds are placed on the action. */
+/** Picture time (s, absolute) of an action-clock moment (the inverse of
+ *  `streetTime`): the street's sounds are placed on the action. */
 export const streetAt = (st: number): number => {
   for (let i = 1; i < STREET_CLOCK.length; i++) {
     const [t0, s0] = STREET_CLOCK[i - 1]!
     const [t1, s1] = STREET_CLOCK[i]!
-    if (st <= s1) return t0 + (t1 - t0) * Math.max(0, (st - s0) / (s1 - s0))
+    if (st <= s1) return STREET_AT + t0 + (t1 - t0) * Math.max(0, (st - s0) / (s1 - s0))
   }
-  return FREEZE_AT
+  return STREET_DONE
 }
 
 // ─── One-shot events ─────────────────────────────────────────────────────────
@@ -221,45 +230,43 @@ export type IntroEvent =
 
 /** In time order (the showcase's hits interleave with the rain). */
 export const EVENTS: readonly IntroEvent[] = ([
-  // 0 · Cold open (the street's hits on its action clock)
-  { at: 0, kind: 'line', shot: 'coldOpen' },
-  { at: 0.05, kind: 'sfx', name: 'synthPulse' },
+  // 0 · The street, last (its hits on its action clock): Atlas's log opens it.
+  { at: STREET_AT, kind: 'line', shot: 'coldOpen' },
+  { at: STREET_AT + 0.05, kind: 'sfx', name: 'synthPulse' },
+  { at: STREET_AT + 0.3, kind: 'atlas', key: 'logStart' },
   { at: streetAt(0.3), kind: 'sfx', name: 'droneArrive', gain: 0.7 },
   // The rain hiss (a 2.8 s burst), laid end to end under the run and slide.
-  { at: 2.75, kind: 'sfx', name: 'synthPulse', gain: 0.9 },
+  { at: STREET_AT + 2.75, kind: 'sfx', name: 'synthPulse', gain: 0.9 },
   { at: streetAt(1.15), kind: 'sfx', name: 'slide' },
   { at: streetAt(1.55), kind: 'sfx', name: 'flameJet', gain: 0.8 },
-  { at: 5.5, kind: 'sfx', name: 'synthPulse', gain: 0.8 },
+  { at: STREET_AT + 5.5, kind: 'sfx', name: 'synthPulse', gain: 0.8 },
   { at: streetAt(1.95), kind: 'sfx', name: 'charge1' },
   { at: streetAt(2.35), kind: 'sfx', name: 'charge2' },
   { at: streetAt(2.65), kind: 'sfx', name: 'chargeShotBig', gain: 0.8 },
   // The showcase: every move the player will learn, once, at full speed.
-  { at: 8.25, kind: 'sfx', name: 'synthPulse', gain: 0.6 },
+  { at: STREET_AT + 8.25, kind: 'sfx', name: 'synthPulse', gain: 0.6 },
   { at: streetAt(SHOW_HIT), kind: 'sfx', name: 'hitHeavy' },
   { at: streetAt(SHOW_DIVE), kind: 'sfx', name: 'dash', gain: 0.7 },
   { at: streetAt(SHOW_PARRY), kind: 'sfx', name: 'parry' },
-  { at: 11.0, kind: 'sfx', name: 'synthPulse', gain: 0.55 },
+  { at: STREET_AT + 11.0, kind: 'sfx', name: 'synthPulse', gain: 0.55 },
   ...SHOW_VOLLEY.flatMap((v): IntroEvent[] => [
     { at: streetAt(v), kind: 'sfx', name: 'enemyShot', gain: 0.8 },
     { at: streetAt(v + SHOW_ORB_FLIGHT), kind: 'sfx', name: 'block' }
   ]),
   { at: streetAt(SHOW_ANSWER), kind: 'sfx', name: 'shoot' },
   { at: streetAt(SHOW_ANSWER_HIT), kind: 'sfx', name: 'explode', gain: 0.8 },
-  { at: 13.75, kind: 'sfx', name: 'synthPulse', gain: 0.55 },
+  { at: STREET_AT + 13.75, kind: 'sfx', name: 'synthPulse', gain: 0.55 },
   { at: streetAt(SHOW_SLAM), kind: 'sfx', name: 'stomp' },
   { at: streetAt(SHOW_SLIDE_FROM), kind: 'sfx', name: 'slide' },
   { at: streetAt(SHOW_FINISH), kind: 'sfx', name: 'shoot' },
   { at: streetAt(SHOW_FINISH_HIT), kind: 'sfx', name: 'explode' },
-  { at: 16.5, kind: 'sfx', name: 'synthPulse', gain: 0.5 },
+  { at: STREET_AT + 16.5, kind: 'sfx', name: 'synthPulse', gain: 0.5 },
   { at: streetAt(SHOW_GEL_BURST), kind: 'sfx', name: 'heal' },
-  { at: REWIND_FROM - 0.1, kind: 'sfx', name: 'tapeRewind' },
-  { at: REWIND_FROM, kind: 'atlas', key: 'logStart' },
-  { at: REWIND_FROM + 0.75, kind: 'sfx', name: 'tapeRewind', gain: 0.6 },
   // 1 · The valley and the Red Signal
   { at: VALLEY_FROM, kind: 'line', shot: 'valley' },
-  { at: 11.8 + SHOW, kind: 'sfx', name: 'relayChime' },
-  { at: 12.7 + SHOW, kind: 'sfx', name: 'relayChime', gain: 0.8 },
-  { at: 13.6 + SHOW, kind: 'sfx', name: 'relayChime', gain: 0.7 },
+  { at: 11.8 + AFTER, kind: 'sfx', name: 'relayChime' },
+  { at: 12.7 + AFTER, kind: 'sfx', name: 'relayChime', gain: 0.8 },
+  { at: 13.6 + AFTER, kind: 'sfx', name: 'relayChime', gain: 0.7 },
   { at: SPIRE_FLASH, kind: 'sfx', name: 'vexGlitch' },
   { at: VEX_ON + 0.1, kind: 'vex', key: 'diagnosis' },
   { at: RING_FROM + 0.5, kind: 'sfx', name: 'relayOut' },
@@ -271,9 +278,9 @@ export const EVENTS: readonly IntroEvent[] = ([
   // 2 · The lab
   { at: LAB_FROM, kind: 'line', shot: 'lab' },
   { at: LAB_FROM + 0.05, kind: 'sfx', name: 'alarm' },
-  { at: 22.9 + SHOW, kind: 'sfx', name: 'alarm', gain: 0.8 },
+  { at: 22.9 + AFTER, kind: 'sfx', name: 'alarm', gain: 0.8 },
   { at: DISC_TO - 0.5, kind: 'sfx', name: 'energy', gain: 0.7 },
-  { at: 26.6 + SHOW, kind: 'sfx', name: 'alarm', gain: 0.7 },
+  { at: 26.6 + AFTER, kind: 'sfx', name: 'alarm', gain: 0.7 },
   { at: LEVER_AT, kind: 'sfx', name: 'capsule' },
   // 3 · Safe mode
   { at: SAFE_FROM, kind: 'line', shot: 'safeMode' },
@@ -282,11 +289,11 @@ export const EVENTS: readonly IntroEvent[] = ([
   { at: HEART_FROM, kind: 'sfx', name: 'heartbeat' },
   // 4 · Wake-up, first person
   { at: WAKE_FROM, kind: 'line', shot: 'wakeUp' },
-  { at: 38.3 + SHOW, kind: 'sfx', name: 'heartbeat', gain: 0.6 },
+  { at: 38.3 + AFTER, kind: 'sfx', name: 'heartbeat', gain: 0.6 },
   { at: PIP_POP, kind: 'sfx', name: 'pipChirp' },
   { at: HUD_BOOT, kind: 'sfx', name: 'bootUp' },
   { at: GLYPH_ON, kind: 'atlas', key: 'goodMorning' },
-  { at: 43.4 + SHOW, kind: 'sfx', name: 'heartbeat', gain: 0.5 },
+  { at: 43.4 + AFTER, kind: 'sfx', name: 'heartbeat', gain: 0.5 },
   { at: HOLO_FROM, kind: 'sfx', name: 'uiOpen' },
   { at: SCRAP_BLINK, kind: 'atlas', key: 'scrapyardFirst' },
   { at: SCRAP_BLINK, kind: 'sfx', name: 'locate' },
@@ -325,23 +332,19 @@ export const keys = (k: ReadonlyArray<readonly [number, number]>, t: number): nu
 // ─── Action clocks ───────────────────────────────────────────────────────────
 
 /**
- * The cold open's action clock: it runs through the speed ramp, freezes on
- * the release, then the tape runs it backwards to the start — the rewind is
- * Atlas replaying its log.
+ * The street's action clock at picture time `t` (absolute): it runs through
+ * the speed ramp from STREET_AT and holds its last frame after STREET_DONE.
  */
-export const streetTime = (t: number): number => {
-  if (t < FREEZE_AT) return keys(STREET_CLOCK, t)
-  if (t < REWIND_FROM) return STREET_END
-  return Math.max(STREET_FROM, STREET_END - (t - REWIND_FROM) * REWIND_RATE)
-}
+export const streetTime = (t: number): number => keys(STREET_CLOCK, t - STREET_AT)
 
 /** How fast the action clock runs at `t` (× real time; the slow motion is
- *  under 1, the freeze 0): the street's particles slow down with it. */
+ *  under 1, the held last frame 0): the street's particles slow down with it. */
 export const streetRate = (t: number): number => {
-  if (t >= FREEZE_AT) return 0
+  const u = t - STREET_AT
+  if (u < 0 || t >= STREET_DONE) return 0
   for (let i = 1; i < STREET_CLOCK.length; i++) {
     const [t1, s1] = STREET_CLOCK[i]!
-    if (t < t1) {
+    if (u < t1) {
       const [t0, s0] = STREET_CLOCK[i - 1]!
       return (s1 - s0) / (t1 - t0)
     }
@@ -357,7 +360,7 @@ export const ringReach = (t: number): number => clamp01((t - RING_FROM) / (RING_
 export interface IntroOverlay {
   /** Black over the frame (fade in from the loader, the wake-up's dark), 0..1. */
   black: number
-  /** The tape-rewind tear: scan-lines, the cyan cast, Atlas's corner glyph. */
+  /** The tape-rewind tear (no longer played: the intro runs in order). */
   rewind: number
   /** The eyelid bars, 0 open … 1 shut. */
   eyelid: number
@@ -385,19 +388,18 @@ export const newOverlay = (): IntroOverlay => ({
 
 /** Out of the dark: shut a moment, two slow blinks, then eyes open. */
 const EYELID: ReadonlyArray<readonly [number, number]> = [
-  [WAKE_FROM, 1], [37.0 + SHOW, 1], [37.45 + SHOW, 0.35], [37.8 + SHOW, 1], [38.2 + SHOW, 1], [39.0 + SHOW, 0]
+  [WAKE_FROM, 1], [37.0 + AFTER, 1], [37.45 + AFTER, 0.35], [37.8 + AFTER, 1], [38.2 + AFTER, 1], [39.0 + AFTER, 0]
 ]
 /** The fade to black that ends safe mode (the wake-up opens in it, lids shut). */
-const DARK_FROM = 35.4 + SHOW
+const DARK_FROM = 35.4 + AFTER
 
 /** Every overlay at `t` (written into `o`, which is returned). */
 export const overlayAt = (t: number, o: IntroOverlay = newOverlay()): IntroOverlay => {
   // In from black off the loader; the cut to the wake-up is to black too.
-  o.black = Math.max(1 - ramp(0, 0.8, t), t >= DARK_FROM && t < 37.0 + SHOW ? ramp(DARK_FROM, WAKE_FROM, t) : 0)
-  // The tear comes up on the rewind and fades once the valley is on.
-  o.rewind = t < REWIND_FROM - 0.15 ? 0 : t < VALLEY_FROM ? ramp(REWIND_FROM - 0.15, REWIND_FROM + 0.1, t) : 1 - ramp(VALLEY_FROM, VALLEY_FROM + 0.4, t)
-  o.eyelid = t < WAKE_FROM || t > 39.2 + SHOW ? 0 : keys(EYELID, t)
-  o.blur = t < WAKE_FROM || t > 40.5 + SHOW ? 0 : 10 * (1 - ramp(37.45 + SHOW, 40.2 + SHOW, t))
+  o.black = Math.max(1 - ramp(0, 0.8, t), t >= DARK_FROM && t < 37.0 + AFTER ? ramp(DARK_FROM, WAKE_FROM, t) : 0)
+  o.rewind = 0
+  o.eyelid = t < WAKE_FROM || t > 39.2 + AFTER ? 0 : keys(EYELID, t)
+  o.blur = t < WAKE_FROM || t > 40.5 + AFTER ? 0 : 10 * (1 - ramp(37.45 + AFTER, 40.2 + AFTER, t))
   const fp = t >= WAKE_FROM && t < FLASH_FULL
   o.hud = fp ? ramp(HUD_BOOT, HUD_BOOT + 0.35, t) : 0
   o.hp = fp ? clamp01((t - HP_FILL_FROM) / (HP_FILL_TO - HP_FILL_FROM)) : 0
@@ -408,7 +410,9 @@ export const overlayAt = (t: number, o: IntroOverlay = newOverlay()): IntroOverl
   o.tagFortress = ramp(HOLO_FROM + 0.6, HOLO_FROM + 1.0, t) * holo
   o.tagScrap = ramp(SCRAP_BLINK, SCRAP_BLINK + 0.3, t) * holo
   o.cutin = t >= CUTIN_FROM && t < CUTIN_TO ? 1 : 0
-  o.flash = ramp(FLASH_FROM, FLASH_FULL, t)
-  o.logo = ramp(LOGO_AT, LOGO_AT + 0.3, t)
+  // The flash and the logo, then the street fades up out of the white.
+  const out = 1 - ramp(STREET_AT - 0.2, STREET_AT + 0.5, t)
+  o.flash = ramp(FLASH_FROM, FLASH_FULL, t) * out
+  o.logo = ramp(LOGO_AT, LOGO_AT + 0.3, t) * (1 - ramp(STREET_AT - 0.5, STREET_AT, t))
   return o
 }

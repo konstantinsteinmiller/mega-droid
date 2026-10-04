@@ -16,7 +16,7 @@ import { nextTick } from 'vue'
 import { drainAndResetModules, drainPersist, holdGameState } from '../stubs/drainPersist'
 import {
   SHOTS, INTRO_END, SKIP_AFTER, ATLAS_HOLD, EVENTS, eventsBetween, overlayAt, streetTime, streetAt, streetRate, shotIndexAt,
-  STREET_FROM, STREET_RELEASE, FREEZE_AT, REWIND_FROM, VALLEY_FROM, WAKE_FROM, VEX_ON, CUTIN_FROM, CUTIN_TO, DISC_FROM, DISC_TO,
+  STREET_FROM, STREET_RELEASE, STREET_AT, STREET_DONE, LAB_FROM, LEVER_AT, LOGO_AT, WAKE_FROM, VEX_ON, CUTIN_FROM, CUTIN_TO, DISC_FROM, DISC_TO,
   HP_FILL_TO, LV_POP, FLASH_FULL, STREET_END, SHOW_HIT, SHOW_PARRY, SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_SLIDE_FROM,
   SHOW_SLIDE_TO, SHOW_FINISH_HIT, SHOW_GEL_BURST
 } from '@/game/story/introScript'
@@ -31,19 +31,22 @@ vi.mock('@/use/useLeaderboard', () => ({ reportRun: async () => {} }))
 vi.mock('@/use/usePortalLeaderboard', () => ({ joinPortalBoard: async () => {}, reportPortalBest: async () => {} }))
 
 describe('the intro script', () => {
-  it('six shots tile the cutscene, each at least 3x its old 17 s-cut length', () => {
-    expect(SHOTS.map(s => s.id)).toEqual(['coldOpen', 'valley', 'lab', 'safeMode', 'wakeUp', 'beam'])
+  it('six shots tile the cutscene in story order, each at least 3x its old 17 s-cut length', () => {
+    // #271: Gauss revives Flux, Pip and Atlas greet him, he is sent out — and
+    // only then the action on the street (it used to open as a flash-forward).
+    expect(SHOTS.map(s => s.id)).toEqual(['valley', 'lab', 'safeMode', 'wakeUp', 'beam', 'coldOpen'])
     expect(SHOTS[0]!.start).toBe(0)
     for (let i = 1; i < SHOTS.length; i++) expect(SHOTS[i]!.start).toBe(SHOTS[i - 1]!.end)
     expect(SHOTS[SHOTS.length - 1]!.end).toBe(INTRO_END)
-    // The old cut: 3.5 · 3 · 3 · 1.5 · 4 · 2 s (17 s), too fast to follow.
-    const OLD = [3.5, 3, 3, 1.5, 4, 2]
+    // The old cut, per shot: valley 3 · lab 3 · safe 1.5 · wake 4 · beam 2 · street 3.5 s.
+    const OLD = [3, 3, 1.5, 4, 2, 3.5]
     SHOTS.forEach((s, i) => expect(s.end - s.start).toBeGreaterThanOrEqual(3 * OLD[i]!))
     expect(INTRO_END).toBeGreaterThanOrEqual(51)
     expect(SKIP_AFTER).toBe(0.5)
-    expect(shotIndexAt(VALLEY_FROM - 0.01)).toBe(0)
-    expect(shotIndexAt(VALLEY_FROM)).toBe(1)
+    expect(shotIndexAt(LAB_FROM - 0.01)).toBe(0)
+    expect(shotIndexAt(LAB_FROM)).toBe(1)
     expect(shotIndexAt(INTRO_END - 0.1)).toBe(5)
+    expect(LEVER_AT).toBeLessThan(STREET_AT)
   })
 
   it('the beats hold long enough to read', () => {
@@ -81,18 +84,22 @@ describe('the intro script', () => {
     }
   })
 
-  it('Atlas speaks first; the Scrapyard theme lands on the flash', () => {
-    const voiced = EVENTS.filter(e => e.kind === 'atlas' || e.kind === 'vex')
-    expect(voiced[0]).toMatchObject({ kind: 'atlas', key: 'logStart' })
+  it('Atlas greets Flux on waking; "Log start." opens the street; the Scrapyard theme takes over at the end', () => {
+    const atlas = EVENTS.filter(e => e.kind === 'atlas')
+    expect(atlas[0]).toMatchObject({ key: 'goodMorning' })
+    const log = atlas.find(e => e.kind === 'atlas' && e.key === 'logStart')!
+    expect(log.at).toBeGreaterThanOrEqual(STREET_AT)
+    expect(log.at).toBeLessThan(STREET_AT + 1)
     const music = EVENTS.find(e => e.kind === 'music')
     expect(music).toMatchObject({ track: 'scrapyard' })
+    expect(music!.at).toBeGreaterThan(STREET_DONE)
   })
 
-  it('the cold open runs in, slows for the slide, plays the showcase, freezes on its last frame, then the tape rewinds it', () => {
-    expect(streetTime(0)).toBe(STREET_FROM)
-    expect(streetTime(FREEZE_AT - 1e-6)).toBeCloseTo(STREET_END, 4)
-    expect(streetTime(FREEZE_AT + 0.1)).toBe(STREET_END)
-    expect(streetTime(REWIND_FROM - 0.01)).toBe(STREET_END)
+  it('the street runs in, slows for the slide, plays the showcase and holds its last frame: no freeze, no rewind', () => {
+    expect(streetTime(STREET_AT)).toBe(STREET_FROM)
+    expect(streetTime(STREET_DONE - 1e-6)).toBeCloseTo(STREET_END, 4)
+    expect(streetTime(STREET_DONE + 0.1)).toBe(STREET_END)
+    expect(streetTime(INTRO_END)).toBe(STREET_END)
     // The showcase runs 1:1 after the release, and every beat sits inside it.
     expect(streetRate(streetAt(STREET_RELEASE + 1))).toBeCloseTo(1, 6)
     for (const b of [SHOW_HIT, SHOW_PARRY, ...SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_FINISH_HIT, SHOW_GEL_BURST]) {
@@ -104,19 +111,17 @@ describe('the intro script', () => {
     expect(SHOW_SLIDE_TO).toBeGreaterThan(SHOW_RING_OVER)
     // The events stay in time order.
     for (let i = 1; i < EVENTS.length; i++) expect(EVENTS[i]!.at).toBeGreaterThanOrEqual(EVENTS[i - 1]!.at)
-    // Back at the start before the valley, the tear held a beat on it.
-    expect(streetTime(VALLEY_FROM - 0.1)).toBe(STREET_FROM)
-    // The action clock only ever runs forward until the freeze.
+    // The action clock only ever runs forward.
     let prev = -Infinity
-    for (let t = 0; t < FREEZE_AT; t += 0.05) {
+    for (let t = STREET_AT; t < INTRO_END; t += 0.05) {
       expect(streetTime(t)).toBeGreaterThanOrEqual(prev)
       prev = streetTime(t)
     }
     // The run at full speed; the slide (action 1.1–1.5) in slow motion.
-    expect(streetRate(1)).toBe(1)
+    expect(streetRate(STREET_AT + 1)).toBe(1)
     expect(streetRate(streetAt(1.3))).toBeLessThan(0.5)
     expect(streetAt(1.5) - streetAt(1.1)).toBeGreaterThanOrEqual(1)
-    expect(streetRate(FREEZE_AT)).toBe(0)
+    expect(streetRate(STREET_DONE)).toBe(0)
     // `streetAt` places the street's sounds on the action.
     for (const st of [-2, 0.3, 1.15, 1.55, 2.35, 2.65]) expect(streetTime(streetAt(st))).toBeCloseTo(st, 6)
   })
@@ -124,17 +129,21 @@ describe('the intro script', () => {
   it('overlays: in from black, the eyelids, the HUD boot, the white flash and the logo', () => {
     expect(overlayAt(0).black).toBe(1)
     expect(overlayAt(1).black).toBe(0)
-    expect(overlayAt(REWIND_FROM + 0.5).rewind).toBeGreaterThan(0.9)
-    expect(overlayAt(VALLEY_FROM + 1).rewind).toBe(0)
+    // No tape rewind any more.
+    for (let t = 0; t < INTRO_END; t += 0.5) expect(overlayAt(t).rewind).toBe(0)
     expect(overlayAt(WAKE_FROM - 0.01).black).toBeGreaterThan(0.95)
     expect(overlayAt(WAKE_FROM + 0.5).eyelid).toBe(1)
-    expect(overlayAt(39.5).eyelid).toBe(0)
-    expect(overlayAt(40).hp).toBe(0)
+    expect(overlayAt(WAKE_FROM + 3.5).eyelid).toBe(0)
+    expect(overlayAt(WAKE_FROM + 1).hp).toBe(0)
     expect(overlayAt(HP_FILL_TO + 0.1).hp).toBe(1)
     expect(overlayAt(LV_POP + 0.5).lv).toBe(1)
-    expect(overlayAt(INTRO_END).flash).toBe(1)
-    expect(overlayAt(INTRO_END).logo).toBe(1)
-    expect(overlayAt(30).flash).toBe(0)
+    // The flash and the logo at the end of the beam, then the street fades
+    // up out of the white.
+    expect(overlayAt(STREET_AT - 0.3).flash).toBe(1)
+    expect(overlayAt(LOGO_AT + 0.4).logo).toBe(1)
+    expect(overlayAt(STREET_AT + 1).flash).toBe(0)
+    expect(overlayAt(STREET_AT + 1).logo).toBe(0)
+    expect(overlayAt(LAB_FROM + 5).flash).toBe(0)
   })
 })
 
@@ -286,7 +295,7 @@ describe('the intro director', () => {
 describe('the intro score ("Wake-Up Call")', () => {
   it('is scored to the picture: one 16th is 0.1 s, and the big hits land on the cutscene beats', async () => {
     const { getSong, songSeconds } = await import('@/game/audio/songs')
-    const { FREEZE_AT, REWIND_FROM, SPIRE_FLASH, CUTIN_FROM, DISC_TO, LEVER_AT, FLASH_FROM, FLASH_FULL } = await import('@/game/story/introScript')
+    const { SPIRE_FLASH, CUTIN_FROM, DISC_TO, LEVER_AT, FLASH_FROM, FLASH_FULL } = await import('@/game/story/introScript')
     const s = getSong('intro')
     expect(60 / s.bpm / 4).toBeCloseTo(0.1, 6)
     expect(songSeconds(s)).toBeGreaterThanOrEqual(INTRO_END)
@@ -300,10 +309,9 @@ describe('the intro score ("Wake-Up Call")', () => {
     expect(hitAt((FLASH_FROM + FLASH_FULL) / 2 + 0.1)).toBe(true)
     // The Atlas disc clicks home on a bell.
     expect(s.steps[Math.round((DISC_TO - 0.5) * 10)]!.some(e => e.i === 'bell')).toBe(true)
-    // The freeze is silence: nothing new between the release and the rewind.
-    const quiet = s.steps.slice(Math.ceil(FREEZE_AT * 10), Math.round(REWIND_FROM * 10)).every(evs => evs.length === 0)
-    expect(quiet).toBe(true)
-    expect(s.steps[Math.round(REWIND_FROM * 10)]!.some(e => e.i === 'crackle')).toBe(true)
+    // The last pose of the street lands on a hit; no tape crackle anywhere.
+    expect(hitAt(STREET_DONE)).toBe(true)
+    expect(s.steps.some(evs => evs.some(e => e.i === 'crackle'))).toBe(false)
     // Scored through to the end, then a groove bar to loop on should anything hold.
     expect(s.steps.slice(Math.round(INTRO_END * 10) - 100, Math.round(INTRO_END * 10)).some(evs => evs.length > 0)).toBe(true)
     expect(s.loopBar * 16 * 0.1).toBeGreaterThanOrEqual(INTRO_END)

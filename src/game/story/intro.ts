@@ -29,7 +29,7 @@ import { setMusicTrack } from '@/use/useSound'
 import { setSongStartHint } from '../audio/music'
 import {
   INTRO_END, SKIP_AFTER, ATLAS_HOLD, eventsBetween, overlayAt, shotIndexAt, streetTime, streetRate, ringReach, ramp, clamp01,
-  STREET_FROM, STREET_RELEASE, SHOW, FREEZE_AT,
+  STREET_FROM, STREET_RELEASE, AFTER, STREET_DONE, SHOTS, STREET_AT as STREET_TIME_AT, type ShotId,
   SHOW_HIT, SHOW_DIVE, SHOW_GUARD_UP, SHOW_PARRY, SHOW_GUARD_DOWN, SHOW_SHIELD_UP, SHOW_VOLLEY, SHOW_ORB_FLIGHT, SHOW_SHIELD_DOWN,
   SHOW_ANSWER, SHOW_ANSWER_HIT, SHOW_SLAM, SHOW_SLIDE_FROM, SHOW_RING_OVER, SHOW_SLIDE_TO, SHOW_FINISH, SHOW_FINISH_HIT,
   SHOW_GEL, SHOW_GEL_BURST, SPIRE_FLASH, VEX_ON, CUTIN_FROM, CUTIN_TO, LAB_FROM, ALARM_TO, GAUSS_TURN,
@@ -41,6 +41,46 @@ import { cine, cineLive, resetCine, setGateHandler, setSkipHandler, skipHold } f
 import { holdProgress, stepHold } from './holdSkip'
 import { sceneQuality, type SceneQuality } from '../engine/quality'
 import { buildAtlas, animateAtlas } from '../models/atlas'
+
+/** The street's two slides (action s): under the Trooper's swing, and under
+ *  its shock ring. */
+export const DASH_RUN: readonly [number, number] = [1.1, 1.6]
+
+/**
+ * A Mega Man X dash on the action clock (#272: the slide looked like lego,
+ * every joint on one 0.12 s ramp): a crouch just before `a`, then low and
+ * leaning in, the front leg reaching, the back leg trailing straight, the
+ * arms swept back, stretched along the run; at `b` a settle with a small
+ * bounce. Writes the rig's joints; returns what the root does (`drop` m down,
+ * `lean` rad forward, `stretch` along the run) and how far into the dash it
+ * is (`on`, 0..1).
+ */
+export const dashPose = (R: Rig, st: number, a: number, b: number): { drop: number; lean: number; stretch: number; on: number } => {
+  const pre = ramp(a - 0.14, a - 0.02, st) * (1 - ramp(a - 0.02, a + 0.06, st))
+  const on = ramp(a - 0.02, a + 0.08, st) * (1 - ramp(b - 0.08, b + 0.04, st))
+  const after = st > b ? clamp01((st - b) / 0.32) : 1
+  const bounce = st > b && after < 1 ? Math.sin(after * Math.PI) * (1 - after) : 0
+  if (pre > 0) {
+    pose(R, 'hipL', -0.6 * pre, 0, -0.05)
+    pose(R, 'kneeL', 0.9 * pre, 0, 0)
+    pose(R, 'hipR', -0.4 * pre, 0, 0.05)
+    pose(R, 'kneeR', 0.9 * pre, 0, 0)
+    pose(R, 'chest', 0.25 * pre, 0, 0)
+  }
+  if (on > 0) {
+    pose(R, 'hipL', -1.2 * on, 0, -0.05)
+    pose(R, 'kneeL', 1.15 * on, 0, 0)
+    pose(R, 'hipR', 0.95 * on, 0, 0.05)
+    pose(R, 'kneeR', 0.25 * on, 0, 0)
+    pose(R, 'chest', 0.42 * on, 0, 0)
+    pose(R, 'shoulderL', 0.95 * on, 0, -0.25 * on)
+  }
+  if (bounce > 0) {
+    pose(R, 'kneeL', 0.6 * bounce, 0, 0)
+    pose(R, 'kneeR', 0.6 * bounce, 0, 0)
+  }
+  return { drop: 0.16 * pre + 0.3 * on + 0.08 * bounce, lean: 0.12 * pre + 0.34 * on, stretch: 0.14 * on - 0.08 * pre - 0.06 * bounce, on }
+}
 import { playVoiceSoon, prefetchVoice, stopVoice } from '../audio/voice'
 import { audio, audioAllowed } from '../audio/engine'
 
@@ -89,6 +129,8 @@ const STEP = 1 / 60
 
 /** Where the sets stand (the lab is at the origin). */
 const STREET_AT = new Vector3(-300, 0, 0)
+/** Drone 2's post for its volley, where the answer shot meets it (street space). */
+const D1_AT = new Vector3(1.4, 3.0, -8.2)
 const VALLEY_AT = new Vector3(300, 0, 0)
 const CUTIN_AT = new Vector3(0, 0, 300)
 
@@ -150,8 +192,7 @@ const camAt = (list: readonly CamKey[], t: number, pos: Vector3, look: Vector3):
 // so the camera settles on its framing while the action plays and drifts on
 // only between beats: holds, not whip pans.
 
-/** Cold open, on the ACTION clock (`streetTime`): so the slow motion slows it
- *  and the rewind rewinds it. */
+/** The street, on the ACTION clock (`streetTime`): so the slow motion slows it. */
 const STREET_CAM: readonly CamKey[] = [
   // High over the wet street, the billboards on both sides; Flux a speck far
   // down it, running in. One long crane down to his height as he nears.
@@ -185,10 +226,10 @@ const STREET_CAM: readonly CamKey[] = [
 
 const VALLEY_CAM: readonly CamKey[] = [
   // A slow aerial drift over the bright valley while the relays chime…
-  { t: 11 + SHOW, pos: [6, 18, 36], look: [0, 1, 0], hfov: 72 },
-  { t: 14.4 + SHOW, pos: [2, 14, 28], look: [-1.5, 2.2, -1.5], hfov: 72 },
+  { t: 11 + AFTER, pos: [6, 18, 36], look: [0, 1, 0], hfov: 72 },
+  { t: 14.4 + AFTER, pos: [2, 14, 28], look: [-1.5, 2.2, -1.5], hfov: 72 },
   // …in on the Spire as it flashes and Vex's face comes on…
-  { t: 16.0 + SHOW, pos: [-0.5, 10.5, 17], look: [-4, 4.5, -3], hfov: 76 },
+  { t: 16.0 + AFTER, pos: [-0.5, 10.5, 17], look: [-4, 4.5, -3], hfov: 76 },
   // …and back out, wide, as the red ring rolls over all of it.
   { t: CUTIN_FROM, pos: [2.5, 13.5, 27], look: [-2, 2, -1], hfov: 80 }
 ]
@@ -218,8 +259,8 @@ const SAFE_CAM: readonly CamKey[] = [
 const FP_LOOK: ReadonlyArray<readonly [number, number, number, number]> = [
   // t, x, y, z
   [WAKE_FROM, GAUSS_CAP.x, 1.3, GAUSS_CAP.z + 0.2],
-  [43.2 + SHOW, GAUSS_CAP.x, 1.35, GAUSS_CAP.z],
-  [44.4 + SHOW, HOLO_AT.x, HOLO_AT.y + 0.2, HOLO_AT.z],
+  [43.2 + AFTER, GAUSS_CAP.x, 1.35, GAUSS_CAP.z],
+  [44.4 + AFTER, HOLO_AT.x, HOLO_AT.y + 0.2, HOLO_AT.z],
   [TURN_FROM, HOLO_AT.x, HOLO_AT.y + 0.2, HOLO_AT.z],
   [STEP_FROM, 0, 1.0, 0],
   [STEP_TO, -0.3, 1.45, 3],
@@ -355,6 +396,10 @@ export class IntroMode implements GameMode {
   private glassCrackle = newCrackle(14)
   private beamGlow!: Mesh
   /** The sets still to build, in shot order, and how many are done. */
+  /** How far into a dash Flux is now (0..1), and the action time the dust
+   *  last checked. */
+  private dashOn = 0
+  private lastDust = -Infinity
   private jobs: Array<() => Group> = []
   private jobAt = 0
   private readonly low: boolean
@@ -417,16 +462,16 @@ export class IntroMode implements GameMode {
     this.healRing = new Mesh(torus(0.7, 0.05, 6, 36), this.healMat)
     this.streetSet.add(this.shield.root, this.shockRing, this.healRing, ...this.orbs)
     this.shockRing.visible = this.flask.visible = this.healRing.visible = false
-    // Atlas, flying at his shoulder: the cold open is a flash-forward.
+    // Atlas, flying at his shoulder: his first mission, logged.
     this.atlasStreet = buildAtlas()
     this.streetSet.add(this.atlasStreet.root)
     this.streetSet.position.copy(STREET_AT)
     s.add(this.streetSet)
 
-    // The loader builds only the cold open's street: it is all the first
-    // 11 s show. The other sets stream in one per frame while it plays
+    // The loader builds the street; the other sets stream in one per frame
     // (`streamSets`), and a shot that needs one not built yet builds it
-    // first (`needSets`), so a skip never shows a missing set.
+    // first (`needSets`: the valley, which opens the intro, on its first
+    // frame), so a skip never shows a missing set.
     this.jobs = [
       () => this.buildValley(),
       () => this.buildCutin(),
@@ -659,7 +704,7 @@ export class IntroMode implements GameMode {
     const t = this.t
     const S = STREET_AT
     const st = streetTime(t)
-    if (t < FREEZE_AT) {
+    if (t >= STREET_TIME_AT && t < STREET_DONE) {
       // The street's particles run on the action clock too: in the slow
       // motion they are spawned, fly and die at its rate.
       const rate = Math.max(0.05, streetRate(t))
@@ -680,6 +725,25 @@ export class IntroMode implements GameMode {
       }
     }
     this.showcaseBursts(st)
+    // The dash: a cyan afterimage streaming off him, dust where it starts and stops.
+    if (this.dashOn > 0.3 && t < STREET_DONE) {
+      const F = this.runnerRoot.position
+      const rate = Math.max(0.05, streetRate(t))
+      for (let k = 0; k < 3; k++) {
+        this.fx.emit({ x: S.x + F.x + (Math.random() - 0.5) * 0.3, y: S.y + 0.35 + Math.random() * 0.8, z: S.z + F.z + (Math.random() - 0.5) * 0.3, color: k ? PAL.glowCyan : '#e6fbff', size: 0.32, sizeEnd: 0.05, life: 0.22 / rate })
+      }
+    }
+    for (const [a, b] of [DASH_RUN, [SHOW_SLIDE_FROM, SHOW_SLIDE_TO]] as const) {
+      for (const at of [a, b]) {
+        if (!(this.lastDust < at && st >= at)) continue
+        const F = this.runnerRoot.position
+        for (let k = 0; k < 10; k++) {
+          const ang = Math.random() * Math.PI * 2
+          this.fx.emit({ x: S.x + F.x, y: S.y + 0.1, z: S.z + F.z, vx: Math.cos(ang) * 2.2, vy: 0.6 + Math.random(), vz: Math.sin(ang) * 2.2, color: '#b8ad98', size: 0.4, sizeEnd: 0.9, life: 0.5, drag: 2 })
+        }
+      }
+    }
+    this.lastDust = st
     if (t > LEVER_AT + 0.05 && t < LEVER_AT + 1.8) {
       // The burst, then the steam thinning out as the glass settles.
       const n = t < LEVER_AT + 0.9 ? 3 : 1
@@ -701,25 +765,27 @@ export class IntroMode implements GameMode {
   render(alpha: number, dt: number): void {
     this.frameDt = dt
     const t = this.ended || !this.started ? this.t : Math.min(INTRO_END, this.t + alpha * STEP)
-    const shot = shotIndexAt(t)
-    if (this.started) this.needSets(shot === 1 ? 2 : shot >= 2 ? this.jobs.length : 0)
+    const shot = SHOTS[shotIndexAt(t)]!.id
+    // The valley opens it (its set and the cut-in's first); the lab's from
+    // its shot on.
+    if (this.started) this.needSets(shot === 'valley' ? 2 : this.jobs.length)
     overlayAt(t, cineLive)
     cineLive.t = t
     const cutin = t >= CUTIN_FROM && t < CUTIN_TO
     // Only the live set is drawn (before the first live frame: all of them,
     // for the precompile).
     if (this.started) {
-      this.streetSet.visible = shot === 0
-      this.valleySet.visible = shot === 1 && !cutin
+      this.streetSet.visible = shot === 'coldOpen'
+      this.valleySet.visible = shot === 'valley' && !cutin
       this.cutinSet.visible = cutin
-      this.labSet.visible = shot >= 2
+      this.labSet.visible = shot !== 'coldOpen' && shot !== 'valley'
     }
     const cam = this.camera
     const pos = this.camPos
     const look = this.camLook
     let hfov = 70
-    if (shot === 0) hfov = this.renderStreet(t, pos, look)
-    else if (shot === 1) hfov = cutin ? this.renderCutin(t, pos, look) : this.renderValley(t, pos, look)
+    if (shot === 'coldOpen') hfov = this.renderStreet(t, pos, look)
+    else if (shot === 'valley') hfov = cutin ? this.renderCutin(t, pos, look) : this.renderValley(t, pos, look)
     else hfov = this.renderLab(t, dt, pos, look)
     this.frame(pos, look, hfov)
     cam.position.copy(pos)
@@ -788,30 +854,28 @@ export class IntroMode implements GameMode {
     // Flux: runs at the camera, slides under the swing, plants, charges.
     const R = this.runner
     const run = st < 1.1
-    const slideK = ramp(1.1, 1.2, st) * (1 - ramp(1.5, 1.7, st))
     let z: number
     if (st < 1.1) z = -16 + 6.8 * st
     else if (st < 1.6) z = -8.52 + (1 - Math.pow(1 - (st - 1.1) / 0.5, 2)) * 4.92
     else z = -3.6
     const turn = ramp(1.6, 1.9, st)
-    this.runnerRoot.position.set(0.15 * slideK, -0.28 * slideK, z)
-    this.runnerRoot.rotation.set(-0.35 * slideK + 0.18 * (run ? 1 : 0), Math.PI * turn, 0)
+    // The answer shot: he turns and raises the cannon at drone 2, up and to
+    // the right (it used to leave straight ahead and bend to the drone).
+    const ans = ramp(SHOW_ANSWER - 0.35, SHOW_ANSWER - 0.05, st) * (1 - ramp(SHOW_ANSWER_HIT + 0.2, SHOW_ANSWER_HIT + 0.6, st))
+    const ry = Math.PI * turn + ans * (Math.atan2(D1_AT.x, D1_AT.z - z) - Math.PI)
     const m = this.runMotion
     m.walk = run ? 1 : 0.2
     m.phase = st * 12
     m.stride = m.phase
     animateHeroWalk(R, m, st)
-    if (slideK > 0) {
-      pose(R, 'hipL', -1.45 * slideK, 0, -0.05)
-      pose(R, 'kneeL', 0.2 * slideK, 0, 0)
-      pose(R, 'hipR', -0.5 * slideK, 0, 0.05)
-      pose(R, 'kneeR', 1.7 * slideK, 0, 0)
-      pose(R, 'chest', -0.35 * slideK, 0, 0)
-      pose(R, 'shoulderL', 0.6 * slideK, 0, -0.6 * slideK)
-    }
+    const dash = dashPose(R, st, DASH_RUN[0], DASH_RUN[1])
+    this.runnerRoot.position.set(0, -dash.drop, z)
+    this.runnerRoot.rotation.set(dash.lean + 0.18 * (run && dash.on === 0 ? 1 : 0), ry, 0)
+    this.runnerRoot.scale.set(1, 1 - dash.stretch * 0.5, 1 + dash.stretch)
+    this.dashOn = dash.on
     const aim = ramp(1.75, 2.0, st)
     if (aim > 0) {
-      pose(R, 'shoulderR', -1.5 * aim, 0, 0.12)
+      pose(R, 'shoulderR', -1.5 * aim - 0.38 * ans, 0, 0.12)
       pose(R, 'elbowR', -0.05, 0, 0)
       pose(R, 'hipL', -0.35 * aim, 0, -0.08)
       pose(R, 'hipR', 0.3 * aim, 0, 0.08)
@@ -820,7 +884,6 @@ export class IntroMode implements GameMode {
     }
     // The charge ring at the muzzle, then the shot a hand's width off the shield.
     this.streetSet.updateMatrixWorld(true)
-    const ry = Math.PI * turn
     const muzzle = R.bones.elbowR!.getWorldPosition(_a).sub(this.streetSet.position)
       .add(_b.set(Math.sin(ry), 0, Math.cos(ry)).multiplyScalar(0.38))
     const charge = st > 1.9 && st < 2.62 ? ramp(1.9, 2.55, st) : 0
@@ -835,7 +898,8 @@ export class IntroMode implements GameMode {
     this.chargeCore.color.set(full ? '#e6fbff' : '#eaffb0')
     this.charge.scale.setScalar(0.5 + 1.5 * charge)
     const shield = _b.set(0.55, 0.75, -6.0)
-    const fly = st >= 2.6 && st < SHOW_HIT ? clamp01((st - 2.6) / 0.1) * 0.88 + 0.12 * clamp01((st - STREET_RELEASE) / (SHOW_HIT - STREET_RELEASE)) : -1
+    // From the release to the shield at one speed (its last metre used to crawl).
+    const fly = st >= STREET_RELEASE && st < SHOW_HIT ? (st - STREET_RELEASE) / (SHOW_HIT - STREET_RELEASE) : -1
     if (fly >= 0) {
       _d.copy(shield).sub(muzzle).normalize()
       _c.copy(muzzle).lerp(shield, fly)
@@ -845,7 +909,7 @@ export class IntroMode implements GameMode {
     this.eyeStreak.visible = st < 1.6
     this.eyeStreak.position.copy(R.bones.head!.getWorldPosition(_a)).sub(this.streetSet.position).add(_d.set(0, 0.02, -0.75))
     this.eyeStreak.rotation.set(Math.PI / 2, 0, 0)
-    // Atlas keeps pace above his shoulder (it rewinds with the tape, too).
+    // Atlas keeps pace above his shoulder.
     const A = this.atlasStreet
     A.root.position.set(this.runnerRoot.position.x + 0.75, 1.75 + Math.sin(st * 3) * 0.08, this.runnerRoot.position.z - 0.7 * Math.cos(ry))
     A.root.rotation.set(0, ry, 0)
@@ -874,24 +938,19 @@ export class IntroMode implements GameMode {
    * The showcase, after the release (ACTION s): the shot lands, a perfect
    * block swats drone 1, the shield takes drone 2's volley, the Trooper's
    * shock ring rolls out and Flux slides under it, then a Repair Gel. Every
-   * pose is a function of the action clock, so the rewind runs it back.
+   * pose is a function of the action clock.
    */
   private renderShowcase(st: number, t: number, muzzle: Vector3): void {
     const R = this.runner
     const F = this.runnerRoot
-    // Flux: the slide under the ring carries him forward; up again after.
-    const slide = ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_FROM + 0.12, st) * (1 - ramp(SHOW_SLIDE_TO - 0.1, SHOW_SLIDE_TO + 0.15, st))
+    // Flux: the dash under the ring carries him forward; he settles after.
     const fz = -3.6 - 1.4 * ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_TO, st)
     if (st > STREET_RELEASE) {
-      F.position.set(0, -0.42 * slide, fz)
-      F.rotation.x = -0.4 * slide
-    }
-    if (slide > 0) {
-      pose(R, 'hipL', -1.45 * slide, 0, -0.05)
-      pose(R, 'kneeL', 0.2 * slide, 0, 0)
-      pose(R, 'hipR', -0.5 * slide, 0, 0.05)
-      pose(R, 'kneeR', 1.7 * slide, 0, 0)
-      pose(R, 'chest', -0.35 * slide, 0, 0)
+      const dash = dashPose(R, st, SHOW_SLIDE_FROM, SHOW_SLIDE_TO)
+      F.position.set(0, -dash.drop, fz)
+      F.rotation.x = dash.lean
+      F.scale.set(1, 1 - dash.stretch * 0.5, 1 + dash.stretch)
+      this.dashOn = Math.max(this.dashOn, dash.on)
     }
     // The shield: up for the parry and for the volley; a flash on each hit.
     const guard = Math.max(
@@ -987,7 +1046,7 @@ export class IntroMode implements GameMode {
       this.shot.fly(at.x, at.y, at.z, _b.x, _b.y, _b.z, t, scale)
       return true
     }
-    if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(d1.position), 0.55)) {
+    if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(D1_AT), 0.55)) {
       shotAt(SHOW_FINISH, SHOW_FINISH_HIT, _c.set(T.position.x, 1.1, T.position.z + 0.3), 0.75)
     }
   }
@@ -1196,7 +1255,7 @@ export class IntroMode implements GameMode {
     pos.copy(EYE).lerp(PAD_EYE, walkK)
     pos.y -= Math.abs(Math.sin(walkK * Math.PI * 3)) * 0.03
     // The wake-up: a small dip and rise as the eyes open.
-    pos.y += -0.05 * (1 - ramp(37.8 + SHOW, 40.0 + SHOW, t))
+    pos.y += -0.05 * (1 - ramp(37.8 + AFTER, 40.0 + AFTER, t))
     fpLookAt(t, look)
     this.placeAtlasFp(t, pos, look)
     return 82
@@ -1267,16 +1326,16 @@ export class IntroMode implements GameMode {
   }
 
   /** Project the bubble's and the tags' anchors for the layer. */
-  private anchors(shot: number, cutin: boolean): void {
+  private anchors(shot: ShotId, cutin: boolean): void {
     const cam = this.camera
     cam.updateMatrixWorld(true)
-    if (shot === 1 && !cutin) {
+    if (shot === 'valley' && !cutin) {
       this.vexHolo.updateMatrixWorld(true)
       _a.set(2.6, 2.0, 0).applyMatrix4(this.vexHolo.matrixWorld).project(cam)
       cineLive.bubbleX = clamp01((_a.x + 1) / 2)
       cineLive.bubbleY = clamp01((1 - _a.y) / 2)
     }
-    if (shot === 4) {
+    if (shot === 'wakeUp') {
       this.holo.root.updateMatrixWorld(true)
       const f = this.holo.spireTip
       _a.set(f.x, f.y + 1, f.z).applyMatrix4(this.holo.root.matrixWorld).project(cam)

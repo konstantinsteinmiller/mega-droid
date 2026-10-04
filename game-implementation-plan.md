@@ -881,8 +881,13 @@ while bars and damage numbers get direct DOM writes.
     short landscape (max-height 480px) puts it under the objective card.
     Also: a weapon lesson's frame leaves with Flux when he steps out of its
     room (`weaponRoomNow`).
-  - [ ] **P8 Intro rework** (#271, #272): new order, synced shots, the
-    Mega Man X dash, the score rewritten.
+  - [x] **P8 Intro rework** (#271, #272): new order, synced shots, the
+    Mega Man X dash, the score rewritten. introScript.ts: valley-to-beam
+    times are `N + AFTER` (AFTER = -11), the street starts at STREET_AT (46 s)
+    and runs to INTRO_END 69.5 s, no freeze or rewind; the shot that plays
+    last keeps the id `coldOpen` (its subtitle key). intro.ts renders by shot
+    id; `dashPose` is the shared dash. songs.ts intro(): the street block at
+    `off = STREET_STEP` (460), the valley-to-beam block at `off = -110`.
   - [ ] **P9 Wrap-up**: voice the new lines, story/voice docs, final browser
     pass.
 

@@ -1189,9 +1189,17 @@ const boss = (): Song => {
 // (`story/introScript.ts`) has a step: step = seconds × 10. It is scored to
 // the picture, not looped as a theme. Each shot is a section of its own,
 // written to the shot's length — the sections breathe with the picture
-// rather than being stretched — and the hits sit on the cutscene's beats:
+// rather than being stretched — and the hits sit on the cutscene's beats.
 //
-//   0–32     cold open, the run: full band in E minor, the chip hero riff
+// The intro plays in story order (#271): the valley, the lab, safe mode, the
+// wake-up and the beam first, the street's action last. Each block is
+// written at its first cut's steps and placed with an offset: the valley to
+// the beam 110 steps EARLIER than written (the valley opens at 0), the street
+// STREET_STEP (460, its 46 s) later.
+//
+// The street (written from 0):
+//
+//   0–32     the run: full band in E minor, the chip hero riff
 //   32–56    the slide in slow motion: the band drops to half time, the riff
 //            at half speed over a choir
 //   56–80    the charge: a riser, a 16th bass pedal, a snare roll; the
@@ -1200,13 +1208,11 @@ const boss = (): Song => {
 //            move (the shot lands 82, the parry 100, the volley's blocks
 //            134/140/146, drone 2 down 154, the ring 162 and the slide under
 //            it 170, the finish 182, the gel's bell burst 196), the hero riff
-//            on top — then silence on the freeze (225)
+//            on top — then the closing chord as the last pose holds (225), and
+//            a groove bar to loop on, should anything hold (244–260)
 //
-//   Everything from the rewind on sits SHOW_STEPS (144 = 9 bars, the
-//   script's SHOW × 10) later than its time below; the steps are written as
-//   they were before the showcase:
+// The valley to the beam (written from 110; it plays from 0):
 //
-//   92–108   the rewind: a crackle
 //   110–146  the valley: G major, then C, a bright pad and a plucked
 //            arpeggio; a bell on each relay chime (118, 127, 136)
 //   146–194  the Red Signal: a hit on the Spire's flash (146), Vex's motif
@@ -1228,15 +1234,19 @@ const boss = (): Song => {
 //   490–548  the beam: the full band, the riff at its top; the column rises
 //            (522) on a D chord, a snare roll and toms
 //   548      the flash: the whole band on one E-major chord, ringing out
-//   576–592  a groove bar to hold on, should anything hold (the loop)
+//            into the street
 //
 // Its `gain` is matched to the other songs with tools/music-render.mjs.
 
+/** Where the street's block starts (16ths): its 46 s in the script. */
+const STREET_STEP = 460
+
 const intro = (): Song => {
-  const S = new Score(46)
+  const S = new Score(45)
   const rng = mulberry32(1700)
-  /** From the rewind on, every step lands this much later (the showcase). */
-  let off = 0
+  /** Where the block being written lands: the street STREET_STEP later,
+   *  the valley to the beam 110 earlier. */
+  let off = STREET_STEP
   /** Add at an absolute 16th (0.1 s each). */
   const at = (step: number, i: Inst, m: number | string, len: number, v: number, p?: number): void =>
     S.add(0, step + off, i, typeof m === 'string' ? note(m) : m, len, v, p)
@@ -1276,8 +1286,8 @@ const intro = (): Song => {
   kit(0, 32, { kick: 4, snare: 8, hats: 16 })
   bassLine(0, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2', 'C3', 'C3', 'C4', 'C3', 'D3', 'D3', 'D4', 'D3'])
   const riff = 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 A5:9:1 G5:10:2 E5:12:4 D5:16:2 E5:18:2 G5:20:2 A5:22:3 B5:25:1 G5:26:2 E5:28:4'
-  S.line(0, 'cLead', riff, 0.75)
-  S.line(0, 'lead', riff, 0.45, -1)
+  line(0, 'cLead', riff, 0.75)
+  line(0, 'lead', riff, 0.45, -1)
 
   // ── 32–56 · The slide, in slow motion: half time ──
   at(32, 'crash', 0, 1, 0.55)
@@ -1288,8 +1298,8 @@ const intro = (): Song => {
   at(48, 'bass', 'D3', 8, 0.8)
   chord(32, 'choir', ['E3', 'G3', 'B3'], 24, 0.4)
   const slow = 'E5:32:4 G5:36:4 A5:40:4 B5:44:6 A5:50:2 G5:52:4'
-  S.line(0, 'cLead', slow, 0.7)
-  S.line(0, 'lead', slow, 0.45, -1)
+  line(0, 'cLead', slow, 0.7)
+  line(0, 'lead', slow, 0.45, -1)
 
   // ── 56–80 · The charge, and the release (80); the freeze cuts it all at 81 ──
   kit(56, 80, { kick: 4, hats: 16, v: 0.85 })
@@ -1337,11 +1347,18 @@ const intro = (): Song => {
   chord(196, 'choir', ['E3', 'G#3', 'B3', 'E4'], 28, 0.5)
   line(200, 'cLead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.75)
   line(200, 'lead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.45, -1)
+  // The last pose: one E-major chord ringing out as the tutorial takes over.
+  at(225, 'hit', 0, 1, 0.9)
+  at(225, 'crash', 0, 1, 0.8)
+  chord(225, 'choir', ['E3', 'G#3', 'B3', 'E4'], 16, 0.55)
+  chord(225, 'brass', ['E2', 'B2', 'E3'], 12, 0.6)
+  // ── 244–260 · A groove to hold on (the loop) ──
+  kit(244, 260, { kick: 4, hats: 8, v: 0.8 })
+  bassLine(244, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2'], 2, 0.75)
+  chord(244, 'pad', ['E3', 'G3', 'B3'], 16, 0.35)
 
-  // From the rewind on: 144 steps (9 bars) later than written.
-  off = 144
-  // ── 92–108 · The rewind ──
-  at(92, 'crackle', 0, 16, 0.55)
+  // The valley to the beam: it opens the intro, 110 steps earlier than written.
+  off = -110
 
   // ── 110–146 · The valley, before ──
   chord(110, 'pad', ['G3', 'B3', 'D4', 'G4'], 18, 0.5)
@@ -1472,16 +1489,11 @@ const intro = (): Song => {
   at(548, 'sub', 'E1', 22, 0.8)
   at(548, 'cLead', 'E6', 12, 0.6)
 
-  // ── 576–592 · A groove to hold on (the loop) ──
-  kit(576, 592, { kick: 4, hats: 8, v: 0.8 })
-  bassLine(576, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2'], 2, 0.75)
-  chord(576, 'pad', ['E3', 'G3', 'B3'], 16, 0.35)
-
   return {
     id: 'intro',
     bpm: 150,
-    bars: 46,
-    loopBar: 45,
+    bars: 45,
+    loopBar: 44,
     swing: 0,
     // Its loud sections (cold open, beam) sit at the boss fight's level; the
     // whole pass, quiet shots included, at the Scrapyard's it hands over to.

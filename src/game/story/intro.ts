@@ -96,6 +96,15 @@ const STEP = 1 / 60
 
 /** Where the sets stand (the lab is at the origin). */
 const STREET_AT = new Vector3(-300, 0, 0)
+/** The showcase's three shots: fired, landed (action clock), size. */
+const SHOTS_FIRED: ReadonlyArray<readonly [number, number, number]> = [
+  [STREET_RELEASE, SHOW_HIT, 1.4], [SHOW_ANSWER, SHOW_ANSWER_HIT, 1], [SHOW_FINISH, SHOW_FINISH_HIT, 1.4]
+]
+/** The muzzle flash's life, and the tracer's fade after the hit (s). */
+const FLASH_FOR = 0.14
+const TRACER_FADE = 0.22
+const _muzzle = new Vector3()
+
 /** Drone 2's post for its volley, where the answer shot meets it (street space). */
 const D1_AT = new Vector3(1.4, 3.0, -8.2)
 const VALLEY_AT = new Vector3(300, 0, 0)
@@ -317,6 +326,13 @@ export class IntroMode implements GameMode {
   private chargeGlow: SpriteMaterial
   private chargeCore: MeshBasicMaterial
   private shot: ChargedShotFx
+  /** Each shot visibly leaves the cannon (#106: the flights are a tenth of a
+   *  second, and started inside his forearm): a flash at the muzzle ring and
+   *  a plasma tracer from the muzzle to the shot, fading after the hit. */
+  private flash: Sprite
+  private flashMat: SpriteMaterial
+  private tracer: Mesh
+  private tracerMat: MeshBasicMaterial
   private eyeStreak: Mesh
   /** The showcase's props: the shield (the game's barrier, held free of the
    *  first-person camera), drone 2's orbs, the Trooper's shock ring, the
@@ -416,8 +432,15 @@ export class IntroMode implements GameMode {
     halo.renderOrder = 6
     this.charge.add(halo, new Mesh(sph(0.09, 12, 8), this.chargeCore))
     this.shot = buildChargedShot('charge2')
+    this.flashMat = new SpriteMaterial({ map: this.chargeGlow.map, color: new Color('#e6fbff'), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
+    this.flash = new Sprite(this.flashMat)
+    this.flash.renderOrder = 7
+    this.flash.visible = false
+    this.tracerMat = additive('#7ff4ff', 0.8)
+    this.tracer = new Mesh(new CylinderGeometry(1, 1, 1, 8, 1, true), this.tracerMat)
+    this.tracer.visible = false
     this.eyeStreak = new Mesh(cap(0.03, 1.2, 6, 2), additive(PAL.heroPlasma, 0.55))
-    this.streetSet.add(this.charge, this.shot.root, this.eyeStreak)
+    this.streetSet.add(this.charge, this.shot.root, this.eyeStreak, this.flash, this.tracer)
     // The showcase's props.
     this.shield = buildBarrier({ free: 0.62 })
     for (let k = 0; k < SHOW_VOLLEY.length; k++) {
@@ -857,8 +880,7 @@ export class IntroMode implements GameMode {
     }
     // The charge ring at the muzzle, then the shot a hand's width off the shield.
     this.streetSet.updateMatrixWorld(true)
-    const muzzle = R.bones.elbowR!.getWorldPosition(_a).sub(this.streetSet.position)
-      .add(_b.set(Math.sin(ry), 0, Math.cos(ry)).multiplyScalar(0.38))
+    const muzzle = _muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
     const charge = st > 1.9 && st < 2.62 ? ramp(1.9, 2.55, st) : 0
     // As the arm cannon charges in play: green through the first level, then
     // the full charge's cyan, flickering.
@@ -967,6 +989,11 @@ export class IntroMode implements GameMode {
       pose(R, 'chest', 0.05, 0.2 - 0.3 * hero, 0)
     }
 
+    // The muzzle where he stands now: the slide carried him forward and the
+    // poses above moved the arm (it was a step behind him at the finish).
+    this.streetSet.updateMatrixWorld(true)
+    muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
+
     // The Trooper: staggered by the charged shot, the slam, then finished.
     const T = this.trooperRoot
     const back = ramp(SHOW_HIT, SHOW_HIT + 0.4, st)
@@ -1025,9 +1052,34 @@ export class IntroMode implements GameMode {
       this.shot.fly(at.x, at.y, at.z, _b.x, _b.y, _b.z, t, scale)
       return true
     }
-    if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(D1_AT), 0.55)) {
+    if (!shotAt(SHOW_ANSWER, SHOW_ANSWER_HIT, _c.copy(D1_AT), 0.8)) {
       // Point blank, a full charge.
       shotAt(SHOW_FINISH, SHOW_FINISH_HIT, _c.set(T.position.x, 1.1, T.position.z + 0.3), 1)
+    }
+    // The flash and the tracer of whichever shot is out (or just landed).
+    this.flash.visible = false
+    this.tracer.visible = false
+    for (const [from, to, size] of SHOTS_FIRED) {
+      if (st < from || st >= to + TRACER_FADE) continue
+      const target = from === STREET_RELEASE ? _c.set(0.55, 0.75, -6.0)
+        : from === SHOW_ANSWER ? _c.copy(D1_AT) : _c.set(T.position.x, 1.1, T.position.z + 0.3)
+      const k = st - from
+      this.flash.visible = k < FLASH_FOR
+      if (this.flash.visible) {
+        this.flash.position.copy(muzzle)
+        this.flash.scale.setScalar(size * (0.5 + 1.4 * (k / FLASH_FOR)))
+        this.flashMat.opacity = 1 - k / FLASH_FOR
+      }
+      const head = _a.copy(muzzle).lerp(target, Math.min(1, k / (to - from)))
+      _b.copy(head).sub(muzzle)
+      const len = _b.length()
+      if (len < 0.05) break
+      this.tracer.visible = true
+      this.tracer.position.copy(muzzle).addScaledVector(_b, 0.5)
+      this.tracer.quaternion.setFromUnitVectors(_up, _b.normalize())
+      this.tracer.scale.set(0.035 * size, len, 0.035 * size)
+      this.tracerMat.opacity = 0.85 * (st < to ? 1 : 1 - (st - to) / TRACER_FADE)
+      break
     }
   }
 

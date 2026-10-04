@@ -18,6 +18,11 @@ import { scaleXp } from '../data/enemies'
 import { COUNTER, type BossDef } from '../data/bosses'
 import { weakSpotAt, WEAK_SPOT_MUL } from '../data/weakspots'
 
+/** A guard broken by a charge shot or a special weapon: what the hit still does. */
+export const GUARD_BROKEN = 0.7
+/** …on a Hardhat under its helmet (#124). */
+export const HARDHAT_COVERED = 0.3
+
 /** Scratch for a weak spot's position. */
 const _weak = { x: 0, y: 0, z: 0, r: 0 }
 
@@ -880,6 +885,9 @@ export class CombatSystem {
     }
     let dmg = amount * e.def.armor
     let crit = o.crit
+    // Stunned before this hit (the guard break below stuns it: that is no
+    // bonus on the very hit that broke it).
+    const wasStunned = e.state === 'stun'
     if (!crit && h.stats.critChance > 0 && Math.random() < h.stats.critChance) {
       crit = true
       dmg *= h.stats.critMul
@@ -888,11 +896,13 @@ export class CombatSystem {
       e.guardBreakT = 1.6
       e.guard = 0
       this.stun(e, 1.1)
-      dmg *= 0.7
+      // The Hardhat's helmet takes most of it (#124): the break opens it up
+      // for the next shots, the hit itself does little.
+      dmg *= e.kind === 'hardhat' ? HARDHAT_COVERED : GUARD_BROKEN
       pushHud({ t: 'text', x: o.x, y: o.y + 0.5, z: o.z, key: 'combat.guardBreak', color: '#ffd84a' })
       h.sfx('guardBreak', e.x, e.z)
     }
-    if (e.state === 'stun') dmg *= 1.25
+    if (wasStunned) dmg *= 1.25
     dmg = Math.max(1, Math.round(dmg))
     e.hp -= dmg
     e.flash = 1

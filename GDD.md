@@ -497,6 +497,21 @@ times, then the door opens anyway. Progress survives the mission snapshot, and
 the hub's Scrapyard card replays the tutorial until it is done. It should take
 about 4 minutes; damage is scaled down to 60 % until the mini-boss.
 
+**As built (2026-10-04).** The first mission is a hand-built stage
+(`world/stages/tutorial.ts`): charge, crate, block, the gap, the chest, the
+slide, then three fighting rooms (two rotor drones; a running wheel and a
+Shield Trooper; a crate golem), the gel corridor and a breather before the
+Scrapper (the shutter waits for the gel lesson). Every lesson room has a
+**hologram** of Flux doing the move on a loop with its input lit over its
+head (`fx/lessonHologram.ts`; no cards, no first-person demo), a big yellow
+arrow over each target, and the door in shuts behind Flux. The slide lesson
+holds the Stomper's leap overhead until he slides. **After every Master**
+(the tutorial's Scrapper too, not Vex) the copied weapon is equipped at
+once, its arm hangs before him as a hologram, and a lesson room behind the
+arena teaches it on blue drones that never fire; its pedestal then lights,
+and stepping on it (or B) beams him out. The next stage's beam-in room
+teaches a weapon only to a player who left before learning it.
+
 **The objective trail** (`fx/objectiveTrail.ts`, `MissionObjects.target`):
 once the walkthrough is done, small yellow chevrons on the floor lead along
 the navigation path to the main objective (the boss shutter, the elite, the

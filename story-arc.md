@@ -36,9 +36,15 @@ The intro keeps every rule `story.md` sets:
 - it doubles as the loader;
 - it ends in the teleporter beam.
 
-It adds a **cold open**: Flux in action on the neon streets, then a rewind to
-how it began. The rewind is **Atlas replaying its log**. So the first thing a
-player sees is the game's promise, and the first voice they hear is Atlas.
+**Order (2026-10-04, #271/#272).** The story comes first, the action last:
+the valley and the Red Signal, the lab where Gauss revives Flux, safe mode,
+the wake-up with Pip and Atlas, the beam out — and then the street, Flux on
+his first mission, opened by Atlas's "Log start." and running straight into
+the tutorial. It used to open on the street as a flash-forward, freeze, and
+rewind to the valley (Atlas replaying its log); playtesters wanted Gauss's
+revival before the action. The shots below keep their old numbers; shot 0
+now plays last, without the freeze or the rewind, its slides a Mega Man X
+dash.
 
 The old shot 1 (the valley) and shot 2 (the Red Signal) are merged.
 
@@ -54,12 +60,12 @@ motion. Anyone who has seen it skips it: the Skip button (tap or click),
 
 | # | Time | Shot | What the player must get |
 | --- | --- | --- | --- |
-| 0 | 0–11 s | Cold open: neon streets | This hero fights machines in a neon android city. |
-| 1 | 11–21 s | Rewind: the valley, then the Red Signal | It was a bright city. A red signal took its machines. |
-| 2 | 21–31 s | The lab | The signal reaches the lab. Gauss wakes Flux. |
-| 3 | 31–36 s | Safe mode | Gauss freezes herself to keep the signal out. She is alive. |
-| 4 | 36–49 s | Wake-up, first person | I'm Flux, level 1. Atlas is with me. The Scrapyard comes first. |
-| 5 | 49–57 s | The beam | Go. |
+| 1 | 0–10 s | The valley, then the Red Signal | It was a bright city. A red signal took its machines. |
+| 2 | 10–20 s | The lab | The signal reaches the lab. Gauss wakes Flux. |
+| 3 | 20–25 s | Safe mode | Gauss freezes herself to keep the signal out. She is alive. |
+| 4 | 25–38 s | Wake-up, first person | I'm Flux, level 1. Atlas is with me. The Scrapyard comes first. |
+| 5 | 38–46 s | The beam | Go. |
+| 0 | 46–69.5 s | The street: his first mission, the showcase | This hero fights machines in a neon android city — and here is every move. |
 
 ### Shot 0 · Cold open (0–11 s)
 
@@ -77,14 +83,14 @@ release, with the charge shot a hand's width from the Trooper's shield.
 craning down to him as he runs in at full speed (3 s). The Trooper's step
 and the slide under its swing play at a third of the speed (2.4 s): the
 poster frame, held. The plant, the aim and the charge play at under half
-speed; the freeze frame holds 1.1 s before the tape runs it all back.
+speed; then the showcase at full speed (the shot lands, a perfect block,
+the shield against a volley, the answer shot at the second drone, a dash
+under the shock ring, the Repair Gel), the last pose held a beat on a chord
+as the tutorial takes over. (Until 2026-10-04 it froze on the release and
+the tape ran it back to the valley.)
 
-The frame **rewinds**. Cyan scan-lines tear through it, the tape-rewind
-effect runs, and a small cyan ring spins in a corner: **Atlas's glyph**.
-
-- *Sound:* rain, a synth-bass pulse, the buster charge whine, then a tape
-  stop.
-- *Atlas (VO, optional):* "Log start."
+- *Sound:* rain, a synth-bass pulse, the buster charge whine.
+- *Atlas (VO):* "Log start." as the street fades up out of the beam's white.
 
 **Key frame:** low angle, Flux mid-slide under a Trooper's shield on wet
 asphalt, with neon reflected in the puddles. Red Vex billboards loom

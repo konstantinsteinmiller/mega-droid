@@ -630,7 +630,7 @@ locales when this is implemented. "Max" is the cap on the delivered length.
 
 | VO id | Key | Who | Line | Direction | Max |
 | --- | --- | --- | --- | --- | --- |
-| `atlas_log_start` | `atlas.intro.log` | Atlas | "Log start." | Flat, clinical. Starts the rewind. | 1.0 s |
+| `atlas_log_start` | `atlas.intro.log` | Atlas | "Log start." | Flat, clinical. Opens the street, Flux's first mission. | 1.0 s |
 | `vex_diagnosis` | `story.vex.diagnosis` | Vex | "Diagnosis: this valley is SICK. The cure… is ME!" | A grand reveal. A pause before "is ME", which is huge. | 3.5 s |
 | `atlas_core_online` | `atlas.intro.online` | Atlas | "Core online. Good morning, Flux." | Soft, the first words he ever hears. Warm on "Flux". | 2.2 s |
 | `atlas_scrapyard_first` | `atlas.intro.plan` | Atlas | "Scrapyard first. One relay at a time." | Matter-of-fact. The mission in one breath. | 2.2 s |

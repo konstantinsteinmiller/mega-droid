@@ -888,8 +888,13 @@ while bars and damage numbers get direct DOM writes.
     last keeps the id `coldOpen` (its subtitle key). intro.ts renders by shot
     id; `dashPose` is the shared dash. songs.ts intro(): the street block at
     `off = STREET_STEP` (460), the valley-to-beam block at `off = -110`.
-  - [ ] **P9 Wrap-up**: voice the new lines, story/voice docs, final browser
-    pass.
+  - [x] **P9 Wrap-up**: voice the new lines, story/voice docs, final browser
+    pass. No new spoken lines came out of P4-P8 (voice-todo stays current);
+    story-arc.md § 1, story-voice-over.md and the GDD describe the new
+    intro order, the hologram tutorial and the weapon room behind the boss.
+    Two late roadmap bullets joined: the shoot glyph that haunted the later
+    lessons (`Coach.master`, quiet while a hologram shows its input) and the
+    forge (Equip under Upgrade, `ConfirmDialog` before Salvage).
 
 ## Resume notes
 

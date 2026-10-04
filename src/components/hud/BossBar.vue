@@ -107,12 +107,12 @@ const segPct = computed(() => (Math.ceil(Math.min(1, Math.max(0, hud.bossHp01)) 
 .bb-enter-from, .bb-leave-to
   opacity: 0
   transform: translate(-50%, -8px)
-// A short landscape screen: the objective card reaches the middle at the top,
-// so the bar hangs just under it instead, a little narrower.
-@media (min-aspect-ratio: 1/1) and (max-height: 480px)
+// A narrow landscape screen: the compass dropped under the top row
+// (Compass.vue); the bar follows it, as wide.
+@media (min-aspect-ratio: 1/1) and (max-width: 1100px)
   .bb
-    top: calc(env(safe-area-inset-top, 0px) + 78px)
-    width: min(40vw, 300px)
+    top: calc(env(safe-area-inset-top, 0px) + clamp(8px, 2.2vmin, 18px) + clamp(36px, 8vmin, 48px) + 8px + clamp(16px, 3.4vmin, 22px) + 14px)
+    width: 40vw
 // Portrait: the compass drops under the top row; the bar follows it.
 @media (max-aspect-ratio: 1/1)
   .bb

@@ -111,6 +111,11 @@ watch([bossId, () => hud.phase], ([id, phase]) => {
     transform: scale(0.6)
 // Portrait: too narrow to share the top row with the status pills, so the
 // tracker sits under the bars instead.
+// A narrow landscape screen: the compass sits under the top row from 30vw to
+// 70vw (Compass.vue), so the card ends before 30vw and wraps instead.
+@media (min-aspect-ratio: 1/1) and (max-width: 1100px)
+  .obj
+    max-width: calc(30vw - 8px - env(safe-area-inset-left, 0px) - clamp(8px, 2.2vmin, 18px) - clamp(40px, 9vmin, 60px))
 @media (max-aspect-ratio: 1/1)
   .obj
     left: calc(env(safe-area-inset-left, 0px) + clamp(8px, 2.2vmin, 18px))

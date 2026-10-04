@@ -75,6 +75,14 @@ const pos = (b: number) => 50 + (Math.max(-HALF, Math.min(HALF, b)) / HALF) * 50
   font-size: 8px
   color: #fff
   text-shadow: 1px 1px 0 #141a33
+// A narrow landscape screen (phones, small tablets): the objective card and
+// the status pills fill the top row (at 640 px the pills reach past the
+// middle), so the strip drops under it, centred; the card keeps clear of it
+// (ObjectiveTracker.vue) and the boss bar hangs under it (BossBar.vue).
+@media (min-aspect-ratio: 1/1) and (max-width: 1100px)
+  .compass
+    top: calc(env(safe-area-inset-top, 0px) + clamp(8px, 2.2vmin, 18px) + clamp(36px, 8vmin, 48px) + 8px)
+    width: 40vw
 // Portrait: the top row is taken by the bars and the status pills, so the
 // strip drops below it.
 @media (max-aspect-ratio: 1/1)

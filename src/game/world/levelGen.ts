@@ -1,4 +1,5 @@
 import { mulberry32, randInt, shuffle, type Rng } from './rng'
+import type { Rarity, Slot } from '../data/items'
 import type { EnemyKind } from '../models/enemies'
 
 /**
@@ -236,6 +237,16 @@ export interface ChestSpot {
   z: number
   yaw: number
   room: number
+  /** An authored prize instead of a roll (#115: a story level's chest that
+   *  must not hand out a legendary for nothing): its rarity and slot, and
+   *  the key that makes it drop once per save. */
+  loot?: ChestLoot
+}
+
+export interface ChestLoot {
+  rarity: Rarity
+  slot: Slot
+  key: string
 }
 
 /** What lies at the bottom of a room's pits: a plain drop, a bed of spikes,

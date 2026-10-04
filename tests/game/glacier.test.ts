@@ -220,7 +220,9 @@ describe('generateGlacier', () => {
         for (const k of c.cells) expect(got.has(k), `${where}: checkpoint ${n} cell ${k}`).toBe(true)
       }
       for (const [n, r] of t.rewards.entries()) expect(got.has(idx(m, r.x, r.z)), `${where}: reward ${n} (${r.kind})`).toBe(true)
-      for (const [n, c] of t.chests!.entries()) expect(got.has(idx(m, c.x, c.z)), `${where}: chest ${n}`).toBe(true)
+      // A chest in the secret's alcove opens with the puzzle (its door cell is reached below).
+      const hidden = new Set((t.secrets ?? []).flatMap(s => s.cells))
+      for (const [n, c] of t.chests!.entries()) if (!hidden.has(idx(m, c.x, c.z))) expect(got.has(idx(m, c.x, c.z)), `${where}: chest ${n}`).toBe(true)
       const s = t.secrets![0]!
       for (const b of s.buttons) {
         // The cell in front of each button, on its floor.

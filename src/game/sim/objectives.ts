@@ -2,7 +2,7 @@ import { Group, Mesh, MeshBasicMaterial, AdditiveBlending, Color, CylinderGeomet
 import type { Quest, QuestTemplate } from '../data/quests'
 import type { Enemy, World } from './world'
 import type { Theme } from '../world/themes'
-import { cellCenter, roomCenter, CELL, type MapData, type Room, type Door } from '../world/levelGen'
+import { cellCenter, roomCenter, CELL, type ChestLoot, type MapData, type Room, type Door } from '../world/levelGen'
 import { buildChest, buildCrate, buildBarrel, buildDataCore, type ChestMesh, type PropMesh } from '../models/props'
 import { buildWorkerBot, animateWorkerBot } from '../models/npc'
 import type { Rig } from '../models/kit'
@@ -43,6 +43,8 @@ export interface Chest {
   rarity: Rarity
   navIdx: number
   beam: Mesh
+  /** An authored prize (`ChestSpot.loot`). */
+  loot?: ChestLoot
 }
 
 export interface Crate {
@@ -94,6 +96,8 @@ export interface ObjectiveHost extends World {
   theme: Theme
   map: MapData
   onChestOpened(c: Chest): void
+  /** An authored chest prize this save already took (`ChestSpot.loot`). */
+  lootTaken?(key: string): boolean
   onCrateBroken(c: Crate): void
   onCoreTaken(c: Core): void
   onObjectiveDone(): void
@@ -255,7 +259,7 @@ export class MissionObjects {
 
   /** A chest on the cell centred at (x, z), its floor at `y`, backed onto
    *  the wall `yaw` faces (`Room.wallSpots`' convention). */
-  private addChestAt(x: number, y: number, z: number, yaw: number, supply: boolean, rarity: Rarity): void {
+  private addChestAt(x: number, y: number, z: number, yaw: number, supply: boolean, rarity: Rarity, loot?: ChestLoot): void {
     const h = this.host
     const mesh = buildChest(h.theme, rarity)
     // Push toward the wall it stands against so it does not block the room.
@@ -275,7 +279,7 @@ export class MissionObjects {
     beam.position.set(cx, y + 2.5, cz)
     beam.visible = false
     parent.add(beam)
-    this.chests.push({ id: this.chests.length, x: cx, y, z: cz, yaw, mesh, opened: false, openT: 0, supply, rarity, navIdx, beam })
+    this.chests.push({ id: this.chests.length, x: cx, y, z: cz, yaw, mesh, opened: false, openT: 0, supply, rarity, navIdx, beam, ...(loot ? { loot } : {}) })
   }
 
   private place(): void {
@@ -365,7 +369,13 @@ export class MissionObjects {
     }
     // A terrain map's own chests (`Terrain.chests`: a level's author put
     // them on its ledges), last: the rolls above stay the seed's.
-    for (const c of map.terrain?.chests ?? []) this.addChestAt(c.x, c.y, c.z, c.yaw, false, rollRarity(rng, 0.3))
+    for (const c of map.terrain?.chests ?? []) {
+      const roll = rollRarity(rng, 0.3) // always drawn: the rolls after stay the seed's
+      // Its prize once per save; after that a plain chest, a notch down.
+      const loot = c.loot && !this.host.lootTaken?.(c.loot.key) ? c.loot : undefined
+      const rarity = loot ? loot.rarity : c.loot ? (c.loot.rarity === 'legendary' ? 'prototype' : c.loot.rarity) : roll
+      this.addChestAt(c.x, c.y, c.z, c.yaw, false, rarity, loot)
+    }
   }
 
   /** Called once enemies exist: attach elite / kill / purge targets. */

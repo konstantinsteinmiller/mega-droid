@@ -85,7 +85,9 @@ export const generateMeltdown = (seed: number): MapData => {
   b.crumble(13, 4, L(6), 1, 1)
   b.checkpoint(10, 4, YAW_PX, [[10, 3], [10, 4], [10, 5]])
   b.checkpoint(14, 4, YAW_PX, [[14, 3], [14, 4]])
-  b.chest(17, 1, YAW_NZ)
+  // A blue blaster, not a roll: the seed's roll here was a legendary
+  // chassis, a level's first room in (#115).
+  b.chest(17, 1, YAW_NZ, { rarity: 'tuned', slot: 'buster', key: 'blaze.ember' })
   b.rewards.push({ x: cellCenter(16), z: cellCenter(1), y: L(5), room: 1, kind: 'bolts' })
   b.foe('flyer', 14, 3, YAW_NX, [11, 1, 16, 6], [L(5), L(7)])
   b.foe('turret', 17, 5, YAW_NX, [17, 5, 17, 5])

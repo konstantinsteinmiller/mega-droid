@@ -2,7 +2,7 @@ import {
   CELL, Cell, Ramp, cellCenter, type MapData, type Room, type RoomRole, type Door, type Terrain, type SectionKind,
   type Ladder, type Lift, type Crusher, type RollerLane, type Checkpoint, type RewardSpot, type FoePost,
   type ChestSpot, type SecretSpec, type PitKind, type WindZone, type RailSpec, type WaveSpec, type VentSpec, type NavLink,
-  type IcePillar, type IcicleSpec, type CrumbleSpec, type MagnetRail, type WaterZone, type NeonBridge, type NeonSwitch, type BlackoutSpec
+  type IcePillar, type IcicleSpec, type CrumbleSpec, type MagnetRail, type WaterZone, type NeonBridge, type NeonSwitch, type BlackoutSpec, type ChestLoot
 } from '../levelGen'
 
 /**
@@ -334,9 +334,9 @@ export class Builder {
 
   /** A chest on cell (i, j)'s floor, backed onto the wall `yaw` faces (one
    *  of the YAW_ constants). Keep it off the walking line: it is solid. */
-  chest(i: number, j: number, yaw: number): void {
+  chest(i: number, j: number, yaw: number, loot?: ChestLoot): void {
     const k = this.k(i, j)
-    this.chests.push({ x: cellCenter(i), y: this.floor[k]!, z: cellCenter(j), yaw, room: this.room[k]! })
+    this.chests.push({ x: cellCenter(i), y: this.floor[k]!, z: cellCenter(j), yaw, room: this.room[k]!, ...(loot ? { loot } : {}) })
   }
 
   /** A one-way hop for the objective trail (see `NavLink`). */

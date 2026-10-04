@@ -209,6 +209,10 @@ export const generateGlacier = (seed: number): MapData => {
   const start = { x: cellCenter(4) + CELL / 2, z: cellCenter(9), yaw: YAW_NZ }
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // In the lobby secret's alcove, beside the Repair Tank and against its end
+  // wall: the puzzle's legendary chassis (#115: it was the Blaze level's
+  // first chest). Last of the chests, so the others keep their ids.
+  b.chest(4, 1, YAW_NX, { rarity: 'legendary', slot: 'chest', key: 'cryo.secret' })
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

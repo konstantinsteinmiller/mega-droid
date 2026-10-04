@@ -1676,6 +1676,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   // ─── Objective host ─────────────────────────────────────────────────────────
 
+  lootTaken(key: string): boolean {
+    return profile.world.seen.includes(`loot:${key}`)
+  }
+
   onChestOpened(c: Chest): void {
     this.chestsOpened++
     profile.stats.chests++
@@ -1683,10 +1687,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Bolts burst out of every chest; an item drops by rarity chance.
     const bolts = Math.round((12 + lvl * 6) * (c.supply ? 1.2 : 1) * this.stats.boltMul)
     for (let k = 0; k < 5; k++) this.system.spawnPickup('bolt', Math.max(1, Math.round(bolts / 5)), c.x, c.y + 1.0, c.z)
-    const itemChance = c.rarity === 'standard' ? 0.45 : 1
+    // An authored prize drops once per save (#115; a save that took it gets
+    // a plain chest a notch down, `MissionObjects.place`).
+    const loot = c.loot && !this.lootTaken(c.loot.key) ? c.loot : null
+    if (loot) profile.world.seen.push(`loot:${loot.key}`)
+    const rarity = c.rarity
+    const itemChance = loot ? 1 : rarity === 'standard' ? 0.45 : 1
     const seed = (this.map.seed ^ (0x9e37 * (c.id + 1))) >>> 0
     if (Math.random() < itemChance) {
-      const it = rollItem(seed, lvl, { rarity: c.rarity })
+      const it = rollItem(seed, lvl, loot ? { rarity, slot: loot.slot } : { rarity })
       profile.inv.items.push(it)
       profile.inv.fresh.push(it.id)
       this.itemsFound.push(it)

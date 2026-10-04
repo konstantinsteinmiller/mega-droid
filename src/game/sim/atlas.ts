@@ -137,6 +137,9 @@ export const CHATTER_GAP = 12
 /** Longest a line waits for its recording to finish loading before it goes
  *  up as a bubble alone (s). */
 export const VOICE_WAIT = 0.8
+/** A line said at once still takes its voice this late (s): past it, the
+ *  bubble is half read and a voice starting then would only talk over it. */
+export const VOICE_LATE = 1.2
 /** A waiting line older than this is dropped (it would come too late).
  *  Doubled with the hold times, so a queue of two lines still gets through.
  *  A scan is about the machine in view: it has seconds. Other chatter keeps
@@ -206,6 +209,10 @@ export interface SpokenLine {
 export class AtlasDirector {
   /** The line up now, if any. */
   line: SpokenLine | null = null
+  /** A line that went up before its recording had loaded (a lesson's intro,
+   *  said at once): its voice follows if it arrives within `VOICE_LATE`
+   *  (#107: the first "Let's train the Charge Shot!" played silent). */
+  private late: { id: AtlasLine; at: number } | null = null
   /** 0..1: how far into view Atlas is (eased). */
   peek = 0
   private t = 0
@@ -321,6 +328,7 @@ export class AtlasDirector {
   update(dt: number, k: AtlasTick): void {
     this.t += dt
     const t = this.t
+    if (this.late) this.catchUp(t)
     // ── Warnings, each re-armed once its cause has cleared ──
     if (k.playing) {
       // Health, in two steps. With a gel in the pack: under half, "use a gel"
@@ -396,9 +404,22 @@ export class AtlasDirector {
     this.peek += (want - this.peek) * Math.min(1, dt * (want ? 3.2 : 1.8))
   }
 
+  private catchUp(t: number): void {
+    const late = this.late!
+    const line = this.line
+    if (!line || line.id !== late.id || line.at !== late.at) { this.late = null; return }
+    const st = this.prefetch(atlasKey(late.id))
+    if (st === 'ready') {
+      this.late = null
+      const voice = this.speak(atlasKey(late.id))
+      if (voice !== null) line.hold = Math.max(line.hold, t - line.at + voice + 0.35)
+    } else if (st === 'none' || t - late.at > VOICE_LATE) this.late = null
+  }
+
   private start(id: AtlasLine): void {
     const key = atlasKey(id)
     const voice = this.speak(key)
+    this.late = voice === null && this.prefetch(key) === 'loading' ? { id, at: this.t } : null
     this.said.set(id, this.t)
     // Said, not just asked for: a tip dropped unsaid may come another day.
     if (onceEver(id)) this.ever.mark(id)

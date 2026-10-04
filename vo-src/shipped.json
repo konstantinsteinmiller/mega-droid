@@ -67,6 +67,14 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_debrief_greatJob": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
+  },
+  "de/atlas_debrief_toLab": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
+  },
   "de/atlas_exit": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -554,6 +562,10 @@
   "de/atlas_story_copied_thunderArc": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "de/atlas_story_cryo": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
   },
   "de/atlas_story_dataCore": {
     "engine": "elevenlabs",
@@ -1243,6 +1255,14 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_debrief_greatJob": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
+  },
+  "en/atlas_debrief_toLab": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
+  },
   "en/atlas_exit": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -1622,6 +1642,10 @@
   "en/atlas_scan_turret": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "en/atlas_scan_volt": {
+    "engine": "elevenlabs",
+    "at": "2026-10-04"
   },
   "en/atlas_scan_warden": {
     "engine": "elevenlabs",

@@ -3,7 +3,7 @@ import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
 import { buildAtlas, animateAtlas } from '../models/atlas'
 import type { Rig } from '../models/kit'
-import { playVoice } from '../audio/voice'
+import { playVoice, prefetchVoice } from '../audio/voice'
 import { tickHud } from '../state/hud'
 import { reactive } from 'vue'
 
@@ -45,6 +45,8 @@ export class DebriefLoaderMode implements GameMode {
   private readonly atlas: Rig
   private t = 0
   private said = 0
+  /** The line said before its recording loaded: voiced once it has (a moment). */
+  private late: { key: string; at: number } | null = null
 
   constructor() {
     this.scene.background = new Color('#111d42')
@@ -60,6 +62,7 @@ export class DebriefLoaderMode implements GameMode {
   }
 
   enter(): void {
+    for (const [, key] of LOADER_LINES) prefetchVoice(key)
     loaderUi.on = true
     loaderUi.line = ''
   }
@@ -69,8 +72,12 @@ export class DebriefLoaderMode implements GameMode {
     const next = LOADER_LINES[this.said]
     if (next && this.t >= next[0]) {
       loaderUi.line = next[1]
-      playVoice(next[1])
+      this.late = playVoice(next[1]) === null ? { key: next[1], at: this.t } : null
       this.said++
+    } else if (this.late) {
+      const st = prefetchVoice(this.late.key)
+      if (st === 'ready') { playVoice(this.late.key); this.late = null }
+      else if (st === 'none' || this.t - this.late.at > 1) this.late = null
     }
   }
 

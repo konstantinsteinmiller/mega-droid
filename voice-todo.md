@@ -16,24 +16,20 @@ itself, so a new line shows up here as missing until it is voiced.
 
 | Who | Lines | EN voiced | DE voiced |
 | --- | --- | --- | --- |
-| Atlas | 209 | 206 | 204 |
+| Atlas | 209 | 209 | 207 |
 | Vex | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 |
 | Pip | 52 | 51 | 52 |
-| **All** | **341** | **337** | **336** |
+| **All** | **341** | **340** | **339** |
 
-## Missing (7)
+## Missing (3)
 
 | File | Who | Plays when | English | German | EN | DE |
 | --- | --- | --- | --- | --- | --- | --- |
-| `atlas_story_cryo` | Atlas | Story mission start: Cryo Plant | Cryo Plant. Brr! Keep moving. | Kryowerk. Brr! Bleib in Bewegung. | elevenlabs | **missing** |
 | `atlas_story_rotor` | Atlas | Story mission start: Rotor Run | Rotor Run. Wind in my antenna! | Rotorflug. Wind in meiner Antenne! | elevenlabs | **missing** |
 | `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | elevenlabs | **missing** |
-| `atlas_scan_volt` | Atlas | The first volt-coated machine | Volt-coated. It shrugs off volt. | Voltbeschichtet. Volt prallt ab. | **missing** | elevenlabs |
 | `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | **missing** | elevenlabs |
-| `atlas_debrief_greatJob` | Atlas | A Atlas line with no notes yet (atlas.debrief.greatJob) | Great job! Another one down. | Gute Arbeit! Wieder einer erledigt. | **missing** | **missing** |
-| `atlas_debrief_toLab` | Atlas | A Atlas line with no notes yet (atlas.debrief.toLab) | Let's go to the lab. | Ab ins Labor. | **missing** | **missing** |
 
 ## Every line (341)
 
@@ -49,7 +45,7 @@ itself, so a new line shows up here as missing until it is voiced.
 | `atlas_brief_story` | Atlas | A story mission starts (fallback line) | A Core Master waits. Let's free it! | Ein Kernmeister wartet. Holen wir ihn raus! | elevenlabs | elevenlabs |
 | `atlas_story_scrapyard` | Atlas | Story mission start: Scrapyard | Scrapyard relay. Light it up! | Schrottplatz-Relais. Bring's zum Leuchten! | elevenlabs | elevenlabs |
 | `atlas_story_blaze` | Atlas | Story mission start: Blaze Refinery | The Refinery. Hot, hot, hot! | Die Raffinerie. Heiß, heiß, heiß! | elevenlabs | elevenlabs |
-| `atlas_story_cryo` | Atlas | Story mission start: Cryo Plant | Cryo Plant. Brr! Keep moving. | Kryowerk. Brr! Bleib in Bewegung. | elevenlabs | **missing** |
+| `atlas_story_cryo` | Atlas | Story mission start: Cryo Plant | Cryo Plant. Brr! Keep moving. | Kryowerk. Brr! Bleib in Bewegung. | elevenlabs | elevenlabs |
 | `atlas_story_volt` | Atlas | Story mission start: Volt Tower | Volt Tower. My circuits tingle! | Voltturm. Meine Schaltkreise kribbeln! | elevenlabs | elevenlabs |
 | `atlas_story_gale` | Atlas | Story mission start: Sky Docks | Sky Docks. Don't look down! | Himmelsdocks. Nicht runterschauen! | elevenlabs | elevenlabs |
 | `atlas_story_magnet` | Atlas | Story mission start: Polarity Works | Polarity Works. My compass spins! | Polaritätswerk. Mein Kompass dreht durch! | elevenlabs | elevenlabs |
@@ -181,7 +177,7 @@ itself, so a new line shows up here as missing until it is voiced.
 | `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | elevenlabs | **missing** |
 | `atlas_scan_fire` | Atlas | The first fire-coated machine | Fire-coated. It shrugs off fire. | Feuerbeschichtet. Feuer prallt ab. | elevenlabs | elevenlabs |
 | `atlas_scan_ice` | Atlas | The first ice-coated machine | Ice-coated. It shrugs off ice. | Eisbeschichtet. Eis prallt ab. | elevenlabs | elevenlabs |
-| `atlas_scan_volt` | Atlas | The first volt-coated machine | Volt-coated. It shrugs off volt. | Voltbeschichtet. Volt prallt ab. | **missing** | elevenlabs |
+| `atlas_scan_volt` | Atlas | The first volt-coated machine | Volt-coated. It shrugs off volt. | Voltbeschichtet. Volt prallt ab. | elevenlabs | elevenlabs |
 | `atlas_scan_wind` | Atlas | The first wind-coated machine | Wind-coated. It shrugs off wind. | Windbeschichtet. Wind prallt ab. | elevenlabs | elevenlabs |
 | `atlas_hint_blaze_lava` | Atlas | Meltdown Descent: the first catwalks over lava | That's lava down there. Stay on the metal. | Da unten ist Lava. Bleib auf dem Metall. | elevenlabs | elevenlabs |
 | `atlas_hint_blaze_leap` | Atlas | Meltdown Descent: the first dash-leap gap | Too wide to walk. Slide off the edge, you'll carry. | Zu weit zum Gehen. Rutsch über die Kante, du fliegst rüber. | elevenlabs | elevenlabs |
@@ -378,5 +374,5 @@ itself, so a new line shows up here as missing until it is voiced.
 | `flux_fumble_4` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Error… wheee! | Fehler… juhuu! | elevenlabs | elevenlabs |
 | `flux_fumble_5` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Butter circuits! | Butter im Schaltkreis! | elevenlabs | elevenlabs |
 | `flux_fumble_6` | Flux | A hard hit shook his charge loose: a wild shot, a flailing arm | Wobble mode ON! | Wackelmodus AN! | elevenlabs | elevenlabs |
-| `atlas_debrief_greatJob` | Atlas | A Atlas line with no notes yet (atlas.debrief.greatJob) | Great job! Another one down. | Gute Arbeit! Wieder einer erledigt. | **missing** | **missing** |
-| `atlas_debrief_toLab` | Atlas | A Atlas line with no notes yet (atlas.debrief.toLab) | Let's go to the lab. | Ab ins Labor. | **missing** | **missing** |
+| `atlas_debrief_greatJob` | Atlas | A Atlas line with no notes yet (atlas.debrief.greatJob) | Great job! Another one down. | Gute Arbeit! Wieder einer erledigt. | elevenlabs | elevenlabs |
+| `atlas_debrief_toLab` | Atlas | A Atlas line with no notes yet (atlas.debrief.toLab) | Let's go to the lab. | Ab ins Labor. | elevenlabs | elevenlabs |

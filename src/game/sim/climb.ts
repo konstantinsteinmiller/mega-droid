@@ -547,6 +547,25 @@ export class ClimbRun {
 
   // ─── Per step ──────────────────────────────────────────────────────────────
 
+  /**
+   * A frozen shot of Flux squashed under a press (`Mission.frameFreeze`,
+   * #116): the head over (x, z) rises `k` (0..1) of the way back to rest,
+   * so he can spring up. The look only: the press's own cycle is untouched
+   * and sets the head again on its next step.
+   */
+  liftCrusherNear(x: number, z: number, k: number): void {
+    for (const cr of this.crushers) {
+      if (Math.abs(cr.x - x) > CR_SIZE || Math.abs(cr.z - z) > CR_SIZE) continue
+      // Its block off while the shot runs: the camera's lines start at Flux,
+      // inside it (they all read as blocked, and it filmed from straight up).
+      cr.slab.active = false
+      const head = cr.head + (CR_REST - cr.head) * (1 - (1 - k) * (1 - k))
+      cr.mesh.head.position.y = head
+      cr.mesh.rod.position.y = head + 1.3
+      cr.mesh.rod.scale.y = Math.max(0.05, CR_BEAM - head - 1.3)
+    }
+  }
+
   /** Lifts, crushers, balls, rewards, checkpoints. Before the player moves:
    *  the lifts' motion this step is what carries a rider. */
   update(dt: number, time: number, p: ClimbBody, playing: boolean): void {

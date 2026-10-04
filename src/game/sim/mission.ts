@@ -1,4 +1,5 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
+import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, SQUASH_FLAT_Y, squashY } from './squash'
 import {
   Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3, Raycaster, Vector2,
   Mesh, RingGeometry, CylinderGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
@@ -545,6 +546,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  trap shot on screen (the barrel's shows him squashed flat). */
   flatT = 0
   private trapCamHazard = ''
+  /** A squash shot's boing has played (#116). */
+  private squashPopped = false
   /** The lava pits' cells (x, surface y, z): embers rise off them near Flux. */
   private lavaCells: Array<[number, number, number]> | null = null
   /** Lesson rooms: intro, try (`sim/training.ts`). */
@@ -1189,8 +1192,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     taken = Math.max(1, Math.round(taken))
     c.hp -= taken
     c.iframes = 0.8
-    // A barrel flattens him like a cartoon (#280): no jolt, no shake.
-    const flat = o.hazard === 'barrel'
+    // A barrel or a press flattens him like a cartoon (#280, #116): no jolt, no shake.
+    const flat = !!o.hazard && SQUASH_HAZARDS.has(o.hazard)
     c.hurtT = flat ? 0 : 0.25
     if (flat) {
       this.flatT = FLAT_FOR
@@ -1223,6 +1226,35 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return 'hit'
   }
 
+  /** Where a squash shot looks from Flux (#116): the open floor along his
+   *  facing, its back, or a side, whichever runs furthest (3 m at most). A
+   *  barrel's (`along`: the way it rolled) films across its lane if that is
+   *  open: along it, the barrel stood between the camera and him. */
+  private squashAim(along: number | null): { tx: number; tz: number; hyaw: number } {
+    const p = this.player
+    let best = { tx: p.x - Math.sin(p.yaw) * 3, tz: p.z - Math.cos(p.yaw) * 3, hyaw: p.yaw }
+    let reach = -1
+    const base = along ?? p.yaw
+    const turns = along === null ? [0, Math.PI, Math.PI / 2, -Math.PI / 2] : [Math.PI / 2, -Math.PI / 2, 0, Math.PI]
+    for (const [n, turn] of turns.entries()) {
+      const a = base + turn
+      const dx = -Math.sin(a)
+      const dz = -Math.cos(a)
+      let d = 0
+      while (d < 3) {
+        const f = floorAt(this.nav, p.x + dx * (d + 0.5), p.z + dz * (d + 0.5))
+        if (f < -50 || Math.abs(f - p.y) > 0.6) break
+        d += 0.5
+      }
+      // The front frame stands at his facing's back side: he turns so that
+      // is the open floor (and faces the camera).
+      if (d > reach) { reach = d; best = { tx: p.x + dx * 3, tz: p.z + dz * 3, hyaw: a + Math.PI } }
+      // Across a barrel's lane, open enough: take it.
+      if (along !== null && n < 2 && d >= 2.5) break
+    }
+    return best
+  }
+
   /**
    * A hazard's first hit of its kind in a mission gets a short freeze-frame on
    * Flux (`sim/freezeCam.ts`): the camera swings in front of him while he
@@ -1232,7 +1264,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * close by (the freeze would hide a live threat's wind-up).
    */
   private maybeTrapCam(hazard: string, fromX: number, fromZ: number): void {
-    if (this.trapCamSeen.has(hazard) || this.freeze.active || this.exit.active || flow.modal) return
+    // A squash is shown every time; the other traps once a mission.
+    const squash = SQUASH_HAZARDS.has(hazard)
+    if ((!squash && this.trapCamSeen.has(hazard)) || this.freeze.active || this.exit.active || flow.modal) return
     if (this.bossStarted && this.boss && this.boss.state !== 'dead') return
     const p = this.player
     for (const o of this.enemies) {
@@ -1240,10 +1274,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     this.trapCamSeen.add(hazard)
     this.trapCamHazard = hazard
+    // The shot plays the flattening and the pop back up itself: the first
+    // person view is not left flat after it.
+    if (squash) {
+      this.flatT = 0
+      this.squashPopped = false
+      if (hazard === 'crush') this.climb?.liftCrusherNear(p.x, p.z, 0)
+    }
     this.startFreeze({
-      kind: 'trap', dur: TRAP_CAM_DUR, frame: 'front', skippable: true,
-      fx: hazard === 'volt' ? 'volt' : hazard === 'ice' ? 'ice' : hazard === 'flame' ? 'flame' : hazard === 'barrel' ? 'flat' : 'spikes',
-      tx: fromX, ty: p.y + 1, tz: fromZ
+      kind: 'trap', dur: squash ? SQUASH_DUR : TRAP_CAM_DUR, frame: 'front', skippable: true,
+      fx: hazard === 'volt' ? 'volt' : hazard === 'ice' ? 'ice' : hazard === 'flame' ? 'flame' : squash ? 'flat' : 'spikes',
+      // A press stands right on him: the camera looks at him from along the
+      // walkway's open side (aimed at the press, or at a wall, it ended up
+      // above him, looking down at the floor).
+      ...(squash ? this.squashAim(hazard === 'barrel' ? Math.atan2(-(p.x - fromX), -(p.z - fromZ)) : null) : { tx: fromX, tz: fromZ }), ty: p.y + 1
     })
   }
 
@@ -5334,9 +5378,23 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const hr = v.heroRoot
     hr.visible = true
     // A trap's hold shakes him in place; the other shots stand him still. A
-    // barrel's leaves him squashed flat, wide as a pancake.
-    const squashed = s.kind === 'trap' && this.trapCamHazard === 'barrel'
-    hr.scale.set(squashed ? 1.45 : 1, squashed ? 0.28 : 1, squashed ? 1.45 : 1)
+    // barrel or a press squashes him flat as a pancake, then he springs
+    // back up past his size and settles (#116).
+    const squashed = s.kind === 'trap' && SQUASH_HAZARDS.has(this.trapCamHazard)
+    if (squashed) {
+      const sy = squashY(t, s.dur)
+      // Wide while flat, thin while stretched tall: the volume reads.
+      const w = 1 + (1 - sy) * ((SQUASH_FLAT_W - 1) / (1 - SQUASH_FLAT_Y))
+      hr.scale.set(w, sy, w)
+      const from = s.dur - SQUASH_SPRING
+      if (this.trapCamHazard === 'crush' && t >= from - SQUASH_LIFT) {
+        this.climb?.liftCrusherNear(s.hx, s.hz, Math.min(1, (t - (from - SQUASH_LIFT)) / SQUASH_LIFT))
+      }
+      if (t >= from && !this.squashPopped) {
+        this.squashPopped = true
+        sfx('fumble')
+      }
+    } else hr.scale.set(1, 1, 1)
     const shake = s.kind === 'trap' && !squashed ? 0.035 : 0
     hr.position.set(
       s.hx + (shake ? (Math.random() - 0.5) * shake : 0),

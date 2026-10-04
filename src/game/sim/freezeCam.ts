@@ -163,9 +163,11 @@ export class FreezeDirector {
       const dist = rescue ? FRONT_DIST * RESCUE_PULL : FRONT_DIST
       _want.x = s.hx - Math.sin(a) * dist
       _want.z = s.hz - Math.cos(a) * dist
-      _want.y = rescue ? s.hy + RESCUE_RISE : s.hy + (flat ? 0.7 : FRONT_UP + 0.4 * k)
+      _want.y = rescue ? s.hy + RESCUE_RISE : s.hy + (flat ? 1.15 : FRONT_UP + 0.4 * k)
       lx = s.hx
-      ly = rescue ? s.ty : s.hy + (flat ? 0.25 : 1.0)
+      // A pancake's look point stays over the floor: lower, the camera's
+      // lines from it met the floor, and it went straight up overhead.
+      ly = rescue ? s.ty : s.hy + (flat ? 0.6 : 1.0)
       lz = s.hz
     } else {
       // Above: high over the subject, looking down into it.

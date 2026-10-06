@@ -122,10 +122,15 @@ window.renderSong = async (id, seconds, wantWav, only) => {
   const r = { id: only ? id + '/' + only : id, pass: +pass.toFixed(1), lufs: +(-0.691 + 10 * Math.log10(ms)).toFixed(1), peakDb: +(20 * Math.log10(peak)).toFixed(1), speed: Math.round(speed) }
   if (wantWav) {
     const L = buf.getChannelData(0), R = buf.getChannelData(1)
+    // A song that peaks over full scale (the boss theme, +0.4 dB) is pulled
+    // down to -1 dBFS for the file instead of clipping in the 16-bit export.
+    let top = 0
+    for (let i = 0; i < buf.length; i++) top = Math.max(top, Math.abs(L[i]), Math.abs(R[i]))
+    const k = top > 0.89 ? 0.89 / top : 1
     const pcm = new Int16Array(buf.length * 2)
     for (let i = 0; i < buf.length; i++) {
-      pcm[2 * i] = Math.max(-1, Math.min(1, L[i])) * 32767
-      pcm[2 * i + 1] = Math.max(-1, Math.min(1, R[i])) * 32767
+      pcm[2 * i] = Math.max(-1, Math.min(1, L[i] * k)) * 32767
+      pcm[2 * i + 1] = Math.max(-1, Math.min(1, R[i] * k)) * 32767
     }
     const bytes = new Uint8Array(pcm.buffer)
     let bin = ''

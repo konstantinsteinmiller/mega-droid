@@ -244,7 +244,10 @@ await ff([
   '-filter_complex', chains.join(';'),
   '-map', '[v]', '-map', `${ci + 2}:a`,
   '-c:v', 'libx264', '-preset', 'slow', '-crf', DRAFT ? '22' : '14', '-profile:v', 'high', '-pix_fmt', 'yuv420p',
-  '-af', 'alimiter=limit=0.89:level=false',
+  // The mix is already at −14 LUFS; loudnorm's TRUE-peak limiter (it
+  // oversamples) holds the AAC encode under −1 dBTP, which a sample limiter
+  // (alimiter) did not: the encode overshot it to −0.6.
+  '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11',
   '-c:a', 'aac', '-b:a', '320k', '-ar', String(SR),
   '-frames:v', String(totalFrames), '-shortest', '-movflags', '+faststart',
   FINAL

@@ -45,6 +45,9 @@ export default {
     'fire': 'Ammu',
     'tank': 'Korjausgeeli',
     'noEnergy': 'Aseenergia ei riitä',
+    'noGel': 'Korjausgeeli on lopussa',
+    'beamNotYet': 'Teleporttaa pois, kun tavoite on täytetty',
+    'beamFight': 'Voita taistelu ensin, teleporttaa sitten pois',
     'tankCount': 'Korjausgeeli: {n}/{max}',
     'borrowed': 'Lainattu {weapon}: {n}/{max} laukausta',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Parannus!',
+    'autoEquip': 'Varustettu!',
     'found': 'Löytyi: {item} ({rarity})!',
     'tank': 'Korjausgeeli löytyi!',
     'giftTank': 'Lahja: +1 korjausgeeli!'
@@ -320,11 +324,16 @@ export default {
     'title': 'TAUKO',
     'resume': 'Jatka',
     'abandon': 'Hylkää tehtävä',
+    'abandonAsk': 'Poistutaanko tehtävästä? Se lasketaan epäonnistuneeksi.',
+    'leapHint': 'Ei hyppynappia: kävele reunan yli, niin hyppäät aukon yli.',
     'controls': 'Ohjaimet',
     'label': {
       'move': 'Liiku',
       'look': 'Katso',
       'parry': 'Torju',
+      'turn': 'Käänny (← →)',
+      'leap': 'Ylitä aukot',
+      'target': 'Seuraava kohde',
       'interact': 'Käytä'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Haluatko kuulla äänet englanniksi?',
-    'body': 'Atlas ja muut puhuvat, mutta eivät vielä sinun kielelläsi. Haluatko kuulla heidät englanniksi? Heidän puheensa näkyy ruudulla aina sinun kielelläsi. Voit muuttaa tämän milloin tahansa kohdassa Asetukset → Pelattavuus.',
+    'body': 'Sinun kielelläsi ei ole vielä ääniä. Haluatko kuulla ne englanniksi? Heidän sanansa näkyvät aina ruudulla. Voit muuttaa tämän milloin tahansa kohdassa Asetukset → Pelattavuus.',
     'no': 'Ei englanninkielistä puhetta'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Opetukset',
     'name': {
       'weapon': 'Aseoppitunti',
-      'gap': 'Hyppyopetus',
+      'gap': 'Kuiluhyppyopetus',
       'gel': 'Korjausgeeliopetus',
       'slide': 'Liukuopetus',
       'block': 'Kilpiopetus',

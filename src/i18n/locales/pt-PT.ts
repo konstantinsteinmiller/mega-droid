@@ -45,6 +45,9 @@ export default {
     'fire': 'Disparar',
     'tank': 'Gel de Reparação',
     'noEnergy': 'Energia da arma insuficiente',
+    'noGel': 'Sem Gel de Reparação',
+    'beamNotYet': 'Teletransporta-te quando cumprires o objetivo',
+    'beamFight': 'Vence primeiro o combate e depois teletransporta-te',
     'tankCount': 'Gel de Reparação: {n} de {max}',
     'borrowed': 'Arma emprestada {weapon}: {n} de {max} tiros',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Melhoria!',
+    'autoEquip': 'Equipado!',
     'found': 'Encontraste {item} ({rarity})!',
     'tank': 'Gel de Reparação encontrado!',
     'giftTank': 'Presente: +1 Gel de Reparação!'
@@ -320,11 +324,16 @@ export default {
     'title': 'EM PAUSA',
     'resume': 'Continuar',
     'abandon': 'Abandonar missão',
+    'abandonAsk': 'Sair da missão? Conta como falhada.',
+    'leapHint': 'Não há botão de salto: avança para lá de uma borda para saltar a fenda.',
     'controls': 'Controlos',
     'label': {
       'move': 'Mover',
       'look': 'Olhar',
       'parry': 'Aparar',
+      'turn': 'Rodar (← →)',
+      'leap': 'Saltar fendas',
+      'target': 'Próximo alvo',
       'interact': 'Interagir'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Queres ouvir as vozes em inglês?',
-    'body': 'Atlas e os outros falam, mas ainda não na tua língua. Queres ouvi-los em inglês? O que dizem aparece sempre no ecrã na tua língua. Podes mudar isto a qualquer momento em Opções → Jogabilidade.',
+    'body': 'Ainda não há vozes na tua língua. Queres ouvi-las em inglês? As palavras deles aparecem sempre no ecrã. Muda isto quando quiseres em Opções → Jogabilidade.',
     'no': 'Sem vozes em inglês'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Câmara lenta final',
     'englishVoice': 'Vozes em inglês',
     'gameplay': 'Jogabilidade',
     'title': 'Opções',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Tutoriais',
     'name': {
       'weapon': 'Lição de Arma',
-      'gap': 'Tutorial de Salto',
+      'gap': 'Tutorial de Salto sobre o Vazio',
       'gel': 'Tutorial de Gel de Reparação',
       'slide': 'Tutorial de Deslize',
       'block': 'Tutorial de Escudo',

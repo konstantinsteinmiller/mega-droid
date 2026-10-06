@@ -126,6 +126,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { formatTenths } from '@/utils/localeNumber'
 import { addHudTicker, hud, hudLive } from '@/game/state/hud'
 import { profile } from '@/game/state/profile'
 import { input } from '@/game/boot'
@@ -169,7 +170,7 @@ const demoOn = (act: string): boolean => demoNow(act) || (tryNow(act) && !desk.v
 const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': true } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
 /** A weapon's mark inside its orb (the same glyph as the results screen). */
 const weaponIcon = (id: string) => WEAPON_ICON[id as WeaponId] ?? 'buster'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 /** The coach glyph for a button, when it is teaching a touch player. */
 const touchHint = (id: HintId) => hud.hints.find(h => h.id === id && h.family === 'touch')
 /** The shield lesson rings the block button on desktop too, beside the card. */
@@ -239,7 +240,7 @@ onMounted(() => {
     if (cooling !== slideCooling.value) slideCooling.value = cooling
     if (!cooling) return
     slideBtn.value?.style.setProperty('--cd', String(Math.min(1, cd / Math.max(0.01, hudLive.slideCdMax))))
-    const txt = cd >= 1 ? String(Math.ceil(cd)) : cd.toFixed(1)
+    const txt = cd >= 1 ? String(Math.ceil(cd)) : formatTenths(cd, locale.value)
     if (txt !== slideText && slideNum.value) {
       slideNum.value.textContent = txt
       slideText = txt

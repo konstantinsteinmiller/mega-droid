@@ -184,7 +184,9 @@ onUnmounted(stopCapture)
             @update:model-value="setSettingValue('musicTrack', $event)"
           )
 
-    div(v-else-if="currentTab === 'gameplay'").flex.flex-col.gap-2.p-2
+    //- A short landscape phone: two columns, every setting on screen at once
+    //- (a third dropdown sat half under the footer, playtest 2026-10-06).
+    div(v-else-if="currentTab === 'gameplay'").gameplay-grid.p-2
       div(class="z-[20] flex flex-col gap-1")
         FSelect(
           :label="t('options.difficulty')"
@@ -265,6 +267,15 @@ onUnmounted(stopCapture)
 </template>
 
 <style lang="sass" scoped>
+.gameplay-grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: 0.5rem
+  align-items: start
+@media (orientation: landscape) and (max-height: 540px)
+  .gameplay-grid
+    grid-template-columns: 1fr 1fr
+    column-gap: 1rem
 span
   text-shadow: 2px 2px 0 #000
 .bindings

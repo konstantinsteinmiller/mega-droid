@@ -45,6 +45,9 @@ export default {
     'fire': 'Disparar',
     'tank': 'Xel reparador',
     'noEnergy': 'Enerxía de arma insuficiente',
+    'noGel': 'Non queda xel reparador',
+    'beamNotYet': 'Teletranspórtate ao cumprir o obxectivo',
+    'beamFight': 'Gaña o combate e logo teletranspórtate',
     'tankCount': 'Xel reparador: {n} de {max}',
     'borrowed': 'Arma emprestada {weapon}: {n} de {max} disparos',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Mellora!',
+    'autoEquip': 'Equipado!',
     'found': 'Botín: {item} ({rarity})!',
     'tank': 'Xel reparador atopado!',
     'giftTank': 'Agasallo: +1 xel reparador!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUSA',
     'resume': 'Continuar',
     'abandon': 'Abandonar a misión',
+    'abandonAsk': 'Saír da misión? Contará como fallida.',
+    'leapHint': 'Non hai botón de salto: camiña por un bordo para saltar o oco.',
     'controls': 'Controis',
     'label': {
       'move': 'Moverse',
       'look': 'Mirar',
       'parry': 'Parada',
+      'turn': 'Xirar (← →)',
+      'leap': 'Saltar ocos',
+      'target': 'Seguinte obxectivo',
       'interact': 'Interactuar'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Queres oír as voces en inglés?',
-    'body': 'Atlas e os demais falan, pero aínda non no teu idioma. Queres oílos en inglés? O que din aparece sempre na pantalla no teu idioma. Podes cambialo cando queiras en Opcións → Xogabilidade.',
+    'body': 'Aínda non hai voces no teu idioma. Queres oílas en inglés? As súas palabras aparecen sempre na pantalla. Podes cambialo cando queiras en Opcións → Xogabilidade.',
     'no': 'Sen voces en inglés'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Titoriais',
     'name': {
       'weapon': 'Lección de armas',
-      'gap': 'Titorial de salto',
+      'gap': 'Titorial de salto sobre o baleiro',
       'gel': 'Titorial de xel reparador',
       'slide': 'Titorial de esvarada',
       'block': 'Titorial de escudo',

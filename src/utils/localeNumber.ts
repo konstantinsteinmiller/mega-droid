@@ -65,3 +65,41 @@ export const formatCount = (value: number, locale: string): string => {
   const fmt = formatterFor(locale)
   return fmt ? fmt.format(n) : String(n)
 }
+
+const percents = new Map<string, Intl.NumberFormat>()
+
+/**
+ * A share as a percent for `locale`, one decimal at most — `0.028` →
+ * `2.8%` / `2,8 %` (fr, de) / `%2,8` (tr). A French playtester read the
+ * English "2.8%" as a mistake (2026-10-06). Latin digits, like `formatCount`.
+ */
+export const formatPercent = (share: number, locale: string): string => {
+  if (!Number.isFinite(share)) return ''
+  let fmt = percents.get(locale)
+  if (!fmt) {
+    try {
+      fmt = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1, numberingSystem: 'latn' })
+    } catch {
+      fmt = new Intl.NumberFormat('en', { style: 'percent', maximumFractionDigits: 1 })
+    }
+    percents.set(locale, fmt)
+  }
+  return fmt.format(Math.round(share * 1000) / 1000)
+}
+
+const tenths = new Map<string, Intl.NumberFormat>()
+
+/** A number with one decimal for `locale` — a cooldown's `0.6` / `0,6`. */
+export const formatTenths = (value: number, locale: string): string => {
+  if (!Number.isFinite(value)) return ''
+  let fmt = tenths.get(locale)
+  if (!fmt) {
+    try {
+      fmt = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1, numberingSystem: 'latn' })
+    } catch {
+      fmt = new Intl.NumberFormat('en', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    }
+    tenths.set(locale, fmt)
+  }
+  return fmt.format(value)
+}

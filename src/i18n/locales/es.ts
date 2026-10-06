@@ -45,6 +45,9 @@ export default {
     'fire': 'Disparar',
     'tank': 'Gel reparador',
     'noEnergy': 'Energía de arma insuficiente',
+    'noGel': 'No queda gel reparador',
+    'beamNotYet': 'Teletranspórtate al cumplir el objetivo',
+    'beamFight': 'Gana el combate y luego teletranspórtate',
     'tankCount': 'Gel reparador: {n} de {max}',
     'borrowed': 'Arma prestada {weapon}: {n} de {max} disparos',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': '¡Mejora!',
+    'autoEquip': '¡Equipado!',
     'found': '¡Botín: {item} ({rarity})!',
     'tank': '¡Gel reparador encontrado!',
     'giftTank': 'Regalo: ¡+1 Gel reparador!'
@@ -295,11 +299,16 @@ export default {
     'title': 'PAUSA',
     'resume': 'Reanudar',
     'abandon': 'Abandonar misión',
+    'abandonAsk': '¿Salir de la misión? Contará como fallida.',
+    'leapHint': 'No hay botón de salto: camina por un borde para saltar el hueco.',
     'controls': 'Controles',
     'label': {
       'move': 'Moverse',
       'look': 'Mirar',
       'parry': 'Parada',
+      'turn': 'Girar (← →)',
+      'leap': 'Saltar huecos',
+      'target': 'Siguiente objetivo',
       'interact': 'Interactuar'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': '¿Quieres oír las voces en inglés?',
-    'body': 'Atlas y los demás hablan, pero aún no en tu idioma. ¿Quieres oírlos en inglés? Lo que dicen siempre aparece en pantalla en tu idioma. Puedes cambiarlo cuando quieras en Opciones → Jugabilidad.',
+    'body': 'Aún no hay voces en tu idioma. ¿Quieres oírlas en inglés? Sus palabras siempre aparecen en pantalla. Puedes cambiarlo cuando quieras en Opciones → Jugabilidad.',
     'no': 'Sin voces en inglés'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutoriales',
     'name': {
       'weapon': 'Lección de armas',
-      'gap': 'Tutorial de salto',
+      'gap': 'Tutorial de salto sobre el vacío',
       'gel': 'Tutorial de gel reparador',
       'slide': 'Tutorial de deslizamiento',
       'block': 'Tutorial de escudo',

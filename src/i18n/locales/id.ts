@@ -45,6 +45,9 @@ export default {
     'fire': 'Tembak',
     'tank': 'Gel Perbaikan',
     'noEnergy': 'Energi senjata tidak cukup',
+    'noGel': 'Gel Perbaikan habis',
+    'beamNotYet': 'Teleport keluar setelah tujuan selesai',
+    'beamFight': 'Menangkan pertarungan dulu, lalu teleport keluar',
     'tankCount': 'Gel Perbaikan: {n} dari {max}',
     'borrowed': 'Senjata pinjaman {weapon}: {n} dari {max} tembakan',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Peningkatan!',
+    'autoEquip': 'Dipakai!',
     'found': '{item} {rarity} ditemukan!',
     'tank': 'Gel Perbaikan ditemukan!',
     'giftTank': 'Hadiah: +1 Gel Perbaikan!'
@@ -295,11 +299,16 @@ export default {
     'title': 'JEDA',
     'resume': 'Lanjutkan',
     'abandon': 'Tinggalkan misi',
+    'abandonAsk': 'Keluar dari misi? Akan dihitung gagal.',
+    'leapHint': 'Tidak ada tombol lompat: berjalanlah melewati tepi untuk melompati celah.',
     'controls': 'Kontrol',
     'label': {
       'move': 'Bergerak',
       'look': 'Melihat',
       'parry': 'Tangkis',
+      'turn': 'Berputar (← →)',
+      'leap': 'Melompati celah',
+      'target': 'Target berikutnya',
       'interact': 'Interaksi'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Dengar suara dalam bahasa Inggris?',
-    'body': 'Atlas dan yang lain berbicara, tapi belum dalam bahasa kamu. Mau mendengar mereka dalam bahasa Inggris? Ucapan mereka selalu tampil di layar dalam bahasa kamu. Kamu bisa mengubahnya kapan saja di Opsi → Permainan.',
+    'body': 'Belum ada suara dalam bahasamu. Mau dengar dalam bahasa Inggris? Ucapan mereka selalu tampil di layar. Ubah kapan saja di Opsi → Permainan.',
     'no': 'Tanpa suara bahasa Inggris'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutorial',
     'name': {
       'weapon': 'Pelajaran Senjata',
-      'gap': 'Tutorial Lompatan',
+      'gap': 'Tutorial Lompat Celah',
       'gel': 'Tutorial Gel Perbaikan',
       'slide': 'Tutorial Meluncur',
       'block': 'Tutorial Perisai',

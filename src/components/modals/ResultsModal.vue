@@ -7,7 +7,9 @@
           div.q-sector {{ t(`sector.${r.quest.sector}`) }}
         //- Where this lifetime XP places the player among everyone. Renders
         //- nothing at all when there is no honest number to show.
-        div.rank(v-if="leaderboardEnabled")
+        //- Not after a failed run: "#19 of 19 players" read as a punishment
+        //- on top of the defeat (playtest 2026-10-06).
+        div.rank(v-if="leaderboardEnabled && r.success")
           RankBadge(:score="lifetime")
         div.rows
           div.row
@@ -72,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
@@ -122,6 +124,17 @@ const lifetime = computed(() => (r.value ? lifetimeXp() : 0))
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
 watch(open, (o) => { if (o) tripled.value = false })
+// Enter or Space continues, as a keyboard player expects (nothing focused the
+// button, and Space is the slide key whose handler takes the press).
+const onKey = (e: KeyboardEvent) => {
+  if (!open.value || e.repeat || adInFlight.value) return
+  if (e.code !== 'Enter' && e.code !== 'NumpadEnter' && e.code !== 'Space') return
+  e.preventDefault()
+  e.stopPropagation()
+  done()
+}
+onMounted(() => window.addEventListener('keydown', onKey, true))
+onUnmounted(() => window.removeEventListener('keydown', onKey, true))
 
 const triple = async () => {
   const res = r.value

@@ -45,6 +45,9 @@ export default {
     'fire': 'Skyt',
     'tank': 'Reparasjonsgel',
     'noEnergy': 'For lite våpenenergi',
+    'noGel': 'Ingen reparasjonsgel igjen',
+    'beamNotYet': 'Teleporter ut når oppgaven er løst',
+    'beamFight': 'Vinn kampen først, teleporter så ut',
     'tankCount': 'Reparasjonsgel: {n} av {max}',
     'borrowed': 'Lånt våpen {weapon}: {n} av {max} skudd',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Oppgradering!',
+    'autoEquip': 'Utstyrt!',
     'found': '{item} ({rarity}) funnet!',
     'tank': 'Reparasjonsgel funnet!',
     'giftTank': 'Gave: +1 Reparasjonsgel!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUSE',
     'resume': 'Fortsett',
     'abandon': 'Avbryt oppdraget',
+    'abandonAsk': 'Forlate oppdraget? Det teller som mislykket.',
+    'leapHint': 'Ingen hoppknapp: gå utfor en kant for å hoppe over gapet.',
     'controls': 'Kontroller',
     'label': {
       'move': 'Gå',
       'look': 'Se',
       'parry': 'Parer',
+      'turn': 'Snu (← →)',
+      'leap': 'Hopp over hull',
+      'target': 'Neste mål',
       'interact': 'Bruk'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Vil du høre stemmene på engelsk?',
-    'body': 'Atlas og de andre snakker, men ikke på språket ditt ennå. Vil du høre dem på engelsk? Det de sier, vises alltid på skjermen på språket ditt. Du kan endre dette når som helst under Innstillinger → Spilling.',
+    'body': 'Ingen stemmer på språket ditt ennå. Vil du høre dem på engelsk? Ordene deres vises alltid på skjermen. Endre det når som helst under Innstillinger → Spilling.',
     'no': 'Ingen engelske stemmer'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Finalekamera',
     'englishVoice': 'Engelske stemmer',
     'gameplay': 'Spilling',
     'title': 'Innstillinger',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Opplæring',
     'name': {
       'weapon': 'Våpenleksjon',
-      'gap': 'Hoppøvelse',
+      'gap': 'Kløfthoppøvelse',
       'gel': 'Reparasjonsgel-øvelse',
       'slide': 'Skliøvelse',
       'block': 'Skjoldøvelse',

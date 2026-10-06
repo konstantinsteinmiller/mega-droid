@@ -45,6 +45,9 @@ export default {
     'fire': '発射',
     'tank': 'リペアジェル',
     'noEnergy': '武器エネルギー不足',
+    'noGel': 'リペアジェルがない',
+    'beamNotYet': '目標を達成したら帰還できる',
+    'beamFight': 'まず戦闘に勝ってから帰還しよう',
     'tankCount': 'リペアジェル：{n}/{max}',
     'borrowed': '借りた武器 {weapon}：残り{n}/{max}発',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'アップグレード！',
+    'autoEquip': '装備した！',
     'found': '{item}（{rarity}）を入手！',
     'tank': 'リペアジェルを入手！',
     'giftTank': 'プレゼント：リペアジェル+1！'
@@ -295,11 +299,16 @@ export default {
     'title': 'ポーズ中',
     'resume': '再開',
     'abandon': 'ミッション放棄',
+    'abandonAsk': 'ミッションを離れる？失敗扱いになる。',
+    'leapHint': 'ジャンプボタンはない：端から歩き出すと、自動で隙間を跳び越える。',
     'controls': '操作方法',
     'label': {
       'move': '移動',
       'look': '視点',
       'parry': 'パリィ',
+      'turn': '旋回（← →）',
+      'leap': '隙間を跳ぶ',
+      'target': '次のターゲット',
       'interact': 'アクション'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': '英語の音声で聞く？',
-    'body': 'Atlasたちは話すけど、まだあなたの言語の音声はない。英語で聞いてみる？セリフはいつも画面にあなたの言語で表示される。「設定 → ゲームプレイ」からいつでも変更できる。',
+    'body': 'あなたの言語の音声はまだない。英語で聞いてみる？セリフはいつも画面に表示される。「設定 → ゲームプレイ」からいつでも変更できる。',
     'no': '英語音声なし'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'チュートリアル',
     'name': {
       'weapon': '武器レッスン',
-      'gap': 'ジャンプチュートリアル',
+      'gap': '穴越えジャンプチュートリアル',
       'gel': 'リペアジェルチュートリアル',
       'slide': 'スライディングチュートリアル',
       'block': 'シールドチュートリアル',

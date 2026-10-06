@@ -45,6 +45,9 @@ export default {
     'fire': 'Šauti',
     'tank': 'Remonto gelis',
     'noEnergy': 'Trūksta ginklo energijos',
+    'noGel': 'Remonto gelio neliko',
+    'beamNotYet': 'Teleportuokis, kai užduotis bus atlikta',
+    'beamFight': 'Pirma laimėk kovą, tada teleportuokis',
     'tankCount': 'Remonto gelis: {n} iš {max}',
     'borrowed': 'Pasiskolintas ginklas {weapon}: {n} iš {max} šūvių',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Geriau!',
+    'autoEquip': 'Uždėta!',
     'found': 'Rasta: {item} ({rarity})!',
     'tank': 'Rastas remonto gelis!',
     'giftTank': 'Dovana: +1 remonto gelis!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUZĖ',
     'resume': 'Tęsti',
     'abandon': 'Palikti misiją',
+    'abandonAsk': 'Palikti misiją? Ji bus laikoma nepavykusia.',
+    'leapHint': 'Šuolio mygtuko nėra: nueik nuo krašto ir peršoksi tarpą.',
     'controls': 'Valdymas',
     'label': {
       'move': 'Judėti',
       'look': 'Žvalgytis',
       'parry': 'Atremti',
+      'turn': 'Sukimasis (← →)',
+      'leap': 'Peršokti tarpus',
+      'target': 'Kitas taikinys',
       'interact': 'Sąveika'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Nori girdėti balsus angliškai?',
-    'body': 'Atlas ir kiti kalba, bet dar ne tavo kalba. Nori juos girdėti angliškai? Tai, ką jie sako, ekrane visada rodoma tavo kalba. Tai gali bet kada pakeisti skiltyje Nustatymai → Žaidimas.',
+    'body': 'Tavo kalba balsų dar nėra. Nori juos girdėti angliškai? Jų žodžiai visada rodomi ekrane. Tai gali bet kada pakeisti skiltyje Nustatymai → Žaidimas.',
     'no': 'Be įgarsinimo anglų kalba'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Mokymai',
     'name': {
       'weapon': 'Ginklo pamoka',
-      'gap': 'Šuolio mokymas',
+      'gap': 'Šuolio per prarają mokymas',
       'gel': 'Remonto gelio mokymas',
       'slide': 'Slydimo mokymas',
       'block': 'Skydo mokymas',

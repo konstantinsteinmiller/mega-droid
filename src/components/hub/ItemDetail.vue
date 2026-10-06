@@ -31,10 +31,10 @@ import { SLOT_ICON, formatAffix } from './gearFormat'
 /** An item card: name in rarity colour, main stat (with ▲/▼ vs. the equipped
  *  piece), implicit + rolled affixes, and a slot for action buttons. */
 const props = defineProps<{ item: Item; compare?: Item | null }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const base = computed(() => BASE_BY_ID[props.item.base])
 const delta = computed(() => (props.compare ? mainStat(props.item) - mainStat(props.compare) : 0))
-const affixText = (a: Affix) => formatAffix(t, a)
+const affixText = (a: Affix) => formatAffix(t, a, locale.value)
 </script>
 
 <style scoped lang="sass">

@@ -45,6 +45,9 @@ export default {
     'fire': '射擊',
     'tank': '修理凝膠',
     'noEnergy': '武器能量不足',
+    'noGel': '修理凝膠已用完',
+    'beamNotYet': '完成目標後才能傳送撤離',
+    'beamFight': '先贏下戰鬥，再傳送撤離',
     'tankCount': '修理凝膠：{n}/{max}',
     'borrowed': '借來的{weapon}：剩餘{n}/{max}發',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': '升級！',
+    'autoEquip': '已裝備！',
     'found': '發現{item}（{rarity}）！',
     'tank': '發現修理凝膠！',
     'giftTank': '禮物：+1 修理凝膠！'
@@ -320,11 +324,16 @@ export default {
     'title': '已暫停',
     'resume': '繼續',
     'abandon': '放棄任務',
+    'abandonAsk': '要離開任務嗎？將視為失敗。',
+    'leapHint': '沒有跳躍鍵：走出邊緣就會躍過缺口。',
     'controls': '操作說明',
     'label': {
       'move': '移動',
       'look': '視角',
       'parry': '彈反',
+      'turn': '轉向（← →）',
+      'leap': '跳過缺口',
+      'target': '下一個目標',
       'interact': '互動'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': '要聽英文語音嗎？',
-    'body': 'Atlas 和其他角色會說話，但還沒有你的語言版本。要聽英文配音嗎？他們說的話一律會以你的語言顯示在畫面上。你可以隨時在「選項 → 遊戲玩法」中更改。',
+    'body': '還沒有你的語言的語音。要聽英文配音嗎？他們說的話一律會顯示在畫面上。你可以隨時在「選項 → 遊戲玩法」中更改。',
     'no': '不要英文配音'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': '教學',
     'name': {
       'weapon': '武器課',
-      'gap': '跳躍教學',
+      'gap': '跨越缺口教學',
       'gel': '修理凝膠教學',
       'slide': '滑鏟教學',
       'block': '護盾教學',

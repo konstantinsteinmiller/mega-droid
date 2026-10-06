@@ -45,6 +45,9 @@ export default {
     'fire': 'Trage',
     'tank': 'Gel Reparator',
     'noEnergy': 'Energie de armă insuficientă',
+    'noGel': 'Nu mai ai Gel Reparator',
+    'beamNotYet': 'Teleportează-te după ce termini obiectivul',
+    'beamFight': 'Câștigă întâi lupta, apoi teleportează-te',
     'tankCount': 'Gel Reparator: {n} din {max}',
     'borrowed': '{weapon} împrumutat: {n} din {max} focuri',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Mai bun!',
+    'autoEquip': 'Echipat!',
     'found': 'Ai găsit: {item} ({rarity})!',
     'tank': 'Ai găsit un Gel Reparator!',
     'giftTank': 'Cadou: +1 Gel Reparator!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUZĂ',
     'resume': 'Continuă',
     'abandon': 'Abandonează misiunea',
+    'abandonAsk': 'Părăsești misiunea? Va conta ca eșuată.',
+    'leapHint': 'Nu există buton de salt: pășește peste o margine ca să sari peste gol.',
     'controls': 'Comenzi',
     'label': {
       'move': 'Mișcare',
       'look': 'Privire',
       'parry': 'Parare',
+      'turn': 'Întoarcere (← →)',
+      'leap': 'Salt peste gol',
+      'target': 'Următoarea țintă',
       'interact': 'Interacțiune'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Vrei să auzi vocile în engleză?',
-    'body': 'Atlas și ceilalți vorbesc, dar încă nu în limba ta. Vrei să-i auzi în engleză? Ce spun ei apare mereu pe ecran în limba ta. Poți schimba asta oricând din Opțiuni → Joc.',
+    'body': 'Încă nu există voci în limba ta. Vrei să le auzi în engleză? Cuvintele lor apar mereu pe ecran. Poți schimba asta oricând din Opțiuni → Joc.',
     'no': 'Fără voci în engleză'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Reluare finală',
     'englishVoice': 'Voci în engleză',
     'gameplay': 'Joc',
     'title': 'Opțiuni',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Tutoriale',
     'name': {
       'weapon': 'Lecția Armei',
-      'gap': 'Tutorial: Săritura',
+      'gap': 'Tutorial: Săritura peste gol',
       'gel': 'Tutorial: Gel Reparator',
       'slide': 'Tutorial: Alunecarea',
       'block': 'Tutorial: Scutul',

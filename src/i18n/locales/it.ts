@@ -45,6 +45,9 @@ export default {
     'fire': 'Spara',
     'tank': 'Gel Riparatore',
     'noEnergy': 'Energia arma insufficiente',
+    'noGel': 'Gel Riparatore esaurito',
+    'beamNotYet': 'Rientra quando l’obiettivo è completato',
+    'beamFight': 'Prima vinci lo scontro, poi rientra',
     'tankCount': 'Gel Riparatore: {n} su {max}',
     'borrowed': 'Arma in prestito {weapon}: {n} colpi su {max}',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Miglioramento!',
+    'autoEquip': 'Equipaggiato!',
     'found': 'Hai trovato {item} ({rarity})!',
     'tank': 'Gel Riparatore trovato!',
     'giftTank': 'Regalo: +1 Gel Riparatore!'
@@ -295,11 +299,16 @@ export default {
     'title': 'IN PAUSA',
     'resume': 'Riprendi',
     'abandon': 'Abbandona missione',
+    'abandonAsk': 'Lasciare la missione? Conterà come fallita.',
+    'leapHint': 'Nessun tasto di salto: supera un bordo camminando per saltare il vuoto.',
     'controls': 'Comandi',
     'label': {
       'move': 'Muoviti',
       'look': 'Guarda',
       'parry': 'Para',
+      'turn': 'Gira (← →)',
+      'leap': 'Salta i vuoti',
+      'target': 'Prossimo bersaglio',
       'interact': 'Interagisci'
     },
     'touch': {
@@ -513,12 +522,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Vuoi sentire le voci in inglese?',
-    'body': 'Atlas e gli altri parlano, ma non ancora nella tua lingua. Vuoi sentirli in inglese? Quello che dicono appare sempre sullo schermo nella tua lingua. Puoi cambiarlo quando vuoi in Opzioni → Gioco.',
+    'body': 'Ancora nessuna voce nella tua lingua. Vuoi sentirle in inglese? Le loro parole appaiono sempre sullo schermo. Puoi cambiarlo quando vuoi in Opzioni → Gioco.',
     'no': 'Niente voci in inglese'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Rallenty finale',
     'englishVoice': 'Voci in inglese',
     'gameplay': 'Gioco',
     'title': 'Opzioni',
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutorial',
     'name': {
       'weapon': "Lezione sull'Arma",
-      'gap': 'Tutorial: Salto',
+      'gap': 'Tutorial: Salto del Fosso',
       'gel': 'Tutorial: Gel Riparatore',
       'slide': 'Tutorial: Scivolata',
       'block': 'Tutorial: Scudo',

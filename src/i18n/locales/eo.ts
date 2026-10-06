@@ -45,6 +45,9 @@ export default {
     'fire': 'Pafi',
     'tank': 'Ripara Ĝelo',
     'noEnergy': 'Ne sufiĉas armila energio',
+    'noGel': 'Neniu Ripara Ĝelo restas',
+    'beamNotYet': 'Teleportiĝu, kiam la tasko estas farita',
+    'beamFight': 'Unue venku la batalon, poste teleportiĝu',
     'tankCount': 'Ripara Ĝelo: {n} el {max}',
     'borrowed': 'Pruntita {weapon}: {n} el {max} pafoj',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Plibonigo!',
+    'autoEquip': 'Ekipita!',
     'found': '{item} ({rarity}) trovita!',
     'tank': 'Ripara Ĝelo trovita!',
     'giftTank': 'Donaco: +1 Ripara Ĝelo!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAŬZITA',
     'resume': 'Daŭrigi',
     'abandon': 'Forlasi mision',
+    'abandonAsk': 'Ĉu forlasi la mision? Ĝi kalkuliĝos kiel malsukcesa.',
+    'leapHint': 'Neniu saltbutono: paŝu de rando por transsalti la truon.',
     'controls': 'Regiloj',
     'label': {
       'move': 'Moviĝi',
       'look': 'Rigardi',
       'parry': 'Pari',
+      'turn': 'Turni (← →)',
+      'leap': 'Transsalti',
+      'target': 'Sekva celo',
       'interact': 'Interagi'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Ĉu aŭdi la voĉojn angle?',
-    'body': 'Atlas kaj la aliaj parolas, sed ankoraŭ ne en via lingvo. Ĉu vi volas aŭdi ilin angle? Kion ili diras, ĉiam aperas sur la ekrano en via lingvo. Vi povas ŝanĝi tion iam ajn en Agordoj → Ludado.',
+    'body': 'Ankoraŭ ne estas voĉoj en via lingvo. Ĉu aŭdi ilin angle? Iliaj vortoj ĉiam aperas sur la ekrano. Ŝanĝu tion iam ajn en Agordoj → Ludado.',
     'no': 'Sen angla voĉado'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Lerniloj',
     'name': {
       'weapon': 'Armila Leciono',
-      'gap': 'Salta Lernilo',
+      'gap': 'Lernilo pri Breĉosalto',
       'gel': 'Lernilo pri Ripara Ĝelo',
       'slide': 'Glita Lernilo',
       'block': 'Ŝilda Lernilo',

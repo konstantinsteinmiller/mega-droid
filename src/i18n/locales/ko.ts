@@ -45,6 +45,9 @@ export default {
     'fire': '발사',
     'tank': '수리 젤',
     'noEnergy': '무기 에너지 부족',
+    'noGel': '수리 젤이 없습니다',
+    'beamNotYet': '목표를 완료한 뒤 귀환하세요',
+    'beamFight': '먼저 전투에서 이긴 뒤 귀환하세요',
     'tankCount': '수리 젤: {n}/{max}',
     'borrowed': '빌린 무기 {weapon}: {n}/{max}발',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': '업그레이드!',
+    'autoEquip': '장착!',
     'found': '{rarity} {item} 발견!',
     'tank': '수리 젤 발견!',
     'giftTank': '선물: 수리 젤 +1!'
@@ -295,11 +299,16 @@ export default {
     'title': '일시정지',
     'resume': '계속하기',
     'abandon': '미션 포기',
+    'abandonAsk': '미션을 떠날까요? 실패로 처리됩니다.',
+    'leapHint': '점프 버튼 없음: 가장자리 밖으로 걸어가면 자동으로 틈을 뛰어넘습니다.',
     'controls': '조작법',
     'label': {
       'move': '이동',
       'look': '시점',
       'parry': '패링',
+      'turn': '회전 (← →)',
+      'leap': '틈 뛰어넘기',
+      'target': '다음 목표',
       'interact': '상호작용'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': '음성을 영어로 들으시겠어요?',
-    'body': 'Atlas와 다른 캐릭터들은 말을 하지만, 아직 사용자의 언어로는 들을 수 없습니다. 영어로 들으시겠어요? 대사는 항상 화면에 사용자의 언어로 표시됩니다. 설정 → 게임플레이에서 언제든지 바꿀 수 있습니다.',
+    'body': '아직 사용자의 언어로 된 음성이 없습니다. 영어로 들으시겠어요? 대사는 항상 화면에 표시됩니다. 설정 → 게임플레이에서 언제든지 바꿀 수 있습니다.',
     'no': '영어 음성 없음'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': '튜토리얼',
     'name': {
       'weapon': '무기 레슨',
-      'gap': '점프 튜토리얼',
+      'gap': '틈새 점프 튜토리얼',
       'gel': '수리 젤 튜토리얼',
       'slide': '슬라이딩 튜토리얼',
       'block': '방패 튜토리얼',

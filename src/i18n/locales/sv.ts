@@ -45,6 +45,9 @@ export default {
     'fire': 'Skjut',
     'tank': 'Reparationsgel',
     'noEnergy': 'För lite vapenenergi',
+    'noGel': 'Ingen reparationsgel kvar',
+    'beamNotYet': 'Teleportera ut när uppgiften är klar',
+    'beamFight': 'Vinn striden först, teleportera sedan ut',
     'tankCount': 'Reparationsgel: {n} av {max}',
     'borrowed': 'Lånat vapen {weapon}: {n} av {max} skott',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Uppgradering!',
+    'autoEquip': 'Utrustad!',
     'found': '{item} ({rarity}) hittad!',
     'tank': 'Reparationsgel hittad!',
     'giftTank': 'Gåva: +1 Reparationsgel!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUSAT',
     'resume': 'Fortsätt',
     'abandon': 'Avbryt uppdraget',
+    'abandonAsk': 'Lämna uppdraget? Det räknas som misslyckat.',
+    'leapHint': 'Ingen hoppknapp: gå över en kant för att hoppa över gapet.',
     'controls': 'Kontroller',
     'label': {
       'move': 'Gå',
       'look': 'Titta',
       'parry': 'Parera',
+      'turn': 'Vänd (← →)',
+      'leap': 'Hoppa över hål',
+      'target': 'Nästa mål',
       'interact': 'Använd'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Vill du höra rösterna på engelska?',
-    'body': 'Atlas och de andra pratar, men inte på ditt språk än. Vill du höra dem på engelska? Det de säger visas alltid på skärmen på ditt språk. Du kan ändra det när som helst under Inställningar → Spel.',
+    'body': 'Inga röster på ditt språk än. Vill du höra dem på engelska? Deras ord visas alltid på skärmen. Ändra det när som helst under Inställningar → Spel.',
     'no': 'Inget engelskt tal'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Finalkamera',
     'englishVoice': 'Engelskt tal',
     'gameplay': 'Spel',
     'title': 'Inställningar',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Övningar',
     'name': {
       'weapon': 'Vapenlektion',
-      'gap': 'Hoppövning',
+      'gap': 'Avgrundshoppövning',
       'gel': 'Reparationsgel-övning',
       'slide': 'Glidövning',
       'block': 'Sköldövning',

@@ -45,6 +45,9 @@ export default {
     'fire': 'Tűz',
     'tank': 'Javítózselé',
     'noEnergy': 'Nincs elég fegyverenergia',
+    'noGel': 'Elfogyott a javítózselé',
+    'beamNotYet': 'Teleportálj ki, ha kész a feladat',
+    'beamFight': 'Előbb nyerd meg a harcot, aztán teleportálj ki',
     'tankCount': 'Javítózselé: {n} / {max}',
     'borrowed': 'Kölcsönfegyver, {weapon}: {n} / {max} lövés',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Jobb!',
+    'autoEquip': 'Felszerelve!',
     'found': 'Találtál egyet: {rarity} {item}!',
     'tank': 'Javítózselét találtál!',
     'giftTank': 'Ajándék: +1 Javítózselé!'
@@ -320,11 +324,16 @@ export default {
     'title': 'SZÜNET',
     'resume': 'Folytatás',
     'abandon': 'Küldetés feladása',
+    'abandonAsk': 'Kilépsz a küldetésből? Sikertelennek számít.',
+    'leapHint': 'Nincs ugrásgomb: lépj le a peremről, és átugrod a rést.',
     'controls': 'Irányítás',
     'label': {
       'move': 'Mozgás',
       'look': 'Nézés',
       'parry': 'Hárítás',
+      'turn': 'Fordulás (← →)',
+      'leap': 'Átugrás',
+      'target': 'Következő célpont',
       'interact': 'Használat'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Angolul szeretnéd hallani a hangokat?',
-    'body': 'Atlas és a többiek beszélnek, de még nem a te nyelveden. Szeretnéd angolul hallani őket? Amit mondanak, az mindig a te nyelveden jelenik meg a képernyőn. Ezt bármikor megváltoztathatod itt: Beállítások → Játékmenet.',
+    'body': 'A nyelveden még nincsenek hangok. Szeretnéd angolul hallani őket? A szavaik mindig megjelennek a képernyőn. Bármikor módosíthatod itt: Beállítások → Játékmenet.',
     'no': 'Nincs angol szinkron'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Lassított finálé',
     'englishVoice': 'Angol szinkron',
     'gameplay': 'Játékmenet',
     'title': 'Beállítások',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Oktatások',
     'name': {
       'weapon': 'Fegyverlecke',
-      'gap': 'Ugrás-oktatás',
+      'gap': 'Szakadékugrás-oktatás',
       'gel': 'Javítózselé-oktatás',
       'slide': 'Csúszás-oktatás',
       'block': 'Pajzsoktatás',

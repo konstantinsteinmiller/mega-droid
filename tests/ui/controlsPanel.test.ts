@@ -38,13 +38,13 @@ const D = (name: keyof typeof ICON_PATHS) => ICON_PATHS[name].join('')
 
 const ORDER: Record<Family, Record<string, string[]>> = {
   touch: {
-    movement: ['move', 'slide'],
+    movement: ['move', 'slide', 'leap'],
     combat: ['fire', 'charge', 'block', 'parry'],
     items: ['tank', 'use']
   },
   mouse: {
-    movement: ['move', 'look', 'slide'],
-    combat: ['fire', 'charge', 'block', 'parry', 'weapon'],
+    movement: ['move', 'look', 'turn', 'slide', 'leap'],
+    combat: ['fire', 'charge', 'block', 'parry', 'weapon', 'target'],
     items: ['tank', 'use', 'beam', 'mute']
   }
 }

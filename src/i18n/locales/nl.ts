@@ -45,6 +45,9 @@ export default {
     'fire': 'Vuren',
     'tank': 'Reparatiegel',
     'noEnergy': 'Niet genoeg wapenenergie',
+    'noGel': 'Geen reparatiegel meer',
+    'beamNotYet': 'Teleporteer weg zodra de opdracht klaar is',
+    'beamFight': 'Win eerst het gevecht, teleporteer dan weg',
     'tankCount': 'Reparatiegel: {n} van {max}',
     'borrowed': 'Geleend wapen {weapon}: {n} van {max} schoten',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Upgrade!',
+    'autoEquip': 'Uitgerust!',
     'found': '{item} ({rarity}) gevonden!',
     'tank': 'Reparatiegel gevonden!',
     'giftTank': 'Cadeau: +1 Reparatiegel!'
@@ -295,11 +299,16 @@ export default {
     'title': 'GEPAUZEERD',
     'resume': 'Hervatten',
     'abandon': 'Missie afbreken',
+    'abandonAsk': 'Missie verlaten? Die telt als mislukt.',
+    'leapHint': 'Geen springknop: loop over een rand om over het gat te springen.',
     'controls': 'Besturing',
     'label': {
       'move': 'Lopen',
       'look': 'Kijken',
       'parry': 'Pareren',
+      'turn': 'Draaien (← →)',
+      'leap': 'Gaten overspringen',
+      'target': 'Volgend doelwit',
       'interact': 'Interactie'
     },
     'touch': {
@@ -513,12 +522,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Stemmen in het Engels horen?',
-    'body': 'Atlas en de anderen praten, maar nog niet in jouw taal. Wil je ze in het Engels horen? Wat ze zeggen, staat altijd in jouw taal op het scherm. Je kunt dit altijd wijzigen onder Opties → Gameplay.',
+    'body': 'Nog geen stemmen in jouw taal. Wil je ze in het Engels horen? Hun woorden staan altijd op het scherm. Wijzig dit altijd onder Opties → Gameplay.',
     'no': 'Geen Engelse stemmen'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Finalecamera',
     'englishVoice': 'Engelse stemmen',
     'gameplay': 'Gameplay',
     'title': 'Opties',
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutorials',
     'name': {
       'weapon': 'Wapenles',
-      'gap': 'Tutorial: Sprong',
+      'gap': 'Tutorial: Kloofsprong',
       'gel': 'Tutorial: Reparatiegel',
       'slide': 'Tutorial: Glijden',
       'block': 'Tutorial: Schild',

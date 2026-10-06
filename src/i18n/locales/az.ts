@@ -45,6 +45,9 @@ export default {
     'fire': 'Atəş',
     'tank': 'Təmir Geli',
     'noEnergy': 'Silah enerjisi çatmır',
+    'noGel': 'Təmir Geli qalmayıb',
+    'beamNotYet': 'Tapşırıq bitəndə teleport ol',
+    'beamFight': 'Əvvəl döyüşü qazan, sonra teleport ol',
     'tankCount': 'Təmir Geli: {n}/{max}',
     'borrowed': 'Borc silah {weapon}: {n}/{max} atəş',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Daha yaxşı!',
+    'autoEquip': 'Taxıldı!',
     'found': '{rarity} {item} tapıldı!',
     'tank': 'Təmir Geli tapıldı!',
     'giftTank': 'Hədiyyə: +1 Təmir Geli!'
@@ -320,11 +324,16 @@ export default {
     'title': 'FASİLƏ',
     'resume': 'Davam et',
     'abandon': 'Missiyanı tərk et',
+    'abandonAsk': 'Missiyadan çıxırsan? Uğursuz sayılacaq.',
+    'leapHint': 'Tullanma düyməsi yoxdur: kənardan addımla, boşluğun üstündən özün tullanacaqsan.',
     'controls': 'İdarəetmə',
     'label': {
       'move': 'Hərəkət',
       'look': 'Baxış',
       'parry': 'Dəf etmə',
+      'turn': 'Dön (← →)',
+      'leap': 'Boşluğu keçmə',
+      'target': 'Növbəti hədəf',
       'interact': 'Qarşılıqlı əlaqə'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Səsləri ingiliscə eşitmək istəyirsən?',
-    'body': 'Atlas və digərləri danışır, amma hələ sənin dilində yox. Onları ingiliscə eşitmək istəyirsən? Dedikləri həmişə ekranda sənin dilində görünür. Bunu istədiyin vaxt Seçimlər → Oyun bölməsində dəyişə bilərsən.',
+    'body': 'Hələ sənin dilində səslər yoxdur. İngiliscə eşitmək istəyirsən? Sözləri həmişə ekranda görünür. Bunu istədiyin vaxt Seçimlər → Oyun bölməsində dəyişə bilərsən.',
     'no': 'İngiliscə səsləndirmə olmasın'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Təlimlər',
     'name': {
       'weapon': 'Silah Dərsi',
-      'gap': 'Tullanma Təlimi',
+      'gap': 'Boşluqdan Tullanma Təlimi',
       'gel': 'Təmir Geli Təlimi',
       'slide': 'Sürüşmə Təlimi',
       'block': 'Qalxan Təlimi',

@@ -12,7 +12,7 @@
         span.l-rar {{ t(`rarity.${item.rarity}`) }}
         span.l-lvl {{ t('enemy.level', { n: item.ilvl }) }}
       ul.l-deltas(v-if="shown.length")
-        li(v-for="l in shown" :key="l.key" :class="l.delta > 0 ? 'plus' : 'minus'") {{ formatStatDelta(t, l.key, l.delta) }}
+        li(v-for="l in shown" :key="l.key" :class="l.delta > 0 ? 'plus' : 'minus'") {{ formatStatDelta(t, l.key, l.delta, locale) }}
         li.more(v-if="hidden > 0") +{{ hidden }}
 </template>
 
@@ -33,7 +33,7 @@ import { SLOT_ICON, formatStatDelta } from '@/components/hub/gearFormat'
  * overall. The in-mission loot card and the results screen both show it.
  */
 const props = defineProps<{ item: Item; compact?: boolean }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const cmp = computed(() => compareItems(props.item, rivalFor(props.item, equipped)))
 /** Lines shown; the rest count as "+n" (the workshop has them all). */
 const cap = computed(() => (props.compact ? 3 : 4))

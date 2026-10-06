@@ -45,6 +45,9 @@ export default {
     'fire': 'Dispara',
     'tank': 'Gel reparador',
     'noEnergy': 'No hi ha prou energia d\'arma',
+    'noGel': 'No queda gel reparador',
+    'beamNotYet': 'Teletransporta’t quan hagis complert l’objectiu',
+    'beamFight': 'Guanya el combat i després teletransporta’t',
     'tankCount': 'Gel reparador: {n} de {max}',
     'borrowed': 'Arma prestada {weapon}: {n} de {max} trets',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Millora!',
+    'autoEquip': 'Equipat!',
     'found': 'Botí: {item} ({rarity})!',
     'tank': 'Gel reparador trobat!',
     'giftTank': 'Regal: +1 gel reparador!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUSA',
     'resume': 'Reprèn',
     'abandon': 'Abandona la missió',
+    'abandonAsk': 'Vols sortir de la missió? Comptarà com a fallida.',
+    'leapHint': 'No hi ha botó de salt: camina fins a la vora per saltar el buit.',
     'controls': 'Controls',
     'label': {
       'move': 'Moure\'s',
       'look': 'Mirar',
       'parry': 'Parada',
+      'turn': 'Girar (← →)',
+      'leap': 'Saltar buits',
+      'target': 'Objectiu següent',
       'interact': 'Interactuar'
     },
     'touch': {
@@ -538,7 +547,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Vols sentir les veus en anglès?',
-    'body': 'Atlas i els altres parlen, però encara no en la teva llengua. Vols sentir-los en anglès? El que diuen sempre apareix a la pantalla en la teva llengua. Pots canviar-ho quan vulguis a Opcions → Joc.',
+    'body': 'Encara no hi ha veus en la teva llengua. Vols sentir-les en anglès? Les seves paraules sempre surten a la pantalla. Pots canviar-ho quan vulguis a Opcions → Joc.',
     'no': 'Sense veus en anglès'
   },
 
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Tutorials',
     'name': {
       'weapon': 'Lliçó d\'armes',
-      'gap': 'Tutorial de salt',
+      'gap': 'Tutorial de salt sobre el buit',
       'gel': 'Tutorial de gel reparador',
       'slide': 'Tutorial de lliscament',
       'block': 'Tutorial d\'escut',

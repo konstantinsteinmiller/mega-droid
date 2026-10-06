@@ -11,6 +11,9 @@
     )
       span.lc-new {{ t('gear.new') }}
       LootCompare(:item="current")
+      //- An upgrade goes on as the card leaves: "Upgrade!" and then nothing
+      //- happened, playtesters found the old piece still worn (2026-10-06).
+      span.lc-equip(v-if="upgrade") {{ t('loot.autoEquip') }}
 </template>
 
 <script setup lang="ts">
@@ -18,7 +21,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { addHudTicker, hud } from '@/game/state/hud'
 import { lootQueue } from '@/game/state/screenFx'
-import { equipped } from '@/game/state/profile'
+import { equipped, equipItem, saveProfile } from '@/game/state/profile'
 import { compareItems, rivalFor } from '@/game/data/itemCompare'
 import { RARITY_COLOR } from '@/game/models/palette'
 import LootCompare from '@/components/molecules/LootCompare.vue'
@@ -40,6 +43,11 @@ const current = computed(() => lootQueue[0] ?? null)
 const upgrade = computed(() => (current.value ? compareItems(current.value, rivalFor(current.value, equipped)).upgrade : false))
 let left = SHOW_S
 const next = (): void => {
+  const it = lootQueue[0]
+  if (it && upgrade.value) {
+    equipItem(it.id)
+    saveProfile()
+  }
   lootQueue.shift()
   left = SHOW_S
 }
@@ -75,6 +83,13 @@ onUnmounted(() => {
   -webkit-tap-highlight-color: transparent
   &.up
     animation: lc-glow 1.2s ease-in-out infinite
+.lc-equip
+  display: block
+  margin-top: 4px
+  text-align: right
+  font-family: var(--font-ui)
+  font-size: clamp(11px, 2.2vmin, 13px)
+  color: #8dff7a
 .lc-new
   position: absolute
   top: -11px

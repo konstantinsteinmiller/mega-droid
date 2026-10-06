@@ -45,6 +45,9 @@ export default {
     'fire': 'Střelba',
     'tank': 'Opravný gel',
     'noEnergy': 'Málo energie zbraně',
+    'noGel': 'Žádný opravný gel',
+    'beamNotYet': 'Teleportuj se, až splníš úkol',
+    'beamFight': 'Nejdřív vyhraj boj, pak se teleportuj',
     'tankCount': 'Opravný gel: {n} z {max}',
     'borrowed': 'Vypůjčená zbraň {weapon}: {n} z {max} výstřelů',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Vylepšení!',
+    'autoEquip': 'Nasazeno!',
     'found': 'Nalezeno: {item} ({rarity})!',
     'tank': 'Nalezen opravný gel!',
     'giftTank': 'Dárek: +1 opravný gel!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUZA',
     'resume': 'Pokračovat',
     'abandon': 'Opustit misi',
+    'abandonAsk': 'Opustit misi? Bude se počítat jako neúspěch.',
+    'leapHint': 'Žádné tlačítko skoku: sejdi z okraje a mezeru přeskočíš.',
     'controls': 'Ovládání',
     'label': {
       'move': 'Pohyb',
       'look': 'Rozhled',
       'parry': 'Vykrytí',
+      'turn': 'Otočení (← →)',
+      'leap': 'Přeskok mezer',
+      'target': 'Další cíl',
       'interact': 'Akce'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Chceš slyšet hlasy anglicky?',
-    'body': 'Atlas a ostatní mluví, ale zatím ne tvým jazykem. Chceš je slyšet anglicky? Co říkají, se vždy zobrazí na obrazovce v tvém jazyce. Kdykoli to můžeš změnit v Možnosti → Hratelnost.',
+    'body': 'Ve tvém jazyce zatím hlasy nejsou. Chceš je slyšet anglicky? Jejich slova se vždy zobrazí na obrazovce. Kdykoli to změníš v Možnosti → Hratelnost.',
     'no': 'Bez anglického dabingu'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Finální záběr',
     'englishVoice': 'Anglický dabing',
     'gameplay': 'Hratelnost',
     'title': 'Možnosti',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Tutoriály',
     'name': {
       'weapon': 'Lekce zbraně',
-      'gap': 'Tutoriál: Skok',
+      'gap': 'Tutoriál: Skok přes propast',
       'gel': 'Tutoriál: Opravný gel',
       'slide': 'Tutoriál: Skluz',
       'block': 'Tutoriál: Štít',

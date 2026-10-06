@@ -121,7 +121,7 @@ const handleTabChange = (val: string | number): void => emit('update:activeTab',
         //- Backdrop
         div.f-modal__backdrop(@click="isClosable && closeOnBackdrop && close()")
 
-        div.f-modal__container
+        div.f-modal__container(:class="{ 'f-modal__container--tabbed': tabs && tabs.length > 0 }")
           //- Header (title ribbon or tab bar). Lives IN the layout flow so it
           //- can never be pushed above the viewport's top edge.
           div.f-modal__header(
@@ -192,6 +192,11 @@ const handleTabChange = (val: string | number): void => emit('update:activeTab',
   width: 100%
   max-width: min(42rem, 96vw)
   max-height: 100%
+
+// A tabbed modal keeps one height for every tab, so its tab bar stays put
+// instead of jumping as a short tab re-centres it (playtest 2026-10-06).
+.f-modal__container--tabbed
+  height: min(36rem, 100%)
 
 .f-modal__header
   position: relative

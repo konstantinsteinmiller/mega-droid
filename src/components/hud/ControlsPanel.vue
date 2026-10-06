@@ -60,7 +60,10 @@ const groups = computed<Group[]>(() => family.value === 'touch'
           // The finger tracing an ∞, as in play, and no look row: the ∞
           // stands for dragging, camera included.
           { key: 'move', glyph: { kind: 'infinity' }, action: 'boots', label: 'pause.label.move', aria: 'pause.touch.move' },
-          { key: 'slide', glyph: { kind: 'finger', mode: 'tap' }, action: 'dodge', label: 'combat.slide', aria: 'tips.red' }
+          { key: 'slide', glyph: { kind: 'finger', mode: 'tap' }, action: 'dodge', label: 'combat.slide', aria: 'tips.red' },
+          // No jump button: walking off an edge leaps by itself (playtesters
+          // looked for one).
+          { key: 'leap', glyph: { kind: 'infinity' }, action: 'up', label: 'pause.label.leap', aria: 'pause.leapHint' }
         ]
       },
       {
@@ -93,7 +96,9 @@ const groups = computed<Group[]>(() => family.value === 'touch'
             label: 'pause.label.look',
             aria: 'pause.keys.look'
           },
-          { key: 'slide', glyph: { kind: 'key', wide: true }, action: 'dodge', label: 'combat.slide', aria: 'pause.keys.slide' }
+          { key: 'turn', glyph: { kind: 'key', code: 'ArrowLeft' }, action: 'replay', label: 'pause.label.turn', aria: 'pause.label.turn' },
+          { key: 'slide', glyph: { kind: 'key', wide: true }, action: 'dodge', label: 'combat.slide', aria: 'pause.keys.slide' },
+          { key: 'leap', glyph: { kind: 'wasd' }, action: 'up', label: 'pause.label.leap', aria: 'pause.leapHint' }
         ]
       },
       {
@@ -105,7 +110,8 @@ const groups = computed<Group[]>(() => family.value === 'touch'
           // is one right click on the beat.
           { key: 'block', glyph: { kind: 'mouse', button: 'right', hold: true }, action: 'shield', label: 'combat.block', aria: 'pause.keys.block' },
           { key: 'parry', glyph: { kind: 'mouse', button: 'right', click: true }, action: 'shield', label: 'pause.label.parry', aria: 'tips.blockKeys' },
-          { key: 'weapon', glyph: { kind: 'key', code: 'Digit1' }, action: 'star', label: 'hero.weapons', aria: 'pause.keys.more' }
+          { key: 'weapon', glyph: { kind: 'key', code: 'Digit1' }, action: 'star', label: 'hero.weapons', aria: 'pause.keys.more' },
+          { key: 'target', glyph: { kind: 'key', code: 'Tab' }, action: 'range', label: 'pause.label.target' }
         ]
       },
       {

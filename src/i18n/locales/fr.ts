@@ -45,6 +45,9 @@ export default {
     'fire': 'Tirer',
     'tank': 'Gel réparateur',
     'noEnergy': "Pas assez d'énergie d'arme",
+    'noGel': 'Plus de gel réparateur',
+    'beamNotYet': 'Téléporte-toi une fois l’objectif rempli',
+    'beamFight': 'Gagne d’abord le combat, puis téléporte-toi',
     'tankCount': 'Gel réparateur : {n} sur {max}',
     'borrowed': 'Arme empruntée {weapon} : {n} tirs sur {max}',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Amélioration !',
+    'autoEquip': 'Équipé !',
     'found': 'Butin : {item} ({rarity}) !',
     'tank': 'Gel réparateur trouvé !',
     'giftTank': 'Cadeau : +1 Gel réparateur !'
@@ -295,11 +299,16 @@ export default {
     'title': 'PAUSE',
     'resume': 'Reprendre',
     'abandon': 'Abandonner la mission',
+    'abandonAsk': 'Quitter la mission ? Elle compte comme un échec.',
+    'leapHint': 'Pas de bouton de saut : marche au-delà d’un bord pour sauter le vide.',
     'controls': 'Commandes',
     'label': {
       'move': 'Se déplacer',
       'look': 'Regarder',
       'parry': 'Parer',
+      'turn': 'Tourner (← →)',
+      'leap': 'Sauter les vides',
+      'target': 'Cible suivante',
       'interact': 'Interagir'
     },
     'touch': {
@@ -513,12 +522,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Entendre les voix en anglais ?',
-    'body': 'Atlas et les autres parlent, mais pas encore dans ta langue. Tu veux les entendre en anglais ? Ce qu’ils disent s’affiche toujours à l’écran dans ta langue. Tu peux changer ça à tout moment dans Options → Jeu.',
+    'body': 'Pas encore de voix dans ta langue. Les entendre en anglais ? Leurs paroles s’affichent toujours à l’écran. Tu peux changer ça à tout moment dans Options → Jeu.',
     'no': 'Pas de voix anglaises'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Ralenti final',
     'englishVoice': 'Voix anglaises',
     'gameplay': 'Jeu',
     'title': 'Options',
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutoriels',
     'name': {
       'weapon': "Leçon d'arme",
-      'gap': 'Tutoriel du saut',
+      'gap': 'Tutoriel du saut de fossé',
       'gel': 'Tutoriel du gel réparateur',
       'slide': 'Tutoriel de la glissade',
       'block': 'Tutoriel du bouclier',

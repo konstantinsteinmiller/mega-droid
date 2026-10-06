@@ -45,6 +45,9 @@ export default {
     'fire': 'Otish',
     'tank': 'Taʼmir geli',
     'noEnergy': 'Qurol energiyasi yetarli emas',
+    'noGel': 'Taʼmir geli qolmadi',
+    'beamNotYet': 'Vazifa bajarilgach teleport qiling',
+    'beamFight': 'Avval jangda yuting, keyin teleport qiling',
     'tankCount': 'Taʼmir geli: {max} tadan {n} ta',
     'borrowed': 'Qarzga olingan qurol {weapon}: {max} tadan {n} ta oʻq',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Yaxshilash!',
+    'autoEquip': 'Kiyildi!',
     'found': '{rarity} {item} topildi!',
     'tank': 'Taʼmir geli topildi!',
     'giftTank': 'Sovg‘a: +1 taʼmir geli!'
@@ -295,11 +299,16 @@ export default {
     'title': 'PAUZA',
     'resume': 'Davom etish',
     'abandon': 'Missiyani tark etish',
+    'abandonAsk': 'Missiyani tark etasizmi? U muvaffaqiyatsiz hisoblanadi.',
+    'leapHint': 'Sakrash tugmasi yoʻq: boʻshliqdan sakrab oʻtish uchun chetdan yurib oʻting.',
     'controls': 'Boshqaruv',
     'label': {
       'move': 'Yurish',
       'look': 'Qarash',
       'parry': 'Qaytarish',
+      'turn': 'Burilish (← →)',
+      'leap': 'Sakrab oʻtish',
+      'target': 'Keyingi nishon',
       'interact': 'Amal'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Ovozlarni ingliz tilida eshitasizmi?',
-    'body': 'Atlas va boshqalar gapiradi, lekin hali sizning tilingizda emas. Ularni ingliz tilida eshitishni xohlaysizmi? Ularning gaplari ekranda doim sizning tilingizda chiqadi. Buni istalgan vaqtda Sozlamalar → Oʻyin boʻlimida oʻzgartirishingiz mumkin.',
+    'body': 'Hali sizning tilingizda ovozlar yoʻq. Ularni ingliz tilida eshitasizmi? Ularning gaplari doim ekranda chiqadi. Buni istalgan vaqtda Sozlamalar → Oʻyin boʻlimida oʻzgartirishingiz mumkin.',
     'no': 'Inglizcha ovozsiz'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Mashgʻulotlar',
     'name': {
       'weapon': 'Qurol darsi',
-      'gap': 'Sakrash mashgʻuloti',
+      'gap': 'Jar ustidan sakrash mashgʻuloti',
       'gel': 'Taʼmir geli mashgʻuloti',
       'slide': 'Sirpanish mashgʻuloti',
       'block': 'Qalqon mashgʻuloti',

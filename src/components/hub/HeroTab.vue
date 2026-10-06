@@ -64,6 +64,10 @@
             span.r-name {{ t(`item.${it.base}`) }}
               span.r-upg(v-if="it.upg") &nbsp;+{{ it.upg }}
             span.r-meta {{ t('enemy.level', { n: it.ilvl }) }}
+            //- Better than the piece worn: two "Scout Helmet Lv. 1" rows looked
+            //- the same until one was opened (playtest 2026-10-06).
+            span.r-better(v-if="!isEquipped(it.id) && better(it)" :title="t('loot.upgrade')")
+              GameIcon(name="up")
             span.r-tag(v-if="isEquipped(it.id)") {{ t('gear.equipped') }}
             span.r-new(v-else-if="profile.inv.fresh.includes(it.id)") {{ t('gear.new') }}
           div.empty-note(v-if="!items.length") {{ t('gear.emptySlot') }}
@@ -101,11 +105,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import ItemDetail from './ItemDetail.vue'
 import { SLOT_ICON } from './gearFormat'
+import { compareItems, rivalFor } from '@/game/data/itemCompare'
+import type { Item } from '@/game/data/items'
 import {
   profile, computeStats, armorTotal, equipped, isEquipped, equipItem, unequipChip, salvageItem, markSeen, itemById
 } from '@/game/state/profile'
@@ -146,10 +152,16 @@ const pickSlot = (s: EquipSlot) => {
   selId.value = profile.inv.equipped[s] ?? items.value[0]?.id ?? null
   sfx('uiClick')
 }
+/** Better overall than the piece it would replace (the loot card's own test). */
+const better = (it: Item): boolean => compareItems(it, rivalFor(it, equipped)).upgrade
+
 const select = (id: string) => {
   selId.value = id
   markSeen(id)
   sfx('uiClick')
+  // Its card and the Equip button into view: on a small phone they sat below
+  // the fold, and the tap seemed to do nothing (playtest 2026-10-06).
+  void nextTick(() => document.querySelector('.detail-col .actions')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
 }
 const equip = () => {
   if (!selected.value) return
@@ -394,6 +406,11 @@ const statRows = computed(() => {
   color: #9fe6ff
 .r-tag
   font-size: 0.75em
+  color: #8dff7a
+.r-better
+  display: inline-flex
+  width: 1.1em
+  height: 1.1em
   color: #8dff7a
 .r-new
   font-size: 0.7em

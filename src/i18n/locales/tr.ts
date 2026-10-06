@@ -45,6 +45,9 @@ export default {
     'fire': 'Ateş et',
     'tank': 'Tamir Jeli',
     'noEnergy': 'Silah enerjisi yetersiz',
+    'noGel': 'Tamir Jeli kalmadı',
+    'beamNotYet': 'Görev tamamlanınca ışınlan',
+    'beamFight': 'Önce savaşı kazan, sonra ışınlan',
     'tankCount': 'Tamir Jeli: {n}/{max}',
     'borrowed': 'Ödünç silah {weapon}: {n}/{max} atış',
     'borrowedGet': '{weapon} ×{n}'
@@ -257,6 +260,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Yükseltme!',
+    'autoEquip': 'Takıldı!',
     'found': '{rarity} {item} bulundu!',
     'tank': 'Tamir Jeli bulundu!',
     'giftTank': 'Hediye: +1 Tamir Jeli!'
@@ -297,11 +301,16 @@ export default {
     'title': 'DURAKLATILDI',
     'resume': 'Devam et',
     'abandon': 'Görevi bırak',
+    'abandonAsk': 'Görevden çıkılsın mı? Başarısız sayılır.',
+    'leapHint': 'Zıplama tuşu yok: boşluğun üstünden atlamak için kenardan yürü.',
     'controls': 'Kontroller',
     'label': {
       'move': 'Hareket',
       'look': 'Bakış',
       'parry': 'Savuşturma',
+      'turn': 'Dön (← →)',
+      'leap': 'Boşluk atlama',
+      'target': 'Sonraki hedef',
       'interact': 'Etkileşim'
     },
     'touch': {
@@ -515,7 +524,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Sesleri İngilizce duymak ister misin?',
-    'body': 'Atlas ve diğerleri konuşuyor ama henüz senin dilinde değil. Onları İngilizce duymak ister misin? Söyledikleri her zaman ekranda senin dilinde görünür. Bunu istediğin zaman Seçenekler → Oynanış bölümünden değiştirebilirsin.',
+    'body': 'Henüz senin dilinde ses yok. İngilizce duymak ister misin? Sözleri her zaman ekranda görünür. Bunu istediğin zaman Seçenekler → Oynanış bölümünden değiştirebilirsin.',
     'no': 'İngilizce seslendirme yok'
   },
 
@@ -915,7 +924,7 @@ export default {
     'checklist': 'Eğitimler',
     'name': {
       'weapon': 'Silah Dersi',
-      'gap': 'Sıçrayış Eğitimi',
+      'gap': 'Boşluk Sıçrayışı Eğitimi',
       'gel': 'Tamir Jeli Eğitimi',
       'slide': 'Kayma Eğitimi',
       'block': 'Kalkan Eğitimi',

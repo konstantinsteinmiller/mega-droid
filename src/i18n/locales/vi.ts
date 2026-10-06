@@ -45,6 +45,9 @@ export default {
     'fire': 'Bắn',
     'tank': 'Gel Sửa Chữa',
     'noEnergy': 'Không đủ năng lượng vũ khí',
+    'noGel': 'Hết Gel Sửa Chữa',
+    'beamNotYet': 'Dịch chuyển về khi xong mục tiêu',
+    'beamFight': 'Thắng trận trước, rồi dịch chuyển về',
     'tankCount': 'Gel Sửa Chữa: {n}/{max}',
     'borrowed': 'Vũ khí mượn {weapon}: {n}/{max} phát',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Nâng cấp!',
+    'autoEquip': 'Đã trang bị!',
     'found': 'Tìm thấy {item} {rarity}!',
     'tank': 'Tìm thấy Gel Sửa Chữa!',
     'giftTank': 'Quà: +1 Gel Sửa Chữa!'
@@ -295,11 +299,16 @@ export default {
     'title': 'TẠM DỪNG',
     'resume': 'Tiếp tục',
     'abandon': 'Bỏ nhiệm vụ',
+    'abandonAsk': 'Rời nhiệm vụ? Sẽ tính là thất bại.',
+    'leapHint': 'Không có nút nhảy: bước qua mép để nhảy qua khoảng trống.',
     'controls': 'Điều khiển',
     'label': {
       'move': 'Di chuyển',
       'look': 'Nhìn',
       'parry': 'Gạt đòn',
+      'turn': 'Xoay (← →)',
+      'leap': 'Nhảy qua hố',
+      'target': 'Mục tiêu kế tiếp',
       'interact': 'Tương tác'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Nghe giọng nói bằng tiếng Anh?',
-    'body': 'Atlas và những người khác có nói, nhưng chưa có bằng ngôn ngữ của bạn. Bạn có muốn nghe họ bằng tiếng Anh không? Lời thoại luôn hiện trên màn hình bằng ngôn ngữ của bạn. Bạn có thể đổi bất cứ lúc nào trong Tùy chọn → Lối chơi.',
+    'body': 'Chưa có giọng nói bằng ngôn ngữ của bạn. Nghe bằng tiếng Anh nhé? Lời thoại luôn hiện trên màn hình. Đổi bất cứ lúc nào trong Tùy chọn → Lối chơi.',
     'no': 'Không lồng tiếng Anh'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Hướng Dẫn',
     'name': {
       'weapon': 'Bài Học Vũ Khí',
-      'gap': 'Hướng Dẫn Nhảy',
+      'gap': 'Hướng Dẫn Nhảy Qua Vực',
       'gel': 'Hướng Dẫn Gel Sửa Chữa',
       'slide': 'Hướng Dẫn Trượt',
       'block': 'Hướng Dẫn Khiên',

@@ -45,6 +45,9 @@ export default {
     'fire': 'Strzał',
     'tank': 'Żel naprawczy',
     'noEnergy': 'Za mało energii broni',
+    'noGel': 'Brak żelu naprawczego',
+    'beamNotYet': 'Teleportuj się po wykonaniu zadania',
+    'beamFight': 'Najpierw wygraj walkę, potem się teleportuj',
     'tankCount': 'Żel naprawczy: {n} z {max}',
     'borrowed': 'Pożyczona broń {weapon}: {n} z {max} strzałów',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Ulepszenie!',
+    'autoEquip': 'Założone!',
     'found': 'Znaleziono: {item} ({rarity})!',
     'tank': 'Znaleziono żel naprawczy!',
     'giftTank': 'Prezent: +1 żel naprawczy!'
@@ -295,11 +299,16 @@ export default {
     'title': 'PAUZA',
     'resume': 'Wznów',
     'abandon': 'Porzuć misję',
+    'abandonAsk': 'Opuścić misję? Zostanie uznana za nieudaną.',
+    'leapHint': 'Brak przycisku skoku: zejdź z krawędzi, a przeskoczysz szczelinę.',
     'controls': 'Sterowanie',
     'label': {
       'move': 'Ruch',
       'look': 'Rozglądanie',
       'parry': 'Parowanie',
+      'turn': 'Obrót (← →)',
+      'leap': 'Przeskakiwanie',
+      'target': 'Następny cel',
       'interact': 'Interakcja'
     },
     'touch': {
@@ -513,12 +522,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Chcesz słyszeć głosy po angielsku?',
-    'body': 'Atlas i inni mówią, ale jeszcze nie w twoim języku. Chcesz słyszeć ich po angielsku? To, co mówią, zawsze wyświetla się na ekranie w twoim języku. Możesz to zmienić w każdej chwili w Opcje → Rozgrywka.',
+    'body': 'Brak jeszcze głosów w twoim języku. Chcesz słyszeć je po angielsku? Ich słowa zawsze widać na ekranie. Zmienisz to w każdej chwili w Opcje → Rozgrywka.',
     'no': 'Bez angielskiego dubbingu'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Finałowe ujęcie',
     'englishVoice': 'Angielski dubbing',
     'gameplay': 'Rozgrywka',
     'title': 'Opcje',
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Samouczki',
     'name': {
       'weapon': 'Lekcja broni',
-      'gap': 'Samouczek: Skok',
+      'gap': 'Samouczek: Skok nad przepaścią',
       'gel': 'Samouczek: Żel naprawczy',
       'slide': 'Samouczek: Wślizg',
       'block': 'Samouczek: Tarcza',

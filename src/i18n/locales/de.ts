@@ -45,6 +45,9 @@ export default {
     'fire': 'Feuern',
     'tank': 'Reparaturgel',
     'noEnergy': 'Nicht genug Waffenenergie',
+    'noGel': 'Kein Reparaturgel mehr',
+    'beamNotYet': 'Rausbeamen, sobald der Auftrag erfüllt ist',
+    'beamFight': 'Erst den Kampf gewinnen, dann rausbeamen',
     'tankCount': 'Reparaturgel: {n} von {max}',
     'borrowed': 'Geliehene Waffe {weapon}: {n} von {max} Schüssen',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Verbesserung!',
+    'autoEquip': 'Ausgerüstet!',
     'found': '{item} ({rarity}) gefunden!',
     'tank': 'Reparaturgel gefunden!',
     'giftTank': 'Geschenk: +1 Reparaturgel!'
@@ -295,11 +299,16 @@ export default {
     'title': 'PAUSIERT',
     'resume': 'Fortsetzen',
     'abandon': 'Mission abbrechen',
+    'abandonAsk': 'Mission verlassen? Sie gilt als gescheitert.',
+    'leapHint': 'Keine Sprungtaste: Lauf über eine Kante, um die Lücke zu überspringen.',
     'controls': 'Steuerung',
     'label': {
       'move': 'Laufen',
       'look': 'Umsehen',
       'parry': 'Parieren',
+      'turn': 'Drehen (← →)',
+      'leap': 'Lücken überspringen',
+      'target': 'Nächstes Ziel',
       'interact': 'Interagieren'
     },
     'touch': {
@@ -513,7 +522,7 @@ export default {
 
   'voiceOffer': {
     'title': 'Stimmen auf Englisch hören?',
-    'body': 'Atlas und die anderen sprechen, aber noch nicht in deiner Sprache. Willst du sie auf Englisch hören? Was sie sagen, steht immer in deiner Sprache auf dem Bildschirm. Du kannst das jederzeit unter Optionen → Gameplay ändern.',
+    'body': 'Noch keine Stimmen in deiner Sprache. Willst du sie auf Englisch hören? Ihre Worte stehen immer auf dem Bildschirm. Jederzeit änderbar unter Optionen → Gameplay.',
     'no': 'Keine englische Sprachausgabe'
   },
 
@@ -913,7 +922,7 @@ export default {
     'checklist': 'Tutorials',
     'name': {
       'weapon': 'Waffen-Lektion',
-      'gap': 'Sprung-Tutorial',
+      'gap': 'Abgrundsprung-Tutorial',
       'gel': 'Reparaturgel-Tutorial',
       'slide': 'Rutsch-Tutorial',
       'block': 'Schild-Tutorial',

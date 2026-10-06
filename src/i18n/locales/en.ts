@@ -54,6 +54,9 @@ export default {
     'fire': 'Fire',
     'tank': 'Repair Gel',
     'noEnergy': 'Not enough weapon energy',
+    'noGel': 'No Repair Gel left',
+    'beamNotYet': 'Beam out once the objective is done',
+    'beamFight': 'Win the fight first, then beam out',
     // The gel button's accessible name: how many are carried, and the room.
     'tankCount': 'Repair Gel: {n} of {max}',
     // The borrowed weapon's button (accessible name) and the pickup toast.
@@ -284,6 +287,8 @@ export default {
   'loot': {
     // The loot card's badge when a find beats what is equipped.
     'upgrade': 'Upgrade!',
+    // Under the loot card's Upgrade badge: it goes on by itself as the card leaves.
+    'autoEquip': 'Equipped!',
     'found': '{rarity} {item} found!',
     'tank': 'Repair Gel found!',
     'giftTank': 'Gift: +1 Repair Gel!'
@@ -355,6 +360,9 @@ export default {
     'title': 'PAUSED',
     'resume': 'Resume',
     'abandon': 'Abandon mission',
+    'abandonAsk': 'Leave the mission? It counts as failed.',
+    // The controls legend's leap row, read aloud: there is no jump button.
+    'leapHint': 'No jump button: walk off an edge to leap across the gap.',
     'controls': 'Controls',
     // The controls legend's visible verbs (ControlsPanel), one per row beside
     // the action's icon; the other rows reuse `combat.*`, `hud.*`, `hero.*`.
@@ -364,6 +372,9 @@ export default {
       'move': 'Move',
       'look': 'Look',
       'parry': 'Parry',
+      'turn': 'Turn (← →)',
+      'leap': 'Leap gaps',
+      'target': 'Next target',
       'interact': 'Interact'
     },
     'touch': {
@@ -596,7 +607,7 @@ export default {
   // voice-over: hear the English one, or only read the lines.
   'voiceOffer': {
     'title': 'Hear the voices in English?',
-    'body': 'Atlas and the others talk, but not in your language yet. Do you want to hear them in English? What they say always shows on screen in your language. You can change this any time under Options → Gameplay.',
+    'body': 'No voices in your language yet. Hear them in English? Their words always show on screen. Change it any time in Options → Gameplay.',
     'no': 'No English voice-over'
   },
 
@@ -1013,7 +1024,7 @@ export default {
     'checklist': 'Tutorials',
     'name': {
       'weapon': 'Weapon Lesson',
-      'gap': 'Jump Tutorial',
+      'gap': 'Gap Leap Tutorial',
       'gel': 'Repair Gel Tutorial',
       'slide': 'Slide Tutorial',
       'block': 'Shield Tutorial',

@@ -45,6 +45,9 @@ export default {
     'fire': 'Pucanj',
     'tank': 'Gel za popravak',
     'noEnergy': 'Premalo energije oružja',
+    'noGel': 'Nema više gela za popravak',
+    'beamNotYet': 'Teleportiraj se kad ispuniš zadatak',
+    'beamFight': 'Prvo pobijedi u borbi, zatim se teleportiraj',
     'tankCount': 'Gel za popravak: {n} od {max}',
     'borrowed': 'Posuđeno oružje {weapon}: {n} od {max} hitaca',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Nadogradnja!',
+    'autoEquip': 'Opremljeno!',
     'found': 'Pronađeno: {item} ({rarity})!',
     'tank': 'Pronađen gel za popravak!',
     'giftTank': 'Dar: +1 gel za popravak!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUZA',
     'resume': 'Nastavi',
     'abandon': 'Napusti misiju',
+    'abandonAsk': 'Napustiti misiju? Računat će se kao neuspjeh.',
+    'leapHint': 'Nema tipke za skok: siđi s ruba i preskočit ćeš procjep.',
     'controls': 'Kontrole',
     'label': {
       'move': 'Kretanje',
       'look': 'Pogled',
       'parry': 'Pariranje',
+      'turn': 'Okretanje (← →)',
+      'leap': 'Preskakanje',
+      'target': 'Sljedeća meta',
       'interact': 'Radnja'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Želiš li čuti glasove na engleskom?',
-    'body': 'Atlas i ostali govore, ali još ne na tvom jeziku. Želiš li ih slušati na engleskom? Ono što govore uvijek se prikazuje na zaslonu na tvom jeziku. To možeš promijeniti bilo kad u Postavke → Igranje.',
+    'body': 'Još nema glasova na tvom jeziku. Želiš li ih slušati na engleskom? Njihove riječi uvijek su na zaslonu. Promijeni to bilo kad u Postavke → Igranje.',
     'no': 'Bez engleskih glasova'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Završna snimka',
     'englishVoice': 'Engleski glasovi',
     'gameplay': 'Igranje',
     'title': 'Postavke',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Vodiči',
     'name': {
       'weapon': 'Lekcija oružja',
-      'gap': 'Vodič: Skok',
+      'gap': 'Vodič: Skok preko provalije',
       'gel': 'Vodič: Gel za popravak',
       'slide': 'Vodič: Klizanje',
       'block': 'Vodič: Štit',

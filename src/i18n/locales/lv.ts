@@ -45,6 +45,9 @@ export default {
     'fire': 'Šaut',
     'tank': 'Remonta gels',
     'noEnergy': 'Nepietiek ieroča enerģijas',
+    'noGel': 'Remonta gels beidzies',
+    'beamNotYet': 'Teleportējies, kad uzdevums izpildīts',
+    'beamFight': 'Vispirms uzvari cīņā, tad teleportējies',
     'tankCount': 'Remonta gels: {n} no {max}',
     'borrowed': 'Aizņemtais ierocis {weapon}: {n} no {max} šāvieniem',
     'borrowedGet': '{weapon} ×{n}'
@@ -255,6 +258,7 @@ export default {
   },
   'loot': {
     'upgrade': 'Uzlabojums!',
+    'autoEquip': 'Uzvilkts!',
     'found': 'Atrasts: {item} ({rarity})!',
     'tank': 'Atrasts remonta gels!',
     'giftTank': 'Dāvana: +1 remonta gels!'
@@ -320,11 +324,16 @@ export default {
     'title': 'PAUZE',
     'resume': 'Turpināt',
     'abandon': 'Pamest misiju',
+    'abandonAsk': 'Pamest misiju? Tā tiks skaitīta kā neizdevusies.',
+    'leapHint': 'Nav lēciena pogas: noej no malas, lai pārlēktu pāri spraugai.',
     'controls': 'Vadība',
     'label': {
       'move': 'Kustība',
       'look': 'Skatiens',
       'parry': 'Atvairīt',
+      'turn': 'Pagrieziens (← →)',
+      'leap': 'Pārlēkšana',
+      'target': 'Nākamais mērķis',
       'interact': 'Darbība'
     },
     'touch': {
@@ -538,12 +547,12 @@ export default {
 
   'voiceOffer': {
     'title': 'Vai vēlies dzirdēt balsis angliski?',
-    'body': 'Atlas un pārējie runā, bet vēl ne tavā valodā. Vai vēlies viņus dzirdēt angliski? Tas, ko viņi saka, uz ekrāna vienmēr redzams tavā valodā. To vari jebkurā laikā mainīt sadaļā Iestatījumi → Spēle.',
+    'body': 'Tavā valodā balsu vēl nav. Vai vēlies tās dzirdēt angliski? Viņu vārdi vienmēr redzami uz ekrāna. To vari jebkurā laikā mainīt sadaļā Iestatījumi → Spēle.',
     'no': 'Bez balsīm angļu valodā'
   },
 
   'options': {
-    'killCams': 'Kill-cam',
+    'killCams': 'Fināla kadrs',
     'englishVoice': 'Balsis angļu valodā',
     'gameplay': 'Spēle',
     'title': 'Iestatījumi',
@@ -932,7 +941,7 @@ export default {
     'checklist': 'Apmācības',
     'name': {
       'weapon': 'Ieroča nodarbība',
-      'gap': 'Apmācība: Lēciens',
+      'gap': 'Apmācība: Lēciens pār plaisu',
       'gel': 'Apmācība: Remonta gels',
       'slide': 'Apmācība: Slīdiens',
       'block': 'Apmācība: Vairogs',

@@ -71,10 +71,12 @@ for (const line of pick) {
       // A sound, not words (barks, laughs), or a word broken on purpose: QA does not check it against the text.
       ...(line.neutral || line.loose || BROKEN.has(line.key) ? { loose: true } : {}),
       emphasis,
-      direction: line.direction[LANGS.indexOf(lang)],
+      // The catalogue writes directions in English and German; a later language
+      // takes the English one (Chatterbox steers by the tone alone anyway).
+      direction: line.direction[LANGS.indexOf(lang)] ?? line.direction[0],
       // For engines that take the direction as an English tag whatever the line's language.
       directionEn: line.direction[0],
-      situation: line.when[LANGS.indexOf(lang)],
+      situation: line.when[LANGS.indexOf(lang)] ?? line.when[0],
       out: relative(ROOT, join(VOICE_OUT, lang, `${file}.ogg`)).replaceAll('\\', '/')
     })
   }

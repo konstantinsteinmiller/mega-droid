@@ -12,6 +12,8 @@ import { VOICE_LINES } from '@/game/audio/voiceLines'
 import { fileName } from '@/game/audio/voiceCatalog'
 import en from '@/i18n/locales/en'
 import de from '@/i18n/locales/de'
+import es from '@/i18n/locales/es'
+import zh from '@/i18n/locales/zh'
 
 const ROOT = resolve(__dirname, '../..')
 const filesOf = (lang: string) => {
@@ -19,13 +21,16 @@ const filesOf = (lang: string) => {
   return new Set(existsSync(dir) ? readdirSync(dir).filter(f => /\.(ogg|mp3|m4a)$/i.test(f)).map(f => f.replace(/\.[^.]+$/, '')) : [])
 }
 const shippedFile = resolve(ROOT, 'vo-src/shipped.json')
+/** The voiced languages, as tools/voice/lib.mjs lists them. */
+const LANGS = ['en', 'de', 'es', 'zh']
 
 describe('voice-todo.md', () => {
   const md = renderVoiceTodo({
     lines: VOICE_LINES,
-    locales: { en, de },
+    langs: LANGS,
+    locales: { en, de, es, zh },
     shipped: existsSync(shippedFile) ? JSON.parse(readFileSync(shippedFile, 'utf8')) : {},
-    files: { en: filesOf('en'), de: filesOf('de') },
+    files: Object.fromEntries(LANGS.map(l => [l, filesOf(l)])),
     fileName
   })
 

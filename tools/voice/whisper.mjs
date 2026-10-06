@@ -61,8 +61,10 @@ export const transcribe = async (items) => {
     return {}
   }
   // The cast's names as a spelling hint (Whisper hears "Flux" as "Phlox" without it).
-  const prompt = 'Flux, Vex, Atlas, Gauss, Pip.'
-  const payload = { jobs: items.map(i => ({ ...i, prompt })) }
+  // Chinese: the names in Chinese punctuation (no sentence: on a one-character
+  // line Whisper printed a prompt sentence back as what it heard).
+  const PROMPT = { zh: 'Flux、Vex、Atlas、Gauss、Pip。' }
+  const payload = { jobs: items.map(i => ({ ...i, prompt: PROMPT[i.lang] ?? 'Flux, Vex, Atlas, Gauss, Pip.' })) }
   // A hung run is killed by the watchdog; one fresh start usually goes through.
   const r = await runPython('whisper', 'run_whisper.py', payload, { label: 'whisper' }).catch((e) => {
     if (!/hung/.test(e.message)) throw e

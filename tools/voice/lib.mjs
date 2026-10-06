@@ -19,7 +19,7 @@ const PATHS = {
   catalog: 'src/game/audio/voiceCatalog.ts',
   cards: 'src/game/audio/voiceCards.ts',
   locale: (lang) => `src/i18n/locales/${lang}.ts`,
-  langs: ['en', 'de'],
+  langs: ['en', 'de', 'es', 'zh'],
   work: 'vo-src',
   out: 'public/audio/voice'
 }

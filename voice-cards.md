@@ -17,12 +17,16 @@ read from the reference text below.
 
 A calm, precise mission-control navigator who is also your friend: brief, dry, understated, warm underneath, and never louder than it needs to be.
 
-- **Accent:** Neutral General American, crisp and clear / Neutrales Hochdeutsch, klar artikuliert, ohne regionale Färbung
+- **Accent:** Neutral General American, crisp and clear / Neutrales Hochdeutsch, klar artikuliert, ohne regionale Färbung / Español peninsular neutro, dicción nítida y clara / 标准普通话，吐字清晰利落
 - **Design prompt (EN):** A woman in her early thirties with a low, smooth alto voice that sits close to gender-neutral, speaking at a measured, even pace. Calm, precise and quietly warm, like a trusted mission-control navigator talking a friend through a route, with a dry, understated sense of humour. Clean, close-miked studio recording with no reverb.
 - **Design prompt (DE):** Eine Frau Anfang dreißig, deutsche Muttersprachlerin, mit tiefer, ruhiger Altstimme, die fast geschlechtsneutral klingt, in gemessenem, gleichmäßigem Tempo. Ruhig, präzise und unaufdringlich warm, wie eine vertraute Navigatorin in der Missionskontrolle, die einer Freundin den Weg erklärt, mit trockenem, untertreibendem Humor. Saubere, nah mikrofonierte Studioaufnahme ohne Hall.
+- **Design prompt (ES):** Una mujer de unos treinta y pocos años, hablante nativa de español de España, con una voz de contralto grave y suave, casi neutra en cuanto a género, que habla a un ritmo pausado y uniforme. Tranquila, precisa y discretamente cálida, como una navegante de control de misión de confianza que guía a una amiga por una ruta, con un humor seco y comedido. Grabación de estudio limpia, con micrófono cercano y sin reverberación.
+- **Design prompt (ZH):** 一位三十出头的女性，母语为普通话，嗓音是低沉顺滑的女中低音，接近中性，语速沉稳均匀。冷静、精准、温暖而不张扬，像一位值得信赖的任务指挥导航员在为朋友指路，带着一点含蓄的冷幽默。干净的近距离录音棚录音，没有混响。
 - **Reference text (EN):** Morning check complete. The road ahead runs north past the old water tower, then down into the quiet valley. Keep your pace steady, watch the bridges, and I will tell you the moment anything changes.
 - **Reference text (DE):** Morgendliche Prüfung abgeschlossen. Der Weg führt nach Norden, am alten Wasserturm vorbei und dann hinunter ins stille Tal. Bleib gleichmäßig in Bewegung, achte auf die Brücken, und ich sage dir sofort Bescheid, wenn sich etwas ändert.
-- **Lines:** 207 (neutral 77, warm 35, urgent 27, cheeky 25, calm 18, excited 17, deadpan 6, sad 1, whisper 1)
+- **Reference text (ES):** Revisión matinal completada. El camino sigue hacia el norte, pasa junto a la vieja torre de agua y baja al valle tranquilo. Mantén un ritmo constante, vigila los puentes y te avisaré en cuanto algo cambie.
+- **Reference text (ZH):** 早间检查完毕。前面的路一直向北，经过那座旧水塔，然后下到安静的山谷里。保持稳定的节奏，留意那些桥，只要有任何变化，我会第一时间告诉你。
+- **Lines:** 209 (neutral 79, warm 35, urgent 27, cheeky 25, calm 18, excited 17, deadpan 6, sad 1, whisper 1)
 - **Notes:** 'Gender-neutral to slightly low' (pronoun 'it') is realised as a low female alto rather than a light male tenor: it lands nearer neutral, keeps Atlas apart from the male-coded Vex and Flux, and is separated from Gauss by age, pitch and pace. Its chain adds no pitch shift (band-pass, doubler, 6 % ring-mod), so the designed pitch is the heard pitch; critical warnings are tagged 'urgent', never 'shout'.
 
 ## Dr. Vex
@@ -33,11 +37,15 @@ A calm, precise mission-control navigator who is also your friend: brief, dry, u
 
 A vain, pompous showman-doctor, part game-show host and part self-adoring surgeon, who relishes every word and swings from smug charm to comic tantrum without ever being truly scary.
 
-- **Accent:** Mid-Atlantic showman diction, crisp consonants, no imitation of any film villain / Hochdeutsch mit theatralischer Bühnendiktion, ohne Anlehnung an einen bestimmten Filmschurken
+- **Accent:** Mid-Atlantic showman diction, crisp consonants, no imitation of any film villain / Hochdeutsch mit theatralischer Bühnendiktion, ohne Anlehnung an einen bestimmten Filmschurken / Dicción de showman en español de España, consonantes nítidas, sin imitar a ningún villano de cine / 舞台主持人式的普通话，咬字铿锵，不模仿任何电影反派
 - **Design prompt (EN):** A man in his early fifties with a rich, resonant baritone and big theatrical projection, like a game-show host crossed with a vain, self-important surgeon. He savours every word, stretches the grand ones, and swings between pompous charm and comic outrage, playful rather than frightening. Clean studio recording with no reverb.
 - **Design prompt (DE):** Ein Mann Anfang fünfzig, deutscher Muttersprachler, mit voller, resonanter Baritonstimme und großer theatralischer Projektion, wie ein Showmaster gekreuzt mit einem eitlen, selbstverliebten Chirurgen. Er genießt jedes Wort, dehnt die großen und schwankt zwischen aufgeblasenem Charme und komischer Empörung, verspielt statt furchteinflößend. Saubere Studioaufnahme ohne Hall.
+- **Design prompt (ES):** Un hombre de unos cincuenta y pocos años, hablante nativo de español de España, con una voz de barítono rica y resonante y una gran proyección teatral, como un presentador de concursos cruzado con un cirujano vanidoso y engreído. Saborea cada palabra, alarga las grandilocuentes y oscila entre un encanto pomposo y una indignación cómica, más juguetón que aterrador. Grabación de estudio limpia y sin reverberación.
+- **Design prompt (ZH):** 一位五十出头的男性，母语为普通话，嗓音是浑厚洪亮的男中音，极富舞台感染力，像综艺节目主持人和一位自负的外科医生的结合体。他品味每一个字，把夸张的词拖得很长，在浮夸的魅力和滑稽的愤怒之间来回切换，俏皮多于可怕。干净的录音棚录音，没有混响。
 - **Reference text (EN):** Good evening, my dear patients, and welcome to the show! Tonight's treatment is simple: sit very still, say thank you, and admire my magnificent work. Questions? No? Wonderful. Next, please!
 - **Reference text (DE):** Guten Abend, meine lieben Patienten, und willkommen zur Show! Die heutige Behandlung ist ganz einfach: stillsitzen, danke sagen und mein großartiges Werk bewundern. Fragen? Nein? Wunderbar. Der Nächste, bitte!
+- **Reference text (ES):** ¡Buenas noches, mis queridos pacientes, y bienvenidos al espectáculo! El tratamiento de esta noche es sencillo: quedaos muy quietos, dad las gracias y admirad mi magnífica obra. ¿Preguntas? ¿No? ¡Maravilloso! ¡El siguiente, por favor!
+- **Reference text (ZH):** 晚上好，我亲爱的病人们，欢迎来到今晚的节目！今晚的治疗非常简单：一动也别动，说声谢谢，然后好好欣赏我伟大的杰作。有问题吗？没有？太好了！下一位，请进！
 - **Lines:** 33 (shout 9, excited 7, cheeky 5, menacing 4, deadpan 3, laugh 3, sad 1, whisper 1)
 - **Notes:** Vex is 'it' in story.md and story-arc.md but 'he/his' throughout the VO directions and line triggers; the voice is male-coded to match the VO chain (−2 semitones plus a crushed sub octave at −12 dB). It is designed mid-low rather than deep because that chain lowers it further, and the accent stays generic to honour the 'archetype, not an impression' rule.
 
@@ -49,11 +57,15 @@ A vain, pompous showman-doctor, part game-show host and part self-adoring surgeo
 
 A plucky, eager little hero who never talks, only yelps, and every yelp lands as a cartoon gag rather than real hurt.
 
-- **Accent:** Neutral General American / Neutrales Hochdeutsch
+- **Accent:** Neutral General American / Neutrales Hochdeutsch / Español peninsular neutro / 标准普通话
 - **Design prompt (EN):** A cheerful young man in his late teens with a bright, light, slightly boyish voice and a quick, bouncy rhythm. Plucky, eager and good-natured, with cartoon comic timing and lots of energy in short exclamations. Clean studio recording with no reverb.
 - **Design prompt (DE):** Ein fröhlicher junger Mann von etwa achtzehn Jahren, deutscher Muttersprachler, mit heller, leichter, etwas jungenhafter Stimme und schnellem, federndem Rhythmus. Mutig, eifrig und gutmütig, mit Cartoon-Timing und viel Energie in kurzen Ausrufen. Saubere Studioaufnahme ohne Hall.
+- **Design prompt (ES):** Un chico alegre de unos dieciocho años, hablante nativo de español de España, con una voz brillante, ligera y algo juvenil y un ritmo rápido y saltarín. Valiente, entusiasta y bonachón, con un sentido cómico de dibujos animados y mucha energía en las exclamaciones cortas. Grabación de estudio limpia y sin reverberación.
+- **Design prompt (ZH):** 一个十八九岁的开朗少年，母语为普通话，嗓音明亮轻快，略带稚气，节奏又快又有弹性。勇敢、热情、心地善良，有卡通式的喜剧节奏，短促的感叹句里充满活力。干净的录音棚录音，没有混响。
 - **Reference text (EN):** Okay, okay, I've got this! Jump, slide, dodge the sparks, and grab the shiny thing at the very top. Wow, look how far you can see from up here! Wait for me, I'm right behind you!
 - **Reference text (DE):** Okay, okay, das schaffe ich! Springen, rutschen, den Funken ausweichen und ganz oben das glänzende Ding schnappen. Wow, schau mal, wie weit man von hier oben sieht! Warte auf mich, ich bin direkt hinter dir!
+- **Reference text (ES):** ¡Vale, vale, que yo puedo! Salto, me deslizo, esquivo las chispas y agarro esa cosa brillante de arriba del todo. ¡Hala, mira qué lejos se ve desde aquí! ¡Espérame, que voy justo detrás!
+- **Reference text (ZH):** 好啦好啦，交给我吧！跳起来，滑过去，躲开火花，再抓住最顶上那个亮闪闪的东西。哇，从这上面能看到好远啊！等等我，我就在你后面！
 - **Lines:** 45 (pained 30, cheeky 7, sad 3, calm 3, excited 2)
 - **Notes:** The speaker card says 'never pained' yet the barks are hurt reactions, so 'pained' here means a funny cartoon yelp, not real pain; parry, gel and power-down barks get cheeky, calm and sad from their feel in story-arc §9. The chain adds +3 semitones with rising formants, so the source is a late-teen voice, not a child's, to avoid a chipmunk result.
 
@@ -65,11 +77,15 @@ A plucky, eager little hero who never talks, only yelps, and every yelp lands as
 
 A gentle, clever, slightly amused grandmother-engineer who built half the city and speaks only once the fighting is over.
 
-- **Accent:** Neutral, softly educated American / Gepflegtes, neutrales Hochdeutsch
+- **Accent:** Neutral, softly educated American / Gepflegtes, neutrales Hochdeutsch / Español peninsular neutro, culto y suave / 温和而有修养的标准普通话
 - **Design prompt (EN):** An elderly woman in her mid-seventies with a warm, soft, gently textured voice of medium pitch, speaking slowly and clearly. Clever, kind and a little amused, like a grandmother who is also a brilliant engineer, with a quiet smile in her words. Clean studio recording with no reverb.
 - **Design prompt (DE):** Eine ältere Frau Mitte siebzig, deutsche Muttersprachlerin, mit warmer, sanfter, leicht strukturierter Stimme in mittlerer Tonlage, die langsam und deutlich spricht. Klug, gütig und ein wenig amüsiert, wie eine Großmutter, die zugleich eine brillante Ingenieurin ist, mit einem leisen Lächeln in den Worten. Saubere Studioaufnahme ohne Hall.
+- **Design prompt (ES):** Una mujer mayor de unos setenta y cinco años, hablante nativa de español de España, con una voz cálida, suave y de textura delicada, de tono medio, que habla despacio y con claridad. Lista, amable y algo divertida, como una abuela que además es una ingeniera brillante, con una sonrisa tranquila en sus palabras. Grabación de estudio limpia y sin reverberación.
+- **Design prompt (ZH):** 一位七十五岁左右的老奶奶，母语为普通话，嗓音温暖柔和，带着轻柔的质感，音调适中，说话缓慢而清楚。聪明、慈祥，又带点幽默，像一位同时也是杰出工程师的奶奶，话语里藏着安静的微笑。干净的录音棚录音，没有混响。
 - **Reference text (EN):** Come in, come in, and mind the cables on the floor. I built this little workshop a very long time ago, and every bolt in it still remembers my hands. Now sit down and tell me what you saw out there.
 - **Reference text (DE):** Komm herein, komm herein, und pass auf die Kabel am Boden auf. Diese kleine Werkstatt habe ich vor sehr langer Zeit gebaut, und jede Schraube darin erinnert sich noch an meine Hände. Nun setz dich und erzähl mir, was du da draußen gesehen hast.
+- **Reference text (ES):** Pasa, pasa, y cuidado con los cables del suelo. Construí este pequeño taller hace muchísimo tiempo, y cada tornillo todavía recuerda mis manos. Ahora siéntate y cuéntame qué has visto ahí fuera.
+- **Reference text (ZH):** 进来吧，进来吧，小心地上的电线。这个小工作间是我很久很久以前亲手搭起来的，里面的每一颗螺丝都还记得我的手。来，坐下，跟我说说你在外面都看到了什么。
 - **Lines:** 2 (warm 1, calm 1)
 - **Notes:** Her two lines (ending.gauss, ending.spark) are planned lines that read the ending captions; the catalog no longer has a separate 'one optional line' or a duplicate Atlas spark line, so nothing to reconcile beyond age. Her chain is only a faint shimmer and a small room, so the design itself has to carry the age and warmth.
 
@@ -81,10 +97,14 @@ A gentle, clever, slightly amused grandmother-engineer who built half the city a
 
 The lab's small helper bot and Flux's biggest fan: an eager, practical caretaker who keeps the beam, the map and the workshop running. Chirpy and proud of every relay, he explains things in short plain sentences, like a friendly lab technician pointing at a map, and never sounds like a soldier.
 
-- **Accent:** Neutral General American, neat and clearly articulated / Neutrales Hochdeutsch, sauber und deutlich artikuliert
+- **Accent:** Neutral General American, neat and clearly articulated / Neutrales Hochdeutsch, sauber und deutlich artikuliert / Español peninsular neutro, ordenado y bien articulado / 标准普通话，干净利落，吐字清楚
 - **Design prompt (EN):** A friendly man in his late twenties with a light, clear tenor voice and crisp, tidy diction, speaking at a brisk, bouncy pace. Eager, helpful and good-humoured, like a cheerful young lab technician explaining a map to a friend, with a smile in every sentence and short, plain phrases. Clean, close-miked studio recording with no reverb.
 - **Design prompt (DE):** Ein freundlicher Mann Ende zwanzig, deutscher Muttersprachler, mit heller, klarer Tenorstimme und sauberer, knackiger Aussprache, in zügigem, federndem Tempo. Eifrig, hilfsbereit und gut gelaunt, wie ein fröhlicher junger Labortechniker, der einem Freund eine Karte erklärt, mit einem Lächeln in jedem Satz und kurzen, einfachen Sätzen. Saubere, nah mikrofonierte Studioaufnahme ohne Hall.
+- **Design prompt (ES):** Un hombre simpático de unos veintitantos años, hablante nativo de español de España, con una voz de tenor ligera y clara y una dicción nítida y ordenada, que habla a un ritmo ágil y animado. Entusiasta, servicial y de buen humor, como un joven técnico de laboratorio alegre que le explica un mapa a un amigo, con una sonrisa en cada frase y frases cortas y sencillas. Grabación de estudio limpia, con micrófono cercano y sin reverberación.
+- **Design prompt (ZH):** 一位二十八九岁的友善男性，母语为普通话，嗓音是轻盈清亮的男高音，吐字干净利落，语速轻快有弹性。热心、乐于助人、性格开朗，像一位快活的年轻实验室技术员在给朋友讲解地图，每句话都带着笑意，句子简短朴实。干净的近距离录音棚录音，没有混响。
 - **Reference text (EN):** Right, everything is ready. The lamps are on, the tools are sorted, and the map is on the table. First we check the route, then we pack what we need. Take your time. I will be right here when you get back.
 - **Reference text (DE):** So, alles ist bereit. Die Lampen sind an, das Werkzeug ist sortiert, und die Karte liegt auf dem Tisch. Erst prüfen wir die Route, dann packen wir ein, was wir brauchen. Lass dir Zeit. Ich bin hier, wenn du zurückkommst.
+- **Reference text (ES):** Bien, todo está listo. Las lámparas están encendidas, las herramientas ordenadas y el mapa está sobre la mesa. Primero revisamos la ruta y luego guardamos lo que necesitamos. Tómate tu tiempo. Estaré aquí mismo cuando vuelvas.
+- **Reference text (ZH):** 好了，一切都准备好了。灯都开着，工具也整理好了，地图就摊在桌子上。我们先确认路线，再把需要的东西装好。不用着急，你回来的时候，我就在这里。
 - **Lines:** 52 (neutral 17, warm 12, calm 9, cheeky 8, excited 6)
 - **Notes:** Pip was glyphs and synth chirps only until #119 gave him a voice for the debriefs after each story mission. An adult light tenor at 'mid', not a boy: the chain lifts him 2 semitones with rising formants, and a younger or higher source would come out a chipmunk over six sentences in a row. Kept apart from Flux (late-teen, yelps only, +3 st, a heavy 330 Hz ring) by age, full sentences and neat diction; from Atlas (a low female alto, no pitch shift, the helmet band) by gender, pitch and pace. His tones stay within warm, excited, cheeky, neutral and calm: he briefs in the safe lab and never warns in the field (that is Atlas's job).

@@ -30,11 +30,18 @@ import { registerOneShotSource } from '@/use/useAssets'
  * duck the music, one at a time among themselves).
  */
 
-export type VoiceLang = 'en' | 'de'
+export type VoiceLang = 'en' | 'de' | 'es' | 'zh'
 
-/** The voice language for a UI locale: German, or English for the rest. */
-export const voiceLangFor = (locale: string | null | undefined): VoiceLang =>
-  (locale ?? '').toLowerCase().startsWith('de') ? 'de' : 'en'
+/** The voice language for a UI locale: German, Spanish or Mandarin (zh-TW
+ *  too: the same spoken language, its subtitles stay Traditional), English
+ *  for the rest. */
+export const voiceLangFor = (locale: string | null | undefined): VoiceLang => {
+  const l = (locale ?? '').toLowerCase()
+  if (l.startsWith('de')) return 'de'
+  if (l.startsWith('es')) return 'es'
+  if (l.startsWith('zh')) return 'zh'
+  return 'en'
+}
 
 const currentLocale = (): string => {
   try {
@@ -47,7 +54,7 @@ const currentLocale = (): string => {
 export const voiceLang = (): VoiceLang => voiceLangFor(currentLocale())
 
 /** The file for a line in a language, if one was dropped in. English stands
- *  in for a German line that has no German file yet. */
+ *  in for a line that has no file in the player's language yet. */
 export const voiceUrl = (id: string, lang: VoiceLang = voiceLang(), files = VOICE_FILES): string | null =>
   files.get(lang)?.get(id) ?? (lang !== 'en' ? files.get('en')?.get(id) ?? null : null)
 

@@ -5,7 +5,7 @@
 
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CARDS, VOICE_LINES, ROOT, toneOf } from './lib.mjs'
+import { CARDS, LANGS, VOICE_LINES, ROOT, toneOf } from './lib.mjs'
 
 const rows = []
 rows.push(`# Voice cards
@@ -32,11 +32,9 @@ for (const [id, c] of Object.entries(CARDS)) {
 
 ${c.personality}
 
-- **Accent:** ${c.accent.en} / ${c.accent.de}
-- **Design prompt (EN):** ${c.designPrompt.en}
-- **Design prompt (DE):** ${c.designPrompt.de}
-- **Reference text (EN):** ${c.referenceText.en}
-- **Reference text (DE):** ${c.referenceText.de}
+- **Accent:** ${LANGS.map(l => c.accent[l]).join(' / ')}
+${LANGS.map(l => `- **Design prompt (${l.toUpperCase()}):** ${c.designPrompt[l]}`).join('\n')}
+${LANGS.map(l => `- **Reference text (${l.toUpperCase()}):** ${c.referenceText[l]}`).join('\n')}
 - **Lines:** ${lines.length} (${split})
 - **Notes:** ${c.notes}
 `)

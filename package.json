@@ -85,6 +85,7 @@
     "jsdom": "^28.1.0",
     "npm-run-all2": "^8.0.4",
     "pdfkit": "^0.20.2",
+    "pinyin-pro": "^3.29.4",
     "playwright-core": "^1.63.0",
     "postcss": "^8.5.8",
     "pug": "^3.0.3",

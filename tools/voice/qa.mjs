@@ -3,11 +3,15 @@
 // the take fits the line's max, the level is on target, nothing clips.
 // `pickBest` chooses between the takes of one line.
 
+import { pinyin } from 'pinyin-pro'
 import { normalize } from './normalize.mjs'
 
+// A Chinese character is a word of its own: the script has no spaces, so the
+// word and letter rates below become character rates there ("Flux" stays one word).
 const words = (s) => s.toLowerCase()
   .normalize('NFKD').replace(/[̀-ͯ]/g, '') // ä → a: Whisper and the text may differ in accents only
   .replace(/ß/g, 'ss')
+  .replace(/\p{Script=Han}/gu, ' $& ')
   .replace(/[^\p{L}\p{N}\s'-]/gu, ' ').replace(/[-']/g, ' ')
   .split(/\s+/).filter(Boolean)
 
@@ -46,15 +50,32 @@ export const letterEdits = (ref, hyp) => distance([...words(ref).join('')], [...
  *  past the budget itself it passes with a warning. The budget is the line's
  *  max (a guide written for actors; the game's bubble waits for the file) or
  *  what its words need at a natural pace, whichever is longer. */
-export const LIMITS = { wer: 0.1, cer: 0.06, lufs: 1.5, peak: -1, overMax: 1.5, wordsPerSecond: 2.6 }
+export const LIMITS = { wer: 0.1, cer: 0.06, lufs: 1.5, peak: -1, overMax: 1.5, wordsPerSecond: 2.6, charsPerSecondZh: 4.5 }
 
-/** How long a line may take: its max, or its words at a natural pace (+0.5 s). */
-export const budgetFor = (text, max) => Math.max(max ?? 0, words(text).length / LIMITS.wordsPerSecond + 0.5)
+/** How long a line may take: its max, or its words at a natural pace (+0.5 s);
+ *  Chinese counts characters, about 4.5 a second. */
+export const budgetFor = (text, max, lang = 'en') =>
+  Math.max(max ?? 0, words(text).length / (lang === 'zh' ? LIMITS.charsPerSecondZh : LIMITS.wordsPerSecond) + 0.5)
 
 /** Whisper's spellings a TTS read cannot help: the cast's names, and homophones it picks the other way. */
 const NAMES = [[/^(flucks|flocks|phlox|flax|flix|vlogs?|flugs)$/, 'flux'], [/^(w|v)(e|ä|a)(ch|k)?(x|chs|ks|cks|x)$/, 'vex'], [/^(atlass?|atlis)$/, 'atlas'],
   [/^weights$/, 'waits'], [/^vault$/, 'volt']]
 const named = (w) => NAMES.reduce((x, [re, to]) => (re.test(x) ? to : x), w)
+
+/** The cast's names as Whisper writes them in Chinese (the zh text keeps them in Latin letters). */
+const ZH_NAMES = [[/弗[拉勒]?克斯|福克斯|弗洛克斯/g, ' flux '], [/[维韦薇]克斯/g, ' vex '], [/阿特拉斯/g, ' atlas '], [/高斯/g, ' gauss '], [/皮普/g, ' pip '], [/马克/g, ' mark ']]
+const zhNamed = (s, lang) => (lang !== 'zh' ? s : ZH_NAMES.reduce((x, [re, to]) => x.replace(re, to), s))
+
+/** Chinese as it sounds: each character its toneless pinyin syllable. Whisper
+ *  writes homophones the other way all the time (它/他 tā, 再/在 zài, 滑/划 huá,
+ *  旋/悬 xuán); the voice said the line right, so compare the sounds. */
+const zhSounded = (s, lang) => (lang !== 'zh' ? s
+  : s.replace(ZH_SOUNDS, ' ').replace(/\p{Script=Han}+/gu, (run) => ` ${pinyin(run, { toneType: 'none', type: 'array' }).join(' ')} `))
+
+/** Chinese sound words (a hiss 嘶, a beep 哔, a huff 哼): a sound, not a word, which
+ *  Whisper drops or writes as any syllable. Left out on both sides; one stray
+ *  syllable in their place still passes (`oneWordAdded`). */
+const ZH_SOUNDS = /[嘶哔哼呼哇哎哟嘿咦嗯呃噗嘀嘟]/gu
 
 /** German as it sounds, for comparing: a final d/b/g is spoken t/p/k and a doubled consonant is one
  *  ("schmollt" and Whisper's "Schmold" are the same sound). */
@@ -66,6 +87,19 @@ const oneWordAdded = (ref, hyp) => {
   const r = words(ref)
   const h = words(hyp)
   return h.length === r.length + 1 && h.some((_, i) => h.filter((__, j) => j !== i).join(' ') === r.join(' '))
+}
+
+/** Chinese: every word of the line is there, in order, and the only extra
+ *  syllables are no more than the sound words left out (先嘶嘶响 heard as 先吸吸响). */
+const soundsHeardAsWords = (raw, ref, hyp, lang) => {
+  if (lang !== 'zh') return false
+  const k = (raw.match(ZH_SOUNDS) ?? []).length
+  const r = words(ref)
+  const h = words(hyp)
+  if (!k || h.length > r.length + k) return false
+  let i = 0
+  for (const w of h) if (w === r[i]) i++
+  return i === r.length
 }
 
 /** Only the opening interjection differs ("Hmph." heard as "Mmm", "Pah." as "Ha"): the line itself is right. */
@@ -86,8 +120,8 @@ export const judge = (take, max) => {
   const reasons = []
   // What Whisper heard, as the model was told to say it: numbers as words, the names as written.
   const lang = take.lang ?? 'en'
-  let heard = take.heard == null ? null : words(normalize(take.heard, lang).text).map(named).map(w => sounded(w, lang)).join(' ')
-  let text = words(take.text).map(w => sounded(w, lang)).join(' ')
+  let heard = take.heard == null ? null : words(zhSounded(zhNamed(normalize(take.heard, lang).text, lang), lang)).map(named).map(w => sounded(w, lang)).join(' ')
+  let text = words(zhSounded(zhNamed(take.text, lang), lang)).map(w => sounded(w, lang)).join(' ')
   // A line cut off mid-word on purpose ("something's in the—"): its last word is whatever was left of it.
   if (heard != null && /[—-]\s*$/.test(text)) {
     text = words(text).slice(0, -1).join(' ')
@@ -98,10 +132,10 @@ export const judge = (take, max) => {
   if (take.loose) {
     // A bark or a laugh is a sound, not words: Whisper cannot read "Nnngh!" back. Only added speech fails it.
     if (heard != null && words(heard).length > n + 1) reasons.push(`words: heard "${take.heard}" (more than the sound)`)
-  } else if (e != null && e > Math.max(LIMITS.wer, n <= 3 ? 1 / n : 0) && cer(text, heard) > LIMITS.cer && letterEdits(text, heard) > 1 && !oneWordAdded(text, heard) && !onlyOpenerDiffers(text, heard)) {
+  } else if (e != null && e > Math.max(LIMITS.wer, n <= 3 ? 1 / n : 0) && cer(text, heard) > LIMITS.cer && letterEdits(text, heard) > 1 && !oneWordAdded(text, heard) && !onlyOpenerDiffers(text, heard) && !soundsHeardAsWords(take.text, text, heard, lang)) {
     reasons.push(`words: heard "${take.heard}" (${Math.round(e * 100)} % off)`)
   }
-  const budget = budgetFor(take.text, max)
+  const budget = budgetFor(take.text, max, lang)
   if (max && take.seconds > budget * LIMITS.overMax + 0.001) reasons.push(`length ${take.seconds.toFixed(2)} s > ${LIMITS.overMax}× ${budget.toFixed(1)} s`)
   if (take.target?.lufs != null && take.lufs != null && Math.abs(take.lufs - take.target.lufs) > LIMITS.lufs) reasons.push(`loudness ${take.lufs} LUFS (target ${take.target.lufs})`)
   if (take.peak > LIMITS.peak) reasons.push(`peak ${take.peak} dBFS`)

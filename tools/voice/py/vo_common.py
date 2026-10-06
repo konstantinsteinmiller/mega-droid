@@ -18,7 +18,7 @@ import numpy as np
 TONES = ["neutral", "calm", "warm", "cheeky", "excited", "urgent", "shout", "whisper",
          "menacing", "sad", "deadpan", "pained", "laugh"]
 
-LANG_NAMES = {"en": "English", "de": "German"}
+LANG_NAMES = {"en": "English", "de": "German", "es": "Spanish", "zh": "Chinese"}
 
 
 def read_jobs(argv):

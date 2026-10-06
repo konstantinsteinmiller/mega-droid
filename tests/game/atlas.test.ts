@@ -292,16 +292,21 @@ describe('Atlas: tips keep their distance', () => {
   })
 })
 
-describe('voice-overs: German or English, and never an error', () => {
+describe('voice-overs: in the player language or English, and never an error', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     __resetVoices()
   })
 
-  it('German players hear German; every other language hears English', () => {
+  it('German, Spanish and Chinese players hear their language; every other language hears English', () => {
     expect(voiceLangFor('de')).toBe('de')
     expect(voiceLangFor('de-AT')).toBe('de')
-    for (const l of ['en', 'fr', 'ja', 'ar', '', null]) expect(voiceLangFor(l)).toBe('en')
+    expect(voiceLangFor('es')).toBe('es')
+    expect(voiceLangFor('es-MX')).toBe('es')
+    expect(voiceLangFor('zh')).toBe('zh')
+    // Traditional-script players hear the same Mandarin; their subtitles stay theirs.
+    expect(voiceLangFor('zh-TW')).toBe('zh')
+    for (const l of ['en', 'fr', 'ja', 'pt', 'ar', '', null]) expect(voiceLangFor(l)).toBe('en')
   })
 
   it('files are found by convention (<lang>/<line id>.ogg); English stands in for a missing German one', () => {

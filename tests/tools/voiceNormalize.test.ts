@@ -24,6 +24,20 @@ describe('voice text normalisation', () => {
     expect(normalize('Who turned the lights ON?!', 'en').text).toBe('Who turned the lights On?!')
   })
 
+  it('spells Spanish and Chinese numbers and per-cents as said, never in English', () => {
+    expect(numberWords(21, 'es')).toBe('veintiuno')
+    expect(numberWords(31, 'es')).toBe('treinta y uno')
+    expect(numberWords(100, 'es')).toBe('cien')
+    expect(numberWords(115, 'es')).toBe('ciento quince')
+    expect(numberWords(11, 'zh')).toBe('十一')
+    expect(numberWords(25, 'zh')).toBe('二十五')
+    expect(numberWords(105, 'zh')).toBe('一百零五')
+    expect(numberWords(115, 'zh')).toBe('一百一十五')
+    expect(normalize('¡25 %! nivel 3', 'es').text).toBe('¡veinticinco por ciento! nivel tres')
+    // Chinese says the per-cent first.
+    expect(normalize('25%的伤害，3级', 'zh').text).toBe('百分之二十五的伤害，三级')
+  })
+
   it('writes every ellipsis the same way', () => {
     expect(normalize('The cure… is ME!', 'en').text).toBe('The cure... is Me!')
   })

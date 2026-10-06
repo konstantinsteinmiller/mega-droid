@@ -21,14 +21,12 @@ itself, so a new line shows up here as missing until it is voiced.
 | Vex | 33 | 33 | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 | 2 | 2 |
-| Pip | 52 | 51 | 52 | 52 | 52 |
-| **All** | **341** | **340** | **341** | **341** | **341** |
+| Pip | 52 | 52 | 52 | 52 | 52 |
+| **All** | **341** | **341** | **341** | **341** | **341** |
 
-## Missing (1)
+## Missing (0)
 
-| File | Who | Plays when | English | German | Spanish | Chinese | EN | DE | ES | ZH |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | Siguiente: Mina Profunda, muy bajo tierra. Máquinas fuertes de verdad. | 接下来：地底深处的深层矿井。机器强得很。 | **missing** | elevenlabs | chatterbox | chatterbox |
+Nothing: every line has its recordings.
 
 ## Every line (341)
 
@@ -320,7 +318,7 @@ itself, so a new line shows up here as missing until it is voiced.
 | `pip_debrief_gale_tip` | Pip | Debrief after Sky Docks: how to beat the next Master | It pulls you in. Block the clamp! | Er zieht dich heran. Blocke, wenn er zupackt! | Te atrae hacia él. ¡Bloquea la pinza! | 它会把你吸过去。格挡它的夹击！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `pip_debrief_magnet_won` | Pip | Debrief after Polarity Works: what the win changed | The trams are rolling again. Ding ding! | Die Trams rollen wieder. Bim, bim! | Los tranvías vuelven a rodar. ¡Tilín, tilín! | 电车又跑起来了。叮叮！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `pip_debrief_magnet_weapon` | Pip | Debrief after Polarity Works: the copied weapon's card | Magnet Pull cracks shields. Perfect for the next Master. | Der Magnetzug knackt Schilde. Genau richtig für den nächsten Meister. | La Atracción Imán rompe escudos. Perfecta para el próximo Maestro. | 磁力牵引能击碎护盾。正好对付下一位大师。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
-| `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | Siguiente: Mina Profunda, muy bajo tierra. Máquinas fuertes de verdad. | 接下来：地底深处的深层矿井。机器强得很。 | **missing** | elevenlabs | chatterbox | chatterbox |
+| `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | Siguiente: Mina Profunda, muy bajo tierra. Máquinas fuertes de verdad. | 接下来：地底深处的深层矿井。机器强得很。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `pip_debrief_magnet_boss` | Pip | Debrief after Polarity Works: what the Master of Deep Mine has done | Drill Master trapped the worker-bots down the shaft. | Der Bohrmeister hält die Arbeiterbots im Schacht fest. | El Maestro Taladro ha atrapado a los robots obreros en el fondo del pozo. | 钻头大师把工作机器人困在了井下。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `pip_debrief_magnet_tip` | Pip | Debrief after Polarity Works: how to beat the next Master | It digs under you. Step off the mark! | Er gräbt sich unter dich. Runter von der Markierung! | Excava bajo tus pies. ¡Sal de la marca! | 它会钻到你脚下。快离开标记！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `pip_debrief_drill_won` | Pip | Debrief after Deep Mine: what the win changed | The worker-bots are back up in daylight. | Die Arbeiterbots sind wieder oben im Tageslicht. | Los robots obreros han vuelto a la luz del día. | 工作机器人又回到阳光下了。 | elevenlabs | elevenlabs | chatterbox | chatterbox |

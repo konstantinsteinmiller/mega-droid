@@ -421,3 +421,35 @@ describe('the panic, the stun and the recovery', () => {
     expect(m.player.z).toBeLessThan(z0 - 0.01)
   })
 })
+
+// Playtest 2026-10-06: the tutorial's machines took a first-timer from full
+// health in seconds, some from behind a wall.
+describe('the tutorial\'s machines hit softly, and nothing hits through a wall', () => {
+  it('a tutorial machine deals a third of the damage it would anywhere else', () => {
+    const lose = (tutorial: boolean) => {
+      const r = rig({ tutorial })
+      const before = r.c.hp
+      r.hit(40)
+      return before - r.c.hp
+    }
+    const plain = lose(false)
+    const tut = lose(true)
+    expect(plain).toBeGreaterThan(0)
+    // 0.34 of the tutorial's own softened hit (0.6): about a fifth of a plain one.
+    expect(tut / plain).toBeGreaterThan(0.12)
+    expect(tut / plain).toBeLessThan(0.3)
+  })
+
+  it('a machine\'s blast never reaches Flux through a wall', () => {
+    const r = rig()
+    // A wall row between Flux and the machine 6 m ahead of him.
+    const row = Math.floor(r.mid / CELL) - 1
+    for (let i = 0; i < W; i++) (r.m.map.cell as Uint8Array)[row * W + i] = 0
+    r.m.nav = createNav(r.m.map)
+    const e = r.machine()
+    const before = r.c.hp
+    const res = r.m.hitPlayer(e, 40, { blockable: false, fromX: e.x, fromZ: e.z, kind: 'aoe' })
+    expect(res).toBe('miss')
+    expect(r.c.hp).toBe(before)
+  })
+})

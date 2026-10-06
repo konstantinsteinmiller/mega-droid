@@ -1091,12 +1091,16 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.guard = Math.max(0, 1 - e.st / 0.22)
         faceTo(e, px, pz, 8, dt)
         if (e.st >= e.teleDur) {
-          const ang = Math.atan2(px - e.x, pz - e.z)
-          for (const off of [-0.26, 0, 0.26]) {
-            const a = ang + off
-            w.fireEnemyShot(e, e.x + Math.sin(a) * 0.35, 0.42, e.z + Math.cos(a) * 0.35, Math.sin(a), 0.03, Math.cos(a), 10, e.dmg, true)
+          // Only at a Flux it still sees: one who stepped behind cover during
+          // the wind-up is not hit through the wall (playtest 2026-10-06).
+          if (seesPlayer(w, e)) {
+            const ang = Math.atan2(px - e.x, pz - e.z)
+            for (const off of [-0.26, 0, 0.26]) {
+              const a = ang + off
+              w.fireEnemyShot(e, e.x + Math.sin(a) * 0.35, 0.42, e.z + Math.cos(a) * 0.35, Math.sin(a), 0.03, Math.cos(a), 10, e.dmg, true)
+            }
+            w.sfx('enemyShot', e.x, e.z)
           }
-          w.sfx('enemyShot', e.x, e.z)
           enterState(e, 'recover')
         }
       } else if (e.state === 'recover') {

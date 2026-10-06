@@ -508,6 +508,14 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   const onLockChange = () => {
     const locked = document.pointerLockElement === surface
     if (locked === input.locked) return
+    // A capture that lands while play may not take it — a menu opened between
+    // the request and the grant (the pause menu's Abandon, then the results):
+    // handed straight back. Kept, it hid the cursor over the results screen
+    // and its Continue ignored every click (playtest 2026-10-06).
+    if (locked && opts.canLock && !opts.canLock()) {
+      document.exitPointerLock()
+      return
+    }
     input.locked = locked
     if (locked) {
       lastLockAt = performance.now()

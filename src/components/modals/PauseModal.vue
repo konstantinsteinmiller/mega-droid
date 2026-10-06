@@ -9,14 +9,21 @@
         div.c-title {{ t('pause.controls') }}
         ControlsPanel
     template(#footer)
-      div.actions
+      //- Abandoning asks first, right here: it sat beside Resume and one tap
+      //- ended a run as failed (playtest 2026-10-06).
+      div.actions(v-if="!confirming")
         FButton(type="primary" icon="play" :label="t('pause.resume')" @click="resume")
         FButton(type="secondary" icon="settings" :label="t('options.title')" @click="$emit('options')")
-        FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="abandon")
+        FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="confirming = true")
+      div.confirm(v-else)
+        p.ask {{ t('pause.abandonAsk') }}
+        div.actions
+          FButton(type="primary" icon="play" :label="t('pause.resume')" @click="resume")
+          FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="abandon")
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
@@ -36,8 +43,14 @@ const objText = computed(() => {
   if (flow.quest) params.boss = t(`boss.${SECTOR_BY_ID[flow.quest.sector].boss}`)
   return t(hud.objectiveKey, params)
 })
+/** The abandon button was pressed once: the footer asks before it ends the run. */
+const confirming = ref(false)
+watch(open, (o) => { if (o) confirming.value = false })
 const resume = () => { flow.modal = '' }
 const abandon = () => {
+  confirming.value = false
+  // Leaving, not resuming: no capture of the mouse on the way out.
+  flow.abandoning = true
   flow.modal = ''
   currentMission()?.retreat()
 }
@@ -73,6 +86,17 @@ ul
   font-size: clamp(11px, 2.4vmin, 14px)
   line-height: 1.5
   color: #dfe7ff
+.confirm
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 8px
+.ask
+  margin: 0
+  color: #ffd0d0
+  font-family: var(--font-ui)
+  font-size: clamp(13px, 2.8vmin, 16px)
+  text-align: center
 .actions
   display: flex
   flex-wrap: wrap

@@ -24,7 +24,7 @@ import { flow } from '@/game/flow'
 import { isGamePaused } from '@/use/useGamePause'
 import { bearingOf } from '@/game/state/damageFeed'
 import { doorInput, promptArrow, type ArrowPose } from '@/game/sim/doorPrompt'
-import { LESSON_OF, type WalkNeed } from '@/game/sim/walkthrough'
+import type { WalkNeed } from '@/game/sim/walkthrough'
 import InputGlyph from './InputGlyph.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 
@@ -58,10 +58,14 @@ const labelKey = ref('walk.finishLesson')
 /** The weapon a beam-in room's lesson is about ("Finish the lesson on …"). */
 const weaponId = ref('')
 const weaponName = computed(() => (weaponId.value ? t(`weapon.${weaponId.value}.name`) : ''))
-/** The lesson a tutorial gate waits for ("Finish first: Shield Tutorial"). */
+/** What a tutorial gate waits for, in the objective card's words ("Finish
+ *  first: Break the crate"): the crate's step used to borrow the charge
+ *  lesson's name, so a player who had learned the charge shot was told to
+ *  finish it (playtest 2026-10-06). */
 const lessonName = computed(() => {
-  const id = need.value ? LESSON_OF[need.value] : undefined
-  return id ? t(`train.name.${id}`) : ''
+  const n = need.value
+  if (!n || n === 'weapon') return ''
+  return t(`objective.walk.${n === 'rest' ? 'gel' : n}`)
 })
 /** On screen (the label is read out only then). */
 const on = ref(false)

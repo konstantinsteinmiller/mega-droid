@@ -56,6 +56,8 @@ export interface ResultsData {
 export const flow = reactive({
   screen: 'boot' as Screen,
   modal: '' as Modal,
+  /** The pause menu's Abandon closed it: leaving, not resuming (no mouse capture). */
+  abandoning: false,
   results: null as ResultsData | null,
   quest: null as Quest | null,
   /** Mission-side counters mirrored for the results screen. */

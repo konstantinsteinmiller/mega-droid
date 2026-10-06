@@ -14,7 +14,6 @@ import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine, type AtlasMemo
 import { buildAtlas, animateAtlas } from '../models/atlas'
 import { playVoice, playVoiceSoon, prefetchVoice } from '../audio/voice'
 import { bark, barkFor, preloadBarks } from '../audio/barks'
-import { compareItems, rivalFor } from '../data/itemCompare'
 import { Scene as StoryScene, markVexSeen, vexSeen, prefetchScene, VEX_BOSS_KEY, type Beat, type ScenePlace } from '../story/vexScene'
 import {
   presentBeats, freedBeats, voltHackBeats, fortressBeats, mk1IntroBeats, mk1SignalBeats, mk1DefeatBeats,
@@ -58,7 +57,7 @@ import { sfx } from '../audio/sfx'
 import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
 import { LessonDirector, roomAt, type LessonTick } from './lessons'
-import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed, LESSON_OF } from './walkthrough'
+import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed } from './walkthrough'
 import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt'
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
@@ -67,7 +66,7 @@ import type { Quest } from '../data/quests'
 import { SECTOR_BY_ID } from '../data/regions'
 import { MissionObjects, CHEST_DY, type Chest, type Crate, type Core, type ObjectiveHost } from './objectives'
 import {
-  profile, grantXp, saveProfile, claimGiftTank, computeStats, writeSnapshot, retryPointOf, xp01, heroColors, markTip, equipped, type MissionSnapshot
+  profile, grantXp, saveProfile, claimGiftTank, computeStats, writeSnapshot, retryPointOf, xp01, heroColors, markTip, type MissionSnapshot
 } from '../state/profile'
 import { rollItem, type Item } from '../data/items'
 import { flow, finishMission, retryFromSnapshot, copyBossWeapon } from '../flow'
@@ -296,6 +295,9 @@ const OVERLOAD_VIOLET = new Color('#b46cff')
 /** The tutorial compass pin: this far along the walk ahead of Flux (m), and
  *  how often that walk is searched again (s). */
 const COMPASS_AHEAD = 3
+/** The tutorial's machines deal this share of their damage (a 66 % cut, on
+ *  top of the tutorial's own softening of an unblocked hit). Traps keep theirs. */
+export const TUTORIAL_ENEMY_DAMAGE = 0.34
 /** A wall nearer than this ahead of the eye (m)… */
 const EYE_WALL_NEAR = 1.35
 /** …and the eye eases back from it up to this far (m). */
@@ -1147,6 +1149,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const c = this.combat
     const p = this.player
     if (c.dead || hud.phase !== 'play') return 'miss'
+    // A machine's blast or stomp never reaches through a wall (a Master's
+    // arena has none between them): playtesters were hit by machines they
+    // could not see.
+    if (e && !e.boss && o.kind === 'aoe' && !hasLineOfSight(this.nav, e.x, e.z, p.x, p.z)) return 'miss'
+    // The tutorial's machines hit a third as hard (playtest 2026-10-06: a
+    // shield soldier took a first-timer from full health in three seconds).
+    if (e && this.setup.tutorial) dmg *= TUTORIAL_ENEMY_DAMAGE
     // A boss attack reached Flux: the arena's run of blocked ones is over.
     if (e?.boss) this.arena?.attackLanded()
     if (c.iframes > 0) return 'miss'
@@ -1770,7 +1779,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       // line in the toast stack went by unread.
       pushHud({ t: 'loot', item: it })
       sfx('loot')
-      if (compareItems(it, rivalFor(it, equipped)).upgrade) this.atlas?.say('hint.upgrade')
+      // No "That's an upgrade" from Atlas: the card says it, and his bubble
+      // covered the card's stat line (playtest 2026-10-06).
     }
     if (Math.random() < 0.18 && profile.inv.tanks < this.stats.tanksMax) {
       profile.inv.tanks++
@@ -2214,8 +2224,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     v.need = need
     // The very first gate: "Finish the Tutorial first" (players took the
     // shut door for a dead end); every later one names its lesson.
-    v.label = !walk ? 'walk.finishLessonOn' : walk.passed === 0 ? 'walk.finishTutorial'
-      : LESSON_OF[need] ? 'walk.finishLessonNamed' : 'walk.finishLesson'
+    v.label = !walk ? 'walk.finishLessonOn' : walk.passed === 0 ? 'walk.finishTutorial' : 'walk.finishLessonNamed'
     v.weapon = this.beamTeach ?? ''
     v.x = d.x
     v.y = d.y + 1.35
@@ -2593,6 +2602,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // waits for a gel used, however the health came back meanwhile.
     if (profile.inv.tanks <= 0 || c.dead || (c.hp >= c.maxHp && !(this.walk && this.lessons.gelLive)) || hud.phase !== 'play') {
       sfx('denied')
+      // Said, not just refused (a muted player heard nothing at all).
+      if (profile.inv.tanks <= 0 && hud.phase === 'play' && !c.dead) pushHud({ t: 'toast', key: 'combat.noGel', color: '#ff9a8a' })
       return false
     }
     profile.inv.tanks--
@@ -2923,7 +2934,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         Math.abs(angDiff(Math.atan2(-(door.x - p.x), -(door.z - p.z)), p.yaw)) < 1.05) this.doInteract()
       if (first && this.input.tankQueued) this.useTank()
       // B: beam out — the same rule as the button (objective done, room quiet).
-      if (first && this.input.beamQueued && hud.objectiveDone && !hud.combat) this.beamOut()
+      if (first && this.input.beamQueued) {
+        if (hud.objectiveDone && !hud.combat) this.beamOut()
+        // Said, not just refused: B did nothing visible before the objective.
+        else if (hud.phase === 'play') {
+          pushHud({ t: 'toast', key: hud.objectiveDone ? 'combat.beamFight' : 'combat.beamNotYet', color: '#ffd27a' })
+          sfx('denied')
+        }
+      }
     } else {
       this.interact = null
     }

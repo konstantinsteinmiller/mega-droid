@@ -171,6 +171,8 @@ export class Coach {
   private now = 0
   private lastLook = 0
   private lastMove = 0
+  /** Mastered thumb glyphs already brought back once after idling. */
+  private idleRecalled = new Set<HintId>()
   private lastFire = 0
   private missedBlocks: number[] = []
   private helpUntil = -1
@@ -292,6 +294,13 @@ export class Coach {
     for (const id of ['move', 'look', 'fire', 'block', 'slide'] as HintId[]) this.recall(id)
   }
 
+  /** A thumb glyph back after idling: always while unlearned, once after. */
+  private idleRecall(id: HintId): void {
+    if (this.mastered(id) && this.idleRecalled.has(id)) return
+    if (this.mastered(id)) this.idleRecalled.add(id)
+    this.recall(id)
+  }
+
   private recall(id: HintId): void {
     if (!this.teaches(id)) return
     const s = this.st[id]
@@ -337,8 +346,10 @@ export class Coach {
     // and looking are watched through a lesson too — a player frozen in front
     // of the training drone is exactly the one who needs the stick again.
     if (t > 6) {
-      if (t - this.lastLook > LOOK_IDLE && !c.combat) this.recall('look')
-      if (t - this.lastMove > MOVE_IDLE && !c.combat) this.recall('move')
+      // …but only once for one who has moved and looked plenty: the WASD and
+      // mouse glyphs kept coming back over every pause (playtest 2026-10-06).
+      if (t - this.lastLook > LOOK_IDLE && !c.combat) this.idleRecall('look')
+      if (t - this.lastMove > MOVE_IDLE && !c.combat) this.idleRecall('move')
       // Never for a player who has shot enough already: the glyph came back
       // in every fight of the tutorial once he paused to dodge or block.
       if ((c.fireLesson || (c.combat && !c.lessonsTeach)) && !this.quiet && !c.veteran && !this.mastered('fire') && t - this.lastFire > FIRE_IDLE) this.recall('fire')

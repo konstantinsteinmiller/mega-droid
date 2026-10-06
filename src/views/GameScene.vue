@@ -280,6 +280,7 @@ watch(() => [isGamePaused.value, flow.screen] as const, ([paused, screen]) => {
   if (paused || screen !== 'mission') releasePointerLock()
 })
 watch(() => flow.modal, (m, prev) => {
+  if (flow.abandoning) { flow.abandoning = false; return }
   if (!m && prev && flow.screen === 'mission' && input.device === 'mouse' && hud.phase === 'play') requestPointerLock(input)
 })
 

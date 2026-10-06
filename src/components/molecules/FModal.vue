@@ -185,6 +185,8 @@ const handleTabChange = (val: string | number): void => emit('update:activeTab',
 
 .f-modal__container
   position: relative
+  // Smaller on a small screen, the whole modal at once (`use/useUiScale.ts`).
+  zoom: var(--ui-scale, 1)
   display: flex
   flex-direction: column
   width: 100%

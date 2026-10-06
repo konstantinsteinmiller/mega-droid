@@ -17,10 +17,13 @@ import GlLostVeil from '@/components/atoms/GlLostVeil.vue'
 import { useCrazyMuteSync } from '@/use/useCrazyMuteSync'
 import useCheats, { installDebugUnlock } from '@/use/useCheats'
 import { orientation } from '@/use/useUser'
+import { installUiScale } from '@/use/useUiScale'
 import { useRenderGate } from '@/platforms/renderGate'
 import { installBrowserGuard } from '@/use/useBrowserGuard'
 
 const { t } = useI18n()
+// The menus' scale on small screens (`--ui-scale`, read by the Lab and FModal).
+installUiScale()
 const { initMusic, pauseMusic, continueMusic } = useMusic()
 useExtensionGuard()
 const { resourceCache } = useAssets()

@@ -302,6 +302,9 @@ onUnmounted(() => {
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)
 .topbar
   pointer-events: auto
+  // A small screen draws the Lab's blocks at a share of their size
+  // (`use/useUiScale.ts`); the tour's overlay stays unscaled and measures them.
+  zoom: var(--ui-scale, 1)
   display: flex
   align-items: center
   gap: clamp(6px, 1.4vmin, 10px)
@@ -387,6 +390,7 @@ onUnmounted(() => {
     color: #ffd84a
 .panel
   pointer-events: auto
+  zoom: var(--ui-scale, 1)
   flex: 1
   min-height: 0
   margin: 0 clamp(8px, 2vmin, 14px)
@@ -394,6 +398,7 @@ onUnmounted(() => {
   flex-direction: column
 .tabs
   pointer-events: auto
+  zoom: var(--ui-scale, 1)
   display: grid
   grid-template-columns: repeat(4, 1fr)
   gap: 6px
@@ -551,21 +556,26 @@ onUnmounted(() => {
   .lock-tip.placed
     animation: none
 
-// Landscape: the panel is a left column, Flux stands on the right.
+// Landscape: the panel is a left column, Flux stands on the right. The
+// blocks are zoomed by --ui-scale and a zoomed vw is a zoomed one too: divide
+// it back out, so the column keeps its share of the screen.
 @media (orientation: landscape)
   .panel
-    width: min(56vw, 620px)
+    width: min(calc(56vw / var(--ui-scale, 1)), 620px)
   .tabs
-    width: min(56vw, 620px)
+    width: min(calc(56vw / var(--ui-scale, 1)), 620px)
 // A phone on its side: every row of height goes to the panel. The top bar
 // leaves the flow (Bolts, the board and Options stay top-right, over the lab),
 // and the level goes to the bottom-right corner, beside the tab row.
+// The column takes a little more of a short screen (62 %): its text needs it more than Flux.
 @media (orientation: landscape) and (max-height: 540px)
+  .panel, .tabs
+    width: min(calc(62vw / var(--ui-scale, 1)), 620px)
   .topbar
     position: absolute
     top: env(safe-area-inset-top, 0px)
     right: env(safe-area-inset-right, 0px)
-    left: calc(env(safe-area-inset-left, 0px) + min(56vw, 620px))
+    left: calc((env(safe-area-inset-left, 0px) + min(62vw, 620px * var(--ui-scale, 1))) / var(--ui-scale, 1))
   .who
     position: fixed
     right: calc(env(safe-area-inset-right, 0px) + clamp(8px, 2vmin, 14px))

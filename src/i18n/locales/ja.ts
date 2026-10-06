@@ -177,6 +177,17 @@ export default {
     'beamOutHint': '準備ができたら帰還しよう。',
     'learnWeapon': '新しい武器を覚えよう：{weapon}',
     'tutorial': '{boss}を倒せ',
+    'walk': {
+      'charge': 'ドローンにチャージショットを撃て',
+      'crate': 'コンテナを壊せ',
+      'block': 'シールドで弾をガードしろ',
+      'gap': '足場の端から歩いて穴を飛び越えろ',
+      'chest': 'チェストを開けろ',
+      'slide': 'スライディングでストンパーの輪から出ろ',
+      'clear': 'この部屋のマシンを倒せ',
+      'gel': 'リペアジェルを使え',
+      'go': '開いたドアを通れ'
+    },
     'boss': '{boss}を倒せ',
     'kill': '{target}を破壊：{n}/{total}',
     'collect': 'データコア：{n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleporttaa pois, kun olet valmis.',
     'learnWeapon': 'Opettele uusi aseesi: {weapon}',
     'tutorial': 'Kukista {boss}',
+    'walk': {
+      'charge': 'Ammu drooniin latauslaukaus',
+      'crate': 'Riko laatikko',
+      'block': 'Torju laukaus kilvelläsi',
+      'gap': 'Kävele reunan yli ja hyppää kuilun yli',
+      'chest': 'Avaa arkku',
+      'slide': 'Liu’u ulos Tömistäjän renkaasta',
+      'clear': 'Kukista tämän huoneen koneet',
+      'gel': 'Käytä korjausgeeliä',
+      'go': 'Kulje avoimesta ovesta'
+    },
     'boss': 'Kukista {boss}',
     'kill': 'Tuhoa {target}: {n}/{total}',
     'collect': 'Dataytimet: {n}/{total}',

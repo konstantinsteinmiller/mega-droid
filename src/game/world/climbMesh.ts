@@ -98,6 +98,10 @@ export const buildClimbLevel = async (
   const cCorr = new Color(theme.corridor)
   const cWall = new Color(theme.wall)
   const cWallLow = new Color(theme.wallLow)
+  // A room's own wall colours and accent (`MapData.roomStyle`, the tutorial's
+  // #118 landmarks); a room without one keeps the theme's.
+  const roomLook = (map.roomStyle ?? []).map(st => st && { high: new Color(st.wall), low: new Color(st.wallLow), accent: st.accent })
+  const lookOf = (k: number) => (map.cell[k] === Cell.Room ? roomLook[map.room[k]!] : undefined)
   const cHaz = new Color(theme.hazard)
   const cHazDark = new Color(theme.crateTrim)
   const cRiser = new Color(theme.trim).lerp(cFloor, 0.35)
@@ -193,14 +197,22 @@ export const buildClimbLevel = async (
   }
 
   // Corner pilasters, deduplicated: the lowest foot and highest top seen.
-  const corners = new Map<string, { x: number; z: number; owner: number; lo: number; hi: number }>()
-  const addCorner = (x: number, z: number, o: number, lo: number, hi: number) => {
+  // Each corner also counts the wall runs meeting at it (`axes`: 1 along x,
+  // 2 along z) and whether any of them is a room's: a straight joint inside a
+  // corridor gets no pilaster (playtest 2026-10-06: one every 3 m on both
+  // sides read as pillars blocking the way).
+  const corners = new Map<string, { x: number; z: number; owner: number; lo: number; hi: number; axes: number; runs: number; room: boolean }>()
+  const addCorner = (x: number, z: number, o: number, lo: number, hi: number, alongX: boolean, room: boolean) => {
     const key = `${Math.round(x * 10)},${Math.round(z * 10)}`
     const c = corners.get(key)
-    if (!c) corners.set(key, { x, z, owner: o, lo, hi })
+    const axis = alongX ? 1 : 2
+    if (!c) corners.set(key, { x, z, owner: o, lo, hi, axes: axis, runs: 1, room })
     else {
       c.lo = Math.min(c.lo, lo)
       c.hi = Math.max(c.hi, hi)
+      c.axes |= axis
+      c.runs++
+      c.room ||= room
     }
   }
 
@@ -370,9 +382,10 @@ export const buildClimbLevel = async (
           if (t.clouds && t.pit[k] && !rim) continue
           // A wall to the room's top, from the lowest floor at its foot.
           const topY = wallTopOf(k)
-          face(b, k, ax, az, bx, bz, e.n, low, () => topY)
-          addCorner(ax, az, o, low, topY)
-          addCorner(bx, bz, o, low, topY)
+          const look = lookOf(k)
+          face(b, k, ax, az, bx, bz, e.n, low, () => topY, 1, look?.low ?? cWallLow, look?.high ?? cWall)
+          addCorner(ax, az, o, low, topY, alongX, c !== Cell.Corridor)
+          addCorner(bx, bz, o, low, topY, alongX, c !== Cell.Corridor)
           decor[o]!.push(xform(piece('capTop', () => paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim)), [mx, topY, mz], rotAlong))
           if (snowy) decor[o]!.push(xform(piece('snowTop', () => paint(rbox(0.62, 0.26, CELL + 0.1, 0.45, 8, 4), '#f7fcff')), [mx, topY + 0.2, mz], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
           // A trim line at every band joint: storeys you can count.
@@ -387,7 +400,8 @@ export const buildClimbLevel = async (
             if (busy.has(`${k}:${e.di},${e.dj}`) || propFaces.has(`${k}:${e.di},${e.dj}`)) {
               // A secret's wall: kept bare for its button / hint (or a prop's).
             } else if (c === Cell.Room && rng() < 0.45) {
-              glows[o]!.push(xform(piece('strip', () => paint(cap(0.07, 1.1, 8, 2), theme.accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
+              const accent = look?.accent ?? theme.accent
+              glows[o]!.push(xform(piece(`strip${accent}`, () => paint(cap(0.07, 1.1, 8, 2), accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
             } else if (rng() < 0.25) {
               const py = fy + 1.1 + rng() * 1.4 + (ramp ? 1.2 : 0)
               decor[o]!.push(xform(piece('pipe', () => paint(cap(0.16, CELL, 10, 2), theme.pipe)), [mx + e.n[0] * 0.2, py, mz + e.n[2] * 0.2], rotAlong))
@@ -465,8 +479,10 @@ export const buildClimbLevel = async (
     onProgress((j + 1) / map.h * 0.6)
   }
 
-  // Pilasters on every wall corner, foot to top.
-  for (const { x, z, owner: o, lo, hi } of corners.values()) {
+  // Pilasters on every wall corner, foot to top — not on a corridor's
+  // straight joints (two runs, one direction, no room wall among them).
+  for (const { x, z, owner: o, lo, hi, axes, runs, room } of corners.values()) {
+    if (!room && runs >= 2 && axes !== 3) continue
     const h = hi - lo + 0.25
     decor[o]!.push(xform(piece(`pil${Math.round(h * 4)}`, () => paint(rcyl(0.3, h, 0.12, 14), theme.pilaster)), [x, lo + h / 2, z]))
     decor[o]!.push(xform(piece('pilasterCap', () => paint(sph(0.34, 14, 8), theme.trim)), [x, hi + 0.25, z]))

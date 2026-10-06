@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportér ud, når du er klar.',
     'learnWeapon': 'Lær dit nye våben: {weapon}',
     'tutorial': 'Besejr {boss}',
+    'walk': {
+      'charge': 'Skyd dronen med et ladeskud',
+      'crate': 'Smadr kassen',
+      'block': 'Bloker et skud med dit skjold',
+      'gap': 'Gå ud over kanten for at springe over',
+      'chest': 'Åbn kisten',
+      'slide': 'Glid ud af Stamperens ring',
+      'clear': 'Besejr maskinerne i rummet',
+      'gel': 'Brug en Reparationsgel',
+      'go': 'Gå gennem den åbne dør'
+    },
     'boss': 'Besejr {boss}',
     'kill': 'Ødelæg {target}: {n}/{total}',
     'collect': 'Datakerner: {n}/{total}',

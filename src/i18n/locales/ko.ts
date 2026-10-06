@@ -177,6 +177,17 @@ export default {
     'beamOutHint': '준비되면 귀환하세요.',
     'learnWeapon': '새 무기를 익히세요: {weapon}',
     'tutorial': '{boss} 처치',
+    'walk': {
+      'charge': '드론에 차지 샷 쏘기',
+      'crate': '크레이트 부수기',
+      'block': '방패로 공격 막기',
+      'gap': '가장자리에서 걸어 나가 틈 뛰어넘기',
+      'chest': '상자 열기',
+      'slide': '슬라이딩으로 스톰퍼의 링 벗어나기',
+      'clear': '이 방의 기계 처치',
+      'gel': '수리 젤 사용',
+      'go': '열린 문으로 지나가기'
+    },
     'boss': '{boss} 처치',
     'kill': '{target} 파괴: {n}/{total}',
     'collect': '데이터 코어: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleporteer weg zodra je klaar bent.',
     'learnWeapon': 'Leer je nieuwe wapen: {weapon}',
     'tutorial': 'Versla {boss}',
+    'walk': {
+      'charge': 'Raak de drone met een geladen schot',
+      'crate': 'Breek het krat',
+      'block': 'Blokkeer een schot met je schild',
+      'gap': 'Loop over de rand om de kloof te springen',
+      'chest': 'Open de kist',
+      'slide': 'Glij uit de ring van de Stamper',
+      'clear': 'Versla de machines in deze kamer',
+      'gel': 'Gebruik een reparatiegel',
+      'go': 'Ga door de open deur'
+    },
     'boss': 'Versla {boss}',
     'kill': 'Vernietig {target}: {n}/{total}',
     'collect': 'Datakernen: {n}/{total}',

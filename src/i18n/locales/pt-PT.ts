@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teletransporta-te quando estiveres pronto.',
     'learnWeapon': 'Aprende a tua nova arma: {weapon}',
     'tutorial': 'Derrota o {boss}',
+    'walk': {
+      'charge': 'Acerta no drone com um tiro carregado',
+      'crate': 'Parte a caixa',
+      'block': 'Bloqueia um tiro com o escudo',
+      'gap': 'Sai pela borda para saltar o vão',
+      'chest': 'Abre o baú',
+      'slide': 'Desliza para fora do anel do Esmagador',
+      'clear': 'Derrota as máquinas desta sala',
+      'gel': 'Usa um Gel de Reparação',
+      'go': 'Passa pela porta aberta'
+    },
     'boss': 'Derrota o {boss}',
     'kill': 'Destrói {target}: {n}/{total}',
     'collect': 'Núcleos de dados: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Dịch chuyển về khi bạn sẵn sàng.',
     'learnWeapon': 'Học vũ khí mới: {weapon}',
     'tutorial': 'Đánh bại {boss}',
+    'walk': {
+      'charge': 'Bắn phát tụ lực vào drone',
+      'crate': 'Phá thùng',
+      'block': 'Dùng khiên chặn một phát bắn',
+      'gap': 'Bước khỏi mép để nhảy qua khe',
+      'chest': 'Mở rương',
+      'slide': 'Trượt ra khỏi vòng của Máy Dậm',
+      'clear': 'Đánh bại máy móc trong phòng này',
+      'gel': 'Dùng Gel Sửa Chữa',
+      'go': 'Đi qua cánh cửa đang mở'
+    },
     'boss': 'Đánh bại {boss}',
     'kill': 'Phá hủy {target}: {n}/{total}',
     'collect': 'Lõi dữ liệu: {n}/{total}',

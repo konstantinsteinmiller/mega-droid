@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportējies, kad esi gatavs.',
     'learnWeapon': 'Apgūsti jauno ieroci: {weapon}',
     'tutorial': 'Uzveic bosu: {boss}',
+    'walk': {
+      'charge': 'Trāpi dronam ar lādētu šāvienu',
+      'crate': 'Salauz kasti',
+      'block': 'Bloķē šāvienu ar vairogu',
+      'gap': 'Noej no malas, lai pārlēktu plaisu',
+      'chest': 'Atver lādi',
+      'slide': 'Izslīdi no Mīdītāja gredzena',
+      'clear': 'Uzveic mašīnas šajā telpā',
+      'gel': 'Izmanto remonta gelu',
+      'go': 'Ej cauri atvērtajām durvīm'
+    },
     'boss': 'Uzveic bosu: {boss}',
     'kill': 'Iznīcini {target}: {n}/{total}',
     'collect': 'Datu kodoli: {n}/{total}',

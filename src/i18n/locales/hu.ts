@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportálj ki, ha készen állsz.',
     'learnWeapon': 'Tanuld meg az új fegyvered: {weapon}',
     'tutorial': 'Győzd le: {boss}',
+    'walk': {
+      'charge': 'Lődd le a drónt töltött lövéssel',
+      'crate': 'Törd szét a ládát',
+      'block': 'Háríts el egy lövést a pajzsoddal',
+      'gap': 'Lépj le a peremről, ugord át a szakadékot',
+      'chest': 'Nyisd ki a ládát',
+      'slide': 'Csússz ki a Dobbantó gyűrűjéből',
+      'clear': 'Győzd le a gépeket ebben a teremben',
+      'gel': 'Használj egy Javítózselét',
+      'go': 'Menj át a nyitott ajtón'
+    },
     'boss': 'Győzd le: {boss}',
     'kill': 'Megsemmisítve, {target}: {n}/{total}',
     'collect': 'Adatmagok: {n}/{total}',

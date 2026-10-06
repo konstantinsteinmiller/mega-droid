@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Rientra quando sei pronto.',
     'learnWeapon': 'Impara la tua nuova arma: {weapon}',
     'tutorial': 'Sconfiggi il {boss}',
+    'walk': {
+      'charge': 'Colpisci il drone con un colpo caricato',
+      'crate': 'Rompi la cassa',
+      'block': 'Blocca un colpo con lo scudo',
+      'gap': 'Scendi dal bordo per saltare il vuoto',
+      'chest': 'Apri la cassa',
+      'slide': 'Scivola fuori dall’anello del Pestone',
+      'clear': 'Sconfiggi le macchine in questa stanza',
+      'gel': 'Usa un Gel Riparatore',
+      'go': 'Passa dalla porta aperta'
+    },
     'boss': 'Sconfiggi il {boss}',
     'kill': 'Distruggi {target}: {n}/{total}',
     'collect': 'Nuclei dati: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportiraj se kad budeš spreman.',
     'learnWeapon': 'Nauči novo oružje: {weapon}',
     'tutorial': 'Pobijedi bossa: {boss}',
+    'walk': {
+      'charge': 'Pogodi dron nabijenim hitcem',
+      'crate': 'Razbij sanduk',
+      'block': 'Blokiraj hitac štitom',
+      'gap': 'Siđi s ruba i preskoči ponor',
+      'chest': 'Otvori sanduk',
+      'slide': 'Klizni van Gaziteljeva prstena',
+      'clear': 'Pobijedi strojeve u ovoj sobi',
+      'gel': 'Upotrijebi gel za popravak',
+      'go': 'Prođi kroz otvorena vrata'
+    },
     'boss': 'Pobijedi bossa: {boss}',
     'kill': 'Uništeno {n}/{total} {target}',
     'collect': 'Podatkovne jezgre: {n}/{total}',

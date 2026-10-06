@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleport keluar kapan pun kamu siap.',
     'learnWeapon': 'Pelajari senjata barumu: {weapon}',
     'tutorial': 'Kalahkan {boss}',
+    'walk': {
+      'charge': 'Tembak drone dengan tembakan bermuatan',
+      'crate': 'Hancurkan kotaknya',
+      'block': 'Blok tembakan dengan perisaimu',
+      'gap': 'Jalan melewati tepi untuk melompati celah',
+      'chest': 'Buka petinya',
+      'slide': 'Meluncur keluar dari lingkaran Penghentak',
+      'clear': 'Kalahkan mesin di ruangan ini',
+      'gel': 'Gunakan Gel Perbaikan',
+      'go': 'Masuk lewat pintu yang terbuka'
+    },
     'boss': 'Kalahkan {boss}',
     'kill': 'Hancurkan {target}: {n}/{total}',
     'collect': 'Inti data: {n}/{total}',

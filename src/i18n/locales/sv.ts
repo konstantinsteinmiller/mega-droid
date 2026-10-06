@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportera ut när du är redo.',
     'learnWeapon': 'Lär dig ditt nya vapen: {weapon}',
     'tutorial': 'Besegra {boss}',
+    'walk': {
+      'charge': 'Skjut drönaren med ett laddskott',
+      'crate': 'Krossa lådan',
+      'block': 'Blockera ett skott med skölden',
+      'gap': 'Gå över kanten för att hoppa över',
+      'chest': 'Öppna kistan',
+      'slide': 'Glid ut ur Stamparens ring',
+      'clear': 'Besegra maskinerna i rummet',
+      'gel': 'Använd en Reparationsgel',
+      'go': 'Gå genom den öppna dörren'
+    },
     'boss': 'Besegra {boss}',
     'kill': 'Förstör {target}: {n}/{total}',
     'collect': 'Datakärnor: {n}/{total}',

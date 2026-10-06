@@ -65,6 +65,14 @@ export interface Pillar {
   gone?: boolean
 }
 
+/** See `MapData.roomStyle`. `prop` is a wall-mounted `DecorKind`. */
+export interface RoomStyle {
+  wall: string
+  wallLow: string
+  accent: string
+  prop: string
+}
+
 export interface MapData {
   seed: number
   w: number
@@ -88,6 +96,10 @@ export interface MapData {
   /** A built tutorial's cast per walkthrough room (by its place on the path),
    *  where the lesson's own teacher is not enough (`spawnTutorial`). */
   walkCast?: string[][]
+  /** A room's own look, by room id (the tutorial, #118): its walls' colours,
+   *  its accent strips and the wall prop it repeats, so a player who walked
+   *  back into it knows the room again. Missing: the theme's. */
+  roomStyle?: Array<RoomStyle | undefined>
   /** A stage's beam-in room (off its first room, `Builder.beamRoom`): where
    *  Flux lands, and the door into the level it holds until the newest
    *  weapon has had its lesson. */

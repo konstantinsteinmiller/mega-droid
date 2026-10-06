@@ -179,6 +179,17 @@ export default {
     'beamOutHint': 'Hazır olduğunda ışınlan.',
     'learnWeapon': 'Yeni silahını öğren: {weapon}',
     'tutorial': 'Patronu yen: {boss}',
+    'walk': {
+      'charge': 'Drona şarjlı atış yap',
+      'crate': 'Kasayı kır',
+      'block': 'Kalkanınla bir atışı blokla',
+      'gap': 'Boşluğu atlamak için kenardan yürü',
+      'chest': 'Sandığı aç',
+      'slide': 'Kayarak Ezici’nin halkasından çık',
+      'clear': 'Bu odadaki makineleri yen',
+      'gel': 'Bir Tamir Jeli kullan',
+      'go': 'Açık kapıdan geç'
+    },
     'boss': 'Patronu yen: {boss}',
     'kill': 'Yok edilen {target}: {n}/{total}',
     'collect': 'Veri çekirdekleri: {n}/{total}',

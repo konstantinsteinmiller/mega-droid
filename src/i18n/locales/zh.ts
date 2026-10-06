@@ -177,6 +177,17 @@ export default {
     'beamOutHint': '准备好后即可传送撤离。',
     'learnWeapon': '学会你的新武器：{weapon}',
     'tutorial': '击败{boss}',
+    'walk': {
+      'charge': '用蓄力弹击中无人机',
+      'crate': '打碎木箱',
+      'block': '用护盾挡下一发子弹',
+      'gap': '走出边缘，跃过缺口',
+      'chest': '打开补给箱',
+      'slide': '滑铲离开重踏者的光圈',
+      'clear': '击败这个房间里的机器',
+      'gel': '使用修理凝胶',
+      'go': '穿过打开的门'
+    },
     'boss': '击败{boss}',
     'kill': '摧毁{target}：{n}/{total}',
     'collect': '数据核心：{n}/{total}',

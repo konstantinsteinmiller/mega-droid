@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportiĝu, kiam vi pretas.',
     'learnWeapon': 'Lernu vian novan armilon: {weapon}',
     'tutorial': 'Venku: {boss}',
+    'walk': {
+      'charge': 'Pafu ŝarĝitan pafon al la drono',
+      'crate': 'Rompu la keston',
+      'block': 'Bloku pafon per via ŝildo',
+      'gap': 'Paŝu de la rando por transsalti la breĉon',
+      'chest': 'Malfermu la keston',
+      'slide': 'Glitu el la ringo de la Piedfrapulo',
+      'clear': 'Venku la maŝinojn en ĉi tiu ĉambro',
+      'gel': 'Uzu Riparan Ĝelon',
+      'go': 'Iru tra la malfermita pordo'
+    },
     'boss': 'Venku: {boss}',
     'kill': 'Detruu {target}: {n}/{total}',
     'collect': 'Datumaj kernoj: {n}/{total}',

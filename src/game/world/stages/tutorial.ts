@@ -1,4 +1,4 @@
-import { cellCenter, type MapData } from '../levelGen'
+import { cellCenter, type MapData, type RoomStyle } from '../levelGen'
 import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
 
 /**
@@ -47,6 +47,26 @@ export const TUTORIAL_STEPS: string[][] = [
 /** Who stands in each walkthrough room (by its place on the path), where the
  *  lesson's own teacher is not enough: the fighting rooms after the lessons. */
 export const TUTORIAL_CAST: string[][] = [[], [], [], [], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
+
+/**
+ * Every room its own look (#118): a wall colour, an accent and a wall prop it
+ * repeats, so a lost player knows a room again ("the rusty one with the
+ * fans — I came from there"). Playtesters of 2026-10-06 wandered for minutes
+ * between rooms that were all the same green. By room id; the arena keeps the
+ * Scrapyard's own colours.
+ */
+export const TUTORIAL_ROOM_STYLE: RoomStyle[] = [
+  { wall: '#6f8a5a', wallLow: '#4e6340', accent: '#ffcf5a', prop: 'cageLamp' },     // 0 the pad: the Scrapyard's green
+  { wall: '#a0623a', wallLow: '#6e4127', accent: '#ffd27a', prop: 'wallFan' },      // 1 crate: rust
+  { wall: '#5a7898', wallLow: '#3b5068', accent: '#7fd8ff', prop: 'breaker' },      // 2 shield: steel blue
+  { wall: '#4e8f88', wallLow: '#335f5a', accent: '#9ff5e6', prop: 'coolantPipe' },  // 3 gap: teal
+  { wall: '#7a5f9a', wallLow: '#523e6a', accent: '#ff7ad9', prop: 'neonSign' },     // 4 chest: purple neon
+  { wall: '#a88a3a', wallLow: '#725d24', accent: '#ffe14d', prop: 'ventGrille' },   // 5 slide: hazard ochre
+  { wall: '#5d86b0', wallLow: '#3e5c7c', accent: '#bfe9ff', prop: 'droneCradle' },  // 6 drones: sky blue
+  { wall: '#9a4f48', wallLow: '#6a3530', accent: '#ffb38a', prop: 'valveWheel' },   // 7 roller: brick red
+  { wall: '#7d7a4e', wallLow: '#56543a', accent: '#e8d48a', prop: 'shoring' },      // 8 golem: olive, under its crane
+  { wall: '#4f566a', wallLow: '#363b4a', accent: '#ff6b6b', prop: 'skullEmblem' }   // 9 antechamber: Vex's slate
+]
 
 export const generateWakeUpCall = (seed: number): MapData => {
   const b = new Builder(W, H)
@@ -118,6 +138,7 @@ export const generateWakeUpCall = (seed: number): MapData => {
   const map = finish(b, start, seed)
   map.walkSteps = TUTORIAL_STEPS
   map.walkCast = TUTORIAL_CAST
+  map.roomStyle = TUTORIAL_ROOM_STYLE
   // A built stage lists no spots; the scripted cast and the crate lesson
   // need them: every floor cell of a room, less its doorways.
   const doorCells = new Set<number>()

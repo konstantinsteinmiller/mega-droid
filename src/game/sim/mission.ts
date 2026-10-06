@@ -53,7 +53,7 @@ import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { Particles } from '../fx/particles'
 import { FloorMarkers, ShockRings, makeBlobShadow } from '../fx/markers'
-import { ObjectiveTrail, type TrailInput } from '../fx/objectiveTrail'
+import { ObjectiveTrail, type TrailInput, createTrailPath, buildTrailPath, projectOnPath } from '../fx/objectiveTrail'
 import { sfx } from '../audio/sfx'
 import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
@@ -293,6 +293,14 @@ const NIGHT = new Color('#04050b')
 const FLASH_WHITE = new Color('#e8eeff')
 /** The Overload's violet (the prototype tier's), mixed into the core as it builds. */
 const OVERLOAD_VIOLET = new Color('#b46cff')
+/** The tutorial compass pin: this far along the walk ahead of Flux (m), and
+ *  how often that walk is searched again (s). */
+const COMPASS_AHEAD = 3
+/** A wall nearer than this ahead of the eye (m)… */
+const EYE_WALL_NEAR = 1.35
+/** …and the eye eases back from it up to this far (m). */
+const EYE_BACK_MAX = 0.45
+const COMPASS_REPATH = 0.4
 /** After a manual look, the soft lock-on stands aside this long (s). */
 const LOCK_YIELD = 1.1
 /** A lock-on target out of sight keeps the lock this long (s), so a machine
@@ -491,6 +499,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** Yellow floor chevrons to the main objective (in the tutorial walkthrough:
    *  to its next lesson, `updateTrail`). */
   trail!: ObjectiveTrail
+  /** The tutorial compass's own walk to the walkthrough's goal (the trail only
+   *  searches while it shows): the pin points along it, never through walls. */
+  private readonly compassPath = createTrailPath()
+  private compassSearchAt = -Infinity
+  private compassOk = false
+  /** The eye's ease back from a wall ahead (m, `wallEyeBack`). */
+  private eyeBack = 0
   private trailIn: TrailInput = { enabled: false, px: 0, pz: 0, target: null, time: 0 }
   /** When the player last steered the camera (drag / keys). */
   private manualLookAt = -10
@@ -2103,6 +2118,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const e = createEnemy(kind, this.setup.enemyLevel, at[0], at[1], roomId)
     e.yaw = Math.atan2(p.x - at[0], p.z - at[1])
     this.addEnemy(e)
+    this.fx.riseRing(at[0], 0.1, at[1], PAL.glowCyan, 0.8, 18)
+    this.sfx('beamIn', at[0], at[1])
+    wake(this, e)
+    return true
+  }
+
+  /** A straggler of a walkthrough room, beamed back into view, awake. */
+  recall(e: Enemy, roomId: number): boolean {
+    const p = this.player
+    const at = helperSpot(this.nav, this.map, roomId, p.x, p.z, p.yaw)
+    if (!at) return false
+    e.x = e.px = at[0]
+    e.z = e.pz = at[1]
+    e.yaw = Math.atan2(p.x - at[0], p.z - at[1])
     this.fx.riseRing(at[0], 0.1, at[1], PAL.glowCyan, 0.8, 18)
     this.sfx('beamIn', at[0], at[1])
     wake(this, e)
@@ -4953,7 +4982,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     // Objective line + compass
     const ob = this.objects.objective
-    hud.objectiveKey = `objective.${ob.template}`
+    // The tutorial: the walkthrough's step of the moment, not the boss.
+    const step = this.walk?.objective() ?? null
+    hud.objectiveKey = step ? `objective.walk.${step}` : `objective.${ob.template}`
     hud.objectiveParams = {
       n: ob.progress, total: ob.count,
       target: this.quest?.target ? (ob.template === 'kill' ? `enemyPlural.${this.quest.target}` : `enemy.${this.quest.target}`) : ''
@@ -4970,7 +5001,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     hud.interactKey = !it ? '' : it.kind === 'chest' ? 'interact.chest' : it.kind === 'npc' ? 'interact.rescue' : 'interact.bossDoor'
     const p = this.player
     const marks: typeof hud.compass = []
-    for (const m of this.objects.compassTargets(this.enemies)) {
+    const walkPin = this.walkCompassPin()
+    if (walkPin) marks.push(walkPin)
+    // The tutorial's pins are the walk's next step alone: a boss pin straight
+    // through the walls (the map snakes) sent playtesters back into finished rooms.
+    else if (!this.walk?.active) for (const m of this.objects.compassTargets(this.enemies)) {
       const bearing = angDiff(Math.atan2(-(m.x - p.x), -(m.z - p.z)), p.yaw)
       marks.push({ bearing: -bearing, kind: m.kind, dist: Math.hypot(m.x - p.x, m.z - p.z) })
       if (marks.length >= 6) break
@@ -5020,6 +5055,60 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       hud.targetName = ''
       hud.targetHidden = false
     }
+  }
+
+  /**
+   * How far the eye eases back (m) from a wall right ahead of it: up to
+   * EYE_BACK_MAX when the wall is closer than EYE_WALL_NEAR, never so far that
+   * the eye would enter a wall behind. Eased, so turning along a wall glides.
+   */
+  private wallEyeBack(x: number, z: number, yaw: number, dt: number): number {
+    const fx = -Math.sin(yaw)
+    const fz = -Math.cos(yaw)
+    // A wall, a pillar or a closed door's slab (the sight test's own blockers).
+    const blocked = (d: number) => !hasLineOfSight(this.nav, x, z, x + fx * d, z + fz * d)
+    let ahead = EYE_WALL_NEAR
+    for (let d = 0.1; d < EYE_WALL_NEAR; d += 0.1) {
+      if (blocked(d)) { ahead = d; break }
+    }
+    let want = Math.min(EYE_BACK_MAX, Math.max(0, EYE_WALL_NEAR - ahead))
+    while (want > 0.02 && blocked(-(want + 0.2))) want -= 0.05
+    want = Math.max(0, want)
+    this.eyeBack += (want - this.eyeBack) * Math.min(1, dt * 10)
+    return this.eyeBack
+  }
+
+  /**
+   * The tutorial compass pin: where the walk to the walkthrough's goal turns
+   * next, about COMPASS_AHEAD metres along the path, and how far that walk
+   * still is. Searched every COMPASS_REPATH s (A*, as the floor trail).
+   */
+  private walkCompassPin(): (typeof hud.compass)[number] | null {
+    const walk = this.walk
+    if (!walk?.active) return null
+    const g = walk.goal()
+    if (!g) return null
+    const p = this.player
+    const path = this.compassPath
+    if (this.time - this.compassSearchAt >= COMPASS_REPATH || Math.hypot(path.tx - g.x, path.tz - g.z) > 1.5) {
+      this.compassSearchAt = this.time
+      this.compassOk = buildTrailPath(this.nav, p.x, p.z, g.x, g.z, path)
+    }
+    let tx = g.x
+    let tz = g.z
+    let dist = Math.hypot(g.x - p.x, g.z - p.z)
+    if (this.compassOk && path.n > 1) {
+      const s = Math.min(path.len, projectOnPath(path, p.x, p.z) + COMPASS_AHEAD)
+      let k = 1
+      while (k < path.n - 1 && path.s[k]! < s) k++
+      const s0 = path.s[k - 1]!
+      const t = Math.max(0, Math.min(1, (s - s0) / Math.max(1e-6, path.s[k]! - s0)))
+      tx = path.x[k - 1]! + (path.x[k]! - path.x[k - 1]!) * t
+      tz = path.z[k - 1]! + (path.z[k]! - path.z[k - 1]!) * t
+      dist = Math.max(0, path.len - projectOnPath(path, p.x, p.z))
+    }
+    const bearing = angDiff(Math.atan2(-(tx - p.x), -(tz - p.z)), p.yaw)
+    return { bearing: -bearing, kind: 'objective', dist }
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -5091,10 +5180,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * 1.8)
     const sh = this.shakeAmt * this.shakeAmt
     const cam = this.camera
+    // Face to a wall, the eye eases back from it (never into what is behind):
+    // at Flux's own radius a flat toon wall filled the whole frame with one
+    // colour, and playtesters took that for the camera inside the wall.
+    const back = this.wallEyeBack(x, z, p.yaw, dt)
     cam.position.set(
-      x + Math.cos(p.yaw) * bobX + (Math.random() - 0.5) * sh * 0.2,
+      x + Math.cos(p.yaw) * bobX + Math.sin(p.yaw) * back + (Math.random() - 0.5) * sh * 0.2,
       y + (Math.random() - 0.5) * sh * 0.16,
-      z - Math.sin(p.yaw) * bobX
+      z - Math.sin(p.yaw) * bobX + Math.cos(p.yaw) * back
     )
     cam.rotation.order = 'YXZ'
     // A fumble's stun jolts the view (`sim/fumble.ts`).

@@ -25,7 +25,7 @@ vi.mock('@/game/sim/enemies', () => ({
   })
 }))
 
-const { Walkthrough, planWalkthrough, stepsFor, doorwayOf, helperSpot, SETTLE, GEL_DELAY, GEL_FORCE_AFTER } = await import('@/game/sim/walkthrough')
+const { Walkthrough, planWalkthrough, stepsFor, doorwayOf, helperSpot, SETTLE, GEL_DELAY, GEL_FORCE_AFTER, STRAGGLE_AFTER } = await import('@/game/sim/walkthrough')
 const { corridorCells } = await import('@/game/sim/traps')
 const { spawnTutorial } = await import('@/game/sim/spawn')
 const { roomAt } = await import('@/game/sim/lessons')
@@ -1343,5 +1343,60 @@ describe('flow', () => {
     writeSnapshot({ ...snap, quest: tutorialQuest(), walk: { gate: 2, crate: true, block: false, slide: false } })
     const cur = bootTarget()
     expect(cur.kind === 'mission' && cur.snapshot?.walk?.gate).toBe(2)
+  })
+})
+
+// Playtest 2026-10-06: players lost in the tutorial could not tell what a
+// door waited for, followed a trail back into finished rooms, and stood in a
+// room whose last machine was somewhere they never looked.
+describe('never lost in the walkthrough', () => {
+  it('names the step of the moment for the objective card', () => {
+    const r = makeWalk()
+    r.walk.start()
+    expect(r.walk.objective()).toBe('charge')
+    passTo(r, 1)
+    // The crate room: its machine first, then the crate.
+    const e = machine(r, r.gate(1).room)
+    enter(r, r.gate(1).room)
+    expect(r.walk.objective()).toBe('clear')
+    e.state = 'dead'
+    expect(r.walk.objective()).toBe('crate')
+  })
+
+  it('beams a room\'s straggler back into view after a quiet wait in that room', () => {
+    const r = makeWalk()
+    const recalled: Enemy[] = []
+    r.host.recall = (e) => { recalled.push(e); return true }
+    r.walk.start()
+    passTo(r, 1)
+    // A machine of the crate room that chased Flux back into the first room and stayed there.
+    const e = machine(r, r.gate(1).room)
+    const [x0, z0] = roomCenter(r.map.rooms[r.gate(0).room]!)
+    e.x = x0
+    e.z = z0
+    enter(r, r.gate(1).room)
+    run(r, STRAGGLE_AFTER - 1)
+    expect(recalled).toHaveLength(0)
+    run(r, 1.5)
+    expect(recalled).toEqual([e])
+    // Never in a fight.
+    recalled.length = 0
+    run(r, STRAGGLE_AFTER + 1, true)
+    expect(recalled).toHaveLength(0)
+  })
+
+  it('never leads the trail back to a far machine outside its room', () => {
+    const r = makeWalk()
+    r.walk.start()
+    passTo(r, 1)
+    const e = machine(r, r.gate(1).room)
+    e.awake = true
+    const [x0, z0] = roomCenter(r.map.rooms[r.gate(0).room]!)
+    e.x = x0
+    e.z = z0
+    // Flux in the crate room, far from it: the goal is not the machine.
+    enter(r, r.gate(1).room)
+    const g = r.walk.goal()
+    expect(g?.kind).not.toBe('machine')
   })
 })

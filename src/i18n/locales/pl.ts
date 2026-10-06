@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportuj się, kiedy zechcesz.',
     'learnWeapon': 'Naucz się nowej broni: {weapon}',
     'tutorial': 'Pokonaj bossa: {boss}',
+    'walk': {
+      'charge': 'Traf drona strzałem naładowanym',
+      'crate': 'Rozbij skrzynkę',
+      'block': 'Zablokuj strzał tarczą',
+      'gap': 'Zejdź z krawędzi, by przeskoczyć przepaść',
+      'chest': 'Otwórz skrzynię',
+      'slide': 'Wyślizgnij się z pierścienia Tupacza',
+      'clear': 'Pokonaj maszyny w tej sali',
+      'gel': 'Użyj żelu naprawczego',
+      'go': 'Przejdź przez otwarte drzwi'
+    },
     'boss': 'Pokonaj bossa: {boss}',
     'kill': 'Zniszcz {target}: {n}/{total}',
     'collect': 'Rdzenie danych: {n}/{total}',

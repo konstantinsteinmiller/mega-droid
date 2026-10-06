@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportuokis, kai būsi pasiruošęs.',
     'learnWeapon': 'Išmok naują ginklą: {weapon}',
     'tutorial': 'Nugalėk: {boss}',
+    'walk': {
+      'charge': 'Pataikyk į droną įkrautu šūviu',
+      'crate': 'Sudaužyk dėžę',
+      'block': 'Atremk šūvį skydu',
+      'gap': 'Nueik nuo krašto ir peršok tarpą',
+      'chest': 'Atidaryk skrynią',
+      'slide': 'Išslysk iš Trypiko žiedo',
+      'clear': 'Nugalėk mašinas šiame kambaryje',
+      'gel': 'Panaudok remonto gelį',
+      'go': 'Eik pro atviras duris'
+    },
     'boss': 'Nugalėk: {boss}',
     'kill': 'Sunaikink {target}: {n}/{total}',
     'collect': 'Duomenų šerdys: {n}/{total}',

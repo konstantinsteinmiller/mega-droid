@@ -75,6 +75,8 @@ export interface DecorPlan {
 
 /** A room gets set dressing at this chance (some rooms, not all). */
 export const ROOM_CHANCE = 0.75
+/** A styled room's own wall prop, this many times (`MapData.roomStyle`). */
+export const LANDMARKS_PER_ROOM = 2
 /** A floor prop keeps this much from each wall it stands against (m). */
 const CORNER_GAP = 0.18
 /** A wall prop needs this much wall over its floor (m). */
@@ -353,6 +355,12 @@ export const planDecor = (map: MapData, sector: SectorId): DecorPlan => {
     for (let n = 0; n < nFloor; n++) cornerProp(r, set.floor[Math.floor(rng() * set.floor.length)]!)
     const nWall = 1 + (big && rng() < 0.5 ? 1 : 0)
     for (let n = 0; n < nWall; n++) wallProp(r, set.wall[Math.floor(rng() * set.wall.length)]!)
+  })
+  // A room's own wall prop, twice, on bare walls (#118): the landmark a lost
+  // player knows it again by. Every room with a style, whatever the dice said.
+  map.roomStyle?.forEach((st, r) => {
+    if (!st || r >= map.rooms.length || !(st.prop in DECOR) || DECOR[st.prop as DecorKind].mount !== 'wall') return
+    for (let n = 0; n < LANDMARKS_PER_ROOM; n++) wallProp(r, st.prop as DecorKind)
   })
   return { props, cranes }
 }

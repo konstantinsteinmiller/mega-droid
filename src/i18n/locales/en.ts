@@ -195,6 +195,18 @@ export default {
     'beamOutHint': 'Beam out when you are ready.',
     'learnWeapon': 'Learn your new {weapon}',
     'tutorial': 'Defeat {boss}',
+    // The tutorial's step of the moment (the walkthrough, `WalkObjective`).
+    'walk': {
+      'charge': 'Charge-shoot the drone',
+      'crate': 'Break the crate',
+      'block': 'Block a shot with your shield',
+      'gap': 'Walk off the edge to leap the gap',
+      'chest': 'Open the chest',
+      'slide': 'Slide out of the Stomper’s ring',
+      'clear': 'Defeat the machines in this room',
+      'gel': 'Use a Repair Gel',
+      'go': 'Go through the open door'
+    },
     'boss': 'Defeat {boss}',
     'kill': 'Destroy {target}: {n}/{total}',
     'collect': 'Data cores: {n}/{total}',

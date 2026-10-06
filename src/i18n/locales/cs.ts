@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportuj se, až budeš připraven.',
     'learnWeapon': 'Nauč se novou zbraň: {weapon}',
     'tutorial': 'Poraz bosse: {boss}',
+    'walk': {
+      'charge': 'Zasáhni dron nabitou ranou',
+      'crate': 'Rozbij bednu',
+      'block': 'Vykryj ránu štítem',
+      'gap': 'Sejdi z okraje a přeskoč propast',
+      'chest': 'Otevři bednu',
+      'slide': 'Vyklouzni z kruhu Dupáka',
+      'clear': 'Poraz stroje v této místnosti',
+      'gel': 'Použij opravný gel',
+      'go': 'Projdi otevřenými dveřmi'
+    },
     'boss': 'Poraz bosse: {boss}',
     'kill': 'Zničeno {n}/{total} {target}',
     'collect': 'Datová jádra: {n}/{total}',

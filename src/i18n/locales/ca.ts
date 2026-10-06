@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teletransporta\'t quan estiguis a punt.',
     'learnWeapon': 'Aprèn la nova arma: {weapon}',
     'tutorial': 'Derrota {boss}',
+    'walk': {
+      'charge': 'Dispara un tret carregat al dron',
+      'crate': 'Trenca la caixa',
+      'block': 'Bloqueja un tret amb l’escut',
+      'gap': 'Surt per la vora per saltar el buit',
+      'chest': 'Obre el cofre',
+      'slide': 'Llisca fora de l’anell de l’Aixafador',
+      'clear': 'Derrota les màquines d’aquesta sala',
+      'gel': 'Fes servir un gel reparador',
+      'go': 'Passa per la porta oberta'
+    },
     'boss': 'Derrota {boss}',
     'kill': 'Destrueix {target}: {n}/{total}',
     'collect': 'Nuclis de dades: {n}/{total}',

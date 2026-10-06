@@ -115,6 +115,9 @@ export interface WalkSave extends WalkthroughSave {
   gelDone?: boolean
 }
 
+/** The objective card's line during the walkthrough (`objective.walk.<id>`). */
+export type WalkObjective = 'charge' | 'crate' | 'block' | 'gap' | 'chest' | 'slide' | 'clear' | 'gel' | 'go'
+
 /** What a held walkthrough door waits on: its room's step, or the gel
  *  corridor's gel (`Walkthrough.needAt`). */
 export type WalkNeed = WalkStep | 'gel' | 'weapon'
@@ -142,6 +145,14 @@ const OPEN_DELAY = 0.8
 const RETRY = 1
 /** The burst reads first; the gel lesson comes on this long after it (s). */
 export const GEL_DELAY = 0.9
+/** Quiet this long in a gate's room while some of its machines are elsewhere
+ *  (s): they are beamed into view. A room whose last machine fled down a
+ *  corridor, or hovers where the player never looks, never held its door. */
+export const STRAGGLE_AFTER = 6
+/** The trail and the compass follow a machine of the gate's room only inside
+ *  that room or this near Flux (m); a far one led players back through
+ *  rooms they had finished. */
+export const FOLLOW_NEAR = 12
 /** On (or past) the gel plate this long with something still awake nearby:
  *  it goes off anyway. A machine that will not come cannot hold the
  *  tutorial shut for good. */
@@ -299,6 +310,9 @@ export interface WalkHost {
   shutDoor?(id: number): void
   /** Beam a stand-in teacher into `room`, in view of the player. */
   bringIn(kind: 'heli' | 'hopper', room: number): boolean
+  /** Beam a straggler of `room` (a machine that left it, or one the player
+   *  cannot find) back into view, awake (optional: a host without it skips). */
+  recall?(e: Enemy, room: number): boolean
   /** Progress worth a checkpoint (the resume snapshot). */
   checkpoint(): void
   // ── The Repair Gel corridor (optional: a host without them skips it) ──
@@ -336,6 +350,9 @@ export class Walkthrough {
   private clearAt = -1
   private readyAt = -1
   private retryAt = -1
+  /** Since when Flux has stood quiet in the gate's room with machines of it
+   *  out of reach (-1: not now). */
+  private straggleFrom = -1
   private lit = false
   /** Gates whose door in has been shut behind the player (one way forward). */
   private shut = 0
@@ -384,6 +401,28 @@ export class Walkthrough {
     const g = this.plan.gates[this.gate]
     if (!g || this.blocked || !g.steps.includes('block')) return false
     return roomAt(this.h.map, x, z) === g.room
+  }
+
+  /**
+   * What the player should do right now, for the objective card (#playtest
+   * 2026-10-06: "Defeat Scrapper" for the whole tutorial told nobody what the
+   * door waited for). The goal marker's order: the gel first, then the gate's
+   * first unfinished step, a room's machines before its own lesson; 'go' when
+   * the way on is open (walk on to the next door).
+   */
+  objective(): WalkObjective | null {
+    if (!this.active) return null
+    if (this.gel === 'sprung') return 'gel'
+    if (this.gel === 'armed') return 'go'
+    const g = this.plan.gates[this.gate]!
+    const clear = roomEmpty(this.h.enemies, g.room)
+    for (const s of g.steps) {
+      if (this.done(s, clear)) continue
+      if (s === 'charge' || s === 'chest') return s
+      if (!clear) return 'clear'
+      return s === 'rest' ? 'gel' : s
+    }
+    return 'go'
   }
 
   /** Until every gate before the boss is passed. */
@@ -455,6 +494,7 @@ export class Walkthrough {
     const clear = roomEmpty(h.enemies, g.room)
     if (!clear) this.clearAt = -1
     else if (this.clearAt < 0) this.clearAt = h.time
+    this.recallStragglers(g, clear, fighting)
     for (let k = 0; k < g.steps.length; k++) {
       const s = g.steps[k]!
       if (this.met(s, clear)) continue
@@ -519,6 +559,34 @@ export class Walkthrough {
    *  in what teaches it (the crate lesson, another machine). A stand-in comes
    *  only into a room with nothing standing, SETTLE after the last one fell:
    *  one at a time, never a pile-up, and never a last one. */
+  /**
+   * Machines of the gate's room that are not in it (one chased Flux down a
+   * corridor and stayed there) or not anywhere he looks: once he has stood in
+   * the room STRAGGLE_AFTER without a fight, each is beamed back into view,
+   * awake. No room of the walkthrough waits on a machine nobody can find.
+   */
+  private recallStragglers(g: WalkGate, clear: boolean, fighting: boolean): void {
+    const h = this.h
+    if (clear || fighting || !h.recall || !this.inGateRoom(g)) {
+      this.straggleFrom = -1
+      return
+    }
+    if (this.straggleFrom < 0) {
+      this.straggleFrom = h.time
+      return
+    }
+    if (h.time - this.straggleFrom < STRAGGLE_AFTER) return
+    this.straggleFrom = -1
+    for (const e of h.enemies) {
+      if (e.room !== g.room || e.state === 'dead' || e.boss || e.dormant) continue
+      h.recall(e, g.room)
+    }
+  }
+
+  private inGateRoom(g: WalkGate): boolean {
+    return roomAt(this.h.map, this.h.player.x, this.h.player.z) === g.room
+  }
+
   private prompt(s: WalkStep, room: number): void {
     const h = this.h
     if (s === 'crate') {
@@ -702,6 +770,8 @@ export class Walkthrough {
       const e = enemies[k]!
       if (e.room !== room || e.state === 'dead' || e.boss) continue
       const d = (e.x - player.x) ** 2 + (e.z - player.z) ** 2
+      // Inside its room, or close to Flux: never a trail back through finished rooms.
+      if (roomAt(this.h.map, e.x, e.z) !== room && d > FOLLOW_NEAR * FOLLOW_NEAR) continue
       if (d < bestD) {
         best = e
         bestD = d

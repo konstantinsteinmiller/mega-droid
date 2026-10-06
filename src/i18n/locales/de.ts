@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Beam dich raus, wenn du bereit bist.',
     'learnWeapon': 'Lerne deine neue Waffe: {weapon}',
     'tutorial': 'Besiege {boss}',
+    'walk': {
+      'charge': 'Triff die Drohne mit einem Ladeschuss',
+      'crate': 'Zerbrich die Kiste',
+      'block': 'Blocke einen Schuss mit deinem Schild',
+      'gap': 'Lauf über die Kante, spring über die Lücke',
+      'chest': 'Öffne die Kiste',
+      'slide': 'Rutsch aus dem Ring des Stampfers',
+      'clear': 'Besiege die Maschinen in diesem Raum',
+      'gel': 'Benutze ein Reparaturgel',
+      'go': 'Geh durch die offene Tür'
+    },
     'boss': 'Besiege {boss}',
     'kill': 'Zerstöre {target}: {n}/{total}',
     'collect': 'Datenkerne: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Hazır olanda teleport ol.',
     'learnWeapon': 'Yeni silahını öyrən: {weapon}',
     'tutorial': 'Bossu məğlub et: {boss}',
+    'walk': {
+      'charge': 'Drona yüklü atəş aç',
+      'crate': 'Qutunu sındır',
+      'block': 'Qalxanınla atəşi blokla',
+      'gap': 'Boşluğu tullanmaq üçün kənardan çıx',
+      'chest': 'Sandığı aç',
+      'slide': 'Sürüşüb Tapdalayanın halqasından çıx',
+      'clear': 'Bu otaqdakı maşınları məğlub et',
+      'gel': 'Təmir Gelindən istifadə et',
+      'go': 'Açıq qapıdan keç'
+    },
     'boss': 'Bossu məğlub et: {boss}',
     'kill': 'Məhv edilən {target}: {n}/{total}',
     'collect': 'Məlumat nüvələri: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Téléporte-toi quand tu es prêt.',
     'learnWeapon': 'Apprends ta nouvelle arme : {weapon}',
     'tutorial': 'Bats {boss}',
+    'walk': {
+      'charge': 'Tire un tir chargé sur le drone',
+      'crate': 'Casse la caisse',
+      'block': 'Bloque un tir avec ton bouclier',
+      'gap': 'Quitte le bord pour sauter le vide',
+      'chest': 'Ouvre le coffre',
+      'slide': 'Glisse hors de l’anneau du Pilonneur',
+      'clear': 'Bats les machines de cette salle',
+      'gel': 'Utilise un gel réparateur',
+      'go': 'Passe la porte ouverte'
+    },
     'boss': 'Bats {boss}',
     'kill': 'Détruis des {target} : {n}/{total}',
     'collect': 'Cœurs de données : {n}/{total}',

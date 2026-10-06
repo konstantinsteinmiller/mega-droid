@@ -34,13 +34,14 @@ export const PROMPT_HOLD = 3
 export const PROMPT_FADE = 0.4
 /** It comes on — and its glyph pulses — at most once this often (s). */
 export const PROMPT_GAP = 1.5
-/** Waiting this near a held door (m)… */
-export const IDLE_RANGE = 4
+/** Waiting this near a held door (m)… (a door sits at the far end of its
+ *  corridor: playtesters stood at the mouth, about 6 m off, and never saw it) */
+export const IDLE_RANGE = 8
 /** …this long (s), outside a fight, is being stuck at it. */
 export const IDLE_AFTER = 8
 /** Walking up this close (m) to a held door shows the prompt at once: most
  *  players never pushed or waited, they turned away thinking it a dead end. */
-export const CLOSE_RANGE = 3
+export const CLOSE_RANGE = 7
 /** The teacher is called this long after the wait trigger (s): its fight
  *  hides the prompt, so the prompt gets its moment first. */
 export const CALL_DELAY = 1.5

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Tayyor boʻlganingizda teleport qiling.',
     'learnWeapon': "Yangi qurolingni o'rgan: {weapon}",
     'tutorial': 'Asosiy dushmanni yenging: {boss}',
+    'walk': {
+      'charge': 'Dronga zaryadli oʻq uzing',
+      'crate': 'Qutini sindiring',
+      'block': 'Qalqon bilan oʻqni bloklang',
+      'gap': 'Jarlikdan sakrash uchun chetdan yuring',
+      'chest': 'Sandiqni oching',
+      'slide': 'Sirpanib, Toptovchi halqasidan chiqing',
+      'clear': 'Bu xonadagi mashinalarni yenging',
+      'gel': 'Taʼmir gelidan foydalaning',
+      'go': 'Ochiq eshikdan oʻting'
+    },
     'boss': 'Asosiy dushmanni yenging: {boss}',
     'kill': '{target}: {n}/{total} yoʻq qilindi',
     'collect': 'Maʼlumot yadrolari: {n}/{total}',

@@ -177,6 +177,17 @@ export default {
     'beamOutHint': 'Teleportează-te când ești gata.',
     'learnWeapon': 'Învață noua armă: {weapon}',
     'tutorial': 'Învinge-l pe {boss}',
+    'walk': {
+      'charge': 'Lovește drona cu o lovitură încărcată',
+      'crate': 'Sparge lada',
+      'block': 'Blochează o lovitură cu scutul',
+      'gap': 'Pășește peste margine ca să sari golul',
+      'chest': 'Deschide lada',
+      'slide': 'Alunecă afară din inelul Tropăitorului',
+      'clear': 'Învinge mașinile din camera asta',
+      'gel': 'Folosește un Gel Reparator',
+      'go': 'Treci prin ușa deschisă'
+    },
     'boss': 'Învinge-l pe {boss}',
     'kill': 'Distruge: {n}/{total} {target}',
     'collect': 'Nuclee de date: {n}/{total}',

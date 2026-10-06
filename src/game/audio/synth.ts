@@ -583,7 +583,12 @@ let humLfo: OscillatorNode | null = null
 let humLfoGain: GainNode | null = null
 
 /** `k01` 0..1 toward full charge; `full` once fully charged; null stops it. */
+/** DEV only: hears every charge-hum update (the trailer's sound log, `game/trailer.ts`). */
+let humTap: ((k01: number | null, full: boolean, over: boolean) => void) | null = null
+export const setChargeHumTap = (t: typeof humTap): void => { if (import.meta.env.DEV) humTap = t }
+
 export const chargeHum = (k01: number | null, full = false, over = false): void => {
+  if (import.meta.env.DEV) humTap?.(k01, full, over)
   const a = audio()
   if (!a) return
   const t = a.ctx.currentTime

@@ -46,10 +46,14 @@ const MIME = {
 /** Vite binds `localhost`, not `127.0.0.1` — probe the name it actually answers to. */
 export const originFor = (port) => `http://localhost:${port}`
 
-/** Does anything at all answer on this port? */
-async function ping(url, timeoutMs = 1500) {
+/** Does anything at all answer on this port? It asks for Vite's own client
+ *  script, not the page: a dev server holds its FIRST page request until the
+ *  cold dependency pre-bundle is done (30 s and more on a busy machine), and a
+ *  ping that aborts before then never sees the server come up at all. A
+ *  static server answers it too (the SPA fallback, or a 404 — any status). */
+async function ping(url, timeoutMs = 5_000) {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
+    const res = await fetch(new URL('/@vite/client', url), { signal: AbortSignal.timeout(timeoutMs) })
     // Any HTTP answer means something owns the port — even a 404.
     return res.status > 0
   } catch {
@@ -202,7 +206,8 @@ export async function assertOwnServer({ url, expectTitle, log }) {
   }
   let html
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    // The first page request waits for the cold pre-bundle (see ping()).
+    const res = await fetch(url, { signal: AbortSignal.timeout(240_000) })
     html = await res.text()
   } catch (err) {
     throw new Error(`Could not read ${url} to verify which game is being served: ${err.message}`)

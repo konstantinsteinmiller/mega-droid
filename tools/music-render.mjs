@@ -15,6 +15,7 @@
 //   node tools/music-render.mjs                     # all songs, stats only
 //   node tools/music-render.mjs --out tmp/music drift boss
 //   node tools/music-render.mjs --stems drift       # loudness per instrument
+//   node tools/music-render.mjs --out tmp --wav --seconds 80 boss   # 44.1 kHz WAV (the trailer's bed)
 
 import { spawn } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -30,6 +31,7 @@ const argv = process.argv.slice(2)
 const flag = (name) => { const i = argv.indexOf(name); if (i < 0) return null; const v = argv[i + 1]; argv.splice(i, 2); return v }
 const OUT = flag('--out')
 const SECONDS = Number(flag('--seconds') ?? 0)
+const WAV = argv.includes('--wav') ? (argv.splice(argv.indexOf('--wav'), 1), true) : false
 const STEMS = argv.includes('--stems') ? (argv.splice(argv.indexOf('--stems'), 1), true) : false
 const ALL = ['hub', 'scrapyard', 'blaze', 'cryo', 'volt', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor', 'fortress', 'drift', 'circuit', 'boss']
 const ids = argv.length ? argv : ALL
@@ -153,7 +155,8 @@ for (const sid of ids) {
     const raw = join(OUT, `${sid}.pcm`)
     writeFileSync(raw, Buffer.from(r.pcm, 'base64'))
     await new Promise((ok, fail) => {
-      const p = spawn(ffmpeg, ['-y', '-loglevel', 'error', '-f', 's16le', '-ar', '44100', '-ac', '2', '-i', raw, '-b:a', '160k', join(OUT, `${sid}.mp3`)], { stdio: 'inherit' })
+      const enc = WAV ? [join(OUT, `${sid}.wav`)] : ['-b:a', '160k', join(OUT, `${sid}.mp3`)]
+      const p = spawn(ffmpeg, ['-y', '-loglevel', 'error', '-f', 's16le', '-ar', '44100', '-ac', '2', '-i', raw, ...enc], { stdio: 'inherit' })
       p.on('exit', c => (c === 0 ? ok() : fail(new Error(`ffmpeg exited ${c}`))))
     })
     rmSync(raw)

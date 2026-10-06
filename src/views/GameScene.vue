@@ -249,6 +249,8 @@ onMounted(async () => {
   if (import.meta.env.DEV) {
     const w = window as unknown as Record<string, unknown>
     w.__game = { app, input, flow, startMission, storyFor, goHub, mission: currentMission }
+    // The cinematic trailer's staging and autopilot seam (tools/cinematic-trailer).
+    void import('@/game/trailer').then(t => t.installTrailerSeam())
     // A fumble on demand (QA, screenshots): the charge as held, else a full
     // one (`sim/fumble.ts`). Folds away in production.
     w.__fumble = () => {

@@ -736,6 +736,10 @@ export default defineConfig(({ mode, command }) => {
 
   return {
     base: '/',
+    // The video recorder's dev server keeps its own pre-bundle cache
+    // (tools/preview-video/preview.config.mjs), so starting it never re-bundles
+    // the deps under a `pnpm dev` that is already open.
+    cacheDir: process.env.VITE_CACHE_DIR || 'node_modules/.vite',
     server: {
       port: 2194
     },

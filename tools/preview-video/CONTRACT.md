@@ -255,11 +255,11 @@ export default {
 }
 ```
 
-## Game-side seams this project provides (Glyphyx; not part of the generic core)
+## Game-side seams this project provides (Mega Droid; not part of the generic core)
 
 | seam | where | what |
 |---|---|---|
-| `?clean=1` | `src/game/cleanFeed.ts` → `CLEAN_FEED` | DEV only, read once: renderer skips timer/hand/ghost/banners, `drawText` and captions off, crest without label, lock ring/chevrons off; `computeArenaLayout(w, h, insets, true)` = board-only, centred, `CLEAN_BOARD_SHARE` portrait 0.88 / landscape 0.82 |
-| `?artdeny=<prefix,…>` | `src/game/art.ts` → `DENIED` | DEV only, read once: `spriteFor(kind, id)` returns null for `kind/id` prefixes → procedural fallback; `artSettled` returns null, so nothing waits on it |
-| `?tier=high` | `src/use/useVfx.ts` | pins the quality ladder |
-| `window.__glyphyx`, `window.__arena` | `GameScene.vue`, `useArenaInput.ts` | DEV-only scripting seams |
+| `#/?level=<template>&sector=<id>&seed=N&plevel=N` | `src/game/data/levelCatalog.ts` | DEV only: boots straight into a level on a throwaway save |
+| `window.__game` | `src/views/GameScene.vue` | DEV only: app, input, flow, `startMission`, `mission()` |
+| `window.__trailer` | `src/game/trailer.ts` | DEV only: god mode, teleport, boss room, health shares, the autopilot, a free camera, the sound tap (`setSfxTap` / `setChargeHumTap`) |
+| `?device=normal&scenery=full` | `src/use/deviceProfile.ts`, `src/game/engine/quality.ts` | pins the device class and scenery: a headless GPU is never read as a weak one |

@@ -29,6 +29,15 @@ let player: Player | null = null
 
 export const setSfxPlayer = (p: Player | null): void => { player = p }
 
+/** DEV only: a listener that hears every sound the game asks for, played or
+ *  not — the trailer recorder logs them and renders them offline
+ *  (`game/trailer.ts`, tools/cinematic-trailer). */
+let tap: Player | null = null
+export const setSfxTap = (t: Player | null): void => { if (import.meta.env.DEV) tap = t }
+
 export const sfx = (name: SfxName | string, pan = 0, gain = 1, muffle = 0): void => {
-  player?.(name as SfxName, Math.max(-1, Math.min(1, pan)), gain, Math.max(0, Math.min(1, muffle)))
+  const p = Math.max(-1, Math.min(1, pan))
+  const m = Math.max(0, Math.min(1, muffle))
+  if (import.meta.env.DEV) tap?.(name as SfxName, p, gain, m)
+  player?.(name as SfxName, p, gain, m)
 }

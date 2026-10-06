@@ -40,6 +40,7 @@
     "compress-bench": "node scripts/image-compress-bench.mjs",
     "compress-folder-with-backup": "node scripts/compress-images.mjs public/images --max-effort --backup-dir public-backup",
     "preview:video": "node tools/preview-video/record.mjs",
+    "cinematic-trailer": "node tools/cinematic-trailer/make.mjs",
     "voice:script": "node --experimental-strip-types --no-warnings tools/voice-script.mjs",
     "voice:report": "node --experimental-strip-types --no-warnings tools/voice-report.mjs",
     "voice:cards": "node --experimental-strip-types --no-warnings tools/voice/cards.mjs",

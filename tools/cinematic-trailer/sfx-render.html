@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Mega Droid sfx render</title></head>
+<body>
+<!--
+  The trailer's sound effects, rendered OFFLINE through the game's own synth.
+  Served by the recorder's Vite dev server (so `/src/…` resolves), driven by
+  tools/cinematic-trailer/sfx-render.mjs: `await window.renderSfx(events, seconds)`
+  replays the log the trailer seam wrote while filming (`src/game/trailer.ts`)
+  at its exact times and returns the stereo mix as 16-bit PCM, base64.
+
+  The game builds its whole audio graph lazily on `getAudioContext()`, which
+  constructs `window.AudioContext`. Before anything imports the engine, that
+  constructor is swapped for one that hands out a view of an
+  OfflineAudioContext which reports itself running (the engine and the synth
+  refuse to play on anything else) and ignores the game's own
+  suspend/resume gates. Every sound then goes through the real recipes, the
+  real buses, the real compressor and limiter.
+-->
+<script type="module">
+const SR = 48000
+window.renderSfx = async (events, seconds) => {
+  const off = new OfflineAudioContext(2, Math.ceil(seconds * SR), SR)
+  const view = new Proxy(off, {
+    get(t, k) {
+      if (k === 'state') return 'running'
+      if (k === 'suspend' || k === 'resume' || k === 'close') return () => Promise.resolve()
+      if (k === 'addEventListener' || k === 'removeEventListener') return () => {}
+      const v = Reflect.get(t, k, t)
+      return typeof v === 'function' ? v.bind(t) : v
+    }
+  })
+  window.AudioContext = function () { return view }
+  window.webkitAudioContext = undefined
+  const { installSynth, chargeHum } = await import('/src/game/audio/synth.ts')
+  const { sfx } = await import('/src/game/audio/sfx.ts')
+  const { audio } = await import('/src/game/audio/engine.ts')
+  installSynth()
+  if (!audio()) throw new Error('the engine refused the offline context')
+
+  // Group by render quantum: one suspend per 128-frame block.
+  const Q = 128 / SR
+  const groups = new Map()
+  for (const e of events) {
+    if (e.t < 0 || e.t >= seconds) continue
+    const q = Math.max(1, Math.round(e.t / Q))
+    if (!groups.has(q)) groups.set(q, [])
+    groups.get(q).push(e)
+  }
+  for (const [q, list] of groups) {
+    off.suspend(q * Q).then(() => {
+      for (const e of list) {
+        try {
+          if (e.k === 's') sfx(e.n, e.p, e.g, e.m)
+          else chargeHum(e.v, e.f, e.o)
+        } catch (err) { console.warn('sfx', e, err) }
+      }
+      off.resume()
+    })
+  }
+  const buf = await off.startRendering()
+  const L = buf.getChannelData(0)
+  const R = buf.getChannelData(1)
+  const pcm = new Int16Array(L.length * 2)
+  for (let i = 0; i < L.length; i++) {
+    pcm[2 * i] = Math.max(-1, Math.min(1, L[i])) * 32767
+    pcm[2 * i + 1] = Math.max(-1, Math.min(1, R[i])) * 32767
+  }
+  const bytes = new Uint8Array(pcm.buffer)
+  let s = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000))
+  return { sr: SR, b64: btoa(s), played: events.length }
+}
+window.sfxRenderReady = true
+</script>
+</body>
+</html>

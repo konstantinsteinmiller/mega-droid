@@ -395,6 +395,10 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_scan_elite": {
+    "engine": "elevenlabs",
+    "at": "2026-10-06"
+  },
   "de/atlas_scan_fire": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -614,6 +618,10 @@
   "de/atlas_story_relayOne": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "de/atlas_story_rotor": {
+    "engine": "elevenlabs",
+    "at": "2026-10-06"
   },
   "de/atlas_story_rotorFreed": {
     "engine": "elevenlabs",

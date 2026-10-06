@@ -42,8 +42,16 @@ describe('voice QA in Chinese and Spanish', () => {
   })
 
   it('budgets Chinese by character, about 4.5 a second', () => {
-    expect(budgetFor('核心上线。早上好，Flux。', 1, 'zh')).toBeCloseTo(8 / 4.5 + 0.5)
-    expect(budgetFor('Core online. Good morning, Flux.', 1, 'en')).toBeCloseTo(5 / 2.6 + 0.5)
+    expect(budgetFor('核心上线。早上好，Flux。', 1, 'zh')).toBeCloseTo(8 / 4.5 + 0.5 + 0.3)
+    expect(budgetFor('Core online. Good morning, Flux.', 1, 'en')).toBeCloseTo(5 / 2.6 + 0.5 + 0.3)
+  })
+
+  it('allows a breath at each sentence break', () => {
+    // Three one-word sentences: two pauses, a real German take ran 2.7 s.
+    expect(budgetFor('Goldring. Elite. Vorsicht.', 1.7, 'de')).toBeCloseTo(3 / 2.6 + 0.5 + 0.6)
+    expect(judge(take('de', 'Goldring. Elite. Vorsicht.', 'Goldring, Elite, Vorsicht.', 2.7), 1.7).ok).toBe(true)
+    // …but a take twice that long still fails.
+    expect(judge(take('de', 'Goldring. Elite. Vorsicht.', 'Goldring, Elite, Vorsicht.', 4.2), 1.7).ok).toBe(false)
   })
 
   it('reads Spanish past its accents and opening marks', () => {

@@ -50,12 +50,15 @@ export const letterEdits = (ref, hyp) => distance([...words(ref).join('')], [...
  *  past the budget itself it passes with a warning. The budget is the line's
  *  max (a guide written for actors; the game's bubble waits for the file) or
  *  what its words need at a natural pace, whichever is longer. */
-export const LIMITS = { wer: 0.1, cer: 0.06, lufs: 1.5, peak: -1, overMax: 1.5, wordsPerSecond: 2.6, charsPerSecondZh: 4.5 }
+export const LIMITS = { wer: 0.1, cer: 0.06, lufs: 1.5, peak: -1, overMax: 1.5, wordsPerSecond: 2.6, charsPerSecondZh: 4.5, sentencePause: 0.3 }
 
-/** How long a line may take: its max, or its words at a natural pace (+0.5 s);
- *  Chinese counts characters, about 4.5 a second. */
-export const budgetFor = (text, max, lang = 'en') =>
-  Math.max(max ?? 0, words(text).length / (lang === 'zh' ? LIMITS.charsPerSecondZh : LIMITS.wordsPerSecond) + 0.5)
+/** How long a line may take: its max, or its words at a natural pace (+0.5 s)
+ *  plus a breath at every sentence break ("Goldring. Elite. Vorsicht." is three
+ *  words and two pauses); Chinese counts characters, about 4.5 a second. */
+export const budgetFor = (text, max, lang = 'en') => {
+  const breaks = Math.max(0, (text.trim().match(/[.!?…。！？]+(?=\s*\S)/gu) ?? []).length)
+  return Math.max(max ?? 0, words(text).length / (lang === 'zh' ? LIMITS.charsPerSecondZh : LIMITS.wordsPerSecond) + 0.5 + LIMITS.sentencePause * breaks)
+}
 
 /** Whisper's spellings a TTS read cannot help: the cast's names, and homophones it picks the other way. */
 const NAMES = [[/^(flucks|flocks|phlox|flax|flix|vlogs?|flugs)$/, 'flux'], [/^(w|v)(e|ä|a)(ch|k)?(x|chs|ks|cks|x)$/, 'vex'], [/^(atlass?|atlis)$/, 'atlas'],

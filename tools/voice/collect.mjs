@@ -27,6 +27,9 @@ const BROKEN = new Set(['vex.hub.volt'])
 const SAY = {
   // "Relais" (French, [ʁəˈlɛː]) comes out "Zweiheles" in this two-word exclamation.
   'de/atlas_arc_2': 'Zwei Relä! Vex schmollt.',
+  // "Rotorflug" comes out "Roter Pflüg" in every ElevenLabs take, "Rotor-Flug"
+  // too: two words, the long o's spelled out.
+  'de/atlas_story_rotor': 'Rohtohr Fluhg. Wind in meiner Antenne!',
   // Barks the model spells out as letters or pads with words: a pronounceable sound instead.
   ...Object.fromEntries([1, 2, 3].flatMap(n => [
     [`en/flux_hurt_lowHp_${n}`, 'Unnngh!'],

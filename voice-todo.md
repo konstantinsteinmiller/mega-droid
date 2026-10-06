@@ -17,19 +17,17 @@ itself, so a new line shows up here as missing until it is voiced.
 
 | Who | Lines | EN voiced | DE voiced | ES voiced | ZH voiced |
 | --- | --- | --- | --- | --- | --- |
-| Atlas | 209 | 209 | 207 | 209 | 209 |
+| Atlas | 209 | 209 | 209 | 209 | 209 |
 | Vex | 33 | 33 | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 | 2 | 2 |
 | Pip | 52 | 51 | 52 | 52 | 52 |
-| **All** | **341** | **340** | **339** | **341** | **341** |
+| **All** | **341** | **340** | **341** | **341** | **341** |
 
-## Missing (3)
+## Missing (1)
 
 | File | Who | Plays when | English | German | Spanish | Chinese | EN | DE | ES | ZH |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `atlas_story_rotor` | Atlas | Story mission start: Rotor Run | Rotor Run. Wind in my antenna! | Rotorflug. Wind in meiner Antenne! | Ruta del Rotor. ¡Viento en mi antena! | 旋翼疾飞，风吹我的天线！ | elevenlabs | **missing** | chatterbox | chatterbox |
-| `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | Anillo dorado. Élite. Cuidado. | 金色光圈。精英。小心。 | elevenlabs | **missing** | chatterbox | chatterbox |
 | `pip_debrief_magnet_next` | Pip | Debrief after Polarity Works: the camera travels to Deep Mine | Next: Deep Mine, deep underground. Seriously strong machines. | Als Nächstes: Tiefenmine, tief unter der Erde. Richtig starke Maschinen. | Siguiente: Mina Profunda, muy bajo tierra. Máquinas fuertes de verdad. | 接下来：地底深处的深层矿井。机器强得很。 | **missing** | elevenlabs | chatterbox | chatterbox |
 
 ## Every line (341)
@@ -53,7 +51,7 @@ itself, so a new line shows up here as missing until it is voiced.
 | `atlas_story_drill` | Atlas | Story mission start: Deep Mine | Deep Mine. Mind your head! | Tiefenmine. Kopf einziehen! | Mina Profunda. ¡Cuidado con la cabeza! | 深层矿井，小心头顶！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_story_tide` | Atlas | Story mission start: Tidewater Locks | Tidewater Locks. Splash time! | Gezeitenschleusen. Platsch-Zeit! | Esclusas de Marea. ¡Hora de chapotear! | 潮汐水闸，玩水时间到！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_story_neon` | Atlas | Story mission start: Blackout Boulevard | Blackout Boulevard. Lights, please! | Blackout-Boulevard. Licht an, bitte! | Bulevar del Apagón. ¡Luces, por favor! | 断电大道。请开灯！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
-| `atlas_story_rotor` | Atlas | Story mission start: Rotor Run | Rotor Run. Wind in my antenna! | Rotorflug. Wind in meiner Antenne! | Ruta del Rotor. ¡Viento en mi antena! | 旋翼疾飞，风吹我的天线！ | elevenlabs | **missing** | chatterbox | chatterbox |
+| `atlas_story_rotor` | Atlas | Story mission start: Rotor Run | Rotor Run. Wind in my antenna! | Rotorflug. Wind in meiner Antenne! | Ruta del Rotor. ¡Viento en mi antena! | 旋翼疾飞，风吹我的天线！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_story_fortress` | Atlas | Story mission start: Vex Fortress | The Fortress. We end this. | Die Festung. Zeit, das zu beenden. | La Fortaleza. Acabemos con esto. | 要塞，一决胜负吧。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_arc_1` | Atlas | Story mission start, 1 of 10 Masters freed | One relay lit. Nine to go! | Ein Relais leuchtet. Noch neun! | Un relé encendido. ¡Quedan nueve! | 点亮一个中继站，还剩九个！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_arc_2` | Atlas | Story mission start, 2 of 10 Masters freed | Two relays! Vex is sulking. | Zwei Relais! Vex schmollt. | ¡Dos relés! Vex está enfurruñado. | 两个了！Vex在生闷气。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
@@ -175,7 +173,7 @@ itself, so a new line shows up here as missing until it is voiced.
 | `atlas_scan_stalker` | Atlas | The first sighting of this machine | Glow Stalker. Parry the lunge. | Leuchtpirscher. Pariere den Sprung. | Acechador Luminoso. Para su embestida. | 辉光潜行者。它扑过来就弹反。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_scan_puffer` | Atlas | The first sighting of this machine | Puffer Mine. Pop it before it swells. | Kugelfischmine. Platz ihn, bevor er anschwillt. | Mina Globo. Reviéntala antes de que se hinche. | 河豚水雷。趁它没胀大先打爆。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_scan_mole` | Atlas | The first sighting of this machine | Mole Driller. Hit it when it pops up. | Maulwurfbohrer. Triff ihn beim Auftauchen. | Topo Taladro. Dale cuando salga del suelo. | 钻地鼹鼠。它一冒头就打。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
-| `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | Anillo dorado. Élite. Cuidado. | 金色光圈。精英。小心。 | elevenlabs | **missing** | chatterbox | chatterbox |
+| `atlas_scan_elite` | Atlas | The first sighting of this machine | Gold ring. Elite. Careful. | Goldring. Elite. Vorsicht. | Anillo dorado. Élite. Cuidado. | 金色光圈。精英。小心。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_scan_fire` | Atlas | The first fire-coated machine | Fire-coated. It shrugs off fire. | Feuerbeschichtet. Feuer prallt ab. | Capa de fuego. El fuego le resbala. | 火焰涂层。火对它没用。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_scan_ice` | Atlas | The first ice-coated machine | Ice-coated. It shrugs off ice. | Eisbeschichtet. Eis prallt ab. | Capa de hielo. El hielo le resbala. | 寒冰涂层。冰对它没用。 | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_scan_volt` | Atlas | The first volt-coated machine | Volt-coated. It shrugs off volt. | Voltbeschichtet. Volt prallt ab. | Capa de voltio. El voltio le resbala. | 电击涂层。电对它没用。 | elevenlabs | elevenlabs | chatterbox | chatterbox |

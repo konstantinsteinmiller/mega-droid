@@ -142,6 +142,10 @@ const OPEN_DELAY = 0.8
 const RETRY = 1
 /** The burst reads first; the gel lesson comes on this long after it (s). */
 export const GEL_DELAY = 0.9
+/** On (or past) the gel plate this long with something still awake nearby:
+ *  it goes off anyway. A machine that will not come cannot hold the
+ *  tutorial shut for good. */
+export const GEL_FORCE_AFTER = 6
 
 /**
  * Which lessons each of `n` path rooms teaches, start room first. Four rooms
@@ -339,6 +343,8 @@ export class Walkthrough {
    *  lesson on, its door held), or done with. */
   private gel: 'wait' | 'armed' | 'sprung' | 'done'
   private gelAt = -1
+  /** Since when Flux has stood on (or past) the armed plate (-1: not there). */
+  private plateSince = -1
   private gelLit = false
   /** The plate went off (saved: a resume never springs it twice). */
   private gelFiredFlag = false
@@ -537,8 +543,13 @@ export class Walkthrough {
     const gel = this.plan.gel
     if (!gel || !playing) return
     if (this.gel === 'armed') {
-      const on = Math.floor(h.player.x / CELL) === gel.spot.i && Math.floor(h.player.z / CELL) === gel.spot.j
-      if (!on || fighting || !(h.gelSafe?.() ?? true)) return
+      if (!this.overPlate(gel)) {
+        this.plateSince = -1
+        return
+      }
+      if (this.plateSince < 0) this.plateSince = h.time
+      const forced = h.time - this.plateSince >= GEL_FORCE_AFTER
+      if (!forced && (fighting || !(h.gelSafe?.() ?? true))) return
       this.gel = 'sprung'
       this.gelAt = h.time
       this.gelLit = false
@@ -556,6 +567,25 @@ export class Walkthrough {
       h.releaseDoor(gel.door)
       h.checkpoint()
     }
+  }
+
+  /**
+   * Flux is on the gel plate — or past it: in the doorway beyond, or already
+   * in the room through it. The plate is one cell before the door, and a
+   * player cutting the corner steps from the cell beside it straight into the
+   * doorway; an exact-cell test left the plate armed for good, the gel lesson
+   * never came, and the boss shutter (which waits for it) stayed shut —
+   * every playtester of 2026-10-06 stood there.
+   */
+  private overPlate(gel: GelPlan): boolean {
+    const h = this.h
+    const i = Math.floor(h.player.x / CELL)
+    const j = Math.floor(h.player.z / CELL)
+    if (i === gel.spot.i && j === gel.spot.j) return true
+    const d = h.map.doors[gel.door]
+    if (d && i === d.i && j === d.j) return true
+    const next = this.plan.gates[gel.gate + 1]
+    return !!next && roomAt(h.map, h.player.x, h.player.z) === next.room
   }
 
   /**

@@ -475,6 +475,20 @@ describe('the Repair Gel lesson', () => {
     expect(d.view()?.id).toBe('charge')
   })
 
+  it('is never shouldered aside either: a training drone still up does not take the stage from it', () => {
+    const h = makeHost(true)
+    const d = new LessonDirector(h.host, { guided: true })
+    // The charge room's drone is still hovering (its door was passed another
+    // way), and the gel lesson is lit: the drone must wait.
+    d.placeTarget()
+    d.startGel()
+    run(d, h.host, 0.5, { ...hurt, controls: true })
+    expect(d.view()?.id).toBe('gel')
+    expect(d.gelLive).toBe(true)
+    d.gelUsed()
+    expect(d.gelEnded).toBe(true)
+  })
+
   it('outside the tutorial: the first calm moment under half health with a gel carried', () => {
     const h = makeHost(false)
     const d = new LessonDirector(h.host)

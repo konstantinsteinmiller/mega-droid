@@ -377,6 +377,10 @@ export class LessonDirector {
 
   private revealCharge(): void {
     if (!this.target?.alive) return
+    // Never over another lesson that has the stage: the gel lesson's door waits
+    // for a gel used WHILE it is live, and a training drone still up (a lesson
+    // passed by its door some other way) took the stage from it for good.
+    if (this.live && this.live !== 'charge') return
     this.revealed = true
     this.live = 'charge'
   }

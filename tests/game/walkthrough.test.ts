@@ -25,7 +25,7 @@ vi.mock('@/game/sim/enemies', () => ({
   })
 }))
 
-const { Walkthrough, planWalkthrough, stepsFor, doorwayOf, helperSpot, SETTLE, GEL_DELAY } = await import('@/game/sim/walkthrough')
+const { Walkthrough, planWalkthrough, stepsFor, doorwayOf, helperSpot, SETTLE, GEL_DELAY, GEL_FORCE_AFTER } = await import('@/game/sim/walkthrough')
 const { corridorCells } = await import('@/game/sim/traps')
 const { spawnTutorial } = await import('@/game/sim/spawn')
 const { roomAt } = await import('@/game/sim/lessons')
@@ -684,6 +684,39 @@ describe('the Repair Gel corridor', () => {
       expect(map.doors[gel.door]!.boss).toBe(false)
       expect(gel.gate).toBeGreaterThanOrEqual(1)
     }
+  })
+
+  // Every playtester of 2026-10-06 cut the corner: from the cell beside the
+  // plate straight into the doorway. The plate stayed armed, the gel lesson
+  // never came, and the boss shutter (it waits for the gel) stayed shut.
+  it('goes off when Flux cuts the corner past the plate: in the doorway, or already through it', () => {
+    for (const where of ['doorway', 'beyond'] as const) {
+      const r = makeWalk(tutorialMap(), { gel: true })
+      r.walk.start()
+      passTo(r, 4)
+      const gel = r.plan.gel!
+      if (where === 'doorway') {
+        const d = r.map.doors[gel.door]!
+        r.host.player.x = cellCenter(d.i)
+        r.host.player.z = cellCenter(d.j)
+      } else enter(r, r.plan.gates[gel.gate + 1]!.room)
+      run(r, 0.1)
+      expect(r.s.sprung, where).toBe(1)
+      run(r, GEL_DELAY + 0.1)
+      expect(r.s.gelStarts, where).toBe(1)
+    }
+  })
+
+  it('goes off anyway when something awake nearby will not come: never a tutorial shut for good', () => {
+    const r = makeWalk(tutorialMap(), { gel: true })
+    r.walk.start()
+    passTo(r, 4)
+    r.s.gelSafe = false
+    onPlate(r)
+    run(r, GEL_FORCE_AFTER - 1)
+    expect(r.s.sprung).toBe(0)
+    run(r, 1.2)
+    expect(r.s.sprung).toBe(1)
   })
 
   it('is armed once the Stomper\'s gate is passed, and not before', () => {

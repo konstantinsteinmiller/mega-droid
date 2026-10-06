@@ -284,8 +284,10 @@ while bars and damage numbers get direct DOM writes.
     Flux's shoulder, in the intro it runs with him in the cold open and rises
     out of his chest disc at the wake-up. Bubble `AtlasBubble.vue`.
   - Voice-overs (`audio/voice.ts`): `public/audio/voice/<en|de|es|zh>/<key>.ogg`,
-    German for `de`, Spanish for `es`, Mandarin for `zh` and `zh-TW`, English
-    for everyone else, listed at build time (never a
+    German for `de`, Spanish for `es`, Mandarin for `zh` and `zh-TW`. Every
+    other language hears English only after saying yes to it (asked once after
+    the first landing, `EnglishVoiceModal.vue`; Options → Gameplay toggle,
+    `useEnglishVoice.ts`), else the lines are their bubbles alone. Listed at build time (never a
     404), silent on any failure. `pnpm voice:script` writes voice-todo.md.
     Loaded on demand: a line's file starts loading when the line is queued
     (`prefetchVoice`); a line still loading waits up to `VOICE_WAIT` (0.8 s),

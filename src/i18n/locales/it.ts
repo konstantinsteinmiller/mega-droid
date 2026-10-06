@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Sciame di Droni', 'desc': 'Tre piccoli droni inseguono tre macchine, aggirando ogni riparo.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vuoi sentire le voci in inglese?',
+    'body': 'Atlas e gli altri parlano, ma non ancora nella tua lingua. Vuoi sentirli in inglese? Quello che dicono appare sempre sullo schermo nella tua lingua. Puoi cambiarlo quando vuoi in Opzioni → Gioco.',
+    'no': 'Niente voci in inglese'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Voci in inglese',
     'gameplay': 'Gioco',
     'title': 'Opzioni',
     'general': 'Generale',

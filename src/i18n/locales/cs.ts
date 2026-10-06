@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Roj dronů', 'desc': 'Tři malé drony vyhledají tři stroje, i za úkrytem.' }
   },
 
+  'voiceOffer': {
+    'title': 'Chceš slyšet hlasy anglicky?',
+    'body': 'Atlas a ostatní mluví, ale zatím ne tvým jazykem. Chceš je slyšet anglicky? Co říkají, se vždy zobrazí na obrazovce v tvém jazyce. Kdykoli to můžeš změnit v Možnosti → Hratelnost.',
+    'no': 'Bez anglického dabingu'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Anglický dabing',
     'gameplay': 'Hratelnost',
     'title': 'Možnosti',
     'general': 'Obecné',

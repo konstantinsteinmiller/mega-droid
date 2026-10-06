@@ -502,8 +502,15 @@ export default {
     'droneSwarm': { 'name': 'Dron Sürüsü', 'desc': 'Üç küçük dron üç makineyi bulur, her siperin etrafından dolaşır.' }
   },
 
+  'voiceOffer': {
+    'title': 'Sesleri İngilizce duymak ister misin?',
+    'body': 'Atlas ve diğerleri konuşuyor ama henüz senin dilinde değil. Onları İngilizce duymak ister misin? Söyledikleri her zaman ekranda senin dilinde görünür. Bunu istediğin zaman Seçenekler → Oynanış bölümünden değiştirebilirsin.',
+    'no': 'İngilizce seslendirme yok'
+  },
+
   'options': {
     'killCams': 'Öldürme kamerası',
+    'englishVoice': 'İngilizce seslendirme',
     'gameplay': 'Oynanış',
     'title': 'Seçenekler',
     'general': 'Genel',

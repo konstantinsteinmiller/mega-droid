@@ -580,8 +580,17 @@ export default {
     'droneSwarm': { 'name': 'Drone Swarm', 'desc': 'Three little drones seek out three machines, round any cover.' }
   },
 
+  // Asked once, after the first landing, of players whose language has no
+  // voice-over: hear the English one, or only read the lines.
+  'voiceOffer': {
+    'title': 'Hear the voices in English?',
+    'body': 'Atlas and the others talk, but not in your language yet. Do you want to hear them in English? What they say always shows on screen in your language. You can change this any time under Options → Gameplay.',
+    'no': 'No English voice-over'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'English voice-over',
     'gameplay': 'Gameplay',
     'title': 'Options',
     'general': 'General',

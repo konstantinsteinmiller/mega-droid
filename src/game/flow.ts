@@ -36,7 +36,7 @@ import { hubSceneFor } from './story/vexScenes'
  */
 
 export type Screen = 'boot' | 'mission' | 'hub' | 'intro' | 'ending' | 'debrief'
-export type Modal = '' | 'results' | 'defeat' | 'pause' | 'levelUp' | 'controls'
+export type Modal = '' | 'results' | 'defeat' | 'pause' | 'levelUp' | 'controls' | 'englishVoice'
 
 export interface ResultsData {
   quest: Quest

@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Essaim de drones', 'desc': 'Trois petits drones traquent trois machines, en contournant tout abri.' }
   },
 
+  'voiceOffer': {
+    'title': 'Entendre les voix en anglais ?',
+    'body': 'Atlas et les autres parlent, mais pas encore dans ta langue. Tu veux les entendre en anglais ? Ce qu’ils disent s’affiche toujours à l’écran dans ta langue. Tu peux changer ça à tout moment dans Options → Jeu.',
+    'no': 'Pas de voix anglaises'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Voix anglaises',
     'gameplay': 'Jeu',
     'title': 'Options',
     'general': 'Général',

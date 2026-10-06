@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Rój dronów', 'desc': 'Trzy małe drony namierzają trzy maszyny i omijają każdą osłonę.' }
   },
 
+  'voiceOffer': {
+    'title': 'Chcesz słyszeć głosy po angielsku?',
+    'body': 'Atlas i inni mówią, ale jeszcze nie w twoim języku. Chcesz słyszeć ich po angielsku? To, co mówią, zawsze wyświetla się na ekranie w twoim języku. Możesz to zmienić w każdej chwili w Opcje → Rozgrywka.',
+    'no': 'Bez angielskiego dubbingu'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Angielski dubbing',
     'gameplay': 'Rozgrywka',
     'title': 'Opcje',
     'general': 'Ogólne',

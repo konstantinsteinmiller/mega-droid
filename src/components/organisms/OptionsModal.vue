@@ -11,6 +11,7 @@ import { LANGUAGES, LANGUAGE_AUTONYMS, DIFFICULTY } from '@/utils/enums'
 import { bcp47For } from '@/i18n/localeTag'
 import { hapticsAvailable, hapticsEnabled, setHapticsEnabled } from '@/use/useHaptics'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
+import { englishVoice, hasOwnVoice, setEnglishVoice } from '@/use/useEnglishVoice'
 import { touchFirst } from '@/game/engine/input'
 import { ACTIONS, bindKey, bindingsChanged, isBindable, primaryCode, resetBindings, type Action } from '@/game/engine/keyBindings'
 import { keyboard, keyLabel, LAYOUTS, setAutoLayout, setManualLayout, type Layout } from '@/game/engine/keyLabels'
@@ -200,6 +201,15 @@ onUnmounted(stopCapture)
           :options="hapticsList"
           :model-value="killCamsEnabled ? 'on' : 'off'"
           @update:model-value="setKillCamsEnabled($event === 'on')"
+        )
+      //- English voice-over: only for a language with no voice-over of its own
+      //- (asked once after the first landing; off until the player says yes).
+      div(v-if="!hasOwnVoice(locale)" class="z-[5] flex flex-col gap-1")
+        FSelect(
+          :label="t('options.englishVoice')"
+          :options="hapticsList"
+          :model-value="englishVoice ? 'on' : 'off'"
+          @update:model-value="setEnglishVoice($event === 'on')"
         )
       //- Vibration: phones only (hidden where there is no motor).
       div(v-if="hapticsAvailable" class="z-[1] flex flex-col gap-1")

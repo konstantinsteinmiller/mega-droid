@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Drona Svarmo', 'desc': 'Tri etaj dronoj serĉas tri maŝinojn, ĉirkaŭ ajna ŝirmilo.' }
   },
 
+  'voiceOffer': {
+    'title': 'Ĉu aŭdi la voĉojn angle?',
+    'body': 'Atlas kaj la aliaj parolas, sed ankoraŭ ne en via lingvo. Ĉu vi volas aŭdi ilin angle? Kion ili diras, ĉiam aperas sur la ekrano en via lingvo. Vi povas ŝanĝi tion iam ajn en Agordoj → Ludado.',
+    'no': 'Sen angla voĉado'
+  },
+
   'options': {
     'killCams': 'Venko-kamerao',
+    'englishVoice': 'Angla voĉado',
     'gameplay': 'Ludado',
     'title': 'Agordoj',
     'general': 'Ĝenerale',

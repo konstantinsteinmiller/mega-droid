@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Bầy Drone', 'desc': 'Ba drone tí hon tự tìm ba cỗ máy, vòng qua mọi chỗ nấp.' }
   },
 
+  'voiceOffer': {
+    'title': 'Nghe giọng nói bằng tiếng Anh?',
+    'body': 'Atlas và những người khác có nói, nhưng chưa có bằng ngôn ngữ của bạn. Bạn có muốn nghe họ bằng tiếng Anh không? Lời thoại luôn hiện trên màn hình bằng ngôn ngữ của bạn. Bạn có thể đổi bất cứ lúc nào trong Tùy chọn → Lối chơi.',
+    'no': 'Không lồng tiếng Anh'
+  },
+
   'options': {
     'killCams': 'Camera hạ gục',
+    'englishVoice': 'Lồng tiếng Anh',
     'gameplay': 'Lối chơi',
     'title': 'Tùy chọn',
     'general': 'Chung',

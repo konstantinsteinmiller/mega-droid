@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Drohnenschwarm', 'desc': 'Drei kleine Drohnen suchen sich drei Maschinen, um jede Deckung herum.' }
   },
 
+  'voiceOffer': {
+    'title': 'Stimmen auf Englisch hören?',
+    'body': 'Atlas und die anderen sprechen, aber noch nicht in deiner Sprache. Willst du sie auf Englisch hören? Was sie sagen, steht immer in deiner Sprache auf dem Bildschirm. Du kannst das jederzeit unter Optionen → Gameplay ändern.',
+    'no': 'Keine englische Sprachausgabe'
+  },
+
   'options': {
     'killCams': 'Kill-Cam',
+    'englishVoice': 'Englische Sprachausgabe',
     'gameplay': 'Gameplay',
     'title': 'Optionen',
     'general': 'Allgemein',

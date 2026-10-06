@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Kawanan Drone', 'desc': 'Tiga drone kecil memburu tiga mesin, mengitari perlindungan apa pun.' }
   },
 
+  'voiceOffer': {
+    'title': 'Dengar suara dalam bahasa Inggris?',
+    'body': 'Atlas dan yang lain berbicara, tapi belum dalam bahasa kamu. Mau mendengar mereka dalam bahasa Inggris? Ucapan mereka selalu tampil di layar dalam bahasa kamu. Kamu bisa mengubahnya kapan saja di Opsi → Permainan.',
+    'no': 'Tanpa suara bahasa Inggris'
+  },
+
   'options': {
     'killCams': 'Kamera kill',
+    'englishVoice': 'Suara bahasa Inggris',
     'gameplay': 'Permainan',
     'title': 'Opsi',
     'general': 'Umum',

@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Roj dronova', 'desc': 'Tri mala drona traže tri stroja, i iza zaklona.' }
   },
 
+  'voiceOffer': {
+    'title': 'Želiš li čuti glasove na engleskom?',
+    'body': 'Atlas i ostali govore, ali još ne na tvom jeziku. Želiš li ih slušati na engleskom? Ono što govore uvijek se prikazuje na zaslonu na tvom jeziku. To možeš promijeniti bilo kad u Postavke → Igranje.',
+    'no': 'Bez engleskih glasova'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Engleski glasovi',
     'gameplay': 'Igranje',
     'title': 'Postavke',
     'general': 'Općenito',

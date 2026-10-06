@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Roi de Drone', 'desc': 'Trei drone mici caută trei mașinării, ocolind orice adăpost.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vrei să auzi vocile în engleză?',
+    'body': 'Atlas și ceilalți vorbesc, dar încă nu în limba ta. Vrei să-i auzi în engleză? Ce spun ei apare mereu pe ecran în limba ta. Poți schimba asta oricând din Opțiuni → Joc.',
+    'no': 'Fără voci în engleză'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Voci în engleză',
     'gameplay': 'Joc',
     'title': 'Opțiuni',
     'general': 'General',

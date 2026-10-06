@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Dronų spiečius', 'desc': 'Trys maži dronai suranda tris mašinas, net už priedangos.' }
   },
 
+  'voiceOffer': {
+    'title': 'Nori girdėti balsus angliškai?',
+    'body': 'Atlas ir kiti kalba, bet dar ne tavo kalba. Nori juos girdėti angliškai? Tai, ką jie sako, ekrane visada rodoma tavo kalba. Tai gali bet kada pakeisti skiltyje Nustatymai → Žaidimas.',
+    'no': 'Be įgarsinimo anglų kalba'
+  },
+
   'options': {
     'killCams': 'Kill-cam kadrai',
+    'englishVoice': 'Įgarsinimas anglų kalba',
     'gameplay': 'Žaidimas',
     'title': 'Nustatymai',
     'general': 'Bendra',

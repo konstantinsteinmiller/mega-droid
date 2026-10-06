@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Dronezwerm', 'desc': 'Drie kleine drones zoeken drie machines op, om elke dekking heen.' }
   },
 
+  'voiceOffer': {
+    'title': 'Stemmen in het Engels horen?',
+    'body': 'Atlas en de anderen praten, maar nog niet in jouw taal. Wil je ze in het Engels horen? Wat ze zeggen, staat altijd in jouw taal op het scherm. Je kunt dit altijd wijzigen onder Opties → Gameplay.',
+    'no': 'Geen Engelse stemmen'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Engelse stemmen',
     'gameplay': 'Gameplay',
     'title': 'Opties',
     'general': 'Algemeen',

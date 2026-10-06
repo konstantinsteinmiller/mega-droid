@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Enxame de Drones', 'desc': 'Três pequenos drones perseguem três máquinas, contornando qualquer cobertura.' }
   },
 
+  'voiceOffer': {
+    'title': 'Queres ouvir as vozes em inglês?',
+    'body': 'Atlas e os outros falam, mas ainda não na tua língua. Queres ouvi-los em inglês? O que dizem aparece sempre no ecrã na tua língua. Podes mudar isto a qualquer momento em Opções → Jogabilidade.',
+    'no': 'Sem vozes em inglês'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Vozes em inglês',
     'gameplay': 'Jogabilidade',
     'title': 'Opções',
     'general': 'Geral',

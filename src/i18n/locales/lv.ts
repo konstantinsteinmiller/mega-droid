@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Dronu spiets', 'desc': 'Trīs mazi droni atrod trīs mašīnas, pat aiz aizsega.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vai vēlies dzirdēt balsis angliski?',
+    'body': 'Atlas un pārējie runā, bet vēl ne tavā valodā. Vai vēlies viņus dzirdēt angliski? Tas, ko viņi saka, uz ekrāna vienmēr redzams tavā valodā. To vari jebkurā laikā mainīt sadaļā Iestatījumi → Spēle.',
+    'no': 'Bez balsīm angļu valodā'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Balsis angļu valodā',
     'gameplay': 'Spēle',
     'title': 'Iestatījumi',
     'general': 'Vispārīgi',

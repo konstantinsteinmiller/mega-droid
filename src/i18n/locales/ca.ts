@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Eixam de drons', 'desc': 'Tres dronets busquen tres màquines i esquiven qualsevol cobertura.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vols sentir les veus en anglès?',
+    'body': 'Atlas i els altres parlen, però encara no en la teva llengua. Vols sentir-los en anglès? El que diuen sempre apareix a la pantalla en la teva llengua. Pots canviar-ho quan vulguis a Opcions → Joc.',
+    'no': 'Sense veus en anglès'
+  },
+
   'options': {
     'killCams': 'Càmera d\'abatiment',
+    'englishVoice': 'Veus en anglès',
     'gameplay': 'Joc',
     'title': 'Opcions',
     'general': 'General',

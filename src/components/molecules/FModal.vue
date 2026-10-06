@@ -12,12 +12,16 @@ interface Props {
   modelValue: boolean | any
   title?: string
   isClosable?: boolean
+  /** A click on the backdrop closes it (with `isClosable`); false for a question
+   *  that must be answered: only its X or its buttons close it. */
+  closeOnBackdrop?: boolean
   tabs?: TabOption[]
   activeTab?: string | number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isClosable: true,
+  closeOnBackdrop: true,
   tabs: () => []
 })
 
@@ -115,7 +119,7 @@ const handleTabChange = (val: string | number): void => emit('update:activeTab',
         aria-modal="true"
       )
         //- Backdrop
-        div.f-modal__backdrop(@click="isClosable && close()")
+        div.f-modal__backdrop(@click="isClosable && closeOnBackdrop && close()")
 
         div.f-modal__container
           //- Header (title ribbon or tab bar). Lives IN the layout flow so it

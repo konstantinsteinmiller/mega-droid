@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Droneverm', 'desc': 'Tre små droner finner tre maskiner, rundt all dekning.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vil du høre stemmene på engelsk?',
+    'body': 'Atlas og de andre snakker, men ikke på språket ditt ennå. Vil du høre dem på engelsk? Det de sier, vises alltid på skjermen på språket ditt. Du kan endre dette når som helst under Innstillinger → Spilling.',
+    'no': 'Ingen engelske stemmer'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Engelske stemmer',
     'gameplay': 'Spilling',
     'title': 'Innstillinger',
     'general': 'Generelt',

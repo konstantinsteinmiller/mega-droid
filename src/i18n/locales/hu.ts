@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Drónraj', 'desc': 'Három kis drón levadász három gépet, bármilyen fedezet mögött.' }
   },
 
+  'voiceOffer': {
+    'title': 'Angolul szeretnéd hallani a hangokat?',
+    'body': 'Atlas és a többiek beszélnek, de még nem a te nyelveden. Szeretnéd angolul hallani őket? Amit mondanak, az mindig a te nyelveden jelenik meg a képernyőn. Ezt bármikor megváltoztathatod itt: Beállítások → Játékmenet.',
+    'no': 'Nincs angol szinkron'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Angol szinkron',
     'gameplay': 'Játékmenet',
     'title': 'Beállítások',
     'general': 'Általános',

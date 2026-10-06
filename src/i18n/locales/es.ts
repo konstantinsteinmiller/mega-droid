@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Enjambre de drones', 'desc': 'Tres dronecitos buscan tres máquinas, rodeando cualquier cobertura.' }
   },
 
+  'voiceOffer': {
+    'title': '¿Quieres oír las voces en inglés?',
+    'body': 'Atlas y los demás hablan, pero aún no en tu idioma. ¿Quieres oírlos en inglés? Lo que dicen siempre aparece en pantalla en tu idioma. Puedes cambiarlo cuando quieras en Opciones → Jugabilidad.',
+    'no': 'Sin voces en inglés'
+  },
+
   'options': {
     'killCams': 'Cámara de derribo',
+    'englishVoice': 'Voces en inglés',
     'gameplay': 'Jugabilidad',
     'title': 'Opciones',
     'general': 'General',

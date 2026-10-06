@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': '無人機蜂群', 'desc': '三架小無人機追蹤三台機械，能繞過任何掩體。' }
   },
 
+  'voiceOffer': {
+    'title': '要聽英文語音嗎？',
+    'body': 'Atlas 和其他角色會說話，但還沒有你的語言版本。要聽英文配音嗎？他們說的話一律會以你的語言顯示在畫面上。你可以隨時在「選項 → 遊戲玩法」中更改。',
+    'no': '不要英文配音'
+  },
+
   'options': {
     'killCams': '擊殺鏡頭',
+    'englishVoice': '英文配音',
     'gameplay': '遊戲玩法',
     'title': '選項',
     'general': '一般',

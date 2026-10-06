@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': '无人机蜂群', 'desc': '三架小无人机追踪三台机械，能绕过任何掩体。' }
   },
 
+  'voiceOffer': {
+    'title': '要听英文语音吗？',
+    'body': 'Atlas 和其他角色会说话，但还没有你的语言版本。要听英文配音吗？他们说的话始终会以你的语言显示在屏幕上。你可以随时在“选项 → 玩法”中更改。',
+    'no': '不要英文配音'
+  },
+
   'options': {
     'killCams': '击杀镜头',
+    'englishVoice': '英文配音',
     'gameplay': '玩法',
     'title': '选项',
     'general': '通用',

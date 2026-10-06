@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Drönarsvärm', 'desc': 'Tre små drönare söker upp tre maskiner, runt allt skydd.' }
   },
 
+  'voiceOffer': {
+    'title': 'Vill du höra rösterna på engelska?',
+    'body': 'Atlas och de andra pratar, men inte på ditt språk än. Vill du höra dem på engelska? Det de säger visas alltid på skärmen på ditt språk. Du kan ändra det när som helst under Inställningar → Spel.',
+    'no': 'Inget engelskt tal'
+  },
+
   'options': {
     'killCams': 'Kill-cam',
+    'englishVoice': 'Engelskt tal',
     'gameplay': 'Spel',
     'title': 'Inställningar',
     'general': 'Allmänt',

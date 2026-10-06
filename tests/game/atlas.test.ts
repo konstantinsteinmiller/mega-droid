@@ -14,7 +14,8 @@ import {
   AtlasDirector, ATLAS_LINES, ATLAS_GAP, CHATTER_GAP, VOICE_WAIT, atlasKey, isChatter, lineSeconds, onceEver,
   type AtlasLine, type AtlasMemory, type AtlasMissionInfo, type AtlasTick
 } from '@/game/sim/atlas'
-import { voiceLangFor, voiceUrl, playVoice, preloadVoices, __resetVoices } from '@/game/audio/voice'
+import { voiceLangFor, voiceUrl, playVoice, preloadVoices, __resetVoices, englishVoiceAllowed } from '@/game/audio/voice'
+import { hasOwnVoice, englishVoice } from '@/use/useEnglishVoice'
 import { voiceFiles } from '@/game/assets/overrides'
 import en from '@/i18n/locales/en'
 
@@ -316,6 +317,31 @@ describe('voice-overs: in the player language or English, and never an error', (
     expect(voiceUrl('atlas.exit', 'de', files)).toMatch(/en\/atlas\.exit\.ogg$/)
     expect(voiceUrl('atlas.bossAhead', 'de', files)).toBeNull()
     expect(voiceUrl('atlas.bossAhead', 'en', files)).toBeNull()
+  })
+
+  it('a language with no voice-over hears English only when the player said yes', () => {
+    for (const l of ['en', 'de', 'es', 'zh', 'zh-TW', 'es-MX', '']) expect(hasOwnVoice(l), l).toBe(true)
+    for (const l of ['fr', 'ja', 'pt', 'pt-PT', 'eo']) expect(hasOwnVoice(l), l).toBe(false)
+    expect(englishVoiceAllowed('fr', null)).toBe(false) // not asked yet: no English
+    expect(englishVoiceAllowed('fr', false)).toBe(false)
+    expect(englishVoiceAllowed('fr', true)).toBe(true)
+    expect(englishVoiceAllowed('de', null)).toBe(true) // its own voice-over (and the English fallback)
+
+    const files = voiceFiles(['en/atlas.lowHp.ogg'])
+    const w = globalThis as unknown as { window?: unknown }
+    const had = 'window' in w
+    const before = w.window
+    w.window = { __i18n: { global: { locale: 'fr' } } }
+    try {
+      englishVoice.value = null
+      expect(voiceUrl('atlas.lowHp', 'en', files)).toBeNull()
+      englishVoice.value = true
+      expect(voiceUrl('atlas.lowHp', 'en', files)).toMatch(/en\/atlas\.lowHp\.ogg$/)
+    } finally {
+      englishVoice.value = null
+      if (had) w.window = before
+      else delete w.window
+    }
   })
 
   it('a line without a file is never requested, logs nothing and plays nothing', () => {

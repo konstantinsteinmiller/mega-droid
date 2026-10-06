@@ -500,8 +500,15 @@ export default {
     'droneSwarm': { 'name': 'Dron toʻdasi', 'desc': 'Uchta kichkina dron uchta mashinani topadi, har qanday panani aylanib oʻtadi.' }
   },
 
+  'voiceOffer': {
+    'title': 'Ovozlarni ingliz tilida eshitasizmi?',
+    'body': 'Atlas va boshqalar gapiradi, lekin hali sizning tilingizda emas. Ularni ingliz tilida eshitishni xohlaysizmi? Ularning gaplari ekranda doim sizning tilingizda chiqadi. Buni istalgan vaqtda Sozlamalar → Oʻyin boʻlimida oʻzgartirishingiz mumkin.',
+    'no': 'Inglizcha ovozsiz'
+  },
+
   'options': {
     'killCams': 'Yoʻq qilish kamerasi',
+    'englishVoice': 'Inglizcha ovoz',
     'gameplay': 'Oʻyin',
     'title': 'Sozlamalar',
     'general': 'Umumiy',

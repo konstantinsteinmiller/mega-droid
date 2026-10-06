@@ -52,6 +52,7 @@
     DefeatModal
     PauseModal(@options="optionsOpen = true")
     ControlsIntroModal
+    EnglishVoiceModal
     LevelUpModal
     OptionsModal(
       :is-open="optionsOpen"
@@ -118,6 +119,9 @@ import HubScreen from '@/components/hub/HubScreen.vue'
 import ResultsModal from '@/components/modals/ResultsModal.vue'
 import DefeatModal from '@/components/modals/DefeatModal.vue'
 import PauseModal from '@/components/modals/PauseModal.vue'
+import EnglishVoiceModal from '@/components/modals/EnglishVoiceModal.vue'
+import { englishVoice, hasOwnVoice } from '@/use/useEnglishVoice'
+import { currentLocale } from '@/game/audio/voice'
 import ControlsIntroModal from '@/components/modals/ControlsIntroModal.vue'
 import LevelUpModal from '@/components/modals/LevelUpModal.vue'
 import OptionsModal from '@/components/organisms/OptionsModal.vue'
@@ -332,10 +336,16 @@ watch(() => hud.phase, (ph) => {
   if (ph === 'play') flow.introPlay = false
 })
 
-watch(() => hud.phase, (ph) => {
-  if (ph === 'play' && flow.screen === 'mission' && !flow.modal && input.device === 'touch' &&
-    !profile.tips['controlsIntro:touch']) flow.modal = 'controls'
-})
+// After a landing: first the English voice-over question (a language with no
+// voice-over of its own, not answered yet — the tutorial's first room for a new
+// player), then a touch player's controls legend. One at a time, in that order.
+const afterLanding = () => {
+  if (hud.phase !== 'play' || flow.screen !== 'mission' || flow.modal) return
+  if (englishVoice.value === null && !hasOwnVoice(currentLocale())) flow.modal = 'englishVoice'
+  else if (input.device === 'touch' && !profile.tips['controlsIntro:touch']) flow.modal = 'controls'
+}
+watch(() => hud.phase, afterLanding)
+watch(() => flow.modal, (now, before) => { if (before === 'englishVoice' && !now) afterLanding() })
 
 watch(isGamePaused, (p) => {
   app.setSuspended(p)

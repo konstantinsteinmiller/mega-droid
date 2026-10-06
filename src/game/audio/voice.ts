@@ -1,6 +1,7 @@
 import { audio, duckMusic } from './engine'
 import { VOICE_FILES } from '../assets/overrides'
 import { registerOneShotSource } from '@/use/useAssets'
+import { englishVoice, hasOwnVoice } from '@/use/useEnglishVoice'
 
 /**
  * ─── Voice-overs ─────────────────────────────────────────────────────────────
@@ -43,7 +44,12 @@ export const voiceLangFor = (locale: string | null | undefined): VoiceLang => {
   return 'en'
 }
 
-const currentLocale = (): string => {
+/** English voice for this locale: its own language, or a player of another
+ *  language who said yes to it (`useEnglishVoice`; never assumed). */
+export const englishVoiceAllowed = (locale: string, choice: boolean | null = englishVoice.value): boolean =>
+  hasOwnVoice(locale) || choice === true
+
+export const currentLocale = (): string => {
   try {
     const g = (window as unknown as { __i18n?: { global?: { locale?: { value?: string } | string } } }).__i18n?.global
     const l = g?.locale
@@ -55,8 +61,12 @@ export const voiceLang = (): VoiceLang => voiceLangFor(currentLocale())
 
 /** The file for a line in a language, if one was dropped in. English stands
  *  in for a line that has no file in the player's language yet. */
-export const voiceUrl = (id: string, lang: VoiceLang = voiceLang(), files = VOICE_FILES): string | null =>
-  files.get(lang)?.get(id) ?? (lang !== 'en' ? files.get('en')?.get(id) ?? null : null)
+export const voiceUrl = (id: string, lang: VoiceLang = voiceLang(), files = VOICE_FILES): string | null => {
+  // A language with no voice-over hears English only if the player said yes:
+  // otherwise the line is its bubble alone (a null is the silent path).
+  if (lang === 'en' && !englishVoiceAllowed(currentLocale())) return null
+  return files.get(lang)?.get(id) ?? (lang !== 'en' ? files.get('en')?.get(id) ?? null : null)
+}
 
 const buffers = new Map<string, AudioBuffer>()
 const failed = new Set<string>()

@@ -525,8 +525,15 @@ export default {
     'droneSwarm': { 'name': 'Drooniparvi', 'desc': 'Kolme pientä droonia etsii kolme konetta, kiertäen minkä tahansa suojan.' }
   },
 
+  'voiceOffer': {
+    'title': 'Haluatko kuulla äänet englanniksi?',
+    'body': 'Atlas ja muut puhuvat, mutta eivät vielä sinun kielelläsi. Haluatko kuulla heidät englanniksi? Heidän puheensa näkyy ruudulla aina sinun kielelläsi. Voit muuttaa tämän milloin tahansa kohdassa Asetukset → Pelattavuus.',
+    'no': 'Ei englanninkielistä puhetta'
+  },
+
   'options': {
     'killCams': 'Tuhokamera',
+    'englishVoice': 'Englanninkielinen puhe',
     'gameplay': 'Pelattavuus',
     'title': 'Asetukset',
     'general': 'Yleiset',

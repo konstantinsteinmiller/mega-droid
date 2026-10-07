@@ -170,7 +170,12 @@ export const spawnTutorial = async (
     const [dx, dz] = doorwayOf(map, room.id)
     const taken: Array<[number, number]> = []
     for (const kind of kinds) {
-      const at = teachSpot(nav, room, dx, dz, taken)
+      // The block lesson's Trooper stands at the room's far end, in front of
+      // the hallway out (#128): next to the entrance, players turned to it
+      // first and the hologram teaching the perfect block was off screen. Now
+      // they walk past the hologram on the way to it.
+      const blockTeacher = kind === 'trooper' && !!gate?.steps.includes('block')
+      const at = (blockTeacher ? exitSpot(nav, map, room, gate!.door, dx, dz, taken) : null) ?? teachSpot(nav, room, dx, dz, taken)
       if (!at) break
       taken.push(at)
       const e = createEnemy(kind, level, at[0], at[1], room.id)
@@ -180,7 +185,7 @@ export const spawnTutorial = async (
       // player all the way back (a playtest note).
       e.leash = roomLeash(room)
       // The block lesson's Trooper keeps its spot: it walked out of the room.
-      if (kind === 'trooper' && gate?.steps.includes('block')) e.rooted = true
+      if (blockTeacher) e.rooted = true
       out.push(e)
       await opts.slice?.()
     }
@@ -207,6 +212,48 @@ const teachSpot = (nav: Nav, room: Room, dx: number, dz: number, taken: Array<[n
       best = [x, z]
       bestScore = score
     }
+  }
+  return best
+}
+
+/** How far into the room from its exit's mouth the block lesson's Trooper stands (m). */
+export const EXIT_GUARD = 3.2
+
+/**
+ * A floor cell EXIT_GUARD metres into the room from the mouth of its way out
+ * (door `doorId`), toward the room's middle, in sight of the entrance.
+ */
+export const exitSpot = (
+  nav: Nav, map: MapData, room: Room, doorId: number, dx: number, dz: number, taken: Array<[number, number]>
+): [number, number] | null => {
+  const d = map.doors[doorId]
+  if (!d) return null
+  const ox = cellCenter(d.i)
+  const oz = cellCenter(d.j)
+  // The mouth: the room's floor cell nearest the exit door.
+  let mx = 0
+  let mz = 0
+  let near = Infinity
+  for (const [i, j] of room.spots) {
+    const l = Math.hypot(cellCenter(i) - ox, cellCenter(j) - oz)
+    if (l < near) { near = l; mx = cellCenter(i); mz = cellCenter(j) }
+  }
+  if (!Number.isFinite(near)) return null
+  const cx = (room.x0 + room.w / 2) * CELL
+  const cz = (room.z0 + room.h / 2) * CELL
+  const il = Math.hypot(cx - mx, cz - mz) || 1
+  const ux = (cx - mx) / il
+  const uz = (cz - mz) / il
+  let best: [number, number] | null = null
+  let bestScore = Infinity
+  for (const [i, j] of room.spots) {
+    const x = cellCenter(i)
+    const z = cellCenter(j)
+    if (taken.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 3)) continue
+    const along = (x - mx) * ux + (z - mz) * uz
+    const off = Math.abs((x - mx) * uz - (z - mz) * ux)
+    const score = Math.abs(along - EXIT_GUARD) + off + (hasLineOfSight(nav, dx, dz, x, z) ? 0 : 6)
+    if (score < bestScore) { best = [x, z]; bestScore = score }
   }
   return best
 }

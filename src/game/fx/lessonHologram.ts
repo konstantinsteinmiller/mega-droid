@@ -24,7 +24,8 @@ export type HoloId = TrainId | 'crate' | 'chest'
  * it. So each lesson room has a see-through cyan Flux that does the move on a
  * loop, in third person, with the machine it is done to as a hologram too
  * where the move needs one: the charged shot popping a rotor drone, the
- * shield raised as a Trooper's shot lands, the slide out from under a
+ * shield raised as a Trooper's shot lands and flies back to blow the
+ * Trooper apart, the slide out from under a
  * Stomper's leap, the walk off a ledge that leaps a gap by itself, the Repair
  * Gel, a copied weapon. The input it uses is pinned above it and lit in
  * step with the loop (`holoGlyphAt`, the HUD's `HoloGlyph`).
@@ -177,6 +178,17 @@ export class LessonHologram {
           this.leaves.push(l)
           this.root.add(l)
         }
+      }
+    }
+    // The block lesson's Trooper, after its own shot comes back: its plates
+    // and its shield as pieces (a disc and boxes of a few sizes).
+    if (id === 'block') {
+      for (let k = 0; k < 9; k++) {
+        const g = k === 0 ? new CylinderGeometry(0.45, 0.45, 0.08, 16) : new BoxGeometry(0.18 + (k % 3) * 0.1, 0.16 + (k % 2) * 0.14, 0.18 + (k % 4) * 0.05)
+        const c = new Mesh(g, k === 0 ? this.mat : this.fx)
+        c.visible = false
+        this.chips.push(c)
+        this.root.add(c)
       }
     }
     // The crate: a box a charged shot breaks into a few chips.
@@ -338,27 +350,32 @@ export class LessonHologram {
     const trooper = this.foe!
     trooper.root.position.set(2.6, 0, 0)
     trooper.root.rotation.set(0, FACE_NX, 0)
-    const aim = smooth(span(u, 0.4, 1.0)) * (1 - smooth(span(u, 1.8, 2.2)))
-    // The perfect block sends the shot back (1.8–2.2): it hits the Trooper,
-    // which reels back, its guard flung open, and finds its feet by 3.2.
-    const reel = u >= 2.2 && u < 3.2 ? Math.sin(span(u, 2.2, 3.2) * Math.PI) : 0
-    trooper.root.position.x += reel * 0.7
-    trooper.root.rotation.z = -reel * 0.45
-    poseTrooper(trooper, 0, aim, t, 0)
-    if (reel > 0) {
-      pose(trooper, 'shoulderL', -0.4 - 0.9 * reel, 0, -0.6 * reel)
-      pose(trooper, 'shoulderR', 0.5 * reel, 0, 0.6 * reel)
-      pose(trooper, 'chest', -0.4 * reel, 0, 0)
-    }
+    // The perfect block sends the shot back (1.8–2.2), bigger than it came:
+    // it hits the Trooper, which bursts into pieces (#128: a block can kill),
+    // and a new one beams in for the next loop (3.3–3.7).
+    const dead = u >= 2.2 && u < 3.3
+    trooper.root.visible = !dead
+    trooper.root.scale.setScalar(u >= 3.3 ? smooth(span(u, 3.3, 3.7)) : 1)
+    poseTrooper(trooper, 0, smooth(span(u, 0.4, 1.0)), t, 0)
     this.orb.visible = u >= 1.2 && u < 2.2
     const k = span(u, 1.2, 1.8)
     const back = span(u, 1.8, 2.2)
     this.orb.position.set(u < 1.8 ? 2.1 - k * 3.5 : -1.4 + back * 3.8, 1.15, 0)
+    this.orb.scale.setScalar(u < 1.8 ? 1.5 : 2.1 + 0.4 * Math.sin(back * Math.PI))
+    // The pieces: thrown away from Flux, tumbling, down onto the floor.
+    const f = span(u, 2.2, 3.1)
+    this.chips.forEach((c, n) => {
+      c.visible = dead
+      const a = (n / this.chips.length) * Math.PI * 2
+      const y = 1.1 + (1.6 + (n % 3) * 0.5) * f - 3.6 * f * f
+      c.position.set(2.6 + (0.6 + Math.cos(a) * 0.5) * 1.6 * f, Math.max(0.1, y), Math.sin(a) * 1.3 * f)
+      c.rotation.set(f * 7 + n, f * 5 + n * 0.7, 0)
+    })
     // The hit: a ring where it lands.
     this.ring.visible = u >= 2.2 && u < 2.7
     this.ring.position.set(2.5, 1.1, 0)
     this.ring.rotation.set(0, Math.PI / 2, 0)
-    this.ring.scale.setScalar(0.3 + 1.2 * span(u, 2.2, 2.7))
+    this.ring.scale.setScalar(0.3 + 1.6 * span(u, 2.2, 2.7))
   }
 
   private poseSlide(u: number, t: number): void {

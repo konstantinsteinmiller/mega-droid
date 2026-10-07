@@ -31,6 +31,7 @@ import {
   INTRO_END, SKIP_AFTER, ATLAS_HOLD, eventsBetween, overlayAt, shotIndexAt, streetTime, streetRate, ringReach, ramp, clamp01,
   STREET_FROM, STREET_RELEASE, AFTER, STREET_DONE, SHOTS, STREET_AT as STREET_TIME_AT, type ShotId,
   SHOW_HIT, SHOW_DIVE, SHOW_GUARD_UP, SHOW_PARRY, SHOW_GUARD_DOWN, SHOW_SHIELD_UP, SHOW_VOLLEY, SHOW_ORB_FLIGHT, SHOW_SHIELD_DOWN,
+  SHOW_TROOP_SHOTS, SHOW_TROOP_FLIGHT, SHOW_TROOP_BACK,
   SHOW_ANSWER, SHOW_ANSWER_HIT, SHOW_SLAM, SHOW_SLIDE_FROM, SHOW_RING_OVER, SHOW_SLIDE_TO, SHOW_FINISH, SHOW_FINISH_HIT,
   SHOW_GEL, SHOW_GEL_BURST, SPIRE_FLASH, VEX_ON, CUTIN_FROM, CUTIN_TO, LAB_FROM, ALARM_TO, GAUSS_TURN,
   DISC_FROM, DISC_TO, STAGGER_AT, LEVER_AT, SAFE_FROM, SEAL_AT, FROST_FROM, FROST_TO, HEART_FROM, WAKE_FROM,
@@ -186,7 +187,11 @@ const STREET_CAM: readonly CamKey[] = [
   // Over his left shoulder (Atlas keeps to his right) as drone 1 dives in,
   // and the parry swats it away.
   { t: 4.1, pos: [-1.5, 1.75, -1.4], look: [-0.3, 1.45, -5.8], hfov: 76 },
-  { t: 5.8, pos: [-1.6, 1.7, -1.6], look: [-1.2, 1.1, -6.4], hfov: 76 },
+  // The Trooper fires twice and each shot comes straight back at it (#127):
+  // the view swings from the tumbling drone onto it.
+  { t: 5.25, pos: [-1.6, 1.7, -1.6], look: [-1.0, 1.15, -6.4], hfov: 76 },
+  { t: 5.75, pos: [-1.7, 1.65, -1.7], look: [0.2, 1.15, -6.9], hfov: 74 },
+  { t: 6.85, pos: [-1.9, 1.5, -1.9], look: [0.3, 1.2, -6.9], hfov: 74 },
   // Low, three-quarter front: drone 2 up high, the shield taking its volley.
   { t: 7.0, pos: [-2.4, 0.8, -2.3], look: [0.7, 1.9, -6.6], hfov: 78 },
   { t: 10.1, pos: [-2.2, 0.85, -2.6], look: [0.9, 1.4, -6.8], hfov: 78 },
@@ -926,7 +931,9 @@ export class IntroMode implements GameMode {
     const tm = this.trooperMotion
     tm.walk = step < 1 && step > 0 ? 1 : 0
     tm.phase = st * 9
-    poseTrooper(this.trooper, guard, 0, st, tm.walk, tm)
+    // Its blaster up for its two shots (#127).
+    const troopAim = ramp(SHOW_TROOP_SHOTS[0]! - 0.3, SHOW_TROOP_SHOTS[0]!, st) * (1 - ramp(SHOW_TROOP_SHOTS[1]! + 0.5, SHOW_TROOP_SHOTS[1]! + 0.8, st))
+    poseTrooper(this.trooper, guard, troopAim, st, tm.walk, tm)
     // Two Rotor Drones swoop in overhead.
     this.drones.forEach((d, i) => {
       const s = i ? 1 : -1
@@ -963,6 +970,9 @@ export class IntroMode implements GameMode {
     // The shield: up for the parry and for the volley; a flash on each hit.
     const guard = Math.max(
       ramp(SHOW_GUARD_UP, SHOW_GUARD_UP + 0.1, st) * (1 - ramp(SHOW_GUARD_DOWN - 0.1, SHOW_GUARD_DOWN, st)),
+      // The Trooper's two shots: up just before each lands — a perfect block.
+      ...SHOW_TROOP_SHOTS.map(v => ramp(v + SHOW_TROOP_FLIGHT - 0.12, v + SHOW_TROOP_FLIGHT - 0.04, st) *
+        (1 - ramp(v + SHOW_TROOP_FLIGHT + 0.15, v + SHOW_TROOP_FLIGHT + 0.3, st))),
       ramp(SHOW_SHIELD_UP, SHOW_SHIELD_UP + 0.15, st) * (1 - ramp(SHOW_SHIELD_DOWN - 0.15, SHOW_SHIELD_DOWN, st))
     )
     if (guard > 0) {
@@ -1010,7 +1020,13 @@ export class IntroMode implements GameMode {
     const down = ramp(SHOW_SLAM - 0.15, SHOW_SLAM, st) * (1 - ramp(SHOW_SLAM + 0.4, SHOW_SLAM + 0.9, st))
     const fall = ramp(SHOW_FINISH_HIT, SHOW_FINISH_HIT + 0.2, st)
     T.position.z = -6.4 - 0.8 * back
-    T.rotation.x = -0.35 * stagger - 0.25 * lift + 0.4 * down - 0.6 * fall
+    // Each of its own shots, sent back, knocks it back a step.
+    let reel = 0
+    for (const v of SHOW_TROOP_SHOTS) {
+      const home = v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK
+      reel = Math.max(reel, ramp(home, home + 0.08, st) * (1 - ramp(home + 0.15, home + 0.55, st)))
+    }
+    T.rotation.x = -0.35 * stagger - 0.25 * lift + 0.4 * down - 0.6 * fall - 0.4 * reel
     // The finish takes it apart: its pieces are the shatter's (`showcaseBursts`).
     T.visible = st < SHOW_FINISH_HIT
     // The shock ring: out from the Trooper's feet, over Flux as he slides.
@@ -1052,6 +1068,24 @@ export class IntroMode implements GameMode {
       o.visible = u >= 0 && u < 1
       if (o.visible) o.position.copy(d1.position).lerp(_d.set(0.05, 1.05, fz - 0.62), u)
     })
+    // The Trooper's two shots: out to the barrier, then home, bigger (#127).
+    SHOW_TROOP_SHOTS.forEach((v, k) => {
+      const o = this.orbs[k]!
+      const out = (st - v) / SHOW_TROOP_FLIGHT
+      const back = (st - v - SHOW_TROOP_FLIGHT) / SHOW_TROOP_BACK
+      _c.set(T.position.x - 0.3, 1.15, T.position.z + 0.55)
+      _d.set(0.05, 1.05, fz - 0.62)
+      if (out >= 0 && out < 1) {
+        o.visible = true
+        o.position.copy(_c).lerp(_d, out)
+        o.scale.setScalar(1)
+      } else if (back >= 0 && back < 1) {
+        o.visible = true
+        o.position.copy(_d).lerp(_c, back)
+        o.scale.setScalar(1.7)
+      } else if (st >= v && st < v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK + 0.01) o.visible = false
+    })
+    for (let k = 0; k < this.orbs.length; k++) if (st >= SHOW_VOLLEY[0]! - 0.1) this.orbs[k]!.scale.setScalar(1)
     // The shot, reused: the answer at drone 2, the point-blank finish.
     const shotAt = (from: number, to: number, target: Vector3, scale: number): boolean => {
       if (st < from || st >= to) return false
@@ -1118,6 +1152,14 @@ export class IntroMode implements GameMode {
     if (passed(SHOW_PARRY)) {
       this.shield.impact('parry')
       burst(bp.x, bp.y, bp.z, ['#fff4a8', '#ffffff', PAL.glowCyan], 30 * n, 7, 0.14)
+    }
+    for (const v of SHOW_TROOP_SHOTS) {
+      // The perfect block: the parry ring, a spray of gold; the shot goes home.
+      if (passed(v + SHOW_TROOP_FLIGHT)) {
+        this.shield.impact('parry')
+        burst(bp.x, bp.y, bp.z, ['#fff4a8', '#ffffff', PAL.glowCyan], 22 * n, 6, 0.13)
+      }
+      if (passed(v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK)) burst(T.x - 0.3, 1.15, T.z + 0.4, ['#ff6a4a', '#ffd84a', '#ffffff'], 20 * n, 5, 0.15, 0.5)
     }
     for (const v of SHOW_VOLLEY) {
       if (!passed(v + SHOW_ORB_FLIGHT)) continue

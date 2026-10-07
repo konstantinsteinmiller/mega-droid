@@ -134,6 +134,13 @@ export const SHOW_DIVE = 3.8
 export const SHOW_GUARD_UP = 4.25
 export const SHOW_PARRY = 4.6
 export const SHOW_GUARD_DOWN = 5.2
+/** The Trooper fires twice (#127): each shot a perfect block sends straight
+ *  back into it. Playtesters read the parry on drone 1 as a swat, not as a
+ *  block that reflects; a shot that flies back home reads as one. Fired at
+ *  each time, blocked SHOW_TROOP_FLIGHT later, home SHOW_TROOP_BACK after. */
+export const SHOW_TROOP_SHOTS: readonly number[] = [5.45, 6.3]
+export const SHOW_TROOP_FLIGHT = 0.3
+export const SHOW_TROOP_BACK = 0.22
 /** Drone 2 fires a volley of three: the shield takes each. */
 export const SHOW_SHIELD_UP = 7.3
 export const SHOW_VOLLEY: readonly number[] = [7.6, 8.2, 8.8]
@@ -249,6 +256,11 @@ export const EVENTS: readonly IntroEvent[] = ([
   { at: streetAt(SHOW_DIVE), kind: 'sfx', name: 'dash', gain: 0.7 },
   { at: streetAt(SHOW_PARRY), kind: 'sfx', name: 'parry' },
   { at: STREET_AT + 11.0, kind: 'sfx', name: 'synthPulse', gain: 0.55 },
+  ...SHOW_TROOP_SHOTS.flatMap((v): IntroEvent[] => [
+    { at: streetAt(v), kind: 'sfx', name: 'enemyShot', gain: 0.85 },
+    { at: streetAt(v + SHOW_TROOP_FLIGHT), kind: 'sfx', name: 'parry' },
+    { at: streetAt(v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK), kind: 'sfx', name: 'hitHeavy', gain: 0.8 }
+  ]),
   ...SHOW_VOLLEY.flatMap((v): IntroEvent[] => [
     { at: streetAt(v), kind: 'sfx', name: 'enemyShot', gain: 0.8 },
     { at: streetAt(v + SHOW_ORB_FLIGHT), kind: 'sfx', name: 'block' }

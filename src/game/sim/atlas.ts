@@ -119,7 +119,9 @@ export const onceEver = (l: AtlasLine): boolean =>
 /** Seconds before the same line may come back (default: once a mission). */
 const COOLDOWN: Partial<Record<AtlasLine, number>> = {
   lowHp: 30, lowHpGel: 30, lowWe: 120, trap: 25, plate: 25, levelUp: 10,
-  'warn.gel': 30, 'warn.critical': 30, 'warn.weEmpty': 60, 'warn.down': 1, 'hint.levelUp': 10
+  'warn.gel': 30, 'warn.critical': 30, 'warn.weEmpty': 60, 'warn.down': 1, 'hint.levelUp': 10,
+  // Said on each unblocked hit in the block lesson (#129), never on top of itself.
+  'help.blockMiss': 9
 }
 /** A borrowed weapon can be refilled and run dry again: its last-shot line may return. */
 const cooldownOf = (id: AtlasLine): number | undefined =>

@@ -760,6 +760,7 @@ export default {
       'gel': 'Brug en Reparationsgel for at hele dig!',
       'slide': 'Glid væk lige før den røde ring når dig!',
       'block': 'Hold blokering, når den skyder. Lige når det rammer, er perfekt!',
+      'blockMiss': 'Skjold op! Blokér lige når det rammer, så flyver det tilbage!',
       'charge': 'Hold skyd, til kanonen gløder, og slip så!',
     },
     'train': {

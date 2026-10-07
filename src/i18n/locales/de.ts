@@ -736,6 +736,7 @@ export default {
       'gel': 'Nutze ein Reparaturgel, um dich zu heilen!',
       'slide': 'Rutsch weg, kurz bevor der rote Ring dich erreicht!',
       'block': 'Halte Blocken gedrückt, wenn er feuert. Genau beim Einschlag ist perfekt!',
+      'blockMiss': 'Schild hoch! Blocke genau beim Treffer, dann fliegt er zurück!',
       'charge': 'Halte Feuer gedrückt, bis die Kanone glüht, dann lass los!',
     },
     'train': {

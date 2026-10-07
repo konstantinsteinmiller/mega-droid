@@ -736,6 +736,7 @@ export default {
       'gel': '¡Usa un gel reparador para curarte!',
       'slide': '¡Desliza justo antes de que el anillo rojo te alcance!',
       'block': 'Mantén bloqueo cuando dispare. ¡Justo al impactar es perfecto!',
+      'blockMiss': '¡Escudo arriba! ¡Bloquea justo al impacto y devuélvelo!',
       'charge': '¡Mantén disparo hasta que el cañón brille, y suelta!',
     },
     'train': {

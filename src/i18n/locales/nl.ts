@@ -736,6 +736,7 @@ export default {
       'gel': 'Gebruik Reparatiegel om te genezen!',
       'slide': 'Glij weg vlak voordat de rode ring je bereikt!',
       'block': 'Houd blokkeren ingedrukt als hij vuurt. Precies bij de inslag is perfect!',
+      'blockMiss': 'Schild omhoog! Blokkeer precies bij de inslag en stuur hem terug!',
       'charge': 'Houd vuren ingedrukt tot het kanon gloeit, laat dan los!',
     },
     'train': {

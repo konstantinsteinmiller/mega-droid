@@ -17,18 +17,18 @@ itself, so a new line shows up here as missing until it is voiced.
 
 | Who | Lines | EN voiced | DE voiced | ES voiced | ZH voiced |
 | --- | --- | --- | --- | --- | --- |
-| Atlas | 209 | 209 | 209 | 209 | 209 |
+| Atlas | 210 | 210 | 210 | 210 | 210 |
 | Vex | 33 | 33 | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 | 2 | 2 |
 | Pip | 52 | 52 | 52 | 52 | 52 |
-| **All** | **341** | **341** | **341** | **341** | **341** |
+| **All** | **342** | **342** | **342** | **342** | **342** |
 
 ## Missing (0)
 
 Nothing: every line has its recordings.
 
-## Every line (341)
+## Every line (342)
 
 | File | Who | Plays when | English | German | Spanish | Chinese | EN | DE | ES | ZH |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -350,6 +350,7 @@ Nothing: every line has its recordings.
 | `atlas_train_weapon` | Atlas | A lesson room: the special weapon just copied from a Master | Let's train your new weapon! | Lass uns deine neue Waffe trainieren! | ¡Vamos a entrenar tu arma nueva! | 我们来练习你的新武器吧！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_help_charge` | Atlas | A lesson: the player has not managed a Charge Shot for a while | Hold fire until the cannon glows, then let go! | Halte Feuer gedrückt, bis die Kanone glüht, dann lass los! | ¡Mantén disparo hasta que el cañón brille, y suelta! | 按住射击直到臂炮发光，然后松开！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_help_block` | Atlas | A lesson: the player has not managed a Perfect Block for a while | Hold block when it fires. Just as it hits is perfect! | Halte Blocken gedrückt, wenn er feuert. Genau beim Einschlag ist perfekt! | Mantén bloqueo cuando dispare. ¡Justo al impactar es perfecto! | 它开火时按住格挡。命中瞬间就是完美时机！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
+| `atlas_help_blockMiss` | Atlas | The block lesson: a shot just hit the player, who did not raise the shield (again after each miss) | Shield up! Block just as it hits to send it back! | Schild hoch! Blocke genau beim Treffer, dann fliegt er zurück! | ¡Escudo arriba! ¡Bloquea justo al impacto y devuélvelo! | 举起护盾！命中瞬间格挡，把它弹回去！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_help_slide` | Atlas | A lesson: the player keeps getting caught by the ring | Slide away just before the red ring reaches you! | Rutsch weg, kurz bevor der rote Ring dich erreicht! | ¡Desliza justo antes de que el anillo rojo te alcance! | 在红色光圈到达前滑铲躲开！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_help_gel` | Atlas | A lesson: the player has not used the Repair Gel yet | Use a Repair Gel to heal up! | Nutze ein Reparaturgel, um dich zu heilen! | ¡Usa un gel reparador para curarte! | 用修理凝胶回复体力！ | elevenlabs | elevenlabs | chatterbox | chatterbox |
 | `atlas_help_gap` | Atlas | A lesson: the player has not leapt the gap yet | Walk straight at the edge and you'll leap across! | Lauf geradeaus auf die Kante zu, dann springst du automatisch rüber! | ¡Camina derecho hacia el borde y saltarás al otro lado! | 朝边缘直走就能自动跳过去！ | elevenlabs | elevenlabs | chatterbox | chatterbox |

@@ -736,6 +736,7 @@ export default {
       'gel': 'Utilise un gel réparateur pour te soigner !',
       'slide': "Glisse juste avant que l'anneau rouge ne t'atteigne !",
       'block': "Maintiens bloquer quand il tire. Pile à l'impact, c'est parfait !",
+      'blockMiss': 'Bouclier levé ! Bloque pile à l\'impact pour le renvoyer !',
       'charge': "Maintiens le tir jusqu'à ce que le canon brille, puis relâche !",
     },
     'train': {

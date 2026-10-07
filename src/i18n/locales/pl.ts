@@ -736,6 +736,7 @@ export default {
       'gel': 'Użyj żelu naprawczego, by się wyleczyć!',
       'slide': 'Wślizgnij się, tuż zanim czerwony pierścień cię dosięgnie!',
       'block': 'Przytrzymaj blok, gdy strzela. Trafienie w idealnym momencie!',
+      'blockMiss': 'Tarcza w górę! Zablokuj w chwili trafienia i odeślij go!',
       'charge': 'Przytrzymaj ogień, aż działo się rozjarzy, potem puść!',
     },
     'train': {

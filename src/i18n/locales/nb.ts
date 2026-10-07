@@ -760,6 +760,7 @@ export default {
       'gel': 'Bruk en Reparasjonsgel for å lappe deg sammen!',
       'slide': 'Skli unna rett før den røde ringen når deg!',
       'block': 'Hold blokk når den skyter. Akkurat idet det treffer er perfekt!',
+      'blockMiss': 'Skjold opp! Blokker idet det treffer, så flyr det tilbake!',
       'charge': 'Hold skyt til kanonen gløder, og slipp!',
     },
     'train': {

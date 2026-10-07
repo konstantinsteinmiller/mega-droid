@@ -760,6 +760,7 @@ export default {
       'gel': 'Fes servir un gel reparador per curar-te!',
       'slide': 'Llisca just abans que l\'anell vermell t\'arribi!',
       'block': 'Mantén el bloqueig quan dispari. Just a l\'impacte és perfecte!',
+      'blockMiss': 'Escut amunt! Bloqueja just a l\'impacte i torna\'l!',
       'charge': 'Mantén el tret fins que el canó brilli, i deixa anar!',
     },
     'train': {

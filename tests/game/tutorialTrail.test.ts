@@ -133,14 +133,22 @@ describe('the trail in the tutorial walkthrough', () => {
     expect(r.last()).toEqual({ enabled: false, target: null })
   })
 
-  it('a live scene lesson: only out of its room, only toward its subject, never over its check', () => {
+  it('a live scene lesson: toward its subject, the crate in its own room too, never over its check', () => {
     const r = rig({ tutorial: true })
-    // The crate lesson, the player in its room: its glyph and edge bubble have it.
+    // The crate lesson, the player in its room: the trail leads to the crate
+    // as well (#119: a playtester never saw it and pushed at the shut door).
     hud.lesson = lesson('crate')
     r.s.goal = { x: 30, z: 10, kind: 'crate' }
     r.s.inRoom = true
     r.step()
+    expect(r.last()).toEqual({ enabled: true, target: { x: 30, z: 10 } })
+    // The training drone in its room: its glyph has it (it hovers in plain view).
+    hud.lesson = lesson('charge')
+    r.s.goal = { x: 12, z: 16, kind: 'drone' }
+    r.step()
     expect(r.last().enabled).toBe(false)
+    hud.lesson = lesson('crate')
+    r.s.goal = { x: 30, z: 10, kind: 'crate' }
     // Wandered off: the bubble does not show out there — the trail leads back.
     r.s.inRoom = false
     r.step()

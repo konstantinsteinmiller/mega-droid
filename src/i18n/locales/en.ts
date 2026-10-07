@@ -836,6 +836,7 @@ export default {
       'gel': 'Use a Repair Gel to heal up!',
       'slide': 'Slide away just before the red ring reaches you!',
       'block': 'Hold block when it fires. Just as it hits is perfect!',
+      'blockMiss': 'Shield up! Block just as it hits to send it back!',
       'charge': 'Hold fire until the cannon glows, then let go!',
     },
     'train': {

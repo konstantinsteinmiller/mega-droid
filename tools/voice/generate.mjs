@@ -130,9 +130,12 @@ for (const r of results) {
   const shipped = relative(ROOT, out).replaceAll('\\', '/')
   // The same take already shipped there: leave the file be. An Ogg stream gets a
   // random serial number on every encode, so a re-encode changes every byte of
-  // an unchanged line and fills the commit with noise.
+  // an unchanged line and fills the commit with noise. Not under --force, and
+  // not after a text change: the takes were spoken anew, so the same take
+  // NUMBER is a different recording (a reworded line kept its old file).
   const prev = before.find(p => p.job.id === r.job.id)
-  if (!(prev?.best === best.take && prev.shipped === shipped && existsSync(out))) await encode(best.master, out)
+  const same = prev?.best === best.take && prev.shipped === shipped && prev.job.text === r.job.text && !a.force
+  if (!(same && existsSync(out))) await encode(best.master, out)
   r.shipped = shipped
 }
 

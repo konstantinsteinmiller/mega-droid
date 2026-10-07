@@ -760,6 +760,7 @@ export default {
       'gel': 'Usa um Gel de Reparação para te curares!',
       'slide': 'Desliza para fugir mesmo antes de o anel vermelho te apanhar!',
       'block': 'Mantém o bloqueio quando ele disparar. Mesmo no impacto é perfeito!',
+      'blockMiss': 'Escudo em cima! Bloqueia mesmo no impacto para o devolver!',
       'charge': 'Mantém o disparo até o canhão brilhar e depois larga!',
     },
     'train': {

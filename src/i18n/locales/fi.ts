@@ -760,6 +760,7 @@ export default {
       'gel': 'Käytä korjausgeeliä parantuaksesi!',
       'slide': 'Liu\'u pois juuri ennen kuin punainen rengas ehtii luoksesi!',
       'block': 'Pidä suojaa, kun se ampuu. Juuri osuman hetkellä on täydellistä!',
+      'blockMiss': 'Kilpi ylös! Suojaa juuri osumahetkellä, niin se palaa takaisin!',
       'charge': 'Pidä liipaisinta, kunnes tykki hehkuu, ja päästä irti!',
     },
     'train': {

@@ -1238,6 +1238,11 @@ const ATLAS_LESSONS: VoiceLine[] = [
     direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],
     max: 3.5
   }),
+  live('atlas.help.blockMiss', 'atlas', 'fieldWarn', {
+    when: ['The block lesson: a shot just hit the player, who did not raise the shield (again after each miss)', 'Die Blocken-Übung: ein Schuss hat den Spieler getroffen, der den Schild nicht gehoben hat (nach jedem Fehlversuch wieder)'],
+    direction: ['Urgent but encouraging, a coach calling it out mid-drill.', 'Eindringlich, aber ermutigend, ein Trainer, der mitten in der Übung ruft.'],
+    max: 3.4
+  }),
   live('atlas.help.slide', 'atlas', 'fieldWarn', {
     when: ['A lesson: the player keeps getting caught by the ring', 'Eine Übung: der Ring erwischt den Spieler immer wieder'],
     direction: ['Patient coaching, never impatient.', 'Geduldig, wie ein Trainer, nie ungeduldig.'],

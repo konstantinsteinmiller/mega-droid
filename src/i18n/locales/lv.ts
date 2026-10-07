@@ -760,6 +760,7 @@ export default {
       'gel': 'Izmanto remonta gelu, lai sadziedētos!',
       'slide': 'Aizslīdi tieši pirms sarkanais gredzens tevi sasniedz!',
       'block': 'Turi bloku, kad tas šauj. Tieši trāpījuma brīdī ir ideāli!',
+      'blockMiss': 'Vairogu augšā! Bloķē tieši trāpījumā, un tas lido atpakaļ!',
       'charge': 'Turi šaušanu, līdz lielgabals iemirdzas, tad atlaid!'
     },
     'train': {

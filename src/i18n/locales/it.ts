@@ -736,6 +736,7 @@ export default {
       'gel': 'Usa un Gel Riparatore per curarti!',
       'slide': "Scivola via appena prima che l'anello rosso ti raggiunga!",
       'block': "Tieni premuto blocca quando spara. Il momento perfetto è proprio all'impatto!",
+      'blockMiss': 'Scudo su! Para proprio all\'impatto per rimandarlo indietro!',
       'charge': 'Tieni premuto il fuoco finché il cannone non brilla, poi rilascia!',
     },
     'train': {

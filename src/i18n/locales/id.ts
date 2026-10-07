@@ -736,6 +736,7 @@ export default {
       'gel': 'Gunakan Gel Perbaikan untuk pulih!',
       'slide': 'Meluncurlah tepat sebelum cincin merah mengenaimu!',
       'block': 'Tahan blok saat dia menembak. Tepat saat kena itu sempurna!',
+      'blockMiss': 'Perisai naik! Blok tepat saat kena untuk memantulkannya!',
       'charge': 'Tahan tembak sampai meriam bercahaya, lalu lepas!',
     },
     'train': {

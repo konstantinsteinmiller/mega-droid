@@ -760,6 +760,7 @@ export default {
       'gel': 'Použij opravný gel a uzdrav se!',
       'slide': 'Uklouzni těsně předtím, než tě červený kruh zasáhne!',
       'block': 'Drž blok, když pálí. Přesně v momentě zásahu je to perfektní!',
+      'blockMiss': 'Štít nahoru! Blokuj přesně při zásahu a pošli to zpět!',
       'charge': 'Drž palbu, dokud dělo nezáří, pak pusť!'
     },
     'train': {

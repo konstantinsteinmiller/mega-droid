@@ -485,6 +485,7 @@ export const TONES: Readonly<Record<string, Tone>> = {
   'atlas.train.weapon': 'excited',
   'atlas.help.charge': 'warm',
   'atlas.help.block': 'warm',
+  'atlas.help.blockMiss': 'urgent',
   'atlas.help.slide': 'warm',
   'atlas.help.gel': 'warm',
   'atlas.help.gap': 'warm',

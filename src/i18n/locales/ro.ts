@@ -760,6 +760,7 @@ export default {
       'gel': 'Folosește un Gel Reparator ca să te vindeci!',
       'slide': 'Alunecă într-o parte chiar înainte să te prindă inelul roșu!',
       'block': 'Ține apăsat pe blocare când trage. Perfect e exact la impact!',
+      'blockMiss': 'Scutul sus! Blochează exact la impact și trimite-l înapoi!',
       'charge': 'Ține apăsat pe foc până strălucește tunul, apoi eliberează!'
     },
     'train': {

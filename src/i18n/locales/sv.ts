@@ -760,6 +760,7 @@ export default {
       'gel': 'Använd en Reparationsgel för att laga dig!',
       'slide': 'Glid undan precis innan den röda ringen når dig!',
       'block': 'Håll in block när den skjuter. Precis när det träffar är perfekt!',
+      'blockMiss': 'Sköld upp! Blockera precis när det träffar, så flyger det tillbaka!',
       'charge': 'Håll in skjut tills kanonen lyser, släpp sedan!',
     },
     'train': {

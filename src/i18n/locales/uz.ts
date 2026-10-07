@@ -736,6 +736,7 @@ export default {
       'gel': 'Davolanish uchun Taʼmir geli ishlating!',
       'slide': 'Qizil halqa sizga yetmasdan oldin sirpanib keting!',
       'block': 'U otayotganda blokni bosib turing. Aynan tegayotgan payt mukammal!',
+      'blockMiss': 'Qalqonni ko\'tar! Tegayotgan payt blokla, u qaytadi!',
       'charge': 'Qoʻl topi yorqinlashguncha otishni bosib turing, soʻng qoʻyib yuboring!',
     },
     'train': {

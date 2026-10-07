@@ -991,6 +991,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     prefetchVoice('atlas.warn.down')
     const lessons: readonly TrainId[] = setup.tutorial ? ['charge', 'block', 'slide', 'gel', 'gap', 'weapon'] : q?.kind === 'story' ? ['weapon'] : []
     for (const id of lessons) { prefetchVoice(`atlas.train.${id}`); prefetchVoice(`atlas.help.${id}`) }
+    if (lessons.includes('block')) prefetchVoice('atlas.help.blockMiss')
   }
 
   /**
@@ -1250,6 +1251,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     pushHud({ t: 'hurt', strength: Math.min(1, taken / (c.maxHp * 0.25)) })
     this.onPlayerHurt(taken)
     if (o.blockable) this.coach.blockableHit()
+    // The block lesson's shot got through (#129): the room's yellow marker
+    // said what to look at, nothing said what to do with it. Atlas says it on
+    // every miss until the block is learned (its cooldown keeps it from
+    // stacking up under a quick-firing machine).
+    if (o.blockable && this.training.id === 'block' && !this.training.done.has('block')) this.say('help.blockMiss')
     // Knock the player back a touch (less on the climb: a narrow walkway)
     const kx = p.x - o.fromX
     const kz = p.z - o.fromZ

@@ -760,6 +760,7 @@ export default {
       'gel': 'Sağalmaq üçün Təmir Geli işlət!',
       'slide': 'Qırmızı halqa sənə çatmamış sürüşüb qaç!',
       'block': 'O atəş açanda bloku basılı saxla. Düz dəyən anda — mükəmməldir!',
+      'blockMiss': 'Qalxanı qaldır! Dəyən anda blokla, geri qayıtsın!',
       'charge': 'Top parlayana qədər atəşi basılı saxla, sonra burax!'
     },
     'train': {

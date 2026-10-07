@@ -760,6 +760,7 @@ export default {
       'gel': 'Használj egy Javítózselét a gyógyuláshoz!',
       'slide': 'Csússz el, mielőtt a piros gyűrű elér!',
       'block': 'Tartsd lenyomva a védést, amikor tüzel. Épp a becsapódáskor a tökéletes!',
+      'blockMiss': 'Pajzsot fel! Védj épp a becsapódáskor, és visszarepül!',
       'charge': 'Tartsd lenyomva a tüzet, amíg az ágyú izzik, aztán engedd el!'
     },
     'train': {

@@ -738,6 +738,7 @@ export default {
       'gel': 'İyileşmek için bir Tamir Jeli kullan!',
       'slide': 'Kırmızı halka sana ulaşmadan hemen önce kay!',
       'block': 'O ateş ederken blokla tuşunu basılı tut. Tam vurduğu an mükemmeldir!',
+      'blockMiss': 'Kalkan yukarı! Tam vurduğu an blokla, geri gitsin!',
       'charge': 'Kol topu parlayana kadar ateşi basılı tut, sonra bırak!',
     },
     'train': {

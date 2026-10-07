@@ -760,6 +760,7 @@ export default {
       'gel': 'Uzu Riparan Ĝelon por resaniĝi!',
       'slide': 'Glitu for ĝuste antaŭ ol la ruĝa ringo atingas vin!',
       'block': 'Tenu blokon, kiam ĝi pafas. Ĝuste kiam ĝi trafas estas perfekte!',
+      'blockMiss': 'Ŝildon supren! Bloku ĝuste ĉe la trafo por resendi ĝin!',
       'charge': 'Tenu pafon, ĝis la kanono brilas, poste lasu!'
     },
     'train': {

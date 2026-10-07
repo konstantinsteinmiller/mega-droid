@@ -736,6 +736,7 @@ export default {
       'gel': 'Dùng Gel Sửa Chữa để hồi phục!',
       'slide': 'Trượt né ngay trước khi vòng đỏ chạm tới cậu!',
       'block': 'Giữ chặn khi nó bắn. Đúng lúc trúng đòn là hoàn hảo!',
+      'blockMiss': 'Giơ khiên lên! Chặn đúng lúc trúng để đánh bật lại!',
       'charge': 'Giữ bắn cho tới khi pháo phát sáng, rồi thả ra!',
     },
     'train': {

@@ -760,6 +760,7 @@ export default {
       'gel': 'Usa un xel reparador para curarte!',
       'slide': 'Esvara xusto antes de que o anel vermello te alcance!',
       'block': 'Mantén o bloqueo cando dispare. Xusto ao impactar é perfecto!',
+      'blockMiss': 'Escudo arriba! Bloquea xusto ao impactar e devólveo!',
       'charge': 'Mantén o disparo ata que o canón brille, e solta!',
     },
     'train': {

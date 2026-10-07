@@ -760,6 +760,7 @@ export default {
       'gel': 'Upotrijebi gel za popravak i izliječi se!',
       'slide': 'Klizni tik prije nego te crveni prsten dosegne!',
       'block': 'Drži blok kad puca. Točno u trenutku pogotka je savršeno!',
+      'blockMiss': 'Štit gore! Blokiraj točno pri pogotku i vrati ga!',
       'charge': 'Drži paljbu dok top ne zasja, pa pusti!'
     },
     'train': {

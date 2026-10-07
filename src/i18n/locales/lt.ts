@@ -760,6 +760,7 @@ export default {
       'gel': 'Panaudok remonto gelį ir pasigydyk!',
       'slide': 'Nuslysk, kol raudonas žiedas tavęs nepasiekė!',
       'block': 'Laikyk blokavimą, kai jis šauna. Tobula – tiksliai pataikymo akimirką!',
+      'blockMiss': 'Skydą aukštyn! Blokuok pataikymo akimirką ir grąžink!',
       'charge': 'Laikyk šūvį, kol patranka sužibs, tada atleisk!'
     },
     'train': {

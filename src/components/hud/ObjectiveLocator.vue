@@ -34,6 +34,7 @@ const rootEl = ref<HTMLElement | null>(null)
 const spinEl = ref<HTMLElement | null>(null)
 const pt = { x: 0, y: 0, visible: false }
 let shown = false
+let pinned = false
 let off: (() => void) | null = null
 
 const place = (): void => {
@@ -99,6 +100,11 @@ const place = (): void => {
   }
   el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
   el.style.opacity = L.alpha.toFixed(3)
+  // A pinned lesson subject (the tutorial's crate) is no boss: no skull.
+  if (L.pin !== pinned) {
+    pinned = L.pin
+    el.classList.toggle('pin', pinned)
+  }
   spin.style.transform = `translate(-50%, -100%) rotate(${angle.toFixed(3)}rad)`
   shown = true
 }
@@ -159,6 +165,8 @@ onUnmounted(() => { off?.() })
   height: 46%
   transform: translateX(-50%)
   color: #141a33
+.pin .mark
+  display: none
 @keyframes loc-bob
   from
     translate: 0 -12%

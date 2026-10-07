@@ -20,6 +20,9 @@ import {
   MK1_INTRO_HOLD, MK1_SIGNAL_HOLD, MK1_CALL
 } from '../story/vexScenes'
 
+/** The pinned locator (#119): its fade (s) and height over the floor (m). */
+const PIN_FADE = 0.3
+const PIN_HEIGHT = 2.7
 /** Main-thread budget per frame for streaming the city in (ms). */
 const CITY_STREAM_MS = 3
 import { getRenderer, fovForAspect } from '../engine/renderer'
@@ -465,7 +468,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private locatorIn: LocatorInput = { playing: false, quiet: false, hasGoal: false, dist: 0, boss: false, finished: false }
   /** Where the triangle points and how solid it is; the HUD projects it per
    *  frame (`ObjectiveLocator.vue`). */
-  readonly locatorPoint = { x: 0, y: 0, z: 0, alpha: 0 }
+  /** `pin`: it marks a lesson's subject (#119), not the boss: no skull. */
+  readonly locatorPoint = { x: 0, y: 0, z: 0, alpha: 0, pin: false }
+  /** The pinned triangle's fade (`updateLocator`, #119). */
+  private pinAlpha = 0
   /** The boss shutter's klaxon has sounded (once per mission). */
   private bossWarned = false
   private vmFlash = 0
@@ -3944,7 +3950,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * step when it ran (undefined when it did not), so the objective scan is
    * not paid twice.
    */
-  private updateLocator(dt: number, playing: boolean, trailGoal: { x: number; z: number } | null | undefined): void {
+  private updateLocator(
+    dt: number, playing: boolean, trailGoal: { x: number; z: number } | null | undefined, pin: { x: number; z: number } | null = null
+  ): void {
     const p = this.player
     const L = this.locatorPoint
     const li = this.locatorIn
@@ -3981,6 +3989,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if (!this.setup.tutorial) this.atlas?.say('hint.locator')
     }
     L.alpha = this.locator.alpha
+    // A pinned goal (the crate lesson's crate, #119): the triangle stays on it
+    // until it is done, high enough to clear the lesson's glyph over it, and
+    // rides the screen's edge while it is out of view, like any locator.
+    if (pin && playing) {
+      if (this.pinAlpha === 0) sfx('locate')
+      this.pinAlpha = Math.min(1, this.pinAlpha + dt / PIN_FADE)
+      L.x = pin.x
+      L.z = pin.z
+      L.y = (this.map?.terrain ? Math.max(-60, floorAt(this.nav, pin.x, pin.z)) : 0) + PIN_HEIGHT
+    } else {
+      this.pinAlpha = Math.max(0, this.pinAlpha - dt / PIN_FADE)
+    }
+    L.pin = this.pinAlpha > 0 && this.pinAlpha >= this.locator.alpha
+    if (this.pinAlpha > 0) L.alpha = Math.max(L.alpha, this.pinAlpha)
   }
 
   /**
@@ -4001,6 +4023,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const ti = this.trailIn
     const walk = this.walk?.active ? this.walk : null
     const after = this.exitGoal()
+    let crate: { x: number; z: number } | null = null
     ti.px = p.x
     ti.pz = p.z
     ti.time = this.time
@@ -4017,7 +4040,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       // drone) hovers in plain view in front of the pad anyway.
       const goal = playing && !this.fighting && this.coach.learned('move') ? walk.goal() : null
       const lesson = hud.lesson
-      ti.target = goal && (!lesson || (!lesson.done && (goal.kind === 'drone' || goal.kind === 'crate') && !this.lessonInRoom()))
+      // The crate lesson keeps the chevrons in its own room too, and pins the
+      // yellow triangle on the crate (#119): a playtester never saw the crate
+      // the crane set down and pushed at the shut door for two minutes.
+      crate = goal?.kind === 'crate' && !!lesson && !lesson.done && !this.lessons.crateBroken ? goal : null
+      ti.target = goal && (!lesson || (!lesson.done && (goal.kind === 'drone' || goal.kind === 'crate') && (!this.lessonInRoom() || crate)))
         ? goal
         : null
       ti.enabled = ti.target !== null
@@ -4026,7 +4053,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ti.target = ti.enabled ? this.objects.target(p.x, p.z, this.enemies) : null
     }
     this.trail.update(dt, ti)
-    this.updateLocator(dt, playing, ti.enabled && (!walk || after) ? ti.target : undefined)
+    this.updateLocator(dt, playing, ti.enabled && (!walk || after) ? ti.target : undefined, crate)
   }
 
   /**

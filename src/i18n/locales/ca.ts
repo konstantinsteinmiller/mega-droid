@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Reinicia ara',
     'retreat': 'Torna al laboratori',
     'respawnIn': 'De tornada al punt de control en {n} s',
-    'retryCheckpoint': 'Torna-hi des del punt de control'
+    'retryCheckpoint': 'Torna-hi des del punt de control',
+    'freeReboot': 'Reinici gratuït',
+    'freeRebootNote': 'El teu primer combat contra un Mestre del Nucli: un reinici gratuït, aquí mateix.'
   },
   'ending': {
     'fall': 'El Gran Mestre cau. El Senyal Vermell d\'en Vex s\'apaga amb ell.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Reprèn',
     'abandon': 'Abandona la missió',
     'abandonAsk': 'Vols sortir de la missió? Comptarà com a fallida.',
+    'abandonWon': 'Vols sortir ara? La victòria contra el cap final encara compta.',
     'leapHint': 'No hi ha botó de salt: camina fins a la vora per saltar el buit.',
     'controls': 'Controls',
     'label': {

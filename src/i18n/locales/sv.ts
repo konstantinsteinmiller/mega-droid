@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Starta om nu',
     'retreat': 'Retirera till labbet',
     'respawnIn': 'Tillbaka vid kontrollpunkten om {n} s',
-    'retryCheckpoint': 'Försök igen från kontrollpunkt'
+    'retryCheckpoint': 'Försök igen från kontrollpunkt',
+    'freeReboot': 'Starta om gratis',
+    'freeRebootNote': 'Din första strid mot en Kärnmästare: starta om gratis en gång, här och nu.'
   },
   'ending': {
     'fall': 'Stormästaren faller. Vex röda signal dör med den.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Fortsätt',
     'abandon': 'Avbryt uppdraget',
     'abandonAsk': 'Lämna uppdraget? Det räknas som misslyckat.',
+    'abandonWon': 'Lämna nu? Segern över bossen räknas ändå.',
     'leapHint': 'Ingen hoppknapp: gå över en kant för att hoppa över gapet.',
     'controls': 'Kontroller',
     'label': {

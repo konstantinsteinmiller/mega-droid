@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Restartigi nun',
     'retreat': 'Retiriĝi al la laboratorio',
     'respawnIn': 'Reen ĉe la kontrolpunkto post {n} s',
-    'retryCheckpoint': 'Reprovi de kontrolpunkto'
+    'retryCheckpoint': 'Reprovi de kontrolpunkto',
+    'freeReboot': 'Senpaga restartigo',
+    'freeRebootNote': 'Via unua batalo kontraŭ Kerna Majstro: unu senpaga restartigo, ĝuste ĉi tie.'
   },
   'ending': {
     'fall': 'La Grandmajstro falas. La Ruĝa Signalo de Vex estingiĝas kune kun ĝi.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Daŭrigi',
     'abandon': 'Forlasi mision',
     'abandonAsk': 'Ĉu forlasi la mision? Ĝi kalkuliĝos kiel malsukcesa.',
+    'abandonWon': 'Ĉu foriri nun? Via venko super la estro ankoraŭ kalkuliĝas.',
     'leapHint': 'Neniu saltbutono: paŝu de rando por transsalti la truon.',
     'controls': 'Regiloj',
     'label': {

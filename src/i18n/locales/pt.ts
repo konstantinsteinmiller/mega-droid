@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Reiniciar agora',
     'retreat': 'Recuar ao laboratório',
     'respawnIn': 'De volta ao checkpoint em {n} s',
-    'retryCheckpoint': 'Tentar do checkpoint'
+    'retryCheckpoint': 'Tentar do checkpoint',
+    'freeReboot': 'Reinício grátis',
+    'freeRebootNote': 'Sua primeira luta contra um Mestre do Núcleo: um reinício grátis, aqui mesmo.'
   },
   'banner': {
     'cleared': 'Fase concluída',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Continuar',
     'abandon': 'Abandonar missão',
     'abandonAsk': 'Sair da missão? Vai contar como falha.',
+    'abandonWon': 'Sair agora? Sua vitória contra o chefe continua valendo.',
     'leapHint': 'Não há botão de pulo: ande para fora de uma borda para pular o vão.',
     'controls': 'Controles',
     'label': {

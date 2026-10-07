@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Paleisti iš naujo dabar',
     'retreat': 'Trauktis į laboratoriją',
     'respawnIn': 'Grįžtama į kontrolinį tašką po {n} s',
-    'retryCheckpoint': 'Kartoti nuo kontrolinio taško'
+    'retryCheckpoint': 'Kartoti nuo kontrolinio taško',
+    'freeReboot': 'Nemokamas paleidimas',
+    'freeRebootNote': 'Tavo pirmoji kova su šerdies meistru: vieną kartą paleisk iš naujo nemokamai, čia pat.'
   },
   'ending': {
     'fall': 'Didysis meistras krinta. Kartu su juo užgęsta Vexo Raudonasis signalas.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Tęsti',
     'abandon': 'Palikti misiją',
     'abandonAsk': 'Palikti misiją? Ji bus laikoma nepavykusia.',
+    'abandonWon': 'Palikti dabar? Pergalė prieš bosą vis tiek įskaitoma.',
     'leapHint': 'Šuolio mygtuko nėra: nueik nuo krašto ir peršoksi tarpą.',
     'controls': 'Valdymas',
     'label': {

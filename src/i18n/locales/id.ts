@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Reboot sekarang',
     'retreat': 'Mundur ke lab',
     'respawnIn': 'Kembali ke titik cek dalam {n} dtk',
-    'retryCheckpoint': 'Ulangi dari checkpoint'
+    'retryCheckpoint': 'Ulangi dari checkpoint',
+    'freeReboot': 'Reboot gratis',
+    'freeRebootNote': 'Duel pertamamu dengan Master Inti: satu reboot gratis, langsung di sini.'
   },
   'banner': {
     'cleared': 'Level selesai',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Lanjutkan',
     'abandon': 'Tinggalkan misi',
     'abandonAsk': 'Keluar dari misi? Akan dihitung gagal.',
+    'abandonWon': 'Keluar sekarang? Kemenangan atas bos tetap dihitung.',
     'leapHint': 'Tidak ada tombol lompat: berjalanlah melewati tepi untuk melompati celah.',
     'controls': 'Kontrol',
     'label': {

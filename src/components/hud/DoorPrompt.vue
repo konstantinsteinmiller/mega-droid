@@ -102,6 +102,9 @@ const place = (): void => {
   if (!m || !v || v.alpha <= 0.001 || hud.phase !== 'play') {
     if (shown) {
       root.style.opacity = '0'
+      // Gone, not just clear: at opacity 0 its last "Finish first: …" stayed
+      // in the page's text to the end of the tutorial (playtest 2026-10-07).
+      root.style.visibility = 'hidden'
       shown = false
       on.value = false
     }
@@ -111,7 +114,10 @@ const place = (): void => {
   if (v.label !== labelKey.value) labelKey.value = v.label
   if (v.weapon !== weaponId.value) weaponId.value = v.weapon
   root.style.opacity = v.alpha.toFixed(3)
-  if (!shown) on.value = true
+  if (!shown) {
+    on.value = true
+    root.style.visibility = 'visible'
+  }
   shown = true
   if (v.pulse !== pulseSeen) {
     pulseSeen = v.pulse
@@ -169,6 +175,8 @@ $navy: #141a33
   position: absolute
   inset: 0
   opacity: 0
+  // Out of the page's text too until it first shows (place()).
+  visibility: hidden
   pointer-events: none
   z-index: 2
   will-change: opacity

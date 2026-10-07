@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Reiniciar xa',
     'retreat': 'Volver ao laboratorio',
     'respawnIn': 'De volta no punto de control en {n} s',
-    'retryCheckpoint': 'Reintentar dende o control'
+    'retryCheckpoint': 'Reintentar dende o control',
+    'freeReboot': 'Reinicio gratuíto',
+    'freeRebootNote': 'O teu primeiro combate contra un Mestre do Núcleo: un reinicio gratuíto, aquí mesmo.'
   },
   'ending': {
     'fall': 'O Gran Mestre cae. O Sinal Vermello de Vex morre con el.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Continuar',
     'abandon': 'Abandonar a misión',
     'abandonAsk': 'Saír da misión? Contará como fallida.',
+    'abandonWon': 'Saír agora? A vitoria contra o xefe segue contando.',
     'leapHint': 'Non hai botón de salto: camiña por un bordo para saltar o oco.',
     'controls': 'Controis',
     'label': {

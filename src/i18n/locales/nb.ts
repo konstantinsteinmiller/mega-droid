@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Start på nytt nå',
     'retreat': 'Trekk deg tilbake til laben',
     'respawnIn': 'Tilbake ved sjekkpunktet om {n} s',
-    'retryCheckpoint': 'Prøv igjen fra sjekkpunkt'
+    'retryCheckpoint': 'Prøv igjen fra sjekkpunkt',
+    'freeReboot': 'Start på nytt gratis',
+    'freeRebootNote': 'Din første kamp mot en Kjernemester: start på nytt én gang gratis, akkurat her.'
   },
   'ending': {
     'fall': 'Stormesteren faller. Vex sitt Røde Signal dør med den.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Fortsett',
     'abandon': 'Avbryt oppdraget',
     'abandonAsk': 'Forlate oppdraget? Det teller som mislykket.',
+    'abandonWon': 'Forlate nå? Seieren over bossen teller fortsatt.',
     'leapHint': 'Ingen hoppknapp: gå utfor en kant for å hoppe over gapet.',
     'controls': 'Kontroller',
     'label': {

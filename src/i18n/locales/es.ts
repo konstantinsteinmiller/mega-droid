@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Reiniciar ya',
     'retreat': 'Volver al laboratorio',
     'respawnIn': 'De vuelta al punto de control en {n} s',
-    'retryCheckpoint': 'Reintentar desde el control'
+    'retryCheckpoint': 'Reintentar desde el control',
+    'freeReboot': 'Reinicio gratis',
+    'freeRebootNote': 'Tu primer combate contra un Maestro del Núcleo: un reinicio gratis, aquí mismo.'
   },
   'banner': {
     'cleared': 'Nivel superado',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Reanudar',
     'abandon': 'Abandonar misión',
     'abandonAsk': '¿Salir de la misión? Contará como fallida.',
+    'abandonWon': '¿Salir ahora? Tu victoria contra el jefe sigue contando.',
     'leapHint': 'No hay botón de salto: camina por un borde para saltar el hueco.',
     'controls': 'Controles',
     'label': {

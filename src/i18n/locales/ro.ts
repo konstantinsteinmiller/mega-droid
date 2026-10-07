@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Repornește acum',
     'retreat': 'Retragere în laborator',
     'respawnIn': 'Înapoi la punctul de control în {n} s',
-    'retryCheckpoint': 'Reia de la checkpoint'
+    'retryCheckpoint': 'Reia de la checkpoint',
+    'freeReboot': 'Repornire gratuită',
+    'freeRebootNote': 'Prima ta luptă cu un Maestru al Nucleului: o repornire gratuită, chiar aici.'
   },
   'ending': {
     'fall': 'Marele Maestru cade. Semnalul Roșu al lui Vex moare odată cu el.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Continuă',
     'abandon': 'Abandonează misiunea',
     'abandonAsk': 'Părăsești misiunea? Va conta ca eșuată.',
+    'abandonWon': 'Pleci acum? Victoria asupra bossului contează în continuare.',
     'leapHint': 'Nu există buton de salt: pășește peste o margine ca să sari peste gol.',
     'controls': 'Comenzi',
     'label': {

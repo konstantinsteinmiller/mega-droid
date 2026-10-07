@@ -401,7 +401,7 @@ describe('trail visibility', () => {
     vi.mocked(findPath).mockClear()
   })
 
-  it('fades in over ~0.4 s at the scene root, faint and on the floor', () => {
+  it('fades in over ~0.4 s at the scene root, bold and on the floor', () => {
     const trail = new ObjectiveTrail(scene, nav)
     expect(trail.mesh.parent).toBe(scene)
     const input = { enabled: true, px: map.start.x, pz: map.start.z, target, time: 0 }
@@ -410,14 +410,16 @@ describe('trail visibility', () => {
     const early = Math.max(...alphas(trail))
     // A quarter of the way into the 0.4 s fade: a quarter of the peak at most.
     expect(early).toBeGreaterThan(0)
-    expect(early).toBeLessThanOrEqual(0.25 * 0.45 + 1e-3)
+    expect(early).toBeLessThanOrEqual(0.25 * 1 + 1e-3)
     run(trail, 0.5, input)
     const n = trail.mesh.count
     expect(n).toBeGreaterThanOrEqual(3)
     expect(n).toBeLessThanOrEqual(TRAIL_MAX)
     const full = alphas(trail)
     expect(Math.max(...full)).toBeGreaterThan(early)
-    for (const a of full) expect(a).toBeLessThanOrEqual(0.45 + 1e-6)
+    for (const a of full) expect(a).toBeLessThanOrEqual(1 + 1e-6)
+    // Bold, not a whisper: playtesters (2026-10-07) never saw the old 0.17–0.45.
+    expect(Math.max(...full)).toBeGreaterThanOrEqual(0.6)
     const m = new Matrix4()
     const pos = new Vector3()
     for (let i = 0; i < n; i++) {
@@ -455,7 +457,7 @@ describe('trail visibility', () => {
       run(trail, 0.2, input)
       // Fading, not popped: half-way down after half the 0.4 s.
       expect(trail.mesh.visible).toBe(true)
-      expect(Math.max(...alphas(trail))).toBeLessThanOrEqual(0.5 * 0.45 + 1e-3)
+      expect(Math.max(...alphas(trail))).toBeLessThanOrEqual(0.5 * 1 + 1e-3)
       run(trail, 0.3, input)
       expect(trail.mesh.visible).toBe(false)
       trail.dispose()

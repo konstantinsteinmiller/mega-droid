@@ -287,7 +287,9 @@ export default {
     'rebootAd': '立即重启',
     'retreat': '撤回实验室',
     'respawnIn': '{n} 秒后回到检查点',
-    'retryCheckpoint': '从检查点重试'
+    'retryCheckpoint': '从检查点重试',
+    'freeReboot': '免费重启',
+    'freeRebootNote': '首次核心大师之战：可在此免费重启一次。'
   },
   'banner': {
     'cleared': '关卡完成',
@@ -300,6 +302,7 @@ export default {
     'resume': '继续',
     'abandon': '放弃任务',
     'abandonAsk': '要离开任务吗？将视为失败。',
+    'abandonWon': '现在离开吗？击败首领的胜利仍然算数。',
     'leapHint': '没有跳跃键：走出边缘就会跃过缺口。',
     'controls': '操作说明',
     'label': {

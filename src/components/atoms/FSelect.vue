@@ -34,7 +34,42 @@ const selectedLabel = computed(() => {
 })
 const selectedLang = computed(() => props.options.find(opt => opt.value === props.modelValue)?.lang)
 
-const toggle = () => (isOpen.value = !isOpen.value)
+/** The list opens upward when there is more room above, and never runs past
+ *  the viewport: on a 640×360 phone the difficulty list ran under the
+ *  Options footer and cut "SCHWER" off (playtest 2026-10-07). */
+const openUp = ref(false)
+const listMax = ref(props.maxHeight)
+const compact = ref(false)
+const fitList = (): void => {
+  const el = dropdownRef.value
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  // The box that clips it: the nearest scrolling ancestor (a modal's body),
+  // else the viewport.
+  let top = 0
+  let bottom = window.innerHeight
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY
+    if (o === 'auto' || o === 'scroll' || o === 'hidden') {
+      const b = p.getBoundingClientRect()
+      top = Math.max(top, b.top)
+      bottom = Math.min(bottom, b.bottom)
+      break
+    }
+  }
+  const below = bottom - r.bottom - 16
+  const above = r.top - top - 16
+  const want = parseFloat(props.maxHeight) || 200
+  openUp.value = below < Math.min(want, 160) && above > below
+  const room = Math.max(96, openUp.value ? above : below)
+  listMax.value = `${Math.min(want, room)}px`
+  // Short of room: tighter rows, so a short list still fits whole.
+  compact.value = room < want
+}
+const toggle = () => {
+  if (!isOpen.value) fitList()
+  isOpen.value = !isOpen.value
+}
 
 const selectOption = (value: string | number) => {
   emit('update:modelValue', value)
@@ -85,19 +120,20 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     transition(name="pop")
       div(
         v-if="isOpen"
-        class="absolute z-1 left-0 right-0 mt-3 rounded-2xl border-[3px] border-[#0f1a30] bg-[#1a2b4b] shadow-2xl overflow-hidden"
+        class="absolute z-1 left-0 right-0 rounded-2xl border-[3px] border-[#0f1a30] bg-[#1a2b4b] shadow-2xl overflow-hidden"
+        :class="openUp ? 'bottom-full mb-3' : 'mt-3'"
       )
         //- Scrollable Area
         div(
           class="custom-scrollbar overflow-y-auto p-2"
-          :style="{ maxHeight: maxHeight }"
+          :style="{ maxHeight: listMax }"
         )
           div(
             v-for="option in options"
             :key="option.value"
             @click="selectOption(option.value)"
-            class="group/item relative mb-1 last:mb-0 cursor-pointer p-3 rounded-xl transition-all duration-75 active:scale-[0.97]"
-            :class="modelValue === option.value ? 'bg-[#50aaff]' : 'hover:bg-[#2266ff]'"
+            class="group/item relative mb-1 last:mb-0 cursor-pointer rounded-xl transition-all duration-75 active:scale-[0.97]"
+            :class="[modelValue === option.value ? 'bg-[#50aaff]' : 'hover:bg-[#2266ff]', compact ? 'px-3 py-1.5' : 'p-3']"
           )
             //- Option Shine (only for selected/hover)
             span(class="absolute inset-x-0 top-0 h-1/2 rounded-t-xl bg-white/10")

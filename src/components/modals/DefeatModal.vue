@@ -2,6 +2,7 @@
   FModal(:model-value="open" :title="t('defeat.title')" :is-closable="false")
     div.defeat
       p.lead {{ t('defeat.body') }}
+      p.free(v-if="freeReboot") {{ t('defeat.freeRebootNote') }}
       //- What is kept, as the same signed chips the job board promises.
       div.keep
         span {{ t('defeat.kept') }}
@@ -17,6 +18,14 @@
           span.fill(:style="{ width: (100 * respawnLeft / RESPAWN_WAIT) + '%' }")
     template(#footer)
       div.actions
+        //- Down in the first boss fight: one free reboot on the spot, no ad.
+        FButton(
+          v-if="freeReboot"
+          type="primary"
+          icon="replay"
+          :label="t('defeat.freeReboot')"
+          @click="rebootFree"
+        )
         //- The Fortress: back to the last checkpoint, free, at full health.
         FButton(
           v-if="canRetry"
@@ -78,7 +87,10 @@ watch(() => flow.quest, () => { revivedByAd.value = false })
 const canAd = computed(() => canOfferReward.value)
 /** Portal rule (Poki): the free choice before the rewarded one. */
 const freeFirst = platformPolicy.freeOptionFirst
-const offerReboot = computed(() => canAd.value && !revivedByAd.value)
+/** The first boss's free reboot (read when the modal opens). */
+const freeReboot = computed(() => open.value && !!currentMission()?.freeBossReboot)
+const offerReboot = computed(() => canAd.value && !revivedByAd.value && !freeReboot.value)
+const rebootFree = () => { currentMission()?.rebootFree() }
 const tally = computed(() => {
   const m = currentMission()
   return { xp: m?.xp ?? 0, bolts: m?.bolts ?? 0 }
@@ -168,6 +180,11 @@ onUnmounted(stopTimer)
   font-family: var(--font-ui)
 .lead
   font-size: clamp(14px, 3vmin, 18px)
+.free
+  margin-top: 8px
+  color: #ffd84a
+  font-weight: 700
+  font-size: clamp(13px, 2.8vmin, 16px)
   margin: 0 0 10px
 .keep
   display: flex

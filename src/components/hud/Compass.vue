@@ -5,11 +5,13 @@
       span.mark(
         v-for="(m, i) in hud.compass"
         :key="i"
-        :class="[m.kind, { edge: Math.abs(m.bearing) > HALF }]"
+        :class="[m.kind, { edge: Math.abs(m.bearing) > HALF, left: m.bearing < 0, first: i === 0 }]"
         :style="{ left: pos(m.bearing) + '%' }"
       )
         span.pin
-        span.dist(v-if="Math.abs(m.bearing) <= HALF") {{ Math.round(m.dist) }}
+        //- Behind: an arrow off the strip's end says which way to turn.
+        span.turn(v-if="Math.abs(m.bearing) > HALF && i === 0")
+        span.dist {{ Math.round(m.dist) }}
 </template>
 
 <script setup lang="ts">
@@ -18,7 +20,9 @@ import { hud } from '@/game/state/hud'
 /**
  * The objective compass: a strip across the top showing where objective
  * targets, the boss and (once done) the exit lie relative to the view.
- * ±80° maps across the strip; anything behind clamps to the edge.
+ * ±80° maps across the strip; anything behind clamps to the edge, and the
+ * first pin (the way to go) grows a pulsing arrow there: "turn this way".
+ * A faded pin at the end of the strip went unread by every playtester.
  */
 const HALF = (80 * Math.PI) / 180
 const pos = (b: number) => 50 + (Math.max(-HALF, Math.min(HALF, b)) / HALF) * 50
@@ -67,6 +71,39 @@ const pos = (b: number) => 50 + (Math.max(-HALF, Math.min(HALF, b)) / HALF) * 50
   box-shadow: 0 0 8px rgba(127, 244, 255, 0.8)
 .edge .pin
   opacity: 0.55
+.edge.first .pin
+  opacity: 1
+.turn
+  position: absolute
+  top: 50%
+  width: 0
+  height: 0
+  border-top: clamp(7px, 1.6vmin, 10px) solid transparent
+  border-bottom: clamp(7px, 1.6vmin, 10px) solid transparent
+  border-left: clamp(10px, 2.2vmin, 14px) solid #ffd84a
+  filter: drop-shadow(0 0 4px rgba(255, 216, 74, 0.9)) drop-shadow(1px 1px 0 #141a33)
+  left: calc(100% + 4px)
+  transform: translateY(-50%)
+  animation: turn-nudge 0.9s ease-in-out infinite
+.left .turn
+  left: auto
+  right: calc(100% + 4px)
+  transform: translateY(-50%) scaleX(-1)
+@keyframes turn-nudge
+  0%, 100%
+    translate: 0 0
+  50%
+    translate: 4px 0
+.left .turn
+  animation-name: turn-nudge-left
+@keyframes turn-nudge-left
+  0%, 100%
+    translate: 0 0
+  50%
+    translate: -4px 0
+@media (prefers-reduced-motion: reduce)
+  .turn
+    animation: none
 .dist
   position: absolute
   top: 100%

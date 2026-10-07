@@ -16,8 +16,10 @@ import { PLAYER_R } from '../sim/constants'
  * blind playtester spent minutes lost in look-alike rooms with only the
  * compass to go on; this says "this way" without a word, and quietly.
  *
- *  - Look: flat chevrons 4 cm over the floor, warm yellow at low opacity,
- *    with a slow wave of light running along them toward the target.
+ *  - Look: flat chevrons 4 cm over the floor, bright warm yellow in the
+ *    game's dark ink outline (they read on pale floors too), with a slow wave
+ *    of light running along them toward the target. Once faint and quiet;
+ *    playtesters (2026-10-07) walked right over them without seeing them.
  *  - Where: 1.1 m apart from 1.5 m ahead of the player to 8 m out, fading in
  *    at the near end and out at the far one. They are spaced back from the
  *    TARGET, not from the player, so they stay put on the floor while the
@@ -36,8 +38,10 @@ import { PLAYER_R } from '../sim/constants'
 
 /** Warm yellow, the game's gold. */
 const TRAIL_COLOR = '#ffd84a'
-/** Chevron quad edge (m); the chevron drawn in it is ~0.35 m across. */
-const ARROW_SIZE = 0.42
+/** The outline: the game's cel ink. */
+const TRAIL_INK = '#0f1a30'
+/** Chevron quad edge (m); the chevron drawn in it is ~0.5 m across. */
+const ARROW_SIZE = 0.6
 /** Height over the floor (m): above blob shadows (0.02) and floor rings (0.03). */
 const ARROW_Y = 0.04
 /** Along the path from the player (m): the first chevron, the last one. */
@@ -69,8 +73,8 @@ const REPATH_RETRY = 1
 /** A new path ending this far from the old one leads somewhere else: the
  *  old trail fades out before the new one fades in (m). */
 const SWITCH_DIST = 3
-const OPACITY_BASE = 0.17
-const OPACITY_PEAK = 0.45
+const OPACITY_BASE = 0.6
+const OPACITY_PEAK = 1
 /** The light wave: one crest every WAVE_LENGTH metres, every WAVE_PERIOD s. */
 const WAVE_PERIOD = 1.2
 const WAVE_LENGTH = 5
@@ -96,6 +100,7 @@ void main() {
 
 const FRAG = /* glsl */`
 uniform vec3 uColor;
+uniform vec3 uInk;
 uniform float uLift;
 varying vec2 vP;
 varying float vAlpha;
@@ -105,22 +110,27 @@ float chevron(vec2 p) {
   vec2 pa = vec2(abs(p.x), p.y) - vec2(0.0, 0.24);
   vec2 ba = vec2(0.33, -0.44);
   float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-  return length(pa - ba * h) - 0.08;
+  return length(pa - ba * h) - 0.1;
 }
 void main() {
   float d = chevron(vP);
   // One pixel of edge at any distance or angle: no shimmer on a grazing floor.
   float aa = max(fwidth(d), 1e-4);
   float core = 1.0 - smoothstep(-aa, aa, d);
-  // A thin soft rim so it reads as light on the floor, not paint.
-  float rim = (1.0 - smoothstep(0.0, 0.07, d)) * 0.3;
-  float a = max(core, rim) * vAlpha;
+  // A dark ink band round it, as every outline in the game: the yellow
+  // reads on the pale floors, the glow on the dark ones.
+  float ink = (1.0 - smoothstep(0.06 - aa, 0.06 + aa, d)) - core;
+  float a = (core + ink * 0.85) * vAlpha;
   if (a < 0.004) discard;
-  // Encode the colour, then premultiply (the blend is ONE / ONE_MINUS_SRC_ALPHA);
-  // uLift adds a touch of glow so it still reads on the dark floors.
+  // Encode both colours, then premultiply (the blend is ONE / ONE_MINUS_SRC_ALPHA);
+  // uLift adds glow to the yellow.
+  gl_FragColor = vec4(uInk, 1.0);
+  #include <colorspace_fragment>
+  vec3 inkC = gl_FragColor.rgb;
   gl_FragColor = vec4(uColor, 1.0);
   #include <colorspace_fragment>
-  gl_FragColor = vec4(gl_FragColor.rgb * a * (1.0 + uLift), a);
+  vec3 col = mix(inkC, gl_FragColor.rgb * (1.0 + uLift), core / max(core + ink, 1e-4));
+  gl_FragColor = vec4(col * a, a);
 }
 `
 
@@ -350,7 +360,7 @@ export class ObjectiveTrail {
     this.alpha = new InstancedBufferAttribute(new Float32Array(TRAIL_MAX), 1).setUsage(DynamicDrawUsage)
     this.geo.setAttribute('aAlpha', this.alpha)
     this.mat = new ShaderMaterial({
-      uniforms: { uColor: { value: new Color(TRAIL_COLOR) }, uLift: { value: 0.3 } },
+      uniforms: { uColor: { value: new Color(TRAIL_COLOR) }, uInk: { value: new Color(TRAIL_INK) }, uLift: { value: 0.5 } },
       vertexShader: VERT,
       fragmentShader: FRAG,
       transparent: true,
@@ -417,7 +427,7 @@ export class ObjectiveTrail {
       }
     }
 
-    this.mat.uniforms.uLift!.value = 0.3 + PULSE_LIFT * pk
+    this.mat.uniforms.uLift!.value = 0.5 + PULSE_LIFT * pk
     _scale.set(ARROW_SIZE * (1 + PULSE_SWELL * pk), 1, ARROW_SIZE * (1 + PULSE_SWELL * pk))
     for (let i = 0; i < n; i++) {
       const b = i * TRAIL_STRIDE

@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Restartovat hned',
     'retreat': 'Ústup do laboratoře',
     'respawnIn': 'Zpět na kontrolním bodě za {n} s',
-    'retryCheckpoint': 'Znovu od kontrolního bodu'
+    'retryCheckpoint': 'Znovu od kontrolního bodu',
+    'freeReboot': 'Restart zdarma',
+    'freeRebootNote': 'Tvůj první souboj s Mistrem jádra: jeden restart zdarma, přímo tady.'
   },
   'ending': {
     'fall': 'Velmistr padá. Vexův Rudý signál umírá s ním.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Pokračovat',
     'abandon': 'Opustit misi',
     'abandonAsk': 'Opustit misi? Bude se počítat jako neúspěch.',
+    'abandonWon': 'Odejít teď? Výhra nad bossem se stále počítá.',
     'leapHint': 'Žádné tlačítko skoku: sejdi z okraje a mezeru přeskočíš.',
     'controls': 'Ovládání',
     'label': {

@@ -319,7 +319,10 @@ export default {
     'retreat': 'Retreat to the lab',
     'respawnIn': 'Back at the checkpoint in {n} s',
     // The Fortress: back to the last checkpoint, free, at full health.
-    'retryCheckpoint': 'Retry from checkpoint'
+    'retryCheckpoint': 'Retry from checkpoint',
+    // Down in the first boss fight (the tutorial's Core Master): once, no ad.
+    'freeReboot': 'Free reboot',
+    'freeRebootNote': 'Your first Core Master fight: one free reboot, right here.'
   },
   // ─── The big moment banners (`BigBanner.vue`) ─────────────────────────────
   // One line across the screen, uppercased by CSS in cased scripts, sized to
@@ -361,6 +364,8 @@ export default {
     'resume': 'Resume',
     'abandon': 'Abandon mission',
     'abandonAsk': 'Leave the mission? It counts as failed.',
+    // The boss is down, only its weapon lesson is left: leaving keeps the win.
+    'abandonWon': 'Leave now? Your boss win still counts.',
     // The controls legend's leap row, read aloud: there is no jump button.
     'leapHint': 'No jump button: walk off an edge to leap across the gap.',
     'controls': 'Controls',

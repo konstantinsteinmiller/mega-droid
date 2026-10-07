@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Hozir qayta yoqish',
     'retreat': 'Laboratoriyaga chekinish',
     'respawnIn': "{n} soniyadan so'ng nazorat nuqtasiga qaytish",
-    'retryCheckpoint': 'Nazorat nuqtasidan qayta'
+    'retryCheckpoint': 'Nazorat nuqtasidan qayta',
+    'freeReboot': 'Bepul qayta yoqish',
+    'freeRebootNote': 'Yadro ustasi bilan birinchi jangingiz: bir marta bepul qayta yoqish, shu yerda.'
   },
   'banner': {
     'cleared': 'Bosqich yakunlandi',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Davom etish',
     'abandon': 'Missiyani tark etish',
     'abandonAsk': 'Missiyani tark etasizmi? U muvaffaqiyatsiz hisoblanadi.',
+    'abandonWon': 'Hozir chiqasizmi? Boss ustidan gʻalabangiz baribir hisoblanadi.',
     'leapHint': 'Sakrash tugmasi yoʻq: boʻshliqdan sakrab oʻtish uchun chetdan yurib oʻting.',
     'controls': 'Boshqaruv',
     'label': {

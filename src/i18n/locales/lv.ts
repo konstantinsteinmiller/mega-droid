@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Pārstartēt tagad',
     'retreat': 'Atkāpties uz laboratoriju',
     'respawnIn': 'Atpakaļ kontrolpunktā pēc {n} s',
-    'retryCheckpoint': 'Atsākt no kontrolpunkta'
+    'retryCheckpoint': 'Atsākt no kontrolpunkta',
+    'freeReboot': 'Pārstartēt bez maksas',
+    'freeRebootNote': 'Tava pirmā cīņa ar Kodola meistaru: viena bezmaksas pārstartēšana, tepat.'
   },
   'ending': {
     'fall': 'Lielmeistars krīt. Vex Sarkanais signāls mirst kopā ar to.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Turpināt',
     'abandon': 'Pamest misiju',
     'abandonAsk': 'Pamest misiju? Tā tiks skaitīta kā neizdevusies.',
+    'abandonWon': 'Pamest tagad? Uzvara pār bosu tik un tā tiks ieskaitīta.',
     'leapHint': 'Nav lēciena pogas: noej no malas, lai pārlēktu pāri spraugai.',
     'controls': 'Vadība',
     'label': {

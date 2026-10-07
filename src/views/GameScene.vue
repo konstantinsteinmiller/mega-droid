@@ -163,6 +163,13 @@ const typing = (e: KeyboardEvent): boolean => {
 }
 
 const onKey = (e: KeyboardEvent) => {
+  // Esc closes Options first (settings apply as they change, so it is the
+  // SAVE & CLOSE button). It used to shut the pause menu UNDER it instead.
+  if (e.code === 'Escape' && optionsOpen.value) {
+    e.preventDefault()
+    if (!e.repeat) optionsOpen.value = false
+    return
+  }
   // F1 and "?" are the HUD's "?" button (the controls legend): a captured
   // mouse has no cursor to click it with. `e.key` so "?" is found on every
   // layout. Both keys are the game's here: F1 never opens the browser's help.

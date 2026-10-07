@@ -289,7 +289,9 @@ export default {
     'rebootAd': 'Hemen yeniden başlat',
     'retreat': 'Laboratuvara çekil',
     'respawnIn': '{n} sn içinde kontrol noktasına dönüş',
-    'retryCheckpoint': 'Kontrol noktasından dene'
+    'retryCheckpoint': 'Kontrol noktasından dene',
+    'freeReboot': 'Bedava yeniden başlat',
+    'freeRebootNote': 'İlk Çekirdek Ustası savaşın: bir kez bedava yeniden başlat, hemen burada.'
   },
   'banner': {
     'cleared': 'Bölüm tamamlandı',
@@ -302,6 +304,7 @@ export default {
     'resume': 'Devam et',
     'abandon': 'Görevi bırak',
     'abandonAsk': 'Görevden çıkılsın mı? Başarısız sayılır.',
+    'abandonWon': 'Şimdi çıkılsın mı? Patrona karşı zaferin yine de sayılır.',
     'leapHint': 'Zıplama tuşu yok: boşluğun üstünden atlamak için kenardan yürü.',
     'controls': 'Kontroller',
     'label': {

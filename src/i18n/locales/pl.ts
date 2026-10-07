@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Restartuj teraz',
     'retreat': 'Wróć do laboratorium',
     'respawnIn': 'Powrót do punktu kontrolnego za {n} s',
-    'retryCheckpoint': 'Wznów od punktu kontrolnego'
+    'retryCheckpoint': 'Wznów od punktu kontrolnego',
+    'freeReboot': 'Darmowy restart',
+    'freeRebootNote': 'Twoje pierwsze starcie z Mistrzem Rdzenia: jeden darmowy restart, tu i teraz.'
   },
   'banner': {
     'cleared': 'Poziom ukończony',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Wznów',
     'abandon': 'Porzuć misję',
     'abandonAsk': 'Opuścić misję? Zostanie uznana za nieudaną.',
+    'abandonWon': 'Opuścić teraz? Zwycięstwo nad bossem wciąż się liczy.',
     'leapHint': 'Brak przycisku skoku: zejdź z krawędzi, a przeskoczysz szczelinę.',
     'controls': 'Sterowanie',
     'label': {

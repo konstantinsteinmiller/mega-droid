@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Käynnistä nyt',
     'retreat': 'Vetäydy labraan',
     'respawnIn': 'Takaisin tarkistuspisteessä {n} s kuluttua',
-    'retryCheckpoint': 'Yritä tarkistuspisteestä'
+    'retryCheckpoint': 'Yritä tarkistuspisteestä',
+    'freeReboot': 'Ilmainen käynnistys',
+    'freeRebootNote': 'Ensimmäinen Ydinmestari-taistelusi: yksi ilmainen käynnistys, tässä ja nyt.'
   },
   'ending': {
     'fall': 'Suurmestari kaatuu. Vexin Punainen Signaali sammuu sen mukana.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Jatka',
     'abandon': 'Hylkää tehtävä',
     'abandonAsk': 'Poistutaanko tehtävästä? Se lasketaan epäonnistuneeksi.',
+    'abandonWon': 'Poistutaanko nyt? Pomovoitto lasketaan silti.',
     'leapHint': 'Ei hyppynappia: kävele reunan yli, niin hyppäät aukon yli.',
     'controls': 'Ohjaimet',
     'label': {

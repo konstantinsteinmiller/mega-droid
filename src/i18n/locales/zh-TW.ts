@@ -287,7 +287,9 @@ export default {
     'rebootAd': '立即重新啟動',
     'retreat': '撤回實驗室',
     'respawnIn': '{n} 秒後回到檢查點',
-    'retryCheckpoint': '從檢查點重試'
+    'retryCheckpoint': '從檢查點重試',
+    'freeReboot': '免費重新啟動',
+    'freeRebootNote': '首次核心大師之戰：可在此免費重新啟動一次。'
   },
   'ending': {
     'fall': '至尊大師倒下了。Vex的紅色訊號也隨之消逝。',
@@ -325,6 +327,7 @@ export default {
     'resume': '繼續',
     'abandon': '放棄任務',
     'abandonAsk': '要離開任務嗎？將視為失敗。',
+    'abandonWon': '現在離開嗎？擊敗頭目的勝利仍然算數。',
     'leapHint': '沒有跳躍鍵：走出邊緣就會躍過缺口。',
     'controls': '操作說明',
     'label': {

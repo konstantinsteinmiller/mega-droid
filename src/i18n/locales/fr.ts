@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Redémarrer maintenant',
     'retreat': 'Retour au labo',
     'respawnIn': 'Retour au point de contrôle dans {n} s',
-    'retryCheckpoint': 'Reprendre au checkpoint'
+    'retryCheckpoint': 'Reprendre au checkpoint',
+    'freeReboot': 'Redémarrage gratuit',
+    'freeRebootNote': 'Ton premier combat contre un Maître du Noyau : un redémarrage gratuit, ici même.'
   },
   'banner': {
     'cleared': 'Niveau terminé',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Reprendre',
     'abandon': 'Abandonner la mission',
     'abandonAsk': 'Quitter la mission ? Elle compte comme un échec.',
+    'abandonWon': 'Quitter maintenant ? Ta victoire contre le boss compte toujours.',
     'leapHint': 'Pas de bouton de saut : marche au-delà d’un bord pour sauter le vide.',
     'controls': 'Commandes',
     'label': {
@@ -566,7 +569,7 @@ export default {
       'block': 'Bloquer',
       'interact': 'Interagir',
       'beam': 'Se téléporter',
-      'tank': 'Gel de réparation',
+      'tank': 'Gel réparateur',
       'weapon1': 'Arme spéciale 1',
       'weapon2': 'Arme spéciale 2',
       'weapon3': 'Arme empruntée',
@@ -738,7 +741,7 @@ export default {
       'gap': 'Entraînons-nous à sauter par-dessus les trous !',
       'gel': 'Entraînons-nous au gel réparateur !',
       'slide': 'Entraînons-nous à la glissade !',
-      'block': 'Entraînons-nous au Blocage Parfait !',
+      'block': 'Entraînons-nous au Blocage parfait !',
       'charge': 'Entraînons-nous au tir chargé !',
     },
     'hint': {

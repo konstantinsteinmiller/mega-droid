@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Jetzt neu starten',
     'retreat': 'Rückzug ins Labor',
     'respawnIn': 'Zurück am Kontrollpunkt in {n} s',
-    'retryCheckpoint': 'Ab Checkpoint neu starten'
+    'retryCheckpoint': 'Ab Checkpoint neu starten',
+    'freeReboot': 'Gratis-Neustart',
+    'freeRebootNote': 'Dein erster Kampf gegen einen Kernmeister: ein Gratis-Neustart, genau hier.'
   },
   'banner': {
     'cleared': 'Level geschafft',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Fortsetzen',
     'abandon': 'Mission abbrechen',
     'abandonAsk': 'Mission verlassen? Sie gilt als gescheitert.',
+    'abandonWon': 'Jetzt gehen? Dein Sieg über den Boss zählt trotzdem.',
     'leapHint': 'Keine Sprungtaste: Lauf über eine Kante, um die Lücke zu überspringen.',
     'controls': 'Steuerung',
     'label': {

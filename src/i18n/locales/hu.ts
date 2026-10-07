@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Újraindítás most',
     'retreat': 'Vissza a laborba',
     'respawnIn': 'Vissza az ellenőrzőpontnál {n} mp múlva',
-    'retryCheckpoint': 'Újra az ellenőrzőponttól'
+    'retryCheckpoint': 'Újra az ellenőrzőponttól',
+    'freeReboot': 'Ingyenes újraindítás',
+    'freeRebootNote': 'Az első Magmester-csatád: egy ingyenes újraindítás, itt helyben.'
   },
   'ending': {
     'fall': 'A Nagymester elesik. Vex Vörös Jele vele együtt hal el.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Folytatás',
     'abandon': 'Küldetés feladása',
     'abandonAsk': 'Kilépsz a küldetésből? Sikertelennek számít.',
+    'abandonWon': 'Kilépsz most? A főellenség legyőzése így is számít.',
     'leapHint': 'Nincs ugrásgomb: lépj le a peremről, és átugrod a rést.',
     'controls': 'Irányítás',
     'label': {

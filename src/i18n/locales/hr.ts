@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Ponovno pokreni sada',
     'retreat': 'Povlačenje u laboratorij',
     'respawnIn': 'Natrag na kontrolnoj točki za {n} s',
-    'retryCheckpoint': 'Ponovi od kontrolne točke'
+    'retryCheckpoint': 'Ponovi od kontrolne točke',
+    'freeReboot': 'Besplatno pokretanje',
+    'freeRebootNote': 'Tvoj prvi obračun s Majstorom jezgre: jedno besplatno ponovno pokretanje, odmah ovdje.'
   },
   'ending': {
     'fall': 'Veliki Majstor pada. Vexov Crveni signal umire s njim.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Nastavi',
     'abandon': 'Napusti misiju',
     'abandonAsk': 'Napustiti misiju? Računat će se kao neuspjeh.',
+    'abandonWon': 'Napustiti sada? Pobjeda nad bossom i dalje se računa.',
     'leapHint': 'Nema tipke za skok: siđi s ruba i preskočit ćeš procjep.',
     'controls': 'Kontrole',
     'label': {

@@ -16,7 +16,7 @@
         FButton(type="secondary" icon="settings" :label="t('options.title')" @click="$emit('options')")
         FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="confirming = true")
       div.confirm(v-else)
-        p.ask {{ t('pause.abandonAsk') }}
+        p.ask {{ t(bossWon ? 'pause.abandonWon' : 'pause.abandonAsk') }}
         div.actions
           FButton(type="primary" icon="play" :label="t('pause.resume')" @click="resume")
           FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="abandon")
@@ -45,6 +45,8 @@ const objText = computed(() => {
 })
 /** The abandon button was pressed once: the footer asks before it ends the run. */
 const confirming = ref(false)
+/** The boss is down, only its weapon lesson left: leaving keeps the win. */
+const bossWon = computed(() => confirming.value && !!currentMission()?.bossWon)
 watch(open, (o) => { if (o) confirming.value = false })
 const resume = () => { flow.modal = '' }
 const abandon = () => {

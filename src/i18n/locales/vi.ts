@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Khởi động lại ngay',
     'retreat': 'Rút về phòng thí nghiệm',
     'respawnIn': 'Trở lại điểm kiểm tra sau {n} giây',
-    'retryCheckpoint': 'Thử lại từ điểm lưu'
+    'retryCheckpoint': 'Thử lại từ điểm lưu',
+    'freeReboot': 'Khởi động lại miễn phí',
+    'freeRebootNote': 'Trận đầu với Chúa Tể Lõi: một lần khởi động lại miễn phí, ngay tại đây.'
   },
   'banner': {
     'cleared': 'Hoàn thành màn',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Tiếp tục',
     'abandon': 'Bỏ nhiệm vụ',
     'abandonAsk': 'Rời nhiệm vụ? Sẽ tính là thất bại.',
+    'abandonWon': 'Rời đi ngay? Chiến thắng trước trùm vẫn được tính.',
     'leapHint': 'Không có nút nhảy: bước qua mép để nhảy qua khoảng trống.',
     'controls': 'Điều khiển',
     'label': {

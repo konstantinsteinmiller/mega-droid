@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Genstart nu',
     'retreat': 'Træk dig tilbage til laboratoriet',
     'respawnIn': 'Tilbage ved checkpointet om {n} s',
-    'retryCheckpoint': 'Prøv igen fra checkpoint'
+    'retryCheckpoint': 'Prøv igen fra checkpoint',
+    'freeReboot': 'Gratis genstart',
+    'freeRebootNote': 'Din første kamp mod en Kernemester: én gratis genstart, lige her.'
   },
   'ending': {
     'fall': 'Stormesteren falder. Vex\' Røde Signal dør med den.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Fortsæt',
     'abandon': 'Opgiv missionen',
     'abandonAsk': 'Forlad missionen? Den tæller som fejlet.',
+    'abandonWon': 'Forlad nu? Sejren over bossen tæller stadig.',
     'leapHint': 'Ingen hopknap: gå ud over en kant for at springe over hullet.',
     'controls': 'Styring',
     'label': {

@@ -287,7 +287,9 @@ export default {
     'rebootAd': '지금 재가동',
     'retreat': '연구소로 후퇴',
     'respawnIn': '{n}초 후 체크포인트로 복귀',
-    'retryCheckpoint': '체크포인트부터 재도전'
+    'retryCheckpoint': '체크포인트부터 재도전',
+    'freeReboot': '무료 재가동',
+    'freeRebootNote': '첫 코어 마스터 전투: 바로 여기서 한 번 무료로 재가동할 수 있어요.'
   },
   'banner': {
     'cleared': '스테이지 클리어',
@@ -300,6 +302,7 @@ export default {
     'resume': '계속하기',
     'abandon': '미션 포기',
     'abandonAsk': '미션을 떠날까요? 실패로 처리됩니다.',
+    'abandonWon': '지금 떠날까요? 보스 승리는 그대로 인정됩니다.',
     'leapHint': '점프 버튼 없음: 가장자리 밖으로 걸어가면 자동으로 틈을 뛰어넘습니다.',
     'controls': '조작법',
     'label': {

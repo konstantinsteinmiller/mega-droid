@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Riavvia ora',
     'retreat': 'Ritirati al laboratorio',
     'respawnIn': 'Di nuovo al checkpoint tra {n} s',
-    'retryCheckpoint': 'Riprova dal checkpoint'
+    'retryCheckpoint': 'Riprova dal checkpoint',
+    'freeReboot': 'Riavvio gratuito',
+    'freeRebootNote': 'La tua prima sfida con un Maestro del Nucleo: un riavvio gratuito, proprio qui.'
   },
   'banner': {
     'cleared': 'Livello completato',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Riprendi',
     'abandon': 'Abbandona missione',
     'abandonAsk': 'Lasciare la missione? Conterà come fallita.',
+    'abandonWon': 'Lasciare ora? La vittoria sul boss conta comunque.',
     'leapHint': 'Nessun tasto di salto: supera un bordo camminando per saltare il vuoto.',
     'controls': 'Comandi',
     'label': {

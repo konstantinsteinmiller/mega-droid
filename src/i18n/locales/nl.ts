@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'Nu herstarten',
     'retreat': 'Terug naar het lab',
     'respawnIn': 'Terug bij het checkpoint over {n} s',
-    'retryCheckpoint': 'Opnieuw vanaf checkpoint'
+    'retryCheckpoint': 'Opnieuw vanaf checkpoint',
+    'freeReboot': 'Gratis herstart',
+    'freeRebootNote': 'Je eerste gevecht tegen een Kernmeester: één gratis herstart, hier en nu.'
   },
   'banner': {
     'cleared': 'Level voltooid',
@@ -300,6 +302,7 @@ export default {
     'resume': 'Hervatten',
     'abandon': 'Missie afbreken',
     'abandonAsk': 'Missie verlaten? Die telt als mislukt.',
+    'abandonWon': 'Nu verlaten? Je zege op de baas telt nog steeds.',
     'leapHint': 'Geen springknop: loop over een rand om over het gat te springen.',
     'controls': 'Besturing',
     'label': {

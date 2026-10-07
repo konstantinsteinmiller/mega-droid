@@ -287,7 +287,9 @@ export default {
     'rebootAd': '今すぐ再起動',
     'retreat': 'ラボへ撤退',
     'respawnIn': '{n}秒後にチェックポイントへ',
-    'retryCheckpoint': 'チェックポイントから再開'
+    'retryCheckpoint': 'チェックポイントから再開',
+    'freeReboot': '無料で再起動',
+    'freeRebootNote': '初めてのコアマスター戦：ここで一度だけ無料で再起動できる。'
   },
   'banner': {
     'cleared': 'ステージクリア',
@@ -300,6 +302,7 @@ export default {
     'resume': '再開',
     'abandon': 'ミッション放棄',
     'abandonAsk': 'ミッションを離れる？失敗扱いになる。',
+    'abandonWon': '今すぐ離れる？ボスへの勝利はそのまま残る。',
     'leapHint': 'ジャンプボタンはない：端から歩き出すと、自動で隙間を跳び越える。',
     'controls': '操作方法',
     'label': {

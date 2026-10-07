@@ -287,7 +287,9 @@ export default {
     'rebootAd': 'İndi yenidən başla',
     'retreat': 'Laboratoriyaya geri çəkil',
     'respawnIn': '{n} san. sonra yoxlama nöqtəsinə qayıdış',
-    'retryCheckpoint': 'Yoxlama nöqtəsindən yenidən başla'
+    'retryCheckpoint': 'Yoxlama nöqtəsindən yenidən başla',
+    'freeReboot': 'Pulsuz yenidən başla',
+    'freeRebootNote': 'İlk Nüvə Ustası döyüşün: bir dəfə pulsuz yenidən başla, elə burada.'
   },
   'ending': {
     'fall': 'Böyük Usta yıxılır. Vexin Qırmızı Siqnalı da onunla birgə sönür.',
@@ -325,6 +327,7 @@ export default {
     'resume': 'Davam et',
     'abandon': 'Missiyanı tərk et',
     'abandonAsk': 'Missiyadan çıxırsan? Uğursuz sayılacaq.',
+    'abandonWon': 'İndi çıxırsan? Boss üzərində qələbən yenə sayılır.',
     'leapHint': 'Tullanma düyməsi yoxdur: kənardan addımla, boşluğun üstündən özün tullanacaqsan.',
     'controls': 'İdarəetmə',
     'label': {

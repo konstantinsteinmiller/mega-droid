@@ -1871,9 +1871,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  one this mission's capsules lend, else one chosen the same way. */
   secretPrize(prize: SecretSpec['prize'], x: number, y: number, z: number): void {
     if (prize === 'tank') {
-      profile.inv.tanks++
-      pushHud({ t: 'toast', key: 'loot.tank', color: '#8dff7a' })
-      sfx('tank')
+      this.giftGel()
     } else if (prize === 'hp') {
       this.onPickup('hpBig', 0)
     } else {
@@ -3652,6 +3650,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (tr.id === 'gel') {
       this.gelHoloOn = true
       if (this.lessons.gelEnded) {
+        // Learned here and now: a free Repair Gel for the road (#130), the
+        // one the lesson just spent back in the pack before the boss.
+        if (!tr.done.has('gel')) this.giftGel()
         this.trainDone('gel')
         tr.leave()
       }
@@ -3819,6 +3820,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /** A lesson done by the player's own hand: ticked off for good. */
+  /** A Repair Gel given (the gel lesson's reward), past the cap if need be. */
+  private giftGel(): void {
+    profile.inv.tanks++
+    pushHud({ t: 'toast', key: 'loot.tank', color: '#8dff7a' })
+    sfx('tank')
+    this.dirty = true
+  }
+
   private trainDone(id: TrainId): void {
     if (!this.training.done.has(id)) markTip(`train:${id}`)
     // The charge lesson has taught shooting and charging: their glyphs retire.

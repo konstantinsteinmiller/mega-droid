@@ -16,8 +16,8 @@ import {
   MissionObjects, objectiveTarget, BOSS_DOOR_STANDOFF, type ObjectiveHost, type TargetSource, type TargetEnemy
 } from '@/game/sim/objectives'
 import {
-  ObjectiveTrail, buildTrailPath, closeToTarget, createTrailPath, layoutTrail, setTrailPath,
-  TRAIL_END, TRAIL_GAP, TRAIL_HIDE_NEAR, TRAIL_MAX, TRAIL_SPACING, TRAIL_START, TRAIL_STRIDE,
+  ObjectiveTrail, buildTrailPath, closeToTarget, createTrailPath, layoutTrail, layoutTurn, setTrailPath,
+  TURN_AHEAD, TURN_N, TURN_R, TRAIL_END, TRAIL_GAP, TRAIL_HIDE_NEAR, TRAIL_MAX, TRAIL_SPACING, TRAIL_START, TRAIL_STRIDE,
   type TrailInput, type TrailPath
 } from '@/game/fx/objectiveTrail'
 
@@ -435,6 +435,54 @@ describe('trail visibility', () => {
     expect(scene.children).not.toContain(trail.mesh)
   })
 
+  it('the goal behind: a small U-turn of chevrons on the floor AHEAD, toward it (#131)', () => {
+    const trail = new ObjectiveTrail(scene, nav)
+    const input: TrailInput = { enabled: true, px: map.start.x, pz: map.start.z, target, time: 0, yaw: 0 }
+    run(trail, 0.6, input)
+    // Which way the walk sets off: the mean direction of the laid chevrons.
+    const m = new Matrix4()
+    const pos = new Vector3()
+    let wx = 0
+    let wz = 0
+    for (let i = 0; i < trail.mesh.count; i++) {
+      trail.mesh.getMatrixAt(i, m)
+      pos.setFromMatrixPosition(m)
+      wx += pos.x - map.start.x
+      wz += pos.z - map.start.z
+    }
+    // Facing the walk (forward = (−sin, −cos)): only the trail.
+    const toward = Math.atan2(-wx, -wz)
+    input.yaw = toward
+    run(trail, 1, input)
+    const base = trail.mesh.count
+    expect(base).toBeGreaterThan(0)
+    expect(base).toBeLessThanOrEqual(TRAIL_MAX)
+    expect(trail.turnMesh.count).toBe(0)
+    // Turned round: the turn-around joins it, in front of the view, drawn
+    // over whatever stands on the floor there.
+    input.yaw = toward + Math.PI
+    run(trail, 1, input)
+    expect(trail.mesh.count).toBe(base)
+    expect(trail.turnMesh.count).toBe(TURN_N)
+    expect(trail.turnMesh.visible).toBe(true)
+    expect((trail.turnMesh.material as { depthTest: boolean }).depthTest).toBe(false)
+    const fx = -Math.sin(input.yaw)
+    const fz = -Math.cos(input.yaw)
+    for (let i = 0; i < TURN_N; i++) {
+      trail.turnMesh.getMatrixAt(i, m)
+      pos.setFromMatrixPosition(m)
+      const ahead = (pos.x - map.start.x) * fx + (pos.z - map.start.z) * fz
+      expect(ahead).toBeGreaterThan(2.2 - 0.01)
+      expect(ahead).toBeLessThan(TURN_AHEAD + TURN_R + 0.01)
+    }
+    // Facing it again: gone.
+    input.yaw = toward
+    run(trail, 1, input)
+    expect(trail.turnMesh.count).toBe(0)
+    expect(trail.mesh.count).toBe(base)
+    trail.dispose()
+  })
+
   it('hides when the mission says no, when there is no target, and next to the target', () => {
     // 3 m back down the boss corridor from the trail's end: close and in plain sight.
     const bd = bossDoor(map)
@@ -483,5 +531,27 @@ describe('trail visibility', () => {
     expect(calls).toBeGreaterThanOrEqual(2)
     expect(calls).toBeLessThanOrEqual(Math.ceil(1.4 / 0.35) + 1)
     trail.dispose()
+  })
+})
+
+describe('the turn-around (#131)', () => {
+  it("curves from straight ahead to the walk's way, on the side the walk leaves from", () => {
+    const out = new Float32Array(TURN_N * TRAIL_STRIDE)
+    // Facing −z (yaw 0); the walk sets off to the right and back (yaw −2.5).
+    expect(layoutTurn(0, 0, 0, -2.5, out)).toBe(TURN_N)
+    let prev = Infinity
+    for (let k = 0; k < TURN_N; k++) {
+      const o = k * TRAIL_STRIDE
+      // Ahead of the view, all of it.
+      expect(out[o + 1]!).toBeLessThan(-TURN_AHEAD + 0.01)
+      // On the right (+x) side.
+      expect(out[o]!).toBeGreaterThan(-1e-6)
+      // Each chevron turned further than the last: rotation.y falls toward the walk.
+      const r = out[o + 2]!
+      expect(r).toBeLessThan(prev)
+      prev = r
+    }
+    // The last one points back toward the player's side (+z travel).
+    expect(Math.cos(out[(TURN_N - 1) * TRAIL_STRIDE + 2]!)).toBeGreaterThan(0)
   })
 })

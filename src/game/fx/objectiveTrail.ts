@@ -325,13 +325,83 @@ export const pulseAt = (t: number): number => {
   return env * (0.6 + 0.4 * Math.sin(u * Math.PI * 6))
 }
 
+/**
+ * The turn-around (#131). The chevrons lie along the walk from where Flux
+ * stands, so with the goal behind him every one of them is behind him too,
+ * and the floor ahead says nothing. While the walk sets off more than
+ * TURN_SHOW from the view's heading, TURN_N chevrons lie on the floor AHEAD
+ * of him in a small U-turn arc (radius TURN_R, starting TURN_AHEAD out, where
+ * a floor decal is still on screen), curving toward the side the walk leaves
+ * from and ending pointing along it.
+ */
+export const TURN_N = 4
+export const TURN_AHEAD = 4.2
+export const TURN_R = 1.3
+/** Shows past this angle between the view and the walk (rad), hides under TURN_HIDE. */
+export const TURN_SHOW = 1.9
+const TURN_HIDE = 1.45
+/** How far along the walk its heading is read (m). */
+const TURN_LOOK = 2.5
+/** Facing a wall: the arc comes closer, down to this (m), to stay on the floor. */
+const TURN_AHEAD_MIN = 2.2
+
+/**
+ * The turn-around's chevrons for a player at (px, pz) looking along `yaw`
+ * (forward = (−sin yaw, −cos yaw)), the walk setting off along `walkYaw`
+ * (the same convention): TRAIL_STRIDE floats each, as `layoutTrail` (x, z,
+ * rotation.y, fade, a wave offset). Returns TURN_N.
+ */
+export const layoutTurn = (
+  px: number, pz: number, yaw: number, walkYaw: number, out: Float32Array, o0 = 0, ahead = TURN_AHEAD
+): number => {
+  let d = walkYaw - yaw
+  d = Math.atan2(Math.sin(d), Math.cos(d))
+  // + = turn left (yaw grows to the left). Straight behind: either way; left.
+  const side = d >= 0 ? 1 : -1
+  const fx = -Math.sin(yaw)
+  const fz = -Math.cos(yaw)
+  // Left of the view: forward turned +90° about +y.
+  const lx = -Math.cos(yaw)
+  const lz = Math.sin(yaw)
+  const sx = px + fx * ahead
+  const sz = pz + fz * ahead
+  const cx = sx + lx * TURN_R * side
+  const cz = sz + lz * TURN_R * side
+  for (let k = 0; k < TURN_N; k++) {
+    const th = d * (k + 0.5) / TURN_N
+    // The start point turned by th about the arc's centre.
+    const rx = sx - cx
+    const rz = sz - cz
+    const c = Math.cos(th)
+    const s = Math.sin(th)
+    const o = o0 + k * TRAIL_STRIDE
+    out[o] = cx + rx * c + rz * s
+    out[o + 1] = cz - rx * s + rz * c
+    // Heading along the arc: the view's, turned by th; as rotation.y with
+    // local +Z along the way (atan2 of the travel direction).
+    const h = yaw + th
+    out[o + 2] = Math.atan2(-Math.sin(h), -Math.cos(h))
+    out[o + 3] = 1
+    out[o + 4] = (TURN_N - k) * TRAIL_SPACING
+  }
+  return TURN_N
+}
+
 const _m = new Matrix4()
 const _scale = new Vector3(ARROW_SIZE, 1, ARROW_SIZE)
+const _turnScale = new Vector3()
+/** The turn-around's chevrons are bigger: 4–6 m off, seen flat along the floor. */
+const TURN_SCALE = 1.5
 const sq = (dx: number, dz: number): number => dx * dx + dz * dz
 
 export class ObjectiveTrail {
   /** One instanced draw, one chevron per laid-out slot. */
   readonly mesh: InstancedMesh
+  /** The turn-around's chevrons (#131), one more draw while they show. */
+  readonly turnMesh: InstancedMesh
+  private readonly turnGeo: PlaneGeometry
+  private readonly turnMat: ShaderMaterial
+  private readonly turnAlpha: InstancedBufferAttribute
   private readonly nav: Nav
   private readonly geo: PlaneGeometry
   private readonly mat: ShaderMaterial
@@ -339,7 +409,10 @@ export class ObjectiveTrail {
   /** The walk on show and the one the last search found (swapped, never reallocated). */
   private path = createTrailPath()
   private next = createTrailPath()
-  private readonly slots = new Float32Array(TRAIL_MAX * TRAIL_STRIDE)
+  private readonly slots = new Float32Array((TRAIL_MAX + TURN_N) * TRAIL_STRIDE)
+  /** 0..1: the turn-around's own fade, and whether it is wanted. */
+  private turnVis = 0
+  private turning = false
   /** 0..1: the show / hide fade. */
   private vis = 0
   private near = false
@@ -381,6 +454,21 @@ export class ObjectiveTrail {
     this.mesh.renderOrder = 2
     this.mesh.name = 'objectiveTrail'
     scene.add(this.mesh)
+    // The turn-around: its own few chevrons, drawn over whatever stands on the
+    // floor ahead (a pad, a crate): a sign in the view, it must not be hidden.
+    this.turnGeo = new PlaneGeometry(1, 1).rotateX(-Math.PI / 2)
+    this.turnAlpha = new InstancedBufferAttribute(new Float32Array(TURN_N), 1).setUsage(DynamicDrawUsage)
+    this.turnGeo.setAttribute('aAlpha', this.turnAlpha)
+    this.turnMat = this.mat.clone()
+    this.turnMat.depthTest = false
+    this.turnMat.uniforms.uLift = this.mat.uniforms.uLift!
+    this.turnMesh = new InstancedMesh(this.turnGeo, this.turnMat, TURN_N)
+    this.turnMesh.instanceMatrix.setUsage(DynamicDrawUsage)
+    this.turnMesh.count = 0
+    this.turnMesh.frustumCulled = false
+    this.turnMesh.renderOrder = 3
+    this.turnMesh.name = 'objectiveTurn'
+    scene.add(this.turnMesh)
   }
 
   /** Every sim step (see `TrailInput`). */
@@ -405,18 +493,35 @@ export class ObjectiveTrail {
       }
     }
     this.vis = want ? Math.min(1, this.vis + dt / FADE_TIME) : Math.max(0, this.vis - dt / FADE_TIME)
-    const n = this.vis > 0 ? layoutTrail(this.path, o.px, o.pz, this.slots) : 0
-    this.mesh.count = n
-    this.mesh.visible = n > 0
+    let n = this.vis > 0 ? layoutTrail(this.path, o.px, o.pz, this.slots) : 0
+    // The turn-around: the walk sets off behind the view.
+    const walkYaw = this.vis > 0 && o.yaw !== undefined ? this.walkHeading(o.px, o.pz) : null
+    if (walkYaw !== null) {
+      let d = walkYaw - o.yaw!
+      d = Math.abs(Math.atan2(Math.sin(d), Math.cos(d)))
+      this.turning = d > (this.turning ? TURN_HIDE : TURN_SHOW)
+    } else this.turning = false
+    this.turnVis = this.turning ? Math.min(1, this.turnVis + dt / FADE_TIME) : Math.max(0, this.turnVis - dt / FADE_TIME)
+    const firstTurn = n
+    if (this.turnVis > 0 && walkYaw !== null) {
+      layoutTurn(o.px, o.pz, o.yaw!, walkYaw, this.slots, n * TRAIL_STRIDE, this.turnAhead(o.px, o.pz, o.yaw!))
+      for (let k = 0; k < TURN_N; k++) this.slots[(n + k) * TRAIL_STRIDE + 3] = this.turnVis
+      n += TURN_N
+    }
+    this.mesh.count = firstTurn
+    this.mesh.visible = firstTurn > 0
+    this.turnMesh.count = n - firstTurn
+    this.turnMesh.visible = n > firstTurn
     if (!n) return
     const sl = this.slots
     const al = this.alpha.array as Float32Array
+    const tal = this.turnAlpha.array as Float32Array
     const phase = (o.time / WAVE_PERIOD) * Math.PI * 2
     // The pulse: its clock runs only while a chevron is in front of the view.
     let pk = 0
     if (o.pulse && this.vis > 0.5) {
       let seen = false
-      for (let i = 0; i < n && !seen; i++) {
+      for (let i = 0; i < firstTurn && !seen; i++) {
         const b = i * TRAIL_STRIDE
         const a = Math.atan2(-(sl[b]! - o.px), -(sl[b + 1]! - o.pz)) - (o.yaw ?? 0)
         seen = Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < PULSE_VIEW
@@ -436,12 +541,23 @@ export class ObjectiveTrail {
       // On the floor it lies on (the climb's ledges; 0 on a flat map). A
       // chevron over a pit — a lift's run while the lift is away — is dark.
       const fy = floorAt(this.nav, sl[b]!, sl[b + 1]!)
-      al[i] = fy === -Infinity ? 0 : Math.min(1, this.vis * sl[b + 3]! * (OPACITY_BASE + (OPACITY_PEAK - OPACITY_BASE) * w * w) * (1 + PULSE_ALPHA * pk))
-      _m.makeRotationY(sl[b + 2]!).scale(_scale).setPosition(sl[b]!, (fy === -Infinity ? 0 : fy) + ARROW_Y, sl[b + 1]!)
-      this.mesh.setMatrixAt(i, _m)
+      const a = fy === -Infinity ? 0 : Math.min(1, this.vis * sl[b + 3]! * (OPACITY_BASE + (OPACITY_PEAK - OPACITY_BASE) * w * w) * (1 + PULSE_ALPHA * pk))
+      _m.makeRotationY(sl[b + 2]!).scale(i < firstTurn ? _scale : _turnScale.copy(_scale).multiplyScalar(TURN_SCALE))
+        .setPosition(sl[b]!, (fy === -Infinity ? 0 : fy) + ARROW_Y, sl[b + 1]!)
+      if (i < firstTurn) {
+        al[i] = a
+        this.mesh.setMatrixAt(i, _m)
+      } else {
+        tal[i - firstTurn] = a
+        this.turnMesh.setMatrixAt(i - firstTurn, _m)
+      }
     }
     this.mesh.instanceMatrix.needsUpdate = true
     this.alpha.needsUpdate = true
+    if (n > firstTurn) {
+      this.turnMesh.instanceMatrix.needsUpdate = true
+      this.turnAlpha.needsUpdate = true
+    }
   }
 
   /** Leave the scene and free the GPU side. */
@@ -450,6 +566,35 @@ export class ObjectiveTrail {
     this.mesh.dispose()
     this.geo.dispose()
     this.mat.dispose()
+    this.turnMesh.removeFromParent()
+    this.turnMesh.dispose()
+    this.turnGeo.dispose()
+    this.turnMat.dispose()
+  }
+
+  /** How far ahead the arc can lie and stay on open floor: TURN_AHEAD, or
+   *  closer in front of a wall (never under TURN_AHEAD_MIN). */
+  private turnAhead(px: number, pz: number, yaw: number): number {
+    const fx = -Math.sin(yaw)
+    const fz = -Math.cos(yaw)
+    for (let a = TURN_AHEAD; a > TURN_AHEAD_MIN; a -= 0.5) {
+      const r = a + TURN_R
+      if (hasLineOfSight(this.nav, px, pz, px + fx * r, pz + fz * r)) return a
+    }
+    return TURN_AHEAD_MIN
+  }
+
+  /** Which way the walk sets off from (px, pz): its heading TURN_LOOK metres
+   *  on (forward = (−sin, −cos), the view's convention), or null. */
+  private walkHeading(px: number, pz: number): number | null {
+    const p = this.path
+    if (p.n < 2) return null
+    const at = projectOnPath(p, px, pz)
+    pointAt(p, Math.min(p.len, at + TURN_LOOK), _tan, 0)
+    const dx = _tan[0]! - px
+    const dz = _tan[1]! - pz
+    if (dx * dx + dz * dz < 0.25) return null
+    return Math.atan2(-dx, -dz)
   }
 
   private search(px: number, pz: number, tx: number, tz: number): void {

@@ -96,6 +96,10 @@
         //- The weapon hologram presses this one (#109): a finger on it, in step.
         span.demo-finger(v-if="i === 0 && demoOn('weapon')" aria-hidden="true")
           InputGlyph(kind="finger" mode="tap")
+        //- The weapon lesson on a phone or tablet (#130): three yellow arrows
+        //- at the button to press, as the slide lesson's held leap does.
+        span.cue-arrows(v-if="!desk && weaponCue(i)" aria-hidden="true")
+          span.cue-arrow(v-for="k in 3" :key="k" :class="`a${k}`")
     //- The borrowed weapon (a capsule's, this mission only): its colour, a
     //- horseshoe of pips for the charges left, no energy cost. It pops in on
     //- the grant and pops out when its last charge is spent.
@@ -166,6 +170,8 @@ const demoNow = (act: string): boolean => hud.holoAct === act && hud.holoDown &&
  *  breathes until they have done it. The gel has its own ring. */
 const TRY_ACT: Record<string, string> = { charge: 'fire', block: 'block', slide: 'slide' }
 const tryNow = (act: string): boolean => (hud.trainPhase === 'try' || hud.trainPhase === 'intro') && TRY_ACT[hud.trainId] === act
+/** The weapon lesson wants this slot pressed (#130). */
+const weaponCue = (i: number): boolean => hud.lesson?.id === 'weapon' && !hud.lesson.done && hud.lesson.slot === i + 1
 const demoOn = (act: string): boolean => demoNow(act) || (tryNow(act) && !desk.value)
 const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': true } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
 /** A weapon's mark inside its orb (the same glyph as the results screen). */
@@ -791,6 +797,8 @@ watch(() => hud.borrowed.teach, (on, was) => {
 // The slide lesson's held leap: the button bounces, three arrows at it.
 .act.slide.cue
   animation: cue-bounce 0.6s ease-in-out infinite
+  z-index: 3
+.act.weapon:has(.cue-arrows)
   z-index: 3
 @keyframes cue-bounce
   50%

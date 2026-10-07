@@ -130,6 +130,38 @@ describe('the cityscape', () => {
     c.dispose()
   })
 
+  it('one draw call per vehicle kind, lights included; the low tier keeps four', async () => {
+    const kinds = async (q: 'low' | 'full') => {
+      const c = await buildCityscape(mapFor(4), THEMES.neon, undefined, q)
+      c.stream(Infinity)
+      const n = c.root.children.filter(o => o instanceof InstancedMesh).length
+      c.dispose()
+      return n
+    }
+    // Rockets, smoke, taxis, quadcopters, cruisers, their light bars, haulers,
+    // the blimp and the freighter.
+    expect(await kinds('full')).toBe(9)
+    // Rockets, taxis, the blimp and the freighter (a budget phone ran at 10–15 fps).
+    expect(await kinds('low')).toBe(4)
+  })
+
+  it('low tier: the traffic moves at 30 Hz, not every frame', async () => {
+    const c = await buildCityscape(mapFor(2), THEMES.volt, undefined, 'low')
+    c.stream(Infinity)
+    c.update(20)
+    const taxi = c.root.children.filter((o): o is InstancedMesh => o instanceof InstancedMesh).find(f => f.count > 1)!
+    const m = new Matrix4()
+    taxi.getMatrixAt(0, m)
+    const before = m.elements[12]
+    c.update(20 + 1 / 120)
+    taxi.getMatrixAt(0, m)
+    expect(m.elements[12]).toBe(before)
+    c.update(20 + 1 / 20)
+    taxi.getMatrixAt(0, m)
+    expect(m.elements[12]).not.toBe(before)
+    c.dispose()
+  })
+
   it('low quality: far fewer buildings, landmarks and vehicles', async () => {
     const size = async (q: 'low' | 'full') => {
       const c = await buildCityscape(mapFor(8), THEMES.blaze, undefined, q)

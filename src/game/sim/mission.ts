@@ -768,7 +768,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.pad = buildTeleporter(th)
     const [sx, sz] = [this.map.start.x, this.map.start.z]
     this.pad.root.position.set(sx, 0, sz)
-    this.scene.add(this.pad.root)
+    // Under its room's group, like any static prop: hidden with the room.
+    this.propParent(sx, sz).add(this.pad.root)
 
     this.marker = new Mesh(
       new RingGeometry(0.34, 0.5, 32),
@@ -3394,7 +3395,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.holdDoor(ex.door)
     const pad = buildTeleporter(this.theme)
     pad.root.position.set(cellCenter(ex.pad[0]), 0, cellCenter(ex.pad[1]))
-    this.scene.add(pad.root)
+    this.propParent(pad.root.position.x, pad.root.position.z).add(pad.root)
     this.exitPad = pad
   }
 
@@ -4647,18 +4648,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.targetHidden = this.targetLostT > 0
   }
 
-  /** A plain door's halves at `e` (0 shut … 1 open): the opening pose in
-   *  `updateDoors`, run backwards for a door slammed shut again. */
+  /** A plain door's halves at `e` (0 shut … 1 open): the opening pose
+   *  (`updateDoors`), and run backwards for a door slammed shut again. */
   private closePanels(d: DoorState, e: number): void {
-    const part = Math.min(1, e * 2.5)
     const lift = Math.max(0, (e - 0.25) / 0.75)
-    for (let k = 0; k < 2; k++) {
-      const pn = d.mesh.panels[k]
-      if (!pn) continue
-      pn.position.x = (k === 0 ? -1 : 1) * part * 0.35
-      pn.position.y = lift * (WALL_H - 1.1)
-      pn.scale.y = Math.max(0.05, 1 - lift * 0.95)
-    }
+    d.mesh.part(Math.min(1, e * 2.5))
+    const pn = d.mesh.panels[0]
+    if (!pn) return
+    pn.position.y = lift * (WALL_H - 1.1)
+    pn.scale.y = Math.max(0.05, 1 - lift * 0.95)
   }
 
   /** The boss shutter rolls up: by the interact key or button, or by itself
@@ -4697,14 +4695,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           d.mesh.panels[0]!.position.y = e * (WALL_H - 0.6)
         } else {
           // Halves part a little, then retract up into the lintel.
-          const part = Math.min(1, e * 2.5)
-          const lift = Math.max(0, (e - 0.25) / 0.75)
-          for (let k = 0; k < 2; k++) {
-            const pn = d.mesh.panels[k]!
-            pn.position.x = (k === 0 ? -1 : 1) * part * 0.35
-            pn.position.y = lift * (WALL_H - 1.1)
-            pn.scale.y = Math.max(0.05, 1 - lift * 0.95)
-          }
+          this.closePanels(d, e)
         }
         if (d.open > 0.55 && d.slab.active) {
           d.slab.active = false
@@ -4732,7 +4723,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         d.shakeT = Math.max(0, d.shakeT - dt)
         const k = d.shakeT / DOOR_SHAKE
         const off = Math.sin(this.time * 70) * 0.06 * k
-        for (let i = 0; i < d.mesh.panels.length && !d.opening; i++) d.mesh.panels[i]!.position.x = (d.mesh.boss ? 0 : (i === 0 ? -1 : 1) * 0) + off
+        for (let i = 0; i < d.mesh.panels.length && !d.opening; i++) d.mesh.panels[i]!.position.x = off
         d.mesh.lampMat.color.set(k > 0 && Math.sin(this.time * 30) > 0 ? '#ff3a3a' : PAL.glowRed)
       }
     }
@@ -4887,6 +4878,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     for (let i = 0; i < n; i++) {
       const bb = lv.bounds[i]!
       lv.rooms[i]!.visible = vis[i] === 1 && Math.hypot(bb.x - p.x, bb.z - p.z) - bb.r < far
+    }
+    // A door stands between two rooms, at the scene root: drawn while either
+    // of them is. Seven draw calls a door (a boss gate fifteen), and the
+    // doors of every room behind the walls were all drawn every frame.
+    for (const d of this.doors) {
+      d.mesh.root.visible = (vis[d.from] === 1 || vis[d.to] === 1) && Math.hypot(d.x - p.x, d.z - p.z) < far + CELL
     }
     for (const e of this.enemies) {
       const alive = e.state !== 'dead' || e.deathT < 0.2

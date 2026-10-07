@@ -97,13 +97,14 @@ export const glow = (hex: string): MeshBasicMaterial => {
 // ─── Inverted-hull outline ───────────────────────────────────────────────────
 //
 // A back-face-only copy of the mesh pushed out along its normals. Written as a
-// ShaderMaterial with three's own skinning / instancing / fog chunks so the
+// ShaderMaterial with three's own skinning / morph / instancing / fog chunks so the
 // same material outlines a skinned character, an instanced crate and a static
 // prop alike — and so a rig's outline is ONE extra draw call bound to the same
 // skeleton, never one per body part.
 
 const OUTLINE_VERT = /* glsl */`
 #include <common>
+#include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #include <fog_pars_vertex>
 uniform float uThickness;
@@ -112,6 +113,7 @@ void main() {
   #include <beginnormal_vertex>
   #include <skinnormal_vertex>
   #include <begin_vertex>
+  #include <morphtarget_vertex>
   #include <skinning_vertex>
   transformed += normalize(objectNormal) * uThickness;
   #include <project_vertex>

@@ -33,8 +33,9 @@ import { sceneQuality, type SceneQuality } from '../engine/quality'
  *   procedurally on every wall (no texture, antialiased by distance), and its
  *   own haze toward the sector's fog colour by distance. The scene's fog would
  *   wipe anything past ~70 m; the haze keeps the city visible but far.
- * - Every vehicle kind is ONE instanced mesh (and one for its lights), placed
- *   each frame from closed-form paths: no simulation, a few dozen matrices.
+ * - Every vehicle kind is ONE instanced mesh, its lights merged in (one draw
+ *   call a kind), placed each frame from closed-form paths: no simulation, a
+ *   few dozen matrices.
  * - Deterministic from the map seed, so a resumed mission sees the same city.
  */
 
@@ -47,6 +48,7 @@ attribute vec2 aW;
 uniform float uHazeNear;
 uniform float uHazeFar;
 uniform float uHazeMax;
+uniform float uHazeLit;
 uniform float uReveal;
 varying float vHaze;
 varying vec2 vW;
@@ -59,8 +61,13 @@ void main() {
   #endif
   wp = modelMatrix * wp;
   float d = distance( wp.xyz, cameraPosition );
+  float hazeMax = uHazeMax;
+  #ifdef VEHICLE
+    // A vehicle's lights (aW.y = 1) cut through the haze further than its body.
+    hazeMax = mix( uHazeMax, uHazeLit, aW.y );
+  #endif
   // A streamed piece rises out of the haze: fully fogged until revealed.
-  vHaze = mix( 1.0, uHazeMax * smoothstep( uHazeNear, uHazeFar, d ), uReveal );
+  vHaze = mix( 1.0, hazeMax * smoothstep( uHazeNear, uHazeFar, d ), uReveal );
   vW = aW;
   // Windows: along the wall (baked arc length), and storeys up it.
   vUv = vec2( aW.x / 2.6, position.y / 3.4 );
@@ -81,7 +88,12 @@ varying vec2 vW;
 varying vec2 vUv;
 void main() {
   vec3 c = vColor.rgb;
-  #ifndef GLOW
+  #ifdef VEHICLE
+    // One mesh per vehicle kind, body and lights together: the lights
+    // (vW.y = 1) never sink into the night, and blink like beacons.
+    c *= 1.0 - 0.5 * uNight * ( 1.0 - vW.y );
+    if ( vW.x > 0.0 ) c *= 0.15 + 0.85 * step( 0.55, fract( uTime * 0.7 + vW.x ) );
+  #elif !defined( GLOW )
     // At night the walls sink into the dark and the lights carry them.
     c *= 1.0 - 0.5 * uNight;
   #endif
@@ -115,14 +127,14 @@ interface CityLook {
   night: number
 }
 
-const cityMat = (look: CityLook, kind: 'body' | 'glow', hazeMax: number): ShaderMaterial =>
+const cityMat = (look: CityLook, kind: 'body' | 'glow' | 'vehicle', hazeMax: number, hazeLit = hazeMax): ShaderMaterial =>
   new ShaderMaterial({
     vertexShader: VERT,
     fragmentShader: FRAG,
     vertexColors: true,
     fog: false,
     toneMapped: false,
-    defines: kind === 'body' ? { WINDOWS: '' } : { GLOW: '' },
+    defines: kind === 'body' ? { WINDOWS: '' } : kind === 'vehicle' ? { VEHICLE: '' } : { GLOW: '' },
     uniforms: {
       uFog: { value: look.fog },
       uGlass: { value: look.glass },
@@ -132,6 +144,7 @@ const cityMat = (look: CityLook, kind: 'body' | 'glow', hazeMax: number): Shader
       uHazeNear: { value: 40 },
       uHazeFar: { value: 320 },
       uHazeMax: { value: hazeMax },
+      uHazeLit: { value: hazeLit },
       uReveal: { value: 1 }
     }
   })
@@ -505,27 +518,31 @@ const chordLane = (cx: number, cz: number, d: number, phi: number, y: number, ha
 
 interface Fleet {
   body: InstancedMesh
-  glow: InstancedMesh | null
   n: number
   place(i: number, t: number, p: Vector3, q: Quaternion, s: Vector3): boolean
 }
 
-/** Build one vehicle kind's meshes from its body and light parts (local,
- *  facing +z), `n` instances. */
+/**
+ * Build one vehicle kind from its body and light parts (local, facing +z),
+ * `n` instances: ONE instanced mesh, one draw call. The lights are merged
+ * into the body with `aW.y` = 1, which the vehicle shader (`VEHICLE`) reads
+ * to keep them bright at night and clear through the haze.
+ */
 const fleet = (
-  bodyParts: BufferGeometry[], glowParts: BufferGeometry[], n: number, bodyMat: Material, glowMat: Material,
+  bodyParts: BufferGeometry[], glowParts: BufferGeometry[], n: number, mat: Material,
   place: Fleet['place']
 ): Fleet => {
-  const body = new InstancedMesh(mergeGeometries(bodyParts), bodyMat, n)
+  const parts = [mergeGeometries(bodyParts)]
+  if (glowParts.length) {
+    const lights = mergeGeometries(glowParts)
+    const aw = lights.attributes.aW!
+    for (let i = 0; i < aw.count; i++) aw.setY(i, 1)
+    parts.push(lights)
+  }
+  const body = new InstancedMesh(parts.length > 1 ? mergeGeometries(parts) : parts[0]!, mat, n)
   body.instanceMatrix.setUsage(DynamicDrawUsage)
   body.frustumCulled = false
-  let glow: InstancedMesh | null = null
-  if (glowParts.length) {
-    glow = new InstancedMesh(mergeGeometries(glowParts), glowMat, n)
-    glow.instanceMatrix.setUsage(DynamicDrawUsage)
-    glow.frustumCulled = false
-  }
-  return { body, glow, n, place }
+  return { body, n, place }
 }
 
 const YAXIS = new Vector3(0, 1, 0)
@@ -663,8 +680,9 @@ const REVEAL = 2.5
  * compiles mid-play.
  *
  * `quality` 'low' (budget phones, `engine/quality.ts`) builds about half the
- * buildings, three landmarks instead of seven, coarser round shapes and
- * roughly half the traffic.
+ * buildings, three landmarks instead of seven, coarser round shapes, and a
+ * quiet sky: four vehicle kinds of eight (four draw calls), seven
+ * vehicles instead of forty-two, moved at 30 Hz.
  */
 export const buildCityscape = async (
   map: MapData, theme: Theme, slice: Slice = noSlice, quality: SceneQuality = sceneQuality()
@@ -688,8 +706,7 @@ export const buildCityscape = async (
   const litBase = look.lit.clone()
   const bodyMat = cityMat(look, 'body', 0.6)
   const glowMat = cityMat(look, 'glow', 0.32)
-  const vehMat = cityMat(look, 'glow', 0.5)
-  vehMat.defines = {}
+  const vehMat = cityMat(look, 'vehicle', 0.5, 0.3)
   const vehLight = cityMat(look, 'glow', 0.3)
   // The rockets' smoke: the vehicles' shading, see-through.
   const smokeMat = vehMat.clone()
@@ -849,7 +866,7 @@ export const buildCityscape = async (
       p.set(port.x + (i ? 8 : -8) + TURN * kk * kk * kk, 2 + 0.5 * ACC * kk * kk, port.z)
       return Math.atan2(3 * TURN * kk * kk, ACC * kk + 1e-6)
     }
-    fleets.push(fleet(b, g, n(2), vehMat, vehLight, (i, t, p, q, s) => {
+    fleets.push(fleet(b, g, n(2), vehMat, (i, t, p, q, s) => {
       const kk = launch(i, t)
       if (kk > LAUNCH) return false
       q.setFromAxisAngle(ZAXIS, -flight(i, kk, p))
@@ -859,7 +876,7 @@ export const buildCityscape = async (
     // A short see-through trail under the flame (none on the low tier).
     if (!low) {
       const tail = new Vector3()
-      fleets.push(fleet(plume(), [], 2, smokeMat, vehLight, (i, t, p, q, s) => {
+      fleets.push(fleet(plume(), [], 2, smokeMat, (i, t, p, q, s) => {
         const kk = launch(i, t)
         if (kk > LAUNCH + 3) return false
         const a = flight(i, Math.min(kk, LAUNCH), p)
@@ -877,17 +894,21 @@ export const buildCityscape = async (
   // Flying taxis.
   {
     const [b, g] = taxi()
-    fleets.push(fleet(b, g, n(12), vehMat, vehLight, (i, t, p, q, s) => {
+    fleets.push(fleet(b, g, low ? 4 : 12, vehMat, (i, t, p, q, s) => {
       const lane = lanes[[0, 1, 2, 3, 5][i % 5]!]!
       along(lane, seedOf(i + 30) * lane.length + t * 17, p, q, 0.08)
       s.setScalar(1.5)
       return true
     }))
   }
+  // The low tier keeps the sky's showpieces (rockets, taxis, the blimp, the
+  // freighter) and drops the swarms: fewer kinds is fewer draw calls, and
+  // fewer vehicles is less to place every frame on a phone that is short of
+  // both.
   // Quadcopters: small, many, weaving along the inner lanes.
-  {
+  if (!low) {
     const [b, g] = quadcopter()
-    fleets.push(fleet(b, g, n(16), vehMat, vehLight, (i, t, p, q, s) => {
+    fleets.push(fleet(b, g, n(16), vehMat, (i, t, p, q, s) => {
       const lane = lanes[i % 2]!
       along(lane, seedOf(i) * lane.length + t * 9, p, q)
       p.y += Math.sin(t * 1.3 + i) * 2 + (i % 3) * 2.5
@@ -897,24 +918,27 @@ export const buildCityscape = async (
     }))
   }
   // Police cruisers: fast, on the middle rings, lights flashing.
-  const copN = n(3)
-  const cops = (() => {
+  const copN = low ? 0 : 3
+  const cops = copN ? (() => {
     const [b, g] = cruiser()
-    return fleet(b, g, copN, vehMat, vehLight, (i, t, p, q, s) => {
+    return fleet(b, g, copN, vehMat, (i, t, p, q, s) => {
       const lane = lanes[2 + (i % 2)]!
       along(lane, seedOf(i + 60) * lane.length + t * 28, p, q, 0.15)
       s.setScalar(1.5)
       return true
     })
-  })()
-  fleets.push(cops)
-  const bars = new InstancedMesh(mergeGeometries(lightbar()), vehLight, copN * 2)
-  bars.frustumCulled = false
-  bars.instanceMatrix.setUsage(DynamicDrawUsage)
+  })() : null
+  if (cops) fleets.push(cops)
+  // Their light bars: two halves per car, recoloured every frame.
+  const bars = copN ? new InstancedMesh(mergeGeometries(lightbar()), vehLight, copN * 2) : null
+  if (bars) {
+    bars.frustumCulled = false
+    bars.instanceMatrix.setUsage(DynamicDrawUsage)
+  }
   // Cargo haulers on the straight lanes.
-  {
+  if (!low) {
     const [b, g] = hauler()
-    fleets.push(fleet(b, g, n(4), vehMat, vehLight, (i, t, p, q, s) => {
+    fleets.push(fleet(b, g, n(4), vehMat, (i, t, p, q, s) => {
       const lane = lanes[5 + (i % 2)]!
       along(lane, seedOf(i + 90) * lane.length + t * 11 * (i % 2 ? 1 : -1), p, q)
       if (i % 2 === 0) q.multiply(tmpQ.setFromAxisAngle(YAXIS, Math.PI))
@@ -925,7 +949,7 @@ export const buildCityscape = async (
   // An ad blimp, slow, on the outer ring.
   {
     const [b, g] = blimp()
-    fleets.push(fleet(b, g, 1, vehMat, vehLight, (_i, t, p, q, s) => {
+    fleets.push(fleet(b, g, 1, vehMat, (_i, t, p, q, s) => {
       along(lanes[4]!, t * 4, p, q)
       p.y += 12
       s.setScalar(1)
@@ -936,18 +960,15 @@ export const buildCityscape = async (
   {
     const [b, g] = freighter()
     const lane = chordLane(cx, cz, reach + 150, base + 4.2, 150, 230)
-    fleets.push(fleet(b, g, n(2), vehMat, vehLight, (i, t, p, q, s) => {
+    fleets.push(fleet(b, g, n(2), vehMat, (i, t, p, q, s) => {
       along(lane, i * 230 + t * 7, p, q)
       s.setScalar(1)
       return true
     }))
   }
 
-  for (const f of fleets) {
-    root.add(f.body)
-    if (f.glow) root.add(f.glow)
-  }
-  root.add(bars)
+  for (const f of fleets) root.add(f.body)
+  if (bars) root.add(bars)
 
   const m = new Matrix4()
   const p = new Vector3()
@@ -979,6 +1000,7 @@ export const buildCityscape = async (
     return joined
   }
 
+  let placedAt = -Infinity
   const update = (t: number): void => {
     lastT = t
     for (const mat of mats) if (mat.uniforms.uTime) mat.uniforms.uTime.value = t
@@ -986,19 +1008,21 @@ export const buildCityscape = async (
       const kr = Math.min(1, (t - rv.at) / REVEAL)
       for (const mat of rv.mats) mat.uniforms.uReveal!.value = kr * kr * (3 - 2 * kr)
     }
+    // The low tier moves its traffic at 30 Hz: far off, the steps never show,
+    // and the matrices upload half as often.
+    if (low && Math.abs(t - placedAt) < 1 / 30) return
+    placedAt = t
     countActive()
     fleets.forEach((f, fi) => {
       const act = active[fi]!
       f.body.count = act
-      if (f.glow) f.glow.count = act
-      if (f === cops) bars.count = act * 2
+      if (bars && f === cops) bars.count = act * 2
       for (let i = 0; i < act; i++) {
         s.set(1, 1, 1)
         const on = f.place(i, t, p, q, s)
         if (on) m.compose(p, q, s)
         f.body.setMatrixAt(i, on ? m : hidden)
-        f.glow?.setMatrixAt(i, on ? m : hidden)
-        if (f === cops) {
+        if (bars && f === cops) {
           // The light bar rides the cruiser; its halves flash in turn.
           for (let h = 0; h < 2; h++) {
             barM.multiplyMatrices(m, h ? barR : barL)
@@ -1008,16 +1032,15 @@ export const buildCityscape = async (
           }
         }
       }
-      if (act) {
-        f.body.instanceMatrix.needsUpdate = true
-        if (f.glow) f.glow.instanceMatrix.needsUpdate = true
-      }
+      if (act) f.body.instanceMatrix.needsUpdate = true
     })
-    bars.instanceMatrix.needsUpdate = true
-    if (bars.instanceColor) bars.instanceColor.needsUpdate = true
+    if (bars) {
+      bars.instanceMatrix.needsUpdate = true
+      if (bars.instanceColor) bars.instanceColor.needsUpdate = true
+    }
   }
   // Colour buffer on the bars from the start (one program, never recompiled).
-  for (let i = 0; i < copN * 2; i++) bars.setColorAt(i, off)
+  if (bars) for (let i = 0; i < copN * 2; i++) bars.setColorAt(i, off)
   update(0)
 
   const stream = (budgetMs: number): boolean => {

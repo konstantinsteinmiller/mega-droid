@@ -187,6 +187,30 @@ phone before acting on it.
 - Not measured: frame time in the Grand Master fight on a phone (≈12 extra
   draw calls: six parts with outlines, the marker, the beams).
 
+### 9. Doors with their rooms, one mesh a door, a quiet sky on budget phones — KEPT (2026-10-07)
+
+- Why: a Mali-G52 MC2 phone (Android 14 WebView, 8 cores, DPR 2) ran
+  missions at 10–15 fps. It already lands on the weak tier (its GPU name:
+  1x pixel ratio, low scenery), so the draw calls were the lever left.
+- Found (exact counts, real GL draw calls per frame, weak tier, dev build):
+  the doors stood at the scene root, so every door of every room behind the
+  walls was drawn: 8 doors x 7 calls + the boss gate's 15 in the tutorial's
+  first room, 71 of its 133 calls. The sky's traffic was 15 calls (a mesh per
+  vehicle kind and another for its lights), even on the low tier.
+- Change:
+  - A door is drawn while either of its two rooms is (`updateRoomCulling`).
+  - A plain door's halves are one body, outline and glow, parted by a morph
+    target (`props.ts` `partMorph`): 7 → 4 calls a door.
+  - The start and exit pads hang under their rooms like any prop.
+  - Every vehicle kind is one instanced mesh, its lights merged in (`VEHICLE`
+    in the city shader): 15 → 9 calls on full scenery.
+  - Low scenery keeps four vehicle kinds (rockets, taxis, blimp, freighter;
+    7 vehicles, was 21) and moves them at 30 Hz: 15 → 4 calls.
+- Exact, tutorial first room: **133 → 50** draw calls. A regular mission's
+  start (Blaze, Volt): **62–67 → 35**.
+- Not measured: frame time on the phone itself. To confirm, the same phone,
+  `?perfprobe=1`, a minute in a mission, `window.__perf`.
+
 ## Open hypotheses (not applied, not measured)
 
 - The inverted-hull outline doubles every decor and character triangle.

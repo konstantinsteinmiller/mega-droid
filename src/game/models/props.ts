@@ -78,8 +78,12 @@ const vexScreenTexture = (): CanvasTexture => {
 
 export interface DoorMesh {
   root: Group
-  /** Panels that slide apart (normal door) or the shutter that lifts (boss). */
+  /** What moves: a plain door's two halves (ONE group, lifted and squashed
+   *  as one) or the boss door's shutter. */
   panels: Group[]
+  /** A plain door's halves parted sideways, 0 (shut) .. 1 (0.35 m each):
+   *  a morph target, so both halves draw as one mesh. No-op on the boss door. */
+  part(k: number): void
   boss: boolean
   lamp: Mesh
   lampMat: MeshBasicMaterial
@@ -164,8 +168,12 @@ export const buildDoor = (theme: Theme, boss: boolean, approach: 1 | -1 = 1): Do
   const w = CELL
   const h = WALL_H - 0.9
   if (boss) return buildBossDoor(root, panels, w, h, approach)
+  // Both halves in one body, one outline and one glow (three draw calls, not
+  // six): each half lies wholly on its own side of x = 0, and a morph target
+  // slides every vertex 0.35 m outward along x by its side.
+  const toon: BufferGeometry[] = []
+  const glowG: BufferGeometry[] = []
   for (const s of [-1, 1]) {
-    const toon: BufferGeometry[] = []
     toon.push(xform(paint(rbox(w / 2 - 0.05, h, 0.34, 0.3), theme.crate), [s * (w / 4), h / 2, 0]))
     // Chevron stripes on the leading edges
     toon.push(paintBy(
@@ -174,20 +182,37 @@ export const buildDoor = (theme: Theme, boss: boolean, approach: 1 | -1 = 1): Do
     ))
     toon.push(xform(paint(ell(0.36, 0.36, 0.08), theme.crateTrim), [s * (w / 4), h * 0.62, 0.18]))
     toon.push(xform(paint(ell(0.36, 0.36, 0.08), theme.crateTrim), [s * (w / 4), h * 0.62, -0.18]))
-    const glowG = [
+    glowG.push(
       xform(paint(sph(0.12, 10, 8), theme.accent), [s * (w / 4), h * 0.62, 0.24]),
       xform(paint(sph(0.12, 10, 8), theme.accent), [s * (w / 4), h * 0.62, -0.24])
-    ]
-    const p = assemble(toon, glowG, 0.025)
-    panels.push(p.root)
-    root.add(p.root)
+    )
   }
+  const leaves = assemble([partMorph(merge(toon))], [partMorph(merge(glowG))], 0.025)
+  panels.push(leaves.root)
+  root.add(leaves.root)
+  const slid: Mesh[] = []
+  leaves.root.traverse((o) => { if ((o as Mesh).morphTargetInfluences) slid.push(o as Mesh) })
+  const part = (k: number): void => { for (const m of slid) m.morphTargetInfluences![0] = k }
   const lampMat = new MeshBasicMaterial({ color: new Color(PAL.glowGreen), toneMapped: false })
   const lamp = new Mesh(new CylinderGeometry(0.16, 0.16, 0.12, 12), lampMat)
   lamp.rotation.x = Math.PI / 2
   lamp.position.set(0, h + 0.35, 0)
   root.add(lamp)
-  return { root, panels, boss, lamp, lampMat, warn: null }
+  return { root, panels, part, boss, lamp, lampMat, warn: null }
+}
+
+/** How far each half of a plain door slides aside when parted (m). */
+const DOOR_PART = 0.35
+
+/** A plain door's geometry with one morph target: every vertex out along x,
+ *  away from the middle, by DOOR_PART (its half's side is its x's sign). */
+const partMorph = (g: BufferGeometry): BufferGeometry => {
+  const pos = g.attributes.position!
+  const d = new Float32Array(pos.count * 3)
+  for (let i = 0; i < pos.count; i++) d[i * 3] = Math.sign(pos.getX(i)) * DOOR_PART
+  g.morphAttributes.position = [new Float32BufferAttribute(d, 3)]
+  g.morphTargetsRelative = true
+  return g
 }
 
 const buildBossDoor = (root: Group, panels: Group[], w: number, h: number, approach: 1 | -1): DoorMesh => {
@@ -271,7 +296,7 @@ const buildBossDoor = (root: Group, panels: Group[], w: number, h: number, appro
     chevronMats.push(m)
     root.add(c)
   }
-  return { root, panels, boss: true, lamp, lampMat, warn: { beacons, domeMat, beamMat, floorMat, chevronMats, level: 1, screenMat } }
+  return { root, panels, part: () => {}, boss: true, lamp, lampMat, warn: { beacons, domeMat, beamMat, floorMat, chevronMats, level: 1, screenMat } }
 }
 
 // ─── Teleporter pad ──────────────────────────────────────────────────────────

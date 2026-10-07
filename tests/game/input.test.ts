@@ -131,11 +131,21 @@ describe('refused capture: drag to look', () => {
     expect(input.lookDX).toBe(30)
   })
 
-  it('out of a fight a short click is a tap (walk-to)', () => {
+  it('out of a fight a short click still fires — never a walk-to (a sleeping golem is no target)', () => {
     fireMode = false
     mouse('mousedown', { button: 0, clientX: 50, clientY: 60 })
+    expect(input.firePressed).toBe(true)
     mouse('mouseup', { button: 0, clientX: 50, clientY: 60 })
-    expect(input.taps).toHaveLength(1)
-    expect(input.firePressed).toBe(false)
+    expect(input.fireReleased).toBe(true)
+    expect(input.taps).toHaveLength(0)
+  })
+
+  it('out of a fight a drag still only looks', () => {
+    fireMode = false
+    mouse('mousedown', { button: 0, clientX: 100, clientY: 100 })
+    mouse('mousemove', { clientX: 140, clientY: 100 })
+    expect(input.fireHeld).toBe(false)
+    expect(input.fireCancelled).toBe(true)
+    expect(input.lookDX).toBe(40)
   })
 })

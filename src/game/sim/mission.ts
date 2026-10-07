@@ -47,7 +47,7 @@ import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, PARRY_WINDOW, wake, createEnemy, frozenDt } from './enemies'
+import { updateEnemy, syncEnemyVisual, PARRY_WINDOW, wake, wakeGolem, createEnemy, frozenDt } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { Particles } from '../fx/particles'
@@ -296,7 +296,8 @@ const OVERLOAD_VIOLET = new Color('#b46cff')
  *  how often that walk is searched again (s). */
 const COMPASS_AHEAD = 3
 /** The tutorial's machines deal this share of their damage (a 66 % cut, on
- *  top of the tutorial's own softening of an unblocked hit). Traps keep theirs. */
+ *  top of the tutorial's own softening of an unblocked hit). Traps and the
+ *  boss keep theirs. */
 export const TUTORIAL_ENEMY_DAMAGE = 0.34
 /** A wall nearer than this ahead of the eye (m)… */
 const EYE_WALL_NEAR = 1.35
@@ -445,6 +446,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private bossRoom: Room | null = null
   private boss: Enemy | null = null
   private bossStarted = false
+  /** The first boss's free reboot has been taken (`freeBossReboot`). */
+  private freeRebootUsed = false
   /** A voiced story scene running (`story/vexScene.ts`, #117), if any. */
   private storyScene: StoryScene | null = null
   /** Scans known said in this save (`noteSighting`): one profile lookup each. */
@@ -1155,7 +1158,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (e && !e.boss && o.kind === 'aoe' && !hasLineOfSight(this.nav, e.x, e.z, p.x, p.z)) return 'miss'
     // The tutorial's machines hit a third as hard (playtest 2026-10-06: a
     // shield soldier took a first-timer from full health in three seconds).
-    if (e && this.setup.tutorial) dmg *= TUTORIAL_ENEMY_DAMAGE
+    // Not its boss: the first Core Master must still feel like one — a fall
+    // there gets a free reboot instead (`freeBossReboot`).
+    if (e && !e.boss && this.setup.tutorial) dmg *= TUTORIAL_ENEMY_DAMAGE
     // A boss attack reached Flux: the arena's run of blocked ones is over.
     if (e?.boss) this.arena?.attackLanded()
     if (c.iframes > 0) return 'miss'
@@ -1663,6 +1668,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const m = this.muzzle()
     const aim = this.aimDir(m)
     const r = this.weapons.use(i, id, m, aim)
+    // Said, not just refused: a tap mid-cooldown did nothing visible.
+    if (r === 'cooldown') sfx('denied')
     if (r === 'ok') {
       this.coach.use('weapon')
       this.lessons.weaponFired()
@@ -2168,7 +2175,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Held doors: the walkthrough's gates, or a stage's beam-in door while
     // its weapon lesson is owed.
     const beamNeed = this.beamTeach ? this.beamDoorId : -1
-    if (!walk && beamNeed < 0) return
+    if (!walk && beamNeed < 0) {
+      // Nothing held any more (the walkthrough is over): the prompt goes.
+      // It used to keep its last "Finish first: use a Repair Gel" up to the
+      // end of the tutorial (playtest 2026-10-07).
+      this.doorView.alpha = 0
+      return
+    }
     const needAt = (id: number): WalkNeed | null => walk ? walk.needAt(id) : id === beamNeed ? 'weapon' : null
     const p = this.player
     const o = this.doorTick
@@ -2498,11 +2511,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return o >= 0 ? this.level.rooms[o]! : this.scene
   }
 
-  /** Retreat / abandon: keep what was earned, fail the quest, go home. */
+  /** Retreat / abandon: keep what was earned, fail the quest, go home —
+   *  unless its boss is already down and only the copied weapon's lesson is
+   *  left (#110): then the win counts. A playtester who left there had to
+   *  replay the whole tutorial, boss and all (2026-10-07). */
   retreat(): void {
     if (this.finished) return
     this.finished = true
-    void finishMission(false, this.tally())
+    void finishMission(this.bossWon, this.tally())
+  }
+
+  /** The objective is done and only the weapon lesson is still owed. */
+  get bossWon(): boolean {
+    return this.objects.objective.done && this.weaponOwed
   }
 
   /**
@@ -2652,6 +2673,21 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /** A checkpoint to retry from is there. */
+  /** Down in the first boss fight (the tutorial's Core Master), once per
+   *  mission: a free reboot on the spot, no ad — the fight stays as hard as
+   *  it is, and a first fall there does not cost the run. */
+  get freeBossReboot(): boolean {
+    const b = this.boss
+    return !!this.setup.tutorial && this.bossStarted && !!b && b.state !== 'dead' && !this.freeRebootUsed
+  }
+
+  /** The free first-boss reboot (`freeBossReboot`). */
+  rebootFree(): void {
+    if (!this.freeBossReboot) return
+    this.freeRebootUsed = true
+    this.revive()
+  }
+
   get canRetryCheckpoint(): boolean {
     return !!this.cpSnap && !this.finished
   }
@@ -4014,7 +4050,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /** The held golem: Flux walks into its room, the crane lets go; it lands
-   *  with a thud (and is a sleeping crate on the floor again). */
+   *  with a thud and unfolds. */
   private stepGolemDrop(dt: number): void {
     const g = this.golemDrop
     if (!g) return
@@ -4037,6 +4073,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     e.y = 0
     g.crane.landed(e.x, floorAt(this.nav, e.x, e.z), e.z)
     this.golemDrop = null
+    // It lands awake: asleep, a golem is a plain crate to a first-timer, and
+    // "Defeat the machines in this room" over a crate read as a dead end
+    // (playtest 2026-10-07).
+    wakeGolem(this, e)
   }
 
   /** The tutorial's crate lesson brings its crate down from the room's crane
@@ -4964,7 +5004,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         hud.checklist = TUTORIAL_TRAINING.filter(id => this.lessonSpots.has(id))
           .map(id => ({ id, done: tr.done.has(id), current: tr.id === id }))
       }
-    }
+    // Every later mission: none. It used to stay up from the tutorial, five
+    // ticks down the right edge of mission 2 (playtest 2026-10-07).
+    } else if (hud.checklist.length) hud.checklist = []
     const c = this.combat
     hud.hp = Math.max(0, c.hp)
     hud.maxHp = c.maxHp
@@ -5019,11 +5061,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     hud.interactKey = !it ? '' : it.kind === 'chest' ? 'interact.chest' : it.kind === 'npc' ? 'interact.rescue' : 'interact.bossDoor'
     const p = this.player
     const marks: typeof hud.compass = []
-    const walkPin = this.walkCompassPin()
+    // The pin of the way to go: along the walk (A*, as the floor trail), not
+    // straight through the walls — the walkthrough's next step, after the
+    // boss its weapon lesson, elsewhere wherever the trail leads. Playtesters
+    // (2026-10-06/07) followed straight-line pins into walls for minutes.
+    const walkActive = !!this.walk?.active
+    const goal = walkActive ? this.walk!.goal() : this.exitGoal() ?? this.trailIn.target
+    const walkPin = goal ? this.pathCompassPin(goal) : null
     if (walkPin) marks.push(walkPin)
     // The tutorial's pins are the walk's next step alone: a boss pin straight
     // through the walls (the map snakes) sent playtesters back into finished rooms.
-    else if (!this.walk?.active) for (const m of this.objects.compassTargets(this.enemies)) {
+    if (!walkActive) for (const m of this.objects.compassTargets(this.enemies)) {
+      // The trail's own target already has its pin, on the path (in its kind).
+      if (walkPin && goal && Math.hypot(m.x - goal.x, m.z - goal.z) < 2) { walkPin.kind = m.kind; continue }
       const bearing = angDiff(Math.atan2(-(m.x - p.x), -(m.z - p.z)), p.yaw)
       marks.push({ bearing: -bearing, kind: m.kind, dist: Math.hypot(m.x - p.x, m.z - p.z) })
       if (marks.length >= 6) break
@@ -5097,15 +5147,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /**
-   * The tutorial compass pin: where the walk to the walkthrough's goal turns
-   * next, about COMPASS_AHEAD metres along the path, and how far that walk
-   * still is. Searched every COMPASS_REPATH s (A*, as the floor trail).
+   * The compass pin of the way to `g`: where the walk there turns next, about
+   * COMPASS_AHEAD metres along the path, and how far that walk still is.
+   * Searched every COMPASS_REPATH s (A*, as the floor trail).
    */
-  private walkCompassPin(): (typeof hud.compass)[number] | null {
-    const walk = this.walk
-    if (!walk?.active) return null
-    const g = walk.goal()
-    if (!g) return null
+  private pathCompassPin(g: { x: number; z: number }): (typeof hud.compass)[number] | null {
     const p = this.player
     const path = this.compassPath
     if (this.time - this.compassSearchAt >= COMPASS_REPATH || Math.hypot(path.tx - g.x, path.tz - g.z) > 1.5) {

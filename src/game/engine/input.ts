@@ -36,7 +36,8 @@
  *   • Esc releases the capture (the browser owns that key while it is
  *     captured); the scene treats a lost capture as "pause".
  *   • Where the capture is refused (a sandboxed embed, an old browser), the
- *     mouse falls back to the touch model: drag to look, click to fire.
+ *     mouse falls back to the touch model: drag to look, click to fire —
+ *     every click, in a fight or not (walk-to taps stay a touch thing).
  *
  * Mouse buttons are read from MOUSE events, not pointer events: a second
  * button pressed while the first is held (block while charging) arrives as a
@@ -285,12 +286,16 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   }
 
   // ── The look / fire gesture shared by touch and the unlocked mouse ──
-  const gestureDown = (x: number, y: number) => {
+  const gestureDown = (x: number, y: number, mouse = false) => {
     lookStartX = lookLastX = x
     lookStartY = lookLastY = y
     lookStartT = performance.now()
     lookMoved = 0
-    lookIsFire = opts.fireMode()
+    // A free mouse has no FIRE button of its own: its left click always
+    // shoots (a drag still looks). Deciding it by `fireMode` made every click
+    // on a sleeping crate golem a walk-to — the tutorial's last room could
+    // not be cleared (playtest 2026-10-07).
+    lookIsFire = mouse || opts.fireMode()
     if (lookIsFire) {
       input.fireHeld = true
       input.firePressed = true
@@ -464,7 +469,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     }
     const r = rect()
     mouseDrag = true
-    gestureDown(e.clientX - r.left, e.clientY - r.top)
+    gestureDown(e.clientX - r.left, e.clientY - r.top, true)
   }
 
   const onMouseMove = (e: MouseEvent) => {

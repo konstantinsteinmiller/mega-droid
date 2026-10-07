@@ -453,3 +453,61 @@ describe('the tutorial\'s machines hit softly, and nothing hits through a wall',
     expect(r.c.hp).toBe(before)
   })
 })
+
+// The owner, 2026-10-07: the first boss must still challenge the core
+// audience; a fall there gets a free reboot instead of softer hits.
+describe('the first boss keeps its bite, and forgives one fall', () => {
+  it('the tutorial boss is not under the tutorial machines\' damage cut', () => {
+    const lose = (tutorial: boolean) => {
+      const r = rig({ tutorial })
+      const before = r.c.hp
+      r.hit(40, r.machine(true))
+      return before - r.c.hp
+    }
+    // Only the tutorial's own long-standing softening (0.6) is left.
+    expect(lose(true) / lose(false)).toBeGreaterThan(0.5)
+  })
+
+  it('down in the tutorial boss fight: one free reboot, then none', () => {
+    const r = rig({ tutorial: true })
+    const m = r.m as unknown as { boss: unknown; bossStarted: boolean; freeBossReboot: boolean; rebootFree(): void; revive(): void }
+    m.boss = { state: 'engage', boss: true }
+    m.bossStarted = true
+    m.revive = () => { r.c.dead = false }
+    r.c.dead = true
+    expect(m.freeBossReboot).toBe(true)
+    m.rebootFree()
+    expect(r.c.dead).toBe(false)
+    expect(m.freeBossReboot).toBe(false)
+  })
+
+  it('no free reboot outside the tutorial, or before its boss fight', () => {
+    const plain = rig().m as unknown as { boss: unknown; bossStarted: boolean; freeBossReboot: boolean }
+    plain.boss = { state: 'engage', boss: true }
+    plain.bossStarted = true
+    expect(plain.freeBossReboot).toBe(false)
+    const early = rig({ tutorial: true }).m as unknown as { boss: unknown; freeBossReboot: boolean }
+    early.boss = { state: 'idle', boss: true }
+    expect(early.freeBossReboot).toBe(false)
+  })
+})
+
+// Playtest 2026-10-07: a player who left after the boss, with only the
+// copied weapon's lesson owed, got MISSION FAILED and replayed it all.
+describe('leaving after the boss keeps the win', () => {
+  it('the boss down and only its weapon lesson owed: the retreat is a win', () => {
+    const m = rig({ tutorial: true }).m as unknown as {
+      objects: { objective: { done: boolean } }; exitWeapon: string; exitLit: boolean; exitPad: unknown; bossWon: boolean
+    }
+    m.objects = { objective: { done: false } }
+    expect(m.bossWon).toBe(false)
+    m.objects.objective.done = true
+    m.exitWeapon = 'scrapVolley'
+    m.exitLit = false
+    m.exitPad = {}
+    expect(m.bossWon).toBe(true)
+    // Learned (the pedestal lit), the objective is simply done: no retreat needed.
+    m.exitLit = true
+    expect(m.bossWon).toBe(false)
+  })
+})

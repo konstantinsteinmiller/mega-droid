@@ -21,7 +21,7 @@
         InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
     button.act.block(
       type="button"
-      :class="[{ held: hud.blockHeld }, demoClass('block')]"
+      :class="[{ held: hud.blockHeld, cue: hud.blockCue }, demoClass('block')]"
       :aria-label="t('combat.block')"
       @pointerdown.prevent.stop="blockDown"
       @pointerup.prevent.stop="blockUp"
@@ -33,6 +33,9 @@
       span.demo-finger(v-if="demoOn('block')" aria-hidden="true")
         InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
       CoachRing(:hint="touchHint('parry') ?? touchHint('block') ?? urgentBlock" side="rim")
+      //- The block lesson's held shot: press it now (`hud.blockCue`).
+      span.cue-arrows(v-if="hud.blockCue" aria-hidden="true")
+        span.cue-arrow(v-for="i in 3" :key="i" :class="`a${i}`")
     //- The cooldown is a clock wipe that shrinks away with the seconds left in
     //- the middle, and the button pops when it is back — the same on a phone
     //- (under the thumb) and on a desktop. Short of power it says so instead:
@@ -795,7 +798,7 @@ watch(() => hud.borrowed.teach, (on, was) => {
   .act.demo-try
     animation: none
 // The slide lesson's held leap: the button bounces, three arrows at it.
-.act.slide.cue
+.act.slide.cue, .act.block.cue
   animation: cue-bounce 0.6s ease-in-out infinite
   z-index: 3
 .act.weapon:has(.cue-arrows)
@@ -831,7 +834,7 @@ watch(() => hud.borrowed.teach, (on, was) => {
   50%
     transform: translate(-50%, -50%) var(--r) translateY(-56px)
 @media (prefers-reduced-motion: reduce)
-  .act.slide.cue, .cue-arrow
+  .act.slide.cue, .act.block.cue, .cue-arrow
     animation: none
 .demo-finger
   position: absolute

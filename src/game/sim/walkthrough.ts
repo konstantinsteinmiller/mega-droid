@@ -453,7 +453,14 @@ export class Walkthrough {
     if (this.gel === 'sprung' && this.plan.gel) this.h.holdDoor(this.plan.gel.door)
   }
 
-  /** A block or a parry landed (anywhere in the mission). */
+  /** The block room's door may open: the shield raised, its Trooper and a
+   *  Rotor Drone down (the mission ticks the lesson off with it). */
+  get blockMet(): boolean {
+    return this.blocked && this.blockRoomDone()
+  }
+
+  /** The shield went up (anywhere in the mission): the block room's first
+   *  condition (`blockRoomDone` the rest). */
   noteBlock(): void {
     if (this.blocked) return
     this.blocked = true
@@ -507,6 +514,11 @@ export class Walkthrough {
     else if (h.time - this.readyAt >= OPEN_DELAY) this.pass(g)
   }
 
+  /** The chest step's chest is open (or there is none). */
+  get chestOpened(): boolean {
+    return this.chestOpen()
+  }
+
   private chestOpen(): boolean {
     const c = this.chest
     return !c || !!this.h.objects.chests[c.id]?.opened
@@ -539,7 +551,7 @@ export class Walkthrough {
       case 'crate':
         return this.crate || (this.crateLive && h.lessons.crateBroken)
       case 'block':
-        return this.blocked
+        return this.blocked && this.blockRoomDone()
       case 'slide':
         return this.slid
       case 'chest':
@@ -553,6 +565,24 @@ export class Walkthrough {
       case 'gap':
         return this.leapt
     }
+  }
+
+  /**
+   * The block room's door (playtest 2026-10-07: on mobile, players shot one
+   * Rotor Drone after another and never raised the shield, so the room never
+   * let them out): the shield raised once (`blocked`), its Trooper down, and
+   * one Rotor Drone of that room down too.
+   */
+  private blockRoomDone(): boolean {
+    const g = this.plan.gates[this.gate]
+    if (!g) return true
+    let drone = false
+    for (const e of this.h.enemies) {
+      if (e.room !== g.room) continue
+      if (e.kind === 'trooper' && e.state !== 'dead') return false
+      if (e.kind === 'heli' && e.state === 'dead') drone = true
+    }
+    return drone
   }
 
   /** The room is quiet and the player in it, but the step is not done: bring

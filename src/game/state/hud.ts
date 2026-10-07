@@ -118,6 +118,10 @@ export const hud = shallowReactive({
   /** The slide lesson holds the Stomper's leap until a slide: three yellow
    *  arrows point at the slide input. */
   slideCue: false,
+  /** The block lesson holds the Trooper's first shot at the parry moment
+   *  until a block: the block input bounces under yellow arrows (touch), a
+   *  mouse with its right button pressing (desktop). */
+  blockCue: false,
   /** Atlas's current line is a lesson intro: the gold bubble. */
   atlasGold: false,
   /** The tutorial checklist (mission 1): each lesson, done or not. */

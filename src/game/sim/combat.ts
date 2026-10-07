@@ -38,6 +38,9 @@ const _weak = { x: 0, y: 0, z: 0, r: 0 }
 export interface CombatHost extends World {
   /** A machine's shot ended on geometry (the boss arena counts these). */
   onShotBlocked?(s: Shot): void
+  /** A blockable machine shot is this close (s) to Flux: the block lesson may
+   *  hold it there (true: time has stopped, leave the shot be). */
+  cueBlock?(s: Shot, eta: number): boolean
   scene: Scene
   stats: PlayerStats
   hitStop: number
@@ -560,6 +563,7 @@ export class CombatSystem {
         incomingShot(h.player, s.x, s.z, s.px, s.pz, s.vx, s.vz) // an off-screen shot whizzes from its side
         if (s.blockable && toPlayer / sp < PARRY_WINDOW + h.stats.parryBonus) {
           ;(s.sprite.material as SpriteMaterial).color.set('#ffffff')
+          if (h.cueBlock?.(s, toPlayer / sp)) continue
         }
         if (dx * dx + dy * dy + dz * dz < rr * rr) {
           const r = h.hitPlayer(s.source, s.dmg, { blockable: s.blockable, fromX: s.px, fromZ: s.pz, kind: 'shot' })

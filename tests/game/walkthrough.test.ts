@@ -147,6 +147,7 @@ const passTo = (r: Rig, n: number) => {
   }
   if (n > 2) {
     r.walk.noteBlock()
+    machine(r, r.gate(2).room, 'heli').state = 'dead'
     enter(r, r.gate(2).room)
     run(r, 1)
   }
@@ -302,19 +303,45 @@ describe('each room', () => {
 
   // A playtester learned the slide and the door stayed shut: the shield and
   // slide rooms open the moment the move is learned, the teacher standing or not.
-  it('third: a block opens it, the Trooper still standing', () => {
+  it('third: the shield once, the Trooper down and one Rotor Drone down open it', () => {
     const r = makeWalk()
     r.walk.start()
     passTo(r, 2)
     const room = r.gate(2).room
-    machine(r, room, 'trooper')
+    const trooper = machine(r, room, 'trooper')
     enter(r, room)
     run(r, 2, true)
     expect(isOpen(r, 2)).toBe(false)
+    // The shield alone no longer does it: the Trooper still stands.
     r.walk.noteBlock()
     run(r, 1, true)
-    expect(isOpen(r, 2)).toBe(true)
+    expect(isOpen(r, 2)).toBe(false)
     expect(r.s.brought).toEqual([])
+    // The Trooper down: a Rotor Drone beams in; the door waits on it.
+    trooper.state = 'dead'
+    run(r, 2)
+    expect(r.s.brought).toEqual(['heli'])
+    expect(isOpen(r, 2)).toBe(false)
+    r.enemies[r.enemies.length - 1]!.state = 'dead'
+    run(r, 1)
+    expect(isOpen(r, 2)).toBe(true)
+    expect(r.s.brought).toEqual(['heli'])
+  })
+
+  it('third: the Trooper and a Rotor Drone down without the shield keep it shut', () => {
+    const r = makeWalk()
+    r.walk.start()
+    passTo(r, 2)
+    const room = r.gate(2).room
+    machine(r, room, 'trooper').state = 'dead'
+    machine(r, room, 'heli').state = 'dead'
+    enter(r, room)
+    run(r, 3)
+    expect(isOpen(r, 2)).toBe(false)
+    expect(r.walk.needAt(r.gate(2).door)).toBe('block')
+    r.walk.noteBlock()
+    run(r, 1)
+    expect(isOpen(r, 2)).toBe(true)
   })
 
   it('third: a Trooper felled before any block brings in a Rotor Drone to block', () => {
@@ -939,6 +966,7 @@ describe('goal: where the floor trail leads next', () => {
     expect(goal(r)).toEqual(at('machine', trooper))
     r.walk.noteBlock()
     trooper.state = 'dead'
+    machine(r, c2, 'heli').state = 'dead'
     run(r, 0.1)
     expect(goal(r)).toEqual(exit(r, 2))
     run(r, 1)
@@ -1122,9 +1150,13 @@ describe('the held door\'s prompt: what a door waits on, who teaches', () => {
     hardhat.state = 'dead'
     passTo(r, 2)
     expect(r.walk.needAt(r.gate(2).door)).toBe('block')
-    // Blocked: done, the Trooper standing or not.
-    machine(r, r.gate(2).room, 'trooper')
+    // The shield raised: not yet, the Trooper standing; done once it and a
+    // Rotor Drone are down.
+    const trooper = machine(r, r.gate(2).room, 'trooper')
     r.walk.noteBlock()
+    expect(r.walk.needAt(r.gate(2).door)).toBe('block')
+    trooper.state = 'dead'
+    machine(r, r.gate(2).room, 'heli').state = 'dead'
     expect(r.walk.needAt(r.gate(2).door)).toBeNull()
     passTo(r, 3)
     expect(r.walk.needAt(r.gate(3).door)).toBe('slide')

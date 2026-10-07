@@ -84,7 +84,7 @@ import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
 import { bossHpMul, PROGRESS_HP } from './adaptive'
-import { LessonHologram, TargetArrow, ArmHologram, type HoloId } from '../fx/lessonHologram'
+import { LessonHologram, TargetArrow, ArmHologram, holoRetired, type HoloId, type HoloProgress } from '../fx/lessonHologram'
 import { tickLava } from '../models/lava'
 import { Shatter } from '../fx/shatter'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
@@ -163,6 +163,11 @@ const FLAT_EYE = 0.45
 /** The slide lesson's Stomper holds at the top of its leap (s into its 0.7 s
  *  arc) until the player slides. */
 const SLIDE_CUE_AT = 0.33
+/** The block lesson holds the Trooper's first shot this far (s) from Flux:
+ *  inside the parry window (PARRY_WINDOW), so the block it waits for parries. */
+const BLOCK_CUE_ETA = 0.2
+/** …and keeps the shield up this long after that block (s), tap or hold. */
+const BLOCK_CUE_HOLD = 0.4
 /** The gel hologram shows within this of its spot (m), once its lesson began. */
 const GEL_HOLO_NEAR = 9
 /** The checklist's arrow toward a lesson stays up this long (s). */
@@ -586,6 +591,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  (`fx/lessonHologram.ts`), each up while Flux is in its room (`room` -1:
    *  the gel's, near its spot once its lesson began). */
   private holos: Array<{ holo: LessonHologram; room: number; x: number; z: number }> = []
+  /** Lessons done this mission: their holograms fold away (`holoRetired`). */
+  private readonly learnedHere = new Set<HoloId>()
+  private readonly holoDone: HoloProgress = { crateBroken: false, chestOpen: false, learned: this.learnedHere }
   /** The big yellow arrows over the lesson targets (two at most at once). */
   private readonly targetArrows: TargetArrow[] = []
   /** The slide lesson's freeze: the Stomper held at the top of its leap until
@@ -595,6 +603,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private slideCueDone = false
   private slideCued: Enemy | null = null
   private gelHoloOn = false
+  /** The block lesson's freeze: the Trooper's first shot held at the parry
+   *  moment until the player blocks (`cueBlock`); once a mission. */
+  private blockCue: Shot | null = null
+  private blockCueDone = false
+  /** After that block, the shield stays up this long (s) even if the tap was
+   *  already let go: the parry it was promised happens. */
+  private blockCueHold = 0
   /** The weapon lesson room behind the boss (`map.exit`): its pedestal (lit
    *  once the lesson is done: walking onto it beams Flux out), the weapon
    *  copied from the boss, whether its lesson has begun, and the arm
@@ -3037,6 +3052,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         return
       }
     }
+    // The block lesson's held shot: only a block lets it land, as a parry.
+    if (this.blockCue && this.freeze.shot?.kind === 'lesson') {
+      if (first && this.input.blockPressed) {
+        this.releaseBlockCue()
+        return
+      }
+    }
     const ended = this.freeze.update(dt, pressed)
     this.fx.update(dt)
     this.system.rubble.update(dt, this.nav)
@@ -3163,6 +3185,64 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       kind: 'lesson', dur: Infinity, frame: 'fp', skippable: false, fx: '',
       tx: e.x, ty: e.y + (e.floor ?? 0) + e.def.aimY, tz: e.z
     })
+  }
+
+  /**
+   * The block lesson's held shot (`CombatHost.cueBlock`): the Trooper's first
+   * shot at Flux, while the block is still to learn, stops in the air at the
+   * moment a block would parry it, the view on it; the HUD bounces the block
+   * input under yellow arrows (touch) or shows the right mouse button
+   * pressing (desktop) — `hud.blockCue` — and only a block lets time run on.
+   */
+  cueBlock(s: Shot, eta: number): boolean {
+    if (!this.walk || this.blockCueDone || this.blockCue || this.freeze.active) return false
+    if (this.training.id !== 'block' || this.training.done.has('block')) return false
+    const e = s.source
+    if (!e || e.kind !== 'trooper' || eta > BLOCK_CUE_ETA) return false
+    this.blockCue = s
+    this.blockCueDone = true
+    hud.blockCue = true
+    // The view on the shot (and the Trooper behind it): the shield must face it.
+    const p = this.player
+    p.yaw = Math.atan2(-(e.x - p.x), -(e.z - p.z))
+    p.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.atan2(s.y - (p.y + EYE_H), Math.max(0.8, Math.hypot(s.x - p.x, s.z - p.z)))))
+    this.startFreeze({ kind: 'lesson', dur: Infinity, frame: 'fp', skippable: false, fx: '', tx: s.x, ty: s.y, tz: s.z })
+    return true
+  }
+
+  /** The block came: the shield up and fresh, the shot set on its last
+   *  stretch straight at Flux's front, and time runs again — it lands inside
+   *  the parry window and flies back at the Trooper. The press stays for the
+   *  next step (no `consumeEdges`). */
+  private releaseBlockCue(): void {
+    const s = this.blockCue!
+    const c = this.combat
+    const p = this.player
+    this.blockCue = null
+    hud.blockCue = false
+    c.power = c.maxPower
+    c.guardBroken = 0
+    c.riposteT = 0
+    c.hurtT = 0
+    c.slideT = 0
+    c.blockPressedAt = this.time
+    this.blockCueHold = BLOCK_CUE_HOLD
+    if (s.active && s.source) {
+      const sp = Math.hypot(s.vx, s.vy, s.vz) || 1
+      const ex = s.source.x - p.x
+      const ez = s.source.z - p.z
+      const el = Math.hypot(ex, ez) || 1
+      const d = sp * BLOCK_CUE_ETA * 0.5
+      const y = p.y + EYE_H - 0.45
+      s.x = s.px = p.x + (ex / el) * d
+      s.z = s.pz = p.z + (ez / el) * d
+      s.y = s.py = y
+      s.vx = -(ex / el) * sp
+      s.vy = 0
+      s.vz = -(ez / el) * sp
+    }
+    this.freeze.end()
+    this.writeHud()
   }
 
   /** The checklist's tap on an open lesson: point the way for a while. */
@@ -3689,6 +3769,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         this.trainSpot = { x: e.x, y: e.y + (e.floor ?? 0) + e.def.aimY + e.def.hitR, z: e.z }
         if (id === 'slide') this.stepSlideCue(e)
       }
+      // The block room's door rule met without a shot ever blocked: the
+      // lesson ticks off with the door.
+      if (id === 'block' && !tr.done.has('block') && walk.blockMet) this.trainDone('block')
     }
   }
 
@@ -3751,20 +3834,24 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   private addHolo(id: HoloId, room: number, x: number, z: number, yaw: number, weaponColor?: string, weapon?: WeaponId): void {
-    const holo = new LessonHologram(id, { weaponColor, weapon })
+    const holo = new LessonHologram(id, { weaponColor, weapon, theme: this.theme })
     holo.place(this.scene, x, Math.max(0, floorAt(this.nav, x, z)), z, yaw)
     this.holos.push({ holo, room, x, z })
   }
 
-  /** Per step: each hologram up while Flux is in its room (#269: even with
-   *  its lesson learned, until he walks out), its input pinned over it on
-   *  the HUD; the yellow arrows over what the lessons want hit (#D31). */
+  /** Per step: each hologram up while Flux is in its room, until its move is
+   *  done (`holoRetired`), its input pinned over it on the HUD; the yellow
+   *  arrows over what the lessons want hit (#D31). */
   private stepHolograms(dt: number): void {
     const p = this.player
     const here = roomAt(this.map, p.x, p.z)
     let glyph: LessonHologram | null = null
+    const done = this.holoDone
+    done.crateBroken = this.lessons.crateBroken
+    done.chestOpen = !!this.walk?.chestOpened
     for (const h of this.holos) {
-      const show = h.room >= 0 ? here === h.room : this.gelHoloOn && Math.hypot(p.x - h.x, p.z - h.z) < GEL_HOLO_NEAR
+      const near = h.room >= 0 ? here === h.room : this.gelHoloOn && Math.hypot(p.x - h.x, p.z - h.z) < GEL_HOLO_NEAR
+      const show = near && !holoRetired(h.holo.id, done)
       h.holo.update(dt, show)
       if (show && !glyph) glyph = h.holo
     }
@@ -3830,6 +3917,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   private trainDone(id: TrainId): void {
     if (!this.training.done.has(id)) markTip(`train:${id}`)
+    this.learnedHere.add(id)
     // The charge lesson has taught shooting and charging: their glyphs retire.
     if (id === 'charge') {
       this.coach.master('fire')
@@ -4236,9 +4324,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (inp.blockPressed) {
       c.blockPressedAt = this.time
       c.riposteT = 0
+      this.walk?.noteBlock()
     }
     c.riposteT = Math.max(0, c.riposteT - dt)
-    c.blocking = inp.blockHeld && c.riposteT <= 0 && c.guardBroken <= 0 && c.slideT <= 0 && c.hurtT <= 0
+    this.blockCueHold = Math.max(0, this.blockCueHold - dt)
+    c.blocking = (inp.blockHeld || this.blockCueHold > 0) && c.riposteT <= 0 && c.guardBroken <= 0 && c.slideT <= 0 && c.hurtT <= 0
 
     // ── Fire / charge (MegaMan: shoot on press, charge while held) ──
     // A fumble's flailing arm neither fires nor charges (`sim/fumble.ts`).
@@ -5792,6 +5882,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   dispose(): void {
+    // A lesson freeze left mid-way (quit from the pause menu): its cue goes.
+    hud.slideCue = false
+    hud.blockCue = false
     for (const c of this.roomCranes) c.dispose()
     this.roomCranes = []
     this.storyScene?.skip()

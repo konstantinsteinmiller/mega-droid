@@ -31,7 +31,7 @@ import InputGlyph from './InputGlyph.vue'
  */
 const el = ref<HTMLElement | null>(null)
 const pinned = ref(false)
-const live = computed(() => hud.phase === 'play' && !hud.slideCue)
+const live = computed(() => hud.phase === 'play' && !hud.slideCue && !hud.blockCue)
 const glyph = computed(() => {
   if (!live.value || hud.device === 'touch') return null
   switch (hud.holoAct) {

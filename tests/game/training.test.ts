@@ -1,6 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { Group as StubGroup } from 'three'
+
+// The charged shot paints a canvas texture: Node has no canvas.
+vi.mock('@/game/fx/chargedShot', () => ({ buildChargedShot: () => ({ root: new StubGroup(), fly: () => {}, hide: () => {} }) }))
 import { Training, INTRO_FOR, HELP_AFTER, CHARGE_STEP, steppedToward, type TrainHost } from '@/game/sim/training'
-import { HOLO_LOOP, HOLO_PRESS, holoGlyphAt, holoLoopAlpha } from '@/game/fx/lessonHologram'
+import { Box3, Vector3, type Mesh, type MeshBasicMaterial, type Object3D } from 'three'
+import { HOLO_LOOP, HOLO_PRESS, holoGlyphAt, holoLoopAlpha, holoRetired, LessonHologram, type HoloId } from '@/game/fx/lessonHologram'
+import { buildChest, buildCrate } from '@/game/models/props'
+import { THEMES } from '@/game/world/themes'
 
 // Every lesson room runs intro → try (a hologram does the move on a loop the
 // whole time; no card, no demo), a hint every HELP_AFTER while stuck, and a
@@ -119,5 +126,40 @@ describe("the charge lesson's start", () => {
   it('walking away, or straight sideways, is not a step toward the drones', () => {
     expect(steppedToward(drone, pad, { x: pad.x - 2, z: pad.z })).toBe(false)
     expect(steppedToward(drone, pad, { x: pad.x, z: pad.z + 3 })).toBe(false)
+  })
+})
+
+// A hologram folds away once its move is done this mission; the perfect
+// block's stays. The crate and the chest are the game's own models.
+describe('lesson holograms retire', () => {
+  const none = { crateBroken: false, chestOpen: false, learned: new Set<HoloId>() }
+  it('stays until its move is done', () => {
+    for (const id of Object.keys(HOLO_LOOP) as HoloId[]) expect(holoRetired(id, none)).toBe(false)
+  })
+  it('goes once done, except the perfect block', () => {
+    const all = { crateBroken: true, chestOpen: true, learned: new Set(Object.keys(HOLO_LOOP) as HoloId[]) }
+    for (const id of Object.keys(HOLO_LOOP) as HoloId[]) expect(holoRetired(id, all)).toBe(id !== 'block')
+    expect(holoRetired('crate', { ...none, crateBroken: true })).toBe(true)
+    expect(holoRetired('chest', { ...none, chestOpen: true })).toBe(true)
+    expect(holoRetired('gel', { ...none, learned: new Set<HoloId>(['gel']) })).toBe(true)
+    expect(holoRetired('gap', { ...none, learned: new Set<HoloId>(['gap']) })).toBe(true)
+  })
+  const size = (o: Object3D): number[] => {
+    o.updateMatrixWorld(true)
+    return new Box3().setFromObject(o).getSize(new Vector3()).toArray().map(v => Math.round(v * 100) / 100)
+  }
+  it('shows the crate and the chest the player meets', () => {
+    const crate = new LessonHologram('crate', { theme: THEMES.scrapyard })
+    const chest = new LessonHologram('chest', { theme: THEMES.scrapyard })
+    const real = { crate: buildCrate(THEMES.scrapyard).root, chest: buildChest(THEMES.scrapyard).root }
+    for (const [id, h] of [['crate', crate], ['chest', chest]] as const) {
+      const prop = h.prop!
+      const want = size(real[id])
+      const meshes: Mesh[] = []
+      prop.traverse(o => { if ((o as Mesh).isMesh) meshes.push(o as Mesh) })
+      // Same parts minus the ink outline, so the same silhouette.
+      expect(size(prop)).toEqual(want)
+      expect(meshes.every(m => (m.material as MeshBasicMaterial).isMeshBasicMaterial)).toBe(true)
+    }
   })
 })

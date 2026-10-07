@@ -11,6 +11,8 @@ import { buildBarrier, type BarrierFx } from '../models/barrier'
 import type { TrainId } from '../sim/training'
 import { dashPose } from '../models/dash'
 import type { WeaponId } from '../data/weapons'
+import { buildChest, buildCrate, type PropMesh } from '../models/props'
+import { THEMES, type Theme } from '../world/themes'
 
 /** What a hologram shows: a lesson's move, or the crate and the chest rooms'
  *  (shoot the crate with a charge, shoot the chest open). */
@@ -57,6 +59,20 @@ export const holoGlyphAt = (id: HoloId, u: number): HoloGlyph => {
   return { act: ACT[id], down: u >= a && u < b }
 }
 
+/** What has been done this mission, as far as the holograms care. */
+export interface HoloProgress {
+  crateBroken: boolean
+  chestOpen: boolean
+  /** Lessons completed this mission (not the profile's old ticks). */
+  learned: ReadonlySet<HoloId>
+}
+
+/** A hologram folds away once its move has been done this mission (the
+ *  crate broken by the charge, the chest shot open, the gap leapt, the gel
+ *  drunk…). The perfect block's stays: a timing worth watching again. */
+export const holoRetired = (id: HoloId, p: HoloProgress): boolean =>
+  id === 'block' ? false : id === 'crate' ? p.crateBroken : id === 'chest' ? p.chestOpen : p.learned.has(id)
+
 /** The loop's own fade (0..1): out over the last HOLO_RESET, in over the first. */
 export const holoLoopAlpha = (id: HoloId, u: number): number => {
   const L = HOLO_LOOP[id]
@@ -90,6 +106,21 @@ const MUZZLE = new Vector3(0, -0.34, 0)
 const _m = new Vector3()
 const _look = new Vector3()
 
+/** A prop drawn in the hologram's light: its body in `mat`, its lamps in
+ *  `fx`, its ink outline dropped (the shape is the game's own model, so the
+ *  hologram teaches the very crate and chest the player meets). */
+const holoProp = (root: Object3D, mat: MeshBasicMaterial, fx: MeshBasicMaterial): void => {
+  const drop: Object3D[] = []
+  root.traverse((o) => {
+    const m = o as Mesh
+    if (!m.isMesh) return
+    const was = m.material as MeshBasicMaterial & { isShaderMaterial?: boolean }
+    if (was.isShaderMaterial) { drop.push(m); return }
+    m.material = was.isMeshBasicMaterial ? fx : mat
+  })
+  for (const o of drop) o.removeFromParent()
+}
+
 /** Yaw that turns a rig (which faces +Z) toward +X. */
 const FACE_PX = Math.PI / 2
 const FACE_NX = -Math.PI / 2
@@ -113,10 +144,11 @@ export class LessonHologram {
   private shown = 0
 
   /** The crate room's crate, and the chest room's chest (its lid on a hinge). */
-  private readonly crate: Mesh | null = null
+  private readonly crate: PropMesh | null = null
   private readonly chips: Mesh[] = []
   private readonly chest: Group | null = null
   private readonly lid: Group | null = null
+  private readonly lamp: MeshBasicMaterial | null = null
 
   /** The weapon lesson's three drones, its shots, its hit halos (two rings
    *  crossed at 90°, so the burst reads in 3D), Thunder Arc's bolts and Gale
@@ -128,7 +160,7 @@ export class LessonHologram {
   private readonly bolts: Mesh[] = []
   private readonly leaves: Mesh[] = []
 
-  constructor(id: HoloId, opts: { weaponColor?: string; weapon?: WeaponId } = {}) {
+  constructor(id: HoloId, opts: { weaponColor?: string; weapon?: WeaponId; theme?: Theme } = {}) {
     this.id = id
     this.mat = holoMaterial()
     this.fx = holoMaterial(id === 'weapon' ? opts.weaponColor ?? '#ffd84a' : id === 'slide' ? '#ff4a4a' : id === 'gel' ? '#8dff7a' : '#9ff4ff')
@@ -191,10 +223,13 @@ export class LessonHologram {
         this.root.add(c)
       }
     }
-    // The crate: a box a charged shot breaks into a few chips.
+    // The crate: the sector's own supply crate, which a charged shot breaks
+    // into a few chips.
+    const theme = opts.theme ?? THEMES.scrapyard
     if (id === 'crate') {
-      this.crate = new Mesh(new BoxGeometry(1, 1, 1), this.mat)
-      this.root.add(this.crate)
+      this.crate = buildCrate(theme)
+      holoProp(this.crate.root, this.mat, this.fx)
+      this.root.add(this.crate.root)
       for (let k = 0; k < 6; k++) {
         const c = new Mesh(new BoxGeometry(0.25, 0.25, 0.25), this.fx)
         c.visible = false
@@ -202,17 +237,13 @@ export class LessonHologram {
         this.root.add(c)
       }
     }
-    // The chest: a box and a lid hinged at its back edge.
+    // The chest: the game's own supply chest, its lid on its hinge.
     if (id === 'chest') {
-      this.chest = new Group()
-      const base = new Mesh(new BoxGeometry(1.0, 0.55, 0.7), this.mat)
-      base.position.y = 0.275
-      this.lid = new Group()
-      this.lid.position.set(0.5, 0.55, 0)
-      const top = new Mesh(new BoxGeometry(1.0, 0.18, 0.72), this.mat)
-      top.position.set(-0.5, 0.09, 0)
-      this.lid.add(top)
-      this.chest.add(base, this.lid)
+      const c = buildChest(theme)
+      holoProp(c.root, this.mat, this.fx)
+      this.chest = c.root
+      this.lid = c.lid
+      this.lamp = c.lampMat
       this.root.add(this.chest)
     }
     // The gap: two ledges with a gap between, in the hologram's own light.
@@ -231,6 +262,11 @@ export class LessonHologram {
     parent.add(this.root)
     this.root.position.set(x, y, z)
     this.root.rotation.y = yaw
+  }
+
+  /** The crate or the chest it shows (the game's own model), if any. */
+  get prop(): Object3D | null {
+    return this.crate?.root ?? this.chest
   }
 
   /** The loop's time now (s). */
@@ -280,6 +316,7 @@ export class LessonHologram {
     this.root.removeFromParent()
     this.mat.dispose()
     this.fx.dispose()
+    this.lamp?.dispose()
   }
 
   // ─── The loops (local space: Flux on the left, facing +X) ────────────────
@@ -602,10 +639,11 @@ export class LessonHologram {
     animateHeroIdle(this.flux, t)
     this.aim(smooth(span(u, 0.2, 0.6)))
     const m = this.muzzle()
-    const crate = this.crate!
+    const crate = this.crate!.root
     const broken = u >= 2.3 && u < 3.8
     crate.visible = !broken
-    crate.position.set(2.4, 0.5, 0)
+    crate.position.set(2.4, 0, 0)
+    crate.rotation.y = FACE_NX
     crate.scale.setScalar(u >= 3.8 ? smooth(span(u, 3.8, 4.1)) : 1)
     const shot = this.shot!
     if (u >= 1.9 && u < 2.3) {
@@ -640,11 +678,11 @@ export class LessonHologram {
     this.orb.visible = u >= 0.6 && u < 0.9
     const k = span(u, 0.6, 0.9)
     this.orb.scale.setScalar(0.6)
-    this.orb.position.set(m.x + k * (1.8 - m.x), m.y + k * (0.45 - m.y), m.z * (1 - k))
+    this.orb.position.set(m.x + k * (1.8 - m.x), m.y + k * (0.6 - m.y), m.z * (1 - k))
     const open = smooth(span(u, 0.9, 1.25)) * (1 - smooth(span(u, 3.0, 3.4)))
-    this.lid!.rotation.z = -1.9 * open
+    this.lid!.rotation.x = -1.9 * open
     this.ring.visible = u >= 0.9 && u < 1.5
-    this.ring.position.set(1.8, 0.9, 0)
+    this.ring.position.set(1.8, 1.25, 0)
     this.ring.rotation.set(-Math.PI / 2, 0, 0)
     this.ring.scale.setScalar(0.3 + 0.8 * span(u, 0.9, 1.5))
   }

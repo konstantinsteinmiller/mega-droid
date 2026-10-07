@@ -15,6 +15,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { sceneUi, setSceneTextLookup } from '@/game/story/vexScene'
+import { loadStreetModule } from '@/game/lazy'
 
 /**
  * The voiced story scenes' bubble (`story/vexScene.ts`): Dr. Vex's ornate red
@@ -32,7 +33,7 @@ const vexFace = ref('')
 onMounted(async () => {
   setSceneTextLookup((key, params) => t(key, fill(params)))
   try {
-    const { vexFaceTexture } = await import('@/game/models/street')
+    const { vexFaceTexture } = await loadStreetModule()
     const img = vexFaceTexture().image as HTMLCanvasElement | undefined
     vexFace.value = img?.toDataURL?.('image/png') ?? ''
   } catch { vexFace.value = '' }

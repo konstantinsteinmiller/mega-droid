@@ -23,6 +23,7 @@ import { joinPortalBoard, reportPortalBest } from '@/use/usePortalLeaderboard'
 import type { SectorId } from './world/themes'
 import { debriefFor, debriefSeen, type DebriefPlan } from './story/debriefScript'
 import { hubSceneFor } from './story/vexScenes'
+import { loadDebriefLoaderModule } from './lazy'
 
 /**
  * ─── Game flow ───────────────────────────────────────────────────────────────
@@ -92,7 +93,7 @@ type IntroFactory = (opts: {
   onStart: () => void
   onLive: () => void
   onEnd: (skipped: boolean) => void
-}) => IntroHandle
+}) => IntroHandle | Promise<IntroHandle>
 /** The ending (`story/ending.ts`), as far as the flow and its layer drive it. */
 export interface EndingHandle extends Pick<import('./engine/app').GameMode, 'scene' | 'camera' | 'update' | 'render' | 'dispose' | 'enter'> {
   skip(): void
@@ -185,7 +186,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
   let loader: import('./story/debriefLoader').DebriefLoaderMode | null = null
   if (!import.meta.env.VITEST) {
     try {
-      const { DebriefLoaderMode } = await import('./story/debriefLoader')
+      const { DebriefLoaderMode } = await loadDebriefLoaderModule()
       loader = new DebriefLoaderMode()
       app.setMode(loader)
       app.setWanted(true)
@@ -330,7 +331,7 @@ export const createBootMode = async (onProgress?: (p01: number) => void): Promis
   void joinPortalBoard(lifetimeXp())
   const t = (import.meta.env.DEV && await testBootTarget()) || bootTarget(INTRO_ENABLED && !!introFactory)
   if (t.kind === 'intro') {
-    const m = beginIntro(false)
+    const m = await beginIntro(false)
     onProgress?.(1)
     return m
   }
@@ -371,12 +372,12 @@ let introLive: IntroHandle | null = null
 let stopCloudWatch: (() => void) | null = null
 
 /** Make the intro the scene (the boot, or a replay from Options). */
-const beginIntro = (replay: boolean): IntroHandle => {
+const beginIntro = async (replay: boolean): Promise<IntroHandle> => {
   flow.screen = 'intro'
   flow.modal = ''
   hud.phase = 'boot'
   // The intro's own score starts when the cutscene goes live (`IntroMode.enter`).
-  const m = introFactory!({
+  const m = await introFactory!({
     replay,
     onStart: () => {
       performance.mark('boot:intro-start')
@@ -485,9 +486,11 @@ const finishIntro = async (replay: boolean, _skipped: boolean): Promise<void> =>
 /** Options → Replay intro (the hub only). It ends back in the hub. */
 export const replayIntro = (): void => {
   if (!introFactory || flow.screen !== 'hub' || flow.loading) return
-  const m = beginIntro(true)
-  app.setMode(m)
-  app.setWanted(true)
+  void beginIntro(true).then((m) => {
+    if (flow.screen !== 'intro') { m.abort(); return }
+    app.setMode(m)
+    app.setWanted(true)
+  })
 }
 
 /** For tests: forget the intro's state between cases. */

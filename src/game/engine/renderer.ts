@@ -2,8 +2,7 @@ import {
   WebGLRenderer, SRGBColorSpace, NoToneMapping, PerspectiveCamera
 } from 'three'
 import { deviceClass } from '@/use/deviceProfile'
-import { perfFlag, IOS_LEGACY } from '@/use/perfVariants'
-import { isAppleTouch } from '@/use/deviceProfile'
+import { perfFlag } from '@/use/perfVariants'
 import { watchContextLoss } from './glContext'
 
 /**
@@ -18,23 +17,27 @@ import { watchContextLoss } from './glContext'
  */
 let renderer: WebGLRenderer | null = null
 
-/** Device-pixel-ratio cap. A 3× phone rendering at 3× fills 9× the pixels of
- *  1× for a picture that a cel-shaded, outlined style barely benefits from. */
-export const dprCap = (): number => {
-  if (perfFlag('dpr1')) return 1
-  const weak = deviceClass() === 'weak'
-  const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-  if (weak) return 1
-  if (!IOS_LEGACY && isAppleTouch()) return 1.5
-  return coarse ? 1.6 : 2
-}
+/**
+ * The canvas's pixel ratio: 1 or 2, nothing between (#121) and never below 1.
+ * A 3× phone rendering at 3× fills 9× the pixels of 1× for a picture that a
+ * cel-shaded, outlined style barely benefits from, so 2 is the top. A weak
+ * device (`deviceClass`) gets 1. Otherwise a screen of 1.5× and up gets 2
+ * and one below gets 1: an in-between ratio (the old 1.5 on iOS, 1.6 on a
+ * phone) resamples every pixel on its way to the screen, which softens the
+ * outlines more than either whole number does.
+ */
+export const pixelRatioFor = (deviceRatio: number, weak: boolean): 1 | 2 =>
+  weak || deviceRatio < 1.5 ? 1 : 2
+
+export const dprCap = (): 1 | 2 =>
+  perfFlag('dpr1') ? 1 : pixelRatioFor(window.devicePixelRatio || 1, deviceClass() === 'weak')
 
 export const getRenderer = (): WebGLRenderer => {
   if (renderer) return renderer
   const canvas = document.createElement('canvas')
   canvas.className = 'game-canvas'
   watchContextLoss(canvas)
-  const dpr = Math.min(window.devicePixelRatio || 1, dprCap())
+  const dpr = dprCap()
   renderer = new WebGLRenderer({
     canvas,
     // MSAA only where it is cheap and visible: at DPR ≥ 1.5 the outlines are

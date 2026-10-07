@@ -311,11 +311,11 @@ export class IntroMode implements GameMode {
 
   // ── Sets ──
   private streetSet = new Group()
-  private street: Street
-  private runner: Rig
+  private street!: Street
+  private runner!: Rig
   private runnerRoot = new Group()
   private runMotion = newMotion(7)
-  private trooper: Rig
+  private trooper!: Rig
   private trooperRoot = new Group()
   private drones: Rig[] = []
   private droneRoots: Group[] = []
@@ -323,30 +323,30 @@ export class IntroMode implements GameMode {
    *  (`fx/chargedShot.ts`; the charge steps green, then the full charge's
    *  flickering cyan, as on the arm cannon in play). */
   private charge = new Group()
-  private chargeGlow: SpriteMaterial
-  private chargeCore: MeshBasicMaterial
-  private shot: ChargedShotFx
+  private chargeGlow!: SpriteMaterial
+  private chargeCore!: MeshBasicMaterial
+  private shot!: ChargedShotFx
   /** Each shot visibly leaves the cannon (#106: the flights are a tenth of a
    *  second, and started inside his forearm): a flash at the muzzle ring and
    *  a plasma tracer from the muzzle to the shot, fading after the hit. */
-  private flash: Sprite
-  private flashMat: SpriteMaterial
-  private tracer: Mesh
-  private tracerMat: MeshBasicMaterial
-  private eyeStreak: Mesh
+  private flash!: Sprite
+  private flashMat!: SpriteMaterial
+  private tracer!: Mesh
+  private tracerMat!: MeshBasicMaterial
+  private eyeStreak!: Mesh
   /** The showcase's props: the shield (the game's barrier, held free of the
    *  first-person camera), drone 2's orbs, the Trooper's shock ring, the
    *  Repair Gel flask and its burst. */
-  private shield: BarrierFx
+  private shield!: BarrierFx
   private readonly shieldAt = new Vector3()
   /** The last frame's length (s): the barrier animates on its own clock. */
   private frameDt = 0
   private orbs: Mesh[] = []
-  private shockRing: Mesh
-  private shockMat: MeshBasicMaterial
-  private flask: Mesh
-  private healRing: Mesh
-  private healMat: MeshBasicMaterial
+  private shockRing!: Mesh
+  private shockMat!: MeshBasicMaterial
+  private flask!: Mesh
+  private healRing!: Mesh
+  private healMat!: MeshBasicMaterial
   /** The action clock last frame: the showcase's bursts fire on crossings. */
   private lastSt = STREET_FROM
 
@@ -409,7 +409,26 @@ export class IntroMode implements GameMode {
     this.rim.position.set(-1, 0.6, -0.8)
     s.add(this.hemi, this.key, this.rim, this.fx.points)
 
-    // ── 0 · The neon street ──
+
+    // The sets in shot order. The loader builds the valley and the cut-in
+    // (the opening shot, #121: their shaders compile behind the splash too);
+    // the rest stream in one per frame while it plays (`streamSets`), the
+    // street last, as it plays last, and a shot that needs one not built yet
+    // builds it first (`needSets`), so a skip never shows a missing set.
+    this.jobs = [
+      () => this.buildValley(),
+      () => this.buildCutin(),
+      () => this.buildLab(),
+      () => this.buildCast(),
+      () => this.buildHolo(),
+      () => this.buildStreetSet()
+    ]
+    this.needSets(2)
+  }
+
+  /** The neon street, the cold open's set: it plays last now. */
+  private buildStreetSet(): Group {
+    const opts = this.opts
     this.street = buildStreet({ low: this.low })
     this.streetSet.add(this.street.root)
     this.runner = buildHero(opts.colors)
@@ -461,19 +480,8 @@ export class IntroMode implements GameMode {
     this.atlasStreet = buildAtlas()
     this.streetSet.add(this.atlasStreet.root)
     this.streetSet.position.copy(STREET_AT)
-    s.add(this.streetSet)
-
-    // The loader builds the street; the other sets stream in one per frame
-    // (`streamSets`), and a shot that needs one not built yet builds it
-    // first (`needSets`: the valley, which opens the intro, on its first
-    // frame), so a skip never shows a missing set.
-    this.jobs = [
-      () => this.buildValley(),
-      () => this.buildCutin(),
-      () => this.buildLab(),
-      () => this.buildCast(),
-      () => this.buildHolo()
-    ]
+    this.scene.add(this.streetSet)
+    return this.streetSet
   }
 
   /** Build the next set (one per frame), and compile its materials now,
@@ -763,8 +771,8 @@ export class IntroMode implements GameMode {
     const t = this.ended || !this.started ? this.t : Math.min(INTRO_END, this.t + alpha * STEP)
     const shot = SHOTS[shotIndexAt(t)]!.id
     // The valley opens it (its set and the cut-in's first); the lab's from
-    // its shot on.
-    if (this.started) this.needSets(shot === 'valley' ? 2 : this.jobs.length)
+    // its shot on, the street for its own.
+    if (this.started) this.needSets(shot === 'valley' ? 2 : shot === 'coldOpen' ? this.jobs.length : this.jobs.length - 1)
     overlayAt(t, cineLive)
     cineLive.t = t
     const cutin = t >= CUTIN_FROM && t < CUTIN_TO
@@ -1088,7 +1096,7 @@ export class IntroMode implements GameMode {
   private showcaseBursts(st: number): void {
     const from = this.lastSt
     this.lastSt = st
-    if (st <= from || st - from > 1) return
+    if (st <= from || st - from > 1 || !this.street) return
     const S = STREET_AT
     const passed = (at: number): boolean => from < at && st >= at
     const burst = (x: number, y: number, z: number, colors: string[], n: number, speed: number, size = 0.12, life = 0.5): void => {

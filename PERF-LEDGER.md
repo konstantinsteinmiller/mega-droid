@@ -211,6 +211,36 @@ phone before acting on it.
 - Not measured: frame time on the phone itself. To confirm, the same phone,
   `?perfprobe=1`, a minute in a mission, `window.__perf`.
 
+### 10. Startup: the scene's own chunks first, the rest on demand (#121) — KEPT (2026-10-07)
+
+- Found, and the bigger news: the obfuscated builds (production, CrazyGames,
+  itch, glitch, GameDistribution, Poki, GameMonetize) were missing nine of
+  the ten platform stages and the Fortress's Core Descent. The obfuscator's
+  stringArray rewrites 60 % of string literals at random, an `import()` whose
+  path became a decoder call cannot be followed by the bundler, so the chunk
+  was never built: deploying the Flame Master's stage failed with "Failed to
+  fetch dynamically imported module …/assets/blaze" (reproduced on the built
+  bundle). Every runtime `import()` now lives in `src/game/lazy.ts` or
+  `world/stages/load.ts`, both excluded; `tests/meta/lazyImports.test.ts`
+  fails on a dynamic import in any file the obfuscator transforms.
+- Change:
+  - The mission engine (502 KB, 197 KB gz) and the intro (32 KB) are their
+    own chunks. The boot chunk: **1479 → 837 KB (508 → 244 KB gz)**. The
+    mission chunk is fetched in the background once the first scene is up.
+  - The intro opens on the valley but built the street (its LAST shot) in the
+    loader, and the valley on its first live frame, uncompiled. Now the
+    loader builds the valley and the cut-in; the street streams in last.
+  - The pixel ratio is 1 or 2, nothing between: 2 from a 1.5× screen up,
+    1 below and on weak devices (was 1.5 on iOS, 1.6 on touch phones).
+- Measured: built bundle, 4× CPU, 8 Mbit/s, phone viewport, 3 interleaved
+  runs, medians. First-timer (intro): the boot work starts **4.5 → 3.3 s**,
+  the scene is ready **10.1 → 8.9 s**, and the longest freeze in the 8 s after
+  the loader **4.1 → 1.5 s**. Returning player (lab): the boot work starts
+  **4.5 → 3.5 s**; ready at ~9 s in both (the lab's shader compile dominates,
+  12 programs on the headless software GL).
+- Sharpness: a 3× phone draws at 2× and reads BLURRY on the live probe, as it
+  did at the old 1.6× (0.111 old, 0.113 new). #121 allows 1× and 2× only.
+
 ## Open hypotheses (not applied, not measured)
 
 - The inverted-hull outline doubles every decor and character triangle.

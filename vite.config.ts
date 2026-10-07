@@ -446,6 +446,17 @@ export default defineConfig(({ mode, command }) => {
           // `localStorage.cheat`, so leaving this file readable grants nothing
           // devtools would not.
           /use[\\/]useCheats\.ts$/,
+          // The game's lazy chunks (#121): the mission engine, the intro, the
+          // ending, the debrief, the boss crane, the Fortress finale, and the
+          // platform stages' generators. With the decoder in front of them the
+          // bundler cannot follow the import, the chunk is never built and the
+          // call fails in the shipped game: nine of ten stages were missing.
+          // `tests/meta/lazyImports.test.ts` checks every dynamic import in
+          // `src` against this list.
+          /game[\\/]lazy\.ts$/,
+          /game[\\/]world[\\/]stages[\\/]load\.ts$/,
+          // The Playgama gameplay bracket loads its plugin on demand.
+          /use[\\/]useGameplayLifecycle\.ts$/,
           // usePlayerIdentity lazy-loads `@/use/useCrazyGames` to read the
           // portal's player name for the leaderboard. Same failure mode, but on
           // a PLAYER-facing path rather than a dev-only one.

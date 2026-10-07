@@ -106,6 +106,7 @@ import { spawnClimb } from './climbSpawn'
 import { BorrowedRun, planBorrowed, secretWeapon } from './borrowed'
 import { Fumble, isHardHit, strayDir, FUMBLE_PANIC } from './fumble'
 import { buildWeaponCapsule } from '../models/weaponCapsule'
+import { loadBossCraneModule, loadFinaleModules } from '../lazy'
 
 export interface MissionSetup {
   sector: SectorId
@@ -848,7 +849,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // The Scrapper fights under his magnet crane (#108).
     // (Loaded with the Scrapper's arena only: no other map pays for it.)
     if (this.boss?.bossId === 'scrapper' && this.bossRoom) {
-      const { BossCrane } = await import('./bossCrane')
+      const { BossCrane } = await loadBossCraneModule()
       this.crane = new BossCrane(this, this.bossRoom)
     }
     // Vex is fought on the roof, in the reactor hall and on the Core ring (#109).
@@ -856,7 +857,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (this.boss && stages && stages.length > 1) {
       const self = this
       // The Fortress's finale is its own chunk: loaded with the Fortress only.
-      const [{ CoreDescent }, { GrandMaster }] = await Promise.all([import('./coreDescent'), import('./grandMaster')])
+      const [{ CoreDescent }, { GrandMaster }] = await loadFinaleModules()
       this.descent = new CoreDescent({
         get player() { return self.player },
         get combat() { return self.combat },

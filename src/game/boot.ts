@@ -1,15 +1,15 @@
 import { getRenderer } from './engine/renderer'
 import { createInput } from './engine/input'
 import { afterPaint, createSlicer, yieldToBrowser, type Slice } from './engine/slicer'
-import type { Material, Mesh, Object3D } from 'three'
+import type { Camera, Material, Mesh, Object3D, Scene } from 'three'
 import { bakeTextures, loadTextureOverrides } from './world/textures'
-import { Mission, setupFromQuest } from './sim/mission'
+import type { Mission } from './sim/mission'
 import { HubMode } from './sim/hub'
-import { IntroMode } from './story/intro'
 import { app, type GameMode } from './engine/app'
 import { initProfile } from './state/profile'
 import { registerModeFactories, createBootMode, ensureJobs } from './flow'
 import { installSynth, loadSfxOverrides } from './audio/synth'
+import { loadDebriefModule, loadEndingModule, loadIntroModule, loadMissionModule } from './lazy'
 
 /**
  * ─── Boot priming ────────────────────────────────────────────────────────────
@@ -34,6 +34,27 @@ import { installSynth, loadSfxOverrides } from './audio/synth'
 export const input = createInput()
 
 /**
+ * The mission engine, on its own chunk (#121): the biggest part of the game,
+ * and a returning player's boot into the lab never needs it. Fetched when a
+ * mission is built — the boot's own (a resume, the tutorial), the tutorial
+ * behind the intro, a deploy — and in the background once the first scene is
+ * up (`prefetchMission`), so the first Deploy does not wait on the network.
+ */
+let missionMod: typeof import('./sim/mission') | null = null
+const loadMission = async (): Promise<typeof import('./sim/mission')> =>
+  (missionMod ??= await loadMissionModule())
+
+/** Fetch the mission engine when the browser is idle (the first scene is
+ *  live by then), never in the way of it. */
+const prefetchMission = (): void => {
+  if (missionMod) return
+  const go = () => { void loadMission().catch(() => { /* the deploy fetches it again */ }) }
+  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+  if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 4000 })
+  else setTimeout(go, 1500)
+}
+
+/**
  * Compile a scene's shader programs off the critical frame. `compileAsync`
  * waits for the GPU asynchronously, but first derives the parameters and
  * cache key of EVERY material and assembles every new program's source, all
@@ -43,7 +64,8 @@ export const input = createInput()
  * `compileAsync`, which would re-derive everything in one task again.
  */
 const precompile = async (
-  mode: GameMode, slice: Slice = createSlicer(12), onProgress: (f01: number) => void = () => {}
+  mode: GameMode, slice: Slice = createSlicer(12), onProgress: (f01: number) => void = () => {},
+  overlay: { scene: Scene; camera: Camera } | null = null
 ): Promise<void> => {
   try {
     const renderer = getRenderer()
@@ -74,8 +96,8 @@ const precompile = async (
       onProgress((i + 1) / reps.length * 0.8)
       await slice()
     }
-    if (mode instanceof Mission) {
-      for (const m of renderer.compile(mode.vmScene, mode.vmCamera)) pending.add(m)
+    if (overlay) {
+      for (const m of renderer.compile(overlay.scene, overlay.camera)) pending.add(m)
     }
     // KHR_parallel_shader_compile: poll completion without blocking.
     const started = performance.now()
@@ -98,8 +120,9 @@ const precompile = async (
 
 registerModeFactories(
   async (quest, snapshot, onProgress) => {
+    const { Mission, setupFromQuest } = await loadMission()
     const m = await Mission.create(setupFromQuest(quest, snapshot), input, (p) => onProgress?.(p * 0.82))
-    await precompile(m, createSlicer(12), (f) => onProgress?.(0.82 + f * 0.1))
+    await precompile(m, createSlicer(12), (f) => onProgress?.(0.82 + f * 0.1), { scene: m.vmScene, camera: m.vmCamera })
     // GPU uploads now, behind the loader, not on the first live frame.
     try {
       await m.warmUp(createSlicer(12), (f) => onProgress?.(0.92 + f * 0.08))
@@ -108,11 +131,13 @@ registerModeFactories(
     return m
   },
   () => new HubMode(),
-  (opts) => new IntroMode(opts),
+  // The intro on its own chunk (#121): only a first-timer (or a replay from
+  // Options) ever plays it, so a returning player never downloads or parses it.
+  async (opts) => new (await loadIntroModule()).IntroMode(opts),
   // The ending's own chunk, fetched when the Fortress is won.
-  async (opts) => new (await import('./story/ending')).EndingMode(opts),
+  async (opts) => new (await loadEndingModule()).EndingMode(opts),
   // The debrief after a story mission, on its own chunk too.
-  async (opts) => new (await import('./story/debrief')).DebriefMode(opts)
+  async (opts) => new (await loadDebriefModule()).DebriefMode(opts)
 )
 
 let prepared: GameMode | null = null
@@ -145,10 +170,11 @@ export const primeGame = (onProgress: (p01: number) => void): Promise<void> => {
     const mode = await createBootMode((p) => onProgress(0.1 + p * 0.88))
     performance.mark('boot:built')
     // A mission was precompiled by its factory; the hub is compiled here.
-    if (!(mode instanceof Mission)) await precompile(mode)
+    if (!isMission(mode)) await precompile(mode)
     onProgress(1)
     prepared = mode
     performance.mark('boot:primed')
+    prefetchMission()
   })()
   return primed
 }
@@ -182,6 +208,9 @@ export const adoptBootMode = async (): Promise<GameMode> => {
   return createBootMode()
 }
 
+/** A mode is a mission (no mission exists before its chunk has loaded). */
+const isMission = (mode: GameMode | null): mode is Mission => !!missionMod && mode instanceof missionMod.Mission
+
 /** The live mission, if the active mode is one (HUD components read it). */
-export const currentMission = (): Mission | null => (app.mode instanceof Mission ? app.mode : null)
+export const currentMission = (): Mission | null => (isMission(app.mode) ? app.mode : null)
 export const currentHub = (): HubMode | null => (app.mode instanceof HubMode ? app.mode : null)

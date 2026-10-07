@@ -356,8 +356,10 @@ export default {
     'story': 'Missione principale',
     'jobs': 'Incarichi',
     'jobsHint': 'Ripetibili — ne arrivano di nuovi man mano che li completi',
+    'jobsLocked': 'Gli incarichi si sbloccano dopo aver sconfitto questo boss: {boss}.',
     'lockedHint': 'Sconfiggi il {boss} per aprire questo settore.',
     'sectorSecured': 'Settore al sicuro. I suoi incarichi sono ancora in bacheca.',
+    'sectorClear': 'Settore al sicuro.',
     'deploy': 'Parti',
     'reroll': 'Nuovo incarico',
     'gift': {

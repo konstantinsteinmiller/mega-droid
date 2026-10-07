@@ -356,8 +356,10 @@ export default {
     'story': 'Mission principale',
     'jobs': 'Contrats',
     'jobsHint': 'Répétables — de nouveaux arrivent à mesure que tu les termines',
+    'jobsLocked': 'Les contrats s\'ouvrent une fois ce boss vaincu : {boss}.',
     'lockedHint': 'Bats {boss} pour ouvrir ce secteur.',
     'sectorSecured': 'Secteur sécurisé. Ses contrats restent disponibles.',
+    'sectorClear': 'Secteur sécurisé.',
     'deploy': 'Déployer',
     'reroll': 'Nouveau contrat',
     'gift': {

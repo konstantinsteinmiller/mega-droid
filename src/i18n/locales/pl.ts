@@ -356,8 +356,10 @@ export default {
     'story': 'Misja fabularna',
     'jobs': 'Zlecenia',
     'jobsHint': 'Powtarzalne — nowe pojawiają się, gdy kończysz poprzednie',
+    'jobsLocked': 'Zlecenia odblokują się po pokonaniu tego bossa: {boss}.',
     'lockedHint': 'Pokonaj bossa ({boss}), by otworzyć ten sektor.',
     'sectorSecured': 'Sektor zabezpieczony. Jego zlecenia wciąż wiszą na tablicy.',
+    'sectorClear': 'Sektor zabezpieczony.',
     'deploy': 'Wyrusz',
     'reroll': 'Nowe zlecenie',
     'gift': {

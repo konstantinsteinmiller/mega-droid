@@ -356,8 +356,10 @@ export default {
     'story': 'Syujetli missiya',
     'jobs': 'Topshiriqlar',
     'jobsHint': 'Takrorlanadi — bajarganingiz sari yangilari keladi',
+    'jobsLocked': 'Topshiriqlar shu boss yengilgach ochiladi: {boss}.',
     'lockedHint': 'Bu sektorni ochish uchun bossni yenging: {boss}.',
     'sectorSecured': 'Sektor tozalandi. Uning topshiriqlari hali ham taxtada.',
+    'sectorClear': 'Sektor tozalandi.',
     'deploy': 'Jangga',
     'reroll': 'Yangi topshiriq',
     'gift': {

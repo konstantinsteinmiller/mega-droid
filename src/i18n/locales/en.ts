@@ -430,8 +430,10 @@ export default {
     'story': 'Story mission',
     'jobs': 'Jobs',
     'jobsHint': 'Repeatable — new ones arrive as you finish them',
+    'jobsLocked': 'Jobs open once you have beaten {boss}.',
     'lockedHint': 'Defeat {boss} to open this sector.',
     'sectorSecured': 'Sector secured. Its jobs are still on the board.',
+    'sectorClear': 'Sector secured.',
     'deploy': 'Deploy',
     'reroll': 'New job',
     // The rewarded "+1 Repair Gel next mission" card on the Missions tab.

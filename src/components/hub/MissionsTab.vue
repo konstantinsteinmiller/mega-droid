@@ -21,7 +21,7 @@
       div.section-title {{ t('hub.story') }}
       QuestCard(v-if="story" :quest="story" story @deploy="deploy(story)")
       div.note(v-else-if="!unlocked(sel)") {{ t('hub.lockedHint', { boss: t(`boss.${prevBoss(sel)}`) }) }}
-      div.note.ok(v-else) {{ t('hub.sectorSecured') }}
+      div.note.ok(v-else) {{ t(boardOpen ? 'hub.sectorSecured' : 'hub.sectorClear') }}
       //- Rewarded: one Repair Gel for the next mission, offered where the
       //- player is about to deploy. Once watched, a badge says it is packed.
       div.gift.ready(v-if="giftReady" data-gift="ready")
@@ -48,8 +48,11 @@
           GameIcon.bi(name="flask")
       div.section-title
         span {{ t('hub.jobs') }}
-        span.hint {{ t('hub.jobsHint') }}
-      QuestCard(v-for="j in profile.quests.jobs" :key="j.id" :quest="j" @deploy="deploy(j)" @reroll="reroll(j.id)")
+        span.hint(v-if="boardOpen") {{ t('hub.jobsHint') }}
+      //- The board opens after the Flame Master (#120): the story comes first.
+      template(v-if="boardOpen")
+        QuestCard(v-for="j in profile.quests.jobs" :key="j.id" :quest="j" @deploy="deploy(j)" @reroll="reroll(j.id)")
+      div.note(v-else data-jobs="locked") {{ t('hub.jobsLocked', { boss: t('boss.blazeMaster') }) }}
 </template>
 
 <script setup lang="ts">
@@ -64,7 +67,7 @@ import { SECTORS, SECTOR_BY_ID } from '@/game/data/regions'
 import type { SectorId } from '@/game/world/themes'
 import { SECTOR_COLOR } from '@/game/data/signature'
 import { profile, saveProfile, computeStats } from '@/game/state/profile'
-import { storyFor, startMission, rerollJob } from '@/game/flow'
+import { storyFor, startMission, rerollJob, jobsOpen } from '@/game/flow'
 import type { Quest } from '@/game/data/quests'
 import { sfx } from '@/game/audio/sfx'
 import { boardClosed, boardOpened, sectorSelected } from '@/game/story/hubAtlas'
@@ -76,6 +79,7 @@ import { resumeMusicAfterAd } from '@/use/useSound'
 /** Sector strip (the valley map), the sector's story mission, and the job board. */
 const { t } = useI18n()
 const unlocked = (id: SectorId) => profile.world.unlocked.includes(id)
+const boardOpen = computed(jobsOpen)
 const cleared = (id: SectorId) => profile.world.bosses.includes(SECTOR_BY_ID[id].boss)
 const firstOpenStory = SECTORS.find(s => unlocked(s.id) && !cleared(s.id))?.id ?? profile.world.selected
 const sel = ref<SectorId>(firstOpenStory)

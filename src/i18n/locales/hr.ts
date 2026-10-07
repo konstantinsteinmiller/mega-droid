@@ -381,8 +381,10 @@ export default {
     'story': 'Misija priče',
     'jobs': 'Poslovi',
     'jobsHint': 'Ponovljivi — novi stižu kako ih završavaš',
+    'jobsLocked': 'Poslovi se otvaraju kad pobijediš ovog bossa: {boss}.',
     'lockedHint': 'Pobijedi bossa ({boss}) da otvoriš ovaj sektor.',
     'sectorSecured': 'Sektor osiguran. Njegovi poslovi još su na ploči.',
+    'sectorClear': 'Sektor osiguran.',
     'deploy': 'Kreni',
     'reroll': 'Novi posao',
     'gift': {

@@ -358,8 +358,10 @@ export default {
     'story': 'Hikâye görevi',
     'jobs': 'İşler',
     'jobsHint': 'Tekrarlanabilir — bitirdikçe yenileri gelir',
+    'jobsLocked': 'İşler şu boss yenilince açılır: {boss}.',
     'lockedHint': 'Bu bölgeyi açmak için {boss} yenilmeli.',
     'sectorSecured': 'Bölge güvende. İşleri hâlâ panoda.',
+    'sectorClear': 'Bölge güvende.',
     'deploy': 'Yola çık',
     'reroll': 'Yeni iş',
     'gift': {

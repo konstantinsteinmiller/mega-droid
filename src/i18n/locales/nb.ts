@@ -381,8 +381,10 @@ export default {
     'story': 'Historieoppdrag',
     'jobs': 'Jobber',
     'jobsHint': 'Kan gjentas — nye kommer når du fullfører dem',
+    'jobsLocked': 'Jobbene åpner når du har slått {boss}.',
     'lockedHint': 'Beseir {boss} for å åpne denne sektoren.',
     'sectorSecured': 'Sektoren er sikret. Jobbene ligger fortsatt på tavla.',
+    'sectorClear': 'Sektoren er sikret.',
     'deploy': 'Dra ut',
     'reroll': 'Ny jobb',
     'gift': {

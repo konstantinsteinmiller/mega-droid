@@ -381,8 +381,10 @@ export default {
     'story': 'Siužeto misija',
     'jobs': 'Darbai',
     'jobsHint': 'Kartojami – nauji atsiranda, kai juos atlieki',
+    'jobsLocked': 'Darbai atsirakina nugalėjus šį bosą: {boss}.',
     'lockedHint': 'Kad atvertum šį sektorių, nugalėk: {boss}.',
     'sectorSecured': 'Sektorius apsaugotas. Jo darbai vis dar lentoje.',
+    'sectorClear': 'Sektorius apsaugotas.',
     'deploy': 'Į misiją',
     'reroll': 'Naujas darbas',
     'gift': {

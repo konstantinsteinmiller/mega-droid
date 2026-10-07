@@ -356,8 +356,10 @@ export default {
     'story': 'ストーリーミッション',
     'jobs': '依頼',
     'jobsHint': '何度でも受けられる — 完了すると新しい依頼が届く',
+    'jobsLocked': '依頼は{boss}を倒すと受けられる。',
     'lockedHint': '{boss}を倒すとこのセクターが開く。',
     'sectorSecured': 'セクター制圧済み。依頼はまだボードに残っている。',
+    'sectorClear': 'セクター制圧済み。',
     'deploy': '出撃',
     'reroll': '別の依頼',
     'gift': {

@@ -749,13 +749,22 @@ const CLIMB_OFFERED = 'climbOffered'
 const climbsNow = () => climbSectors(profile.world.unlocked, profile.world.bosses)
 
 /**
- * Keep three jobs on the board, drawn from the unlocked sectors. The first
- * time a climb becomes possible (the Scrapper is down: straight after the
- * tutorial) one is put on the board — the newest job makes way for it — so
- * nobody has to reroll to find out the tower exists. After that it rolls like
- * any other job.
+ * The job board opens once the Flame Master is down (#120), or on New Game+.
+ * Before that the Lab offers the story alone: a playtester took two jobs in
+ * the Scrapyard instead of the Flame Master's stage, never saw the
+ * platforming, and got bored of the labyrinths.
+ */
+export const jobsOpen = (): boolean =>
+  profile.world.ngPlus > 0 || profile.world.bosses.includes(SECTOR_BY_ID.blaze.boss)
+
+/**
+ * Keep three jobs on the board, drawn from the unlocked sectors, once it is
+ * open (`jobsOpen`). The first time a climb becomes possible one is put on
+ * the board — the newest job makes way for it — so nobody has to reroll to
+ * find out the tower exists. After that it rolls like any other job.
  */
 export const ensureJobs = (): void => {
+  if (!jobsOpen()) return
   const q = profile.quests
   const sectors = profile.world.unlocked
   const climbs = climbsNow()

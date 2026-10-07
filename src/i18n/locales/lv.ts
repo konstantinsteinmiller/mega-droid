@@ -381,8 +381,10 @@ export default {
     'story': 'Stāsta misija',
     'jobs': 'Darbi',
     'jobsHint': 'Atkārtojami — jauni pienāk, kad tos pabeidz',
+    'jobsLocked': 'Darbi atveras pēc šī bosa uzvarēšanas: {boss}.',
     'lockedHint': 'Uzveic bosu ({boss}), lai atvērtu šo sektoru.',
     'sectorSecured': 'Sektors nodrošināts. Tā darbi joprojām ir uz dēļa.',
+    'sectorClear': 'Sektors nodrošināts.',
     'deploy': 'Doties',
     'reroll': 'Jauns darbs',
     'gift': {

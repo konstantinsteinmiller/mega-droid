@@ -356,8 +356,10 @@ export default {
     'story': 'Misi cerita',
     'jobs': 'Tugas',
     'jobsHint': 'Bisa diulang — tugas baru muncul tiap kali kamu menyelesaikannya',
+    'jobsLocked': 'Tugas terbuka setelah kamu mengalahkan {boss}.',
     'lockedHint': 'Kalahkan {boss} untuk membuka sektor ini.',
     'sectorSecured': 'Sektor aman. Tugas-tugasnya masih ada di papan.',
+    'sectorClear': 'Sektor aman.',
     'deploy': 'Berangkat',
     'reroll': 'Tugas baru',
     'gift': {

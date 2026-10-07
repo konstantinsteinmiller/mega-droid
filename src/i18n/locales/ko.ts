@@ -356,8 +356,10 @@ export default {
     'story': '스토리 미션',
     'jobs': '의뢰',
     'jobsHint': '반복 가능 — 완료할 때마다 새 의뢰가 도착합니다',
+    'jobsLocked': '{boss}을(를) 쓰러뜨리면 의뢰가 열립니다.',
     'lockedHint': '{boss} 격파 시 이 구역이 열립니다.',
     'sectorSecured': '구역 확보 완료. 의뢰는 아직 게시판에 남아 있습니다.',
+    'sectorClear': '구역 확보 완료.',
     'deploy': '출격',
     'reroll': '새 의뢰',
     'gift': {

@@ -356,8 +356,10 @@ export default {
     'story': 'Misión principal',
     'jobs': 'Encargos',
     'jobsHint': 'Repetibles: llegan nuevos a medida que los completas',
+    'jobsLocked': 'Los encargos se abren cuando derrotes a este jefe: {boss}.',
     'lockedHint': 'Derrota a {boss} para abrir este sector.',
     'sectorSecured': 'Sector asegurado. Sus encargos siguen disponibles.',
+    'sectorClear': 'Sector asegurado.',
     'deploy': 'Desplegar',
     'reroll': 'Nuevo encargo',
     'gift': {

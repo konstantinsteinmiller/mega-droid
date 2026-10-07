@@ -381,8 +381,10 @@ export default {
     'story': 'Misión principal',
     'jobs': 'Encargas',
     'jobsHint': 'Repetibles: chegan novas a medida que as completas',
+    'jobsLocked': 'As encargas ábrense cando derrotes este xefe: {boss}.',
     'lockedHint': 'Derrota {boss} para abrir este sector.',
     'sectorSecured': 'Sector asegurado. As súas encargas seguen dispoñibles.',
+    'sectorClear': 'Sector asegurado.',
     'deploy': 'Despregar',
     'reroll': 'Nova encarga',
     'gift': {

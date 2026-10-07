@@ -26,7 +26,7 @@ vi.mock('@/use/useAdGate', async () => {
 })
 vi.mock('@/use/useSound', () => ({ resumeMusicAfterAd: vi.fn() }))
 vi.mock('@/game/audio/sfx', () => ({ sfx: vi.fn() }))
-vi.mock('@/game/flow', () => ({ storyFor: () => null, startMission: vi.fn(), rerollJob: vi.fn() }))
+vi.mock('@/game/flow', () => ({ storyFor: () => null, startMission: vi.fn(), rerollJob: vi.fn(), jobsOpen: () => true }))
 vi.mock('@/use/useDragScroll', () => ({ useDragScroll: () => {}, revealIn: () => {} }))
 
 const mountTab = () => mount(MissionsTab, {

@@ -381,8 +381,10 @@ export default {
     'story': 'Missão principal',
     'jobs': 'Contratos',
     'jobsHint': 'Repetíveis — chegam novos à medida que os concluis',
+    'jobsLocked': 'Os contratos abrem quando derrotares este chefe: {boss}.',
     'lockedHint': 'Derrota o {boss} para abrir este setor.',
     'sectorSecured': 'Setor seguro. Os contratos dele continuam no quadro.',
+    'sectorClear': 'Setor seguro.',
     'deploy': 'Partir',
     'reroll': 'Novo contrato',
     'gift': {

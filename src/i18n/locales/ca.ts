@@ -381,8 +381,10 @@ export default {
     'story': 'Missió principal',
     'jobs': 'Encàrrecs',
     'jobsHint': 'Repetibles: n\'arriben de nous a mesura que els completes',
+    'jobsLocked': 'Els encàrrecs s\'obren quan derrotis aquest cap: {boss}.',
     'lockedHint': 'Derrota {boss} per obrir aquest sector.',
     'sectorSecured': 'Sector assegurat. Els seus encàrrecs encara són disponibles.',
+    'sectorClear': 'Sector assegurat.',
     'deploy': 'Desplega',
     'reroll': 'Encàrrec nou',
     'gift': {

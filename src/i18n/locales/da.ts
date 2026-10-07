@@ -381,8 +381,10 @@ export default {
     'story': 'Historiemission',
     'jobs': 'Opgaver',
     'jobsHint': 'Kan gentages — nye kommer, når du klarer dem',
+    'jobsLocked': 'Opgaverne åbner, når du har besejret {boss}.',
     'lockedHint': 'Besejr {boss} for at åbne denne sektor.',
     'sectorSecured': 'Sektoren er sikret. Dens opgaver er stadig på tavlen.',
+    'sectorClear': 'Sektoren er sikret.',
     'deploy': 'Afsted',
     'reroll': 'Ny opgave',
     'gift': {

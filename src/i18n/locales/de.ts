@@ -356,8 +356,10 @@ export default {
     'story': 'Hauptmission',
     'jobs': 'Aufträge',
     'jobsHint': 'Wiederholbar – neue kommen, sobald du welche abschließt',
+    'jobsLocked': 'Aufträge gibt es, sobald du diesen Boss besiegt hast: {boss}.',
     'lockedHint': 'Besiege {boss}, um diesen Sektor zu öffnen.',
     'sectorSecured': 'Sektor gesichert. Seine Aufträge stehen weiter bereit.',
+    'sectorClear': 'Sektor gesichert.',
     'deploy': 'Ausrücken',
     'reroll': 'Neuer Auftrag',
     'gift': {

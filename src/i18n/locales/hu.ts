@@ -381,8 +381,10 @@ export default {
     'story': 'Történetküldetés',
     'jobs': 'Megbízások',
     'jobsHint': 'Ismételhetők — újak érkeznek, ahogy teljesíted őket',
+    'jobsLocked': 'A megbízások e főellenség legyőzése után nyílnak meg: {boss}.',
     'lockedHint': 'Győzd le, hogy megnyíljon ez a szektor: {boss}.',
     'sectorSecured': 'Szektor biztosítva. A megbízásai még a táblán vannak.',
+    'sectorClear': 'Szektor biztosítva.',
     'deploy': 'Indulás',
     'reroll': 'Új megbízás',
     'gift': {

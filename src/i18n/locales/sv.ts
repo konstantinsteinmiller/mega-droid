@@ -381,8 +381,10 @@ export default {
     'story': 'Berättelseuppdrag',
     'jobs': 'Jobb',
     'jobsHint': 'Kan göras om — nya dyker upp när du klarar dem',
+    'jobsLocked': 'Jobben öppnas när du har besegrat {boss}.',
     'lockedHint': 'Besegra {boss} för att öppna den här sektorn.',
     'sectorSecured': 'Sektorn säkrad. Dess jobb finns kvar på tavlan.',
+    'sectorClear': 'Sektorn säkrad.',
     'deploy': 'Ge dig av',
     'reroll': 'Nytt jobb',
     'gift': {

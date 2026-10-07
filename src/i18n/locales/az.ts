@@ -381,8 +381,10 @@ export default {
     'story': 'Hekayə missiyası',
     'jobs': 'Tapşırıqlar',
     'jobsHint': 'Təkrarlana bilər — bitirdikcə yeniləri gəlir',
+    'jobsLocked': 'Tapşırıqlar bu boss məğlub ediləndən sonra açılır: {boss}.',
     'lockedHint': 'Bu sektoru açmaq üçün bossu məğlub et: {boss}.',
     'sectorSecured': 'Sektor təmizləndi. Tapşırıqları hələ lövhədədir.',
+    'sectorClear': 'Sektor təmizləndi.',
     'deploy': 'Yola düş',
     'reroll': 'Yeni tapşırıq',
     'gift': {

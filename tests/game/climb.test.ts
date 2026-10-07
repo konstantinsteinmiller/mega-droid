@@ -325,19 +325,38 @@ describe('the climb on the job board', () => {
     expect(a.reward.rarityBias).toBeGreaterThanOrEqual(1.5)
   })
 
-  it('the board shows one climb the first time it becomes available, once', async () => {
+  it('New Game+ opens the board from the start', async () => {
+    const { profile } = await import('@/game/state/profile')
+    const { ensureJobs, jobsOpen } = await import('@/game/flow')
+    profile.world.unlocked = ['scrapyard']
+    profile.world.bosses = []
+    profile.world.ngPlus = 1
+    profile.quests.jobs = []
+    expect(jobsOpen()).toBe(true)
+    ensureJobs()
+    expect(profile.quests.jobs.length).toBe(3)
+    profile.world.ngPlus = 0
+    expect(jobsOpen()).toBe(false)
+  })
+
+  it('the board opens after the Flame Master, with one climb on it the first time, once', async () => {
     const { profile } = await import('@/game/state/profile')
     const { ensureJobs } = await import('@/game/flow')
     profile.world.unlocked = ['scrapyard']
     profile.world.bosses = []
     profile.tips = {}
     profile.quests.jobs = []
+    profile.world.ngPlus = 0
     ensureJobs()
-    expect(profile.quests.jobs.length).toBe(3)
-    expect(profile.quests.jobs.some(j => j.template === 'climb')).toBe(false)
-    expect(profile.tips.climbOffered).toBeUndefined()
-    // The Scrapper falls (the tutorial): the next top-up puts a climb up.
+    // No board before the Flame Master (#120): the story comes first.
+    expect(profile.quests.jobs.length).toBe(0)
     profile.world.bosses = ['scrapper']
+    ensureJobs()
+    expect(profile.quests.jobs.length).toBe(0)
+    expect(profile.tips.climbOffered).toBeUndefined()
+    // The Flame Master falls: the board fills, a climb among its jobs.
+    profile.world.unlocked = ['scrapyard', 'blaze']
+    profile.world.bosses = ['scrapper', 'blazeMaster']
     ensureJobs()
     expect(profile.quests.jobs.length).toBe(3)
     expect(profile.quests.jobs.filter(j => j.template === 'climb').length).toBe(1)

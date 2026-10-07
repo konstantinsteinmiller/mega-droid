@@ -381,8 +381,10 @@ export default {
     'story': 'Tarinatehtävä',
     'jobs': 'Keikat',
     'jobsHint': 'Toistettavia – uusia tulee, kun suoritat niitä',
+    'jobsLocked': 'Keikat aukeavat, kun olet voittanut tämän pomon: {boss}.',
     'lockedHint': 'Kukista {boss} avataksesi tämän sektorin.',
     'sectorSecured': 'Sektori turvattu. Sen keikat ovat yhä taululla.',
+    'sectorClear': 'Sektori turvattu.',
     'deploy': 'Lähde',
     'reroll': 'Uusi keikka',
     'gift': {

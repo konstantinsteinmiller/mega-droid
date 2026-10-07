@@ -356,8 +356,10 @@ export default {
     'story': '主线任务',
     'jobs': '委托',
     'jobsHint': '可重复接取——完成后会送来新委托',
+    'jobsLocked': '击败{boss}后即可接受委托。',
     'lockedHint': '击败{boss}即可开启此区域。',
     'sectorSecured': '区域已肃清。委托仍在任务板上。',
+    'sectorClear': '区域已肃清。',
     'deploy': '出击',
     'reroll': '换个委托',
     'gift': {

@@ -381,8 +381,10 @@ export default {
     'story': 'Rakonta misio',
     'jobs': 'Taskoj',
     'jobsHint': 'Ripeteblaj — novaj alvenas, kiam vi finas ilin',
+    'jobsLocked': 'La taskoj malfermiĝas post venko super ĉi tiu estro: {boss}.',
     'lockedHint': 'Por malfermi ĉi tiun sektoron, venku: {boss}.',
     'sectorSecured': 'Sektoro sekurigita. Ĝiaj taskoj ankoraŭ estas sur la tabulo.',
+    'sectorClear': 'Sektoro sekurigita.',
     'deploy': 'Ekiri',
     'reroll': 'Nova tasko',
     'gift': {

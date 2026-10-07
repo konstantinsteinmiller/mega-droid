@@ -356,8 +356,10 @@ export default {
     'story': 'Verhaalmissie',
     'jobs': 'Klussen',
     'jobsHint': 'Herhaalbaar — er komen nieuwe bij zodra je ze afrondt',
+    'jobsLocked': 'Klussen komen vrij zodra je {boss} hebt verslagen.',
     'lockedHint': 'Versla {boss} om deze sector te openen.',
     'sectorSecured': 'Sector veiliggesteld. De klussen staan nog op het bord.',
+    'sectorClear': 'Sector veiliggesteld.',
     'deploy': 'Uitrukken',
     'reroll': 'Nieuwe klus',
     'gift': {

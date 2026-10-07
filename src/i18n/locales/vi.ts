@@ -356,8 +356,10 @@ export default {
     'story': 'Nhiệm vụ cốt truyện',
     'jobs': 'Nhiệm vụ phụ',
     'jobsHint': 'Làm lại được — nhiệm vụ mới xuất hiện khi bạn hoàn thành',
+    'jobsLocked': 'Nhiệm vụ phụ mở ra khi bạn đánh bại {boss}.',
     'lockedHint': 'Đánh bại {boss} để mở khu vực này.',
     'sectorSecured': 'Khu vực đã an toàn. Nhiệm vụ phụ vẫn còn trên bảng.',
+    'sectorClear': 'Khu vực đã an toàn.',
     'deploy': 'Xuất kích',
     'reroll': 'Đổi nhiệm vụ',
     'gift': {

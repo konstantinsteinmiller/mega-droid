@@ -381,8 +381,10 @@ export default {
     'story': 'Misiune de poveste',
     'jobs': 'Sarcini',
     'jobsHint': 'Repetabile — apar altele noi pe măsură ce le termini',
+    'jobsLocked': 'Sarcinile se deblochează după ce învingi acest boss: {boss}.',
     'lockedHint': 'Învinge-l pe {boss} ca să deschizi acest sector.',
     'sectorSecured': 'Sector securizat. Sarcinile lui sunt încă pe panou.',
+    'sectorClear': 'Sector securizat.',
     'deploy': 'Pornește',
     'reroll': 'Altă sarcină',
     'gift': {

@@ -381,8 +381,10 @@ export default {
     'story': '主線任務',
     'jobs': '委託',
     'jobsHint': '可重複接取——完成後會送來新委託',
+    'jobsLocked': '擊敗{boss}後即可接受委託。',
     'lockedHint': '擊敗{boss}即可開啟此區域。',
     'sectorSecured': '區域已肅清。委託仍在任務板上。',
+    'sectorClear': '區域已肅清。',
     'deploy': '出擊',
     'reroll': '換個委託',
     'gift': {

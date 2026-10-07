@@ -381,8 +381,10 @@ export default {
     'story': 'Příběhová mise',
     'jobs': 'Zakázky',
     'jobsHint': 'Opakovatelné — nové přibývají, jak je plníš',
+    'jobsLocked': 'Zakázky se otevřou po porážce tohoto bosse: {boss}.',
     'lockedHint': 'Poraz bosse ({boss}) a otevřeš tento sektor.',
     'sectorSecured': 'Sektor zajištěn. Jeho zakázky jsou stále na tabuli.',
+    'sectorClear': 'Sektor zajištěn.',
     'deploy': 'Vyrazit',
     'reroll': 'Nová zakázka',
     'gift': {

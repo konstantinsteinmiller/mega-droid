@@ -234,6 +234,39 @@ export const doorwayOf = (map: MapData, roomId: number): [number, number] => {
   return [cellCenter(d.i + (d.axis === 'x' ? d.dir : 0)), cellCenter(d.j + (d.axis === 'z' ? d.dir : 0))]
 }
 
+/** A lesson room's hologram: where its root stands and its yaw (its local
+ *  +X, the line it plays along, is (cos yaw, -sin yaw)). */
+export interface HoloSpot {
+  x: number
+  z: number
+  yaw: number
+}
+
+/**
+ * Where a lesson room's hologram stands (`fx/lessonHologram.ts`): off to one
+ * side of the room's middle and playing away from the way in (the start
+ * room: from the pad), seen from behind, the way the player sees his own
+ * Flux do it. Pure, from the map: the tutorial's cast reads it too (the
+ * block lesson's Trooper stands beside the hologram's).
+ */
+export const roomHoloSpot = (map: MapData, plan: WalkPlan, roomId: number): HoloSpot | null => {
+  const r = map.rooms[roomId]
+  if (!r) return null
+  let x = (r.x0 + r.w / 2) * CELL
+  let z = (r.z0 + r.h / 2) * CELL
+  const [dx, dz] = roomId === plan.gates[0]?.room ? [map.start.x, map.start.z] : doorwayOf(map, roomId)
+  const ix = x - dx
+  const iz = z - dz
+  const il = Math.hypot(ix, iz) || 1
+  const ux = ix / il
+  const uz = iz / il
+  const side = Math.min(2.8, Math.max(0, Math.min(r.w, r.h) * CELL / 2 - 2.2))
+  // Its Flux (2 m behind its middle) stands level with the room's middle.
+  x += -uz * side + ux * 2
+  z += ux * side + uz * 2
+  return { x, z, yaw: Math.atan2(-uz, ux) }
+}
+
 /** Where a stand-in teacher beams in: inside `roomId`, 4–11 m from the
  *  player, in sight, as near the middle of the view as the room allows. */
 export const helperSpot = (
@@ -292,7 +325,7 @@ export interface WalkHost {
     /** The crate lesson's crate while that lesson runs (null otherwise). */
     readonly crateAt: { readonly x: number; readonly z: number } | null
     /** Light the crate lesson in `room`; false while no crate can be shown. */
-    startCrate(room: number): boolean
+    startCrate(room: number, exitDoor?: number): boolean
     /** A floor glow under a scripted scene's subject (the chest). */
     spotlight(x: number, z: number, on: boolean): void
   }
@@ -507,7 +540,7 @@ export class Walkthrough {
       if (this.met(s, clear)) continue
       this.readyAt = -1
       const settled = this.clearAt >= 0 && h.time - this.clearAt >= SETTLE
-      if (settled && h.time >= this.retryAt && roomAt(h.map, h.player.x, h.player.z) === g.room) this.prompt(s, g.room)
+      if (settled && h.time >= this.retryAt && roomAt(h.map, h.player.x, h.player.z) === g.room) this.prompt(s, g)
       return
     }
     if (this.readyAt < 0) this.readyAt = h.time
@@ -617,10 +650,12 @@ export class Walkthrough {
     return roomAt(this.h.map, this.h.player.x, this.h.player.z) === g.room
   }
 
-  private prompt(s: WalkStep, room: number): void {
+  private prompt(s: WalkStep, g: WalkGate): void {
     const h = this.h
+    const room = g.room
     if (s === 'crate') {
-      if (!this.crateLive) this.crateLive = h.lessons.startCrate(room)
+      // A crate brought in lands in front of the way out (`Lessons.bringCrate`).
+      if (!this.crateLive) this.crateLive = h.lessons.startCrate(room, g.door)
       if (!this.crateLive) this.retryAt = h.time + RETRY
     } else if (s === 'block' || s === 'slide') {
       if (h.bringIn(s === 'block' ? 'heli' : 'hopper', room)) {

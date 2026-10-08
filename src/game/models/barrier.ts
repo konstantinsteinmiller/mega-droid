@@ -209,6 +209,19 @@ const LOWER_TIME = 0.2
 const BREAK_TIME = 0.6
 const RIPPLE_TIME = 0.42
 const PARRY_TIME = 0.5
+/** A parry's thrust: out at the shot over THRUST_OUT (s), back over
+ *  THRUST_BACK; how far out, as a share of the shield's distance from the
+ *  eye (the viewmodel), or of its radius (a free shield, the holograms'). */
+const THRUST_OUT = 0.07
+const THRUST_BACK = 0.3
+const THRUST_VIEW = 0.3
+const THRUST_FREE = 0.5
+/** The thrust's reach (0..1) `t` seconds into it. */
+const thrustAt = (t: number): number => {
+  if (t < THRUST_OUT) return t / THRUST_OUT
+  const k = 1 - (t - THRUST_OUT) / THRUST_BACK
+  return k > 0 ? k * k : 0
+}
 
 const _m = new Matrix4()
 const _inv = new Matrix4()
@@ -275,6 +288,9 @@ export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
   let hit = 0
   let parry = 0
   let kick = 0
+  /** Seconds into a parry's thrust (the shield punched out at the shot);
+   *  THRUST_OUT + THRUST_BACK or more: none. */
+  let thrustT = 9
   let flick = 1
   let flickT = 0
 
@@ -283,7 +299,7 @@ export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
       // Its owner's place and facing; only its size (and the raise's little rise) are its own.
       const r = opts.free
       mesh.scale.set(r * Math.max(0.02, sx), r * Math.max(0.02, sy), r)
-      mesh.position.set(0, lift * r, kick * 0.06 * r)
+      mesh.position.set(0, lift * r, (kick * 0.06 - thrustAt(thrustT) * THRUST_FREE) * r)
       return
     }
     const parent = root.parent
@@ -297,8 +313,9 @@ export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
     // +Z faces the camera (at the origin); then the "held at an angle" tilt.
     _m.lookAt(_origin, _p, _up)
     _q.setFromRotationMatrix(_m).multiply(_tilt)
-    // A hit shoves it toward the player for a moment.
-    _p.multiplyScalar(1 - kick * 0.035)
+    // A hit shoves it toward the player for a moment; a parry punches it out
+    // at the shot and back (the shield is what sends the shot home).
+    _p.multiplyScalar(1 - kick * 0.035 + thrustAt(thrustT) * THRUST_VIEW)
     // Never a zero scale: decompose() of a singular matrix yields NaNs
     _s.set(L.r * Math.max(0.02, sx), L.r * Math.max(0.02, sy), L.r)
     _m.compose(_p, _q, _s)
@@ -308,6 +325,9 @@ export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
 
   const update = (dt: number, up: boolean, power01: number, t: number): void => {
     const breaking = breakT >= 0
+    // A parry's thrust plays out whole, even as the shield is let go.
+    thrustT += dt
+    if (thrustT < THRUST_OUT + THRUST_BACK) up = true
     if (up && !breaking) {
       if (!raised) {
         raised = true
@@ -405,8 +425,12 @@ export const buildBarrier = (opts: { free?: number } = {}): BarrierFx => {
     }
     ripple = 0.001
     hit = 1
-    kick = kind === 'parry' ? 1.3 : 1
-    if (kind === 'parry') parry = 1
+    // A parry thrusts out instead of giving way.
+    kick = kind === 'parry' ? 0 : 1
+    if (kind === 'parry') {
+      parry = 1
+      thrustT = 0
+    }
   }
 
   return { root, update, impact }

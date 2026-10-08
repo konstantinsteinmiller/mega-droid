@@ -122,6 +122,10 @@ export const hud = shallowReactive({
    *  until a block: the block input bounces under yellow arrows (touch), a
    *  mouse with its right button pressing (desktop). */
   blockCue: false,
+  /** The tutorial's charge show (`sim/chargeShow.ts`): the game turns onto
+   *  a drone ('aim'), holds fire to a full charge ('hold') and lets go
+   *  ('release'); the HUD shows that input held meanwhile. */
+  chargeShow: '' as '' | 'aim' | 'hold' | 'release',
   /** Atlas's current line is a lesson intro: the gold bubble. */
   atlasGold: false,
   /** The tutorial checklist (mission 1): each lesson, done or not. */

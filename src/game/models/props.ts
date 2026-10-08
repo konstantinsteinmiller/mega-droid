@@ -535,18 +535,13 @@ export interface TrainingTargetMesh {
   body: Group
   /** Side rotor pods (spin). */
   rotors: Group[]
-  /** The energy bubble that turns quick shots away. */
-  barrier: Mesh
-  barrierMat: MeshBasicMaterial
-  /** The bright rim ring facing the player (flashes on every deflected shot). */
-  rim: Mesh
-  rimMat: MeshBasicMaterial
 }
 
 /**
- * A hovering training drone: a red-and-white bullseye in an energy bubble.
- * Quick shots skip off the bubble; a charged shot pops it — the charge shot's
- * first lesson, with no words. Built around its hover centre, front = +Z.
+ * A hovering training drone. Quick shots skip off it; a charged shot pops it
+ * — the charge shot's first lesson, with no words. No bubble round it
+ * (playtest 2026-10-07: the circle read as a target ring, not as armour, and
+ * hid the machine). Built around its hover centre, front = +Z.
  */
 export const buildTrainingTarget = (): TrainingTargetMesh => {
   const root = new Group()
@@ -562,19 +557,5 @@ export const buildTrainingTarget = (): TrainingTargetMesh => {
   const rotors: Group[] = []
   const rotor = rig.bones.rotor
   if (rotor) rotors.push(rotor as unknown as Group)
-  // The bubble: soft additive shell + a bright rim facing the player.
-  const barrierMat = new MeshBasicMaterial({
-    color: new Color(PAL.glowCyan), transparent: true, opacity: 0.13, blending: AdditiveBlending,
-    depthWrite: false, toneMapped: false
-  })
-  const barrier = new Mesh(stripUvSphere(0.78), barrierMat)
-  const rimMat = new MeshBasicMaterial({
-    color: new Color(PAL.glowCyan), transparent: true, opacity: 0.55, blending: AdditiveBlending,
-    depthWrite: false, side: DoubleSide, toneMapped: false
-  })
-  const rim = new Mesh(torus(0.78, 0.022, 6, 40), rimMat)
-  root.add(barrier, rim)
-  return { root, body, rotors, barrier, barrierMat, rim, rimMat }
+  return { root, body, rotors }
 }
-
-const stripUvSphere = (r: number): BufferGeometry => sph(r, 28, 18)

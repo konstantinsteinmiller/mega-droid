@@ -27,7 +27,7 @@
       TutorialChecklist
       LessonPointer
       LessonGlyph
-      BlockCue
+      InputCue
     HubScreen(v-else-if="flow.screen === 'hub'" @options="optionsOpen = true")
     CutsceneLayer(v-else-if="flow.screen === 'intro'")
     EndingLayer(v-else-if="flow.screen === 'ending'")
@@ -116,7 +116,7 @@ import TrainingFrame from '@/components/hud/TrainingFrame.vue'
 import TutorialChecklist from '@/components/hud/TutorialChecklist.vue'
 import LessonPointer from '@/components/hud/LessonPointer.vue'
 import LessonGlyph from '@/components/hud/LessonGlyph.vue'
-import BlockCue from '@/components/hud/BlockCue.vue'
+import InputCue from '@/components/hud/InputCue.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
 import ResultsModal from '@/components/modals/ResultsModal.vue'
 import DefeatModal from '@/components/modals/DefeatModal.vue'

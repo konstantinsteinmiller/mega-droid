@@ -121,6 +121,10 @@ const holoProp = (root: Object3D, mat: MeshBasicMaterial, fx: MeshBasicMaterial)
   for (const o of drop) o.removeFromParent()
 }
 
+/** The block lesson's Trooper: this far (m) along the hologram's line from
+ *  its middle (the tutorial's real Trooper stands beside it, `sim/spawn.ts`). */
+export const HOLO_TROOPER_X = 2.6
+
 /** Yaw that turns a rig (which faces +Z) toward +X. */
 const FACE_PX = Math.PI / 2
 const FACE_NX = -Math.PI / 2
@@ -385,7 +389,7 @@ export class LessonHologram {
     b.update(dt, up, 1, t)
     if (u >= 1.8 && u - dt < 1.8) b.impact('parry')
     const trooper = this.foe!
-    trooper.root.position.set(2.6, 0, 0)
+    trooper.root.position.set(HOLO_TROOPER_X, 0, 0)
     trooper.root.rotation.set(0, FACE_NX, 0)
     // The perfect block sends the shot back (1.8–2.2), bigger than it came:
     // it hits the Trooper, which bursts into pieces (#128: a block can kill),

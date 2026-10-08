@@ -3,11 +3,12 @@ import type { Element } from '../data/enemies'
 import type { MapData, Room } from '../world/levelGen'
 import { CELL, cellCenter, roomCenter } from '../world/levelGen'
 import { mulberry32, weighted } from '../world/rng'
-import { hasLineOfSight, type Nav } from '../world/nav'
+import { hasLineOfSight, isSolidAt, type Nav } from '../world/nav'
 import { createEnemy } from './enemies'
 import type { Enemy } from './world'
 import type { Slice } from '../engine/slicer'
-import { TEACHER, doorwayOf, type WalkPlan } from './walkthrough'
+import { TEACHER, doorwayOf, roomHoloSpot, type WalkPlan } from './walkthrough'
+import { HOLO_TROOPER_X } from '../fx/lessonHologram'
 import { THEMES, type SectorId } from '../world/themes'
 
 /**
@@ -170,12 +171,13 @@ export const spawnTutorial = async (
     const [dx, dz] = doorwayOf(map, room.id)
     const taken: Array<[number, number]> = []
     for (const kind of kinds) {
-      // The block lesson's Trooper stands at the room's far end, in front of
-      // the hallway out (#128): next to the entrance, players turned to it
-      // first and the hologram teaching the perfect block was off screen. Now
-      // they walk past the hologram on the way to it.
+      // The block lesson's Trooper stands beside the hologram's own, 2 m to
+      // its left as seen from the way in (`besideHoloTrooper`): next to the
+      // entrance (#128) players turned to it first and the hologram was off
+      // screen; at the far exit it was away from the hologram too. The exit
+      // spot stays as the fallback.
       const blockTeacher = kind === 'trooper' && !!gate?.steps.includes('block')
-      const at = (blockTeacher ? exitSpot(nav, map, room, gate!.door, dx, dz, taken) : null) ?? teachSpot(nav, room, dx, dz, taken)
+      const at = (blockTeacher ? besideHoloTrooper(nav, map, plan, room) ?? exitSpot(nav, map, room, gate!.door, dx, dz, taken) : null) ?? teachSpot(nav, room, dx, dz, taken)
       if (!at) break
       taken.push(at)
       const e = createEnemy(kind, level, at[0], at[1], room.id)
@@ -256,6 +258,34 @@ export const exitSpot = (
     if (score < bestScore) { best = [x, z]; bestScore = score }
   }
   return best
+}
+
+/** The real Trooper this far (m) to the left of the hologram's, as the
+ *  player sees them walking in. */
+export const TROOPER_BESIDE_HOLO = 2
+
+/**
+ * The block lesson's Trooper (playtest 2026-10-07): beside the hologram's
+ * own, TROOPER_BESIDE_HOLO to its left as seen from the way in — the
+ * player looks at the hologram and the machine it is about in one view.
+ * Null when that point is not open floor of the room (then the old spot,
+ * at the exit, `exitSpot`).
+ */
+export const besideHoloTrooper = (nav: Nav, map: MapData, plan: WalkPlan, room: Room): [number, number] | null => {
+  const h = roomHoloSpot(map, plan, room.id)
+  if (!h) return null
+  // The hologram's line, into the room; its Trooper stands HOLO_TROOPER_X along it.
+  const ux = Math.cos(h.yaw)
+  const uz = -Math.sin(h.yaw)
+  // Left of a view along (ux, uz) is (uz, -ux).
+  const x = h.x + ux * HOLO_TROOPER_X + uz * TROOPER_BESIDE_HOLO
+  const z = h.z + uz * HOLO_TROOPER_X - ux * TROOPER_BESIDE_HOLO
+  if (isSolidAt(nav, x, z) || roomOf(map, x, z)?.id !== room.id) return null
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2
+    if (isSolidAt(nav, x + Math.cos(a) * 0.9, z + Math.sin(a) * 0.9)) return null
+  }
+  return [x, z]
 }
 
 export const roomOf = (map: MapData, x: number, z: number): Room | null => {

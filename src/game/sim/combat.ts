@@ -41,6 +41,13 @@ export interface CombatHost extends World {
   /** A blockable machine shot is this close (s) to Flux: the block lesson may
    *  hold it there (true: time has stopped, leave the shot be). */
   cueBlock?(s: Shot, eta: number): boolean
+  /** A machine a lesson still needs takes no damage at all (the block room's
+   *  Trooper until the perfect block is learned): every hit tinks off. */
+  lessonShield?(e: Enemy): boolean
+  /** A parried shot came home to `e`: the share (0..1) of its max health it
+   *  may have left after this hit (the block lesson's volley takes it apart
+   *  in even thirds), or undefined for a plain hit. */
+  reflectShare?(s: Shot, e: Enemy): number | undefined
   scene: Scene
   stats: PlayerStats
   hitStop: number
@@ -815,15 +822,16 @@ export class CombatSystem {
     }
     e.lastWeapon = ''
     const lvl = s.kind === 'charge3' ? 3 : s.kind === 'charge2' ? 2 : s.kind === 'charge1' ? 1 : s.kind === 'reflect' ? 2 : 0
-    this.damageEnemy(e, s.dmg, { crit: s.crit, charge: lvl, fromX: s.px, fromZ: s.pz, x: s.x, y: s.y, z: s.z, color: s.color, element: s.element, weakSpot })
+    const share = s.kind === 'reflect' ? this.host.reflectShare?.(s, e) : undefined
+    this.damageEnemy(e, s.dmg, { crit: s.crit, charge: lvl, fromX: s.px, fromZ: s.pz, x: s.x, y: s.y, z: s.z, color: s.color, element: s.element, weakSpot, share })
   }
 
-  damageEnemy(e: Enemy, amount: number, o: { crit: boolean; charge: number; fromX: number; fromZ: number; x: number; y: number; z: number; color: string; element?: string; special?: boolean; weapon?: string; weakSpot?: boolean }): void {
+  damageEnemy(e: Enemy, amount: number, o: { crit: boolean; charge: number; fromX: number; fromZ: number; x: number; y: number; z: number; color: string; element?: string; special?: boolean; weapon?: string; weakSpot?: boolean; share?: number }): void {
     const h = this.host
     // A boss not yet in the arena takes nothing and shows nothing.
     if (e.state === 'dead' || e.offstage || e.buried) return
     // Bosses are untouchable during their entrance and their phase-2 roar.
-    if (e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar'))) {
+    if ((e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar'))) || h.lessonShield?.(e)) {
       h.fx.sparks(o.x, o.y, o.z, '#ffffff', 6, 4, 0.14)
       pushHud({ t: 'text', x: o.x, y: o.y + 0.3, z: o.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', e.x, e.z)
@@ -908,6 +916,9 @@ export class CombatSystem {
     }
     if (wasStunned) dmg *= 1.25
     dmg = Math.max(1, Math.round(dmg))
+    // A set share left (`CombatHost.reflectShare`): exactly that, whatever the
+    // guard, the stun or the armour made of the hit.
+    if (o.share !== undefined) dmg = Math.max(1, e.hp - Math.floor(e.maxHp * o.share))
     e.hp -= dmg
     e.flash = 1
     // Magnet Pull yanks a flyer out of its hover: a short stun (it sags).

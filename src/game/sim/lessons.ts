@@ -25,8 +25,9 @@ import { EYE_H } from './constants'
  * where it is the obvious thing to do — and no word is ever shown:
  *
  * 1. CHARGE. In the tutorial's start room a training drone hovers in front
- *    of the pad inside an energy bubble. Quick shots skip off the bubble; a
- *    charged shot pops it. The glyph — a looping demo: a finger (or the left
+ *    of the pad (a second one beside it, which the game itself pops with a
+ *    charged shot right after the landing: `chargeShow.ts`). Quick shots
+ *    skip off them; a charged shot pops it. The glyph — a looping demo: a finger (or the left
  *    mouse button) held down, the crosshair's rings filling, the shot growing,
  *    let go and it flies in (`ChargeDemo.vue`) — comes onto the drone once
  *    the player can move and look — the coach's first two glyphs — or at
@@ -90,6 +91,8 @@ export interface LessonHost {
   addCrate(x: number, z: number, yaw: number): Crate | null
   /** A room's crane delivers the crate (true), or nothing does. */
   craneDrop?(c: Crate): boolean
+  /** A room's crane reaches over (x, z). */
+  craneCovers?(x: number, z: number): boolean
   addEnemy(e: Enemy): void
   spawnPickup(kind: PickupKind, value: number, x: number, y: number, z: number): void
   weaponCost(id: WeaponId): number
@@ -114,6 +117,9 @@ const REVEAL_AFTER = 10
 /** On a terrain map a drone hovers only over a floor this close to the
  *  player's (m): a ledge above or a pit below is out of the lesson's reach. */
 const DRONE_FLOOR = 0.6
+/** The tutorial's crate lands this far (m) into the room from the edge of
+ *  the exit's mouth (`crateAtExit`). */
+const CRATE_BEFORE_EXIT = 2.5
 /** Half-angle between Scrap Burst's outer shots (weapons.ts: spread 0.42). */
 const SPREAD = 0.21
 /** Outside the tutorial the gel lesson comes in under this much health (the
@@ -587,7 +593,7 @@ export class LessonDirector {
   /** Light the crate lesson in `roomId` (the walkthrough calls it for the
    *  tutorial's crate room). False when the room has no crate and no free
    *  floor in sight to beam one onto. */
-  startCrate(roomId: number): boolean {
+  startCrate(roomId: number, exitDoor = -1): boolean {
     if (this.live) return this.live === 'crate' && this.crateRoom === roomId
     const h = this.host
     const p = h.player
@@ -610,7 +616,7 @@ export class LessonDirector {
         return true
       }
     }
-    if (!best) best = this.bringCrate(roomId)
+    if (!best) best = (exitDoor >= 0 ? this.crateAtExit(roomId, exitDoor) : null) ?? this.bringCrate(roomId)
     if (!best) return false
     this.crate = best
     this.crateRoom = roomId
@@ -619,6 +625,62 @@ export class LessonDirector {
     this.ring.position.set(best.x, 0.04, best.z)
     this.ring.visible = true
     return true
+  }
+
+  /**
+   * The tutorial's crate, where the room had none (playtest 2026-10-07):
+   * the crane sets it down in front of the way out — after the room's fight
+   * and the hologram crate, the player walks to that door and cannot miss
+   * it. CRATE_BEFORE_EXIT into the room from the exit's mouth, on its axis,
+   * under the crane's reach where it can be. Null with no such floor.
+   */
+  private crateAtExit(roomId: number, doorId: number): Crate | null {
+    const h = this.host
+    const room = h.map.rooms[roomId]
+    const d = h.map.doors[doorId]
+    if (!room || !d) return null
+    const ox = cellCenter(d.i)
+    const oz = cellCenter(d.j)
+    // The mouth: the room's floor cell nearest the exit door.
+    let mx = 0
+    let mz = 0
+    let near = Infinity
+    for (const [i, j] of room.spots) {
+      const l = Math.hypot(cellCenter(i) - ox, cellCenter(j) - oz)
+      if (l < near) { near = l; mx = cellCenter(i); mz = cellCenter(j) }
+    }
+    if (!Number.isFinite(near)) return null
+    // Into the room: from the door through the mouth.
+    const il = Math.hypot(mx - ox, mz - oz) || 1
+    const ux = (mx - ox) / il
+    const uz = (mz - oz) / il
+    const props = h.crates()
+    const p = h.player
+    let pick: [number, number] | null = null
+    let pickScore = Infinity
+    for (let along = 0.5; along <= 4.5; along += 0.5) {
+      for (const off of [0, 0.75, -0.75, 1.5, -1.5]) {
+        const x = mx + ux * (along - CELL / 2) - uz * off
+        const z = mz + uz * (along - CELL / 2) + ux * off
+        if (isSolidAt(h.nav, x, z) || roomAt(h.map, x, z) !== roomId) continue
+        let open = true
+        for (let k = 0; k < 8 && open; k++) {
+          const a = (k / 8) * Math.PI * 2
+          if (isSolidAt(h.nav, x + Math.cos(a) * 0.8, z + Math.sin(a) * 0.8)) open = false
+        }
+        if (!open || props.some(c => !c.broken && Math.hypot(c.x - x, c.z - z) < 1.6)) continue
+        if (Math.hypot(x - p.x, z - p.z) < 1.5) continue
+        const score = Math.abs(along - CRATE_BEFORE_EXIT) + Math.abs(off) + (h.craneCovers && !h.craneCovers(x, z) ? 5 : 0)
+        if (score < pickScore) { pick = [x, z]; pickScore = score }
+      }
+    }
+    if (!pick) return null
+    const c = h.addCrate(pick[0], pick[1], Math.atan2(ox - pick[0], oz - pick[1]))
+    if (c && !h.craneDrop?.(c)) {
+      h.fx.riseRing(c.x, 0.1, c.z, PAL.glowCyan, 0.8, 18)
+      h.sfx('beamIn', c.x, c.z)
+    }
+    return c
   }
 
   /** A crate for the lesson where the room had none: on a free interior
@@ -706,12 +768,10 @@ export class LessonDirector {
       t.hitT = Math.max(0, t.hitT - dt * 4)
       m.root.position.y = t.y + Math.sin(h.time * 2.1) * 0.08
       m.body.rotation.y = Math.atan2(h.player.x - t.x, h.player.z - t.z)
-      m.rim.rotation.y = m.body.rotation.y
       m.body.rotation.z = Math.sin(h.time * 1.3) * 0.08
       for (const r of m.rotors) r.rotation.y += dt * 14
-      m.barrierMat.opacity = 0.13 + t.hitT * 0.4 + Math.sin(h.time * 3) * 0.02
-      m.rimMat.opacity = 0.55 + t.hitT * 0.45
-      m.barrier.scale.setScalar(1 + t.hitT * 0.08)
+      // A quick shot's knock: the drone jolts back a touch.
+      m.body.scale.setScalar(1 - t.hitT * 0.06)
     }
   }
 

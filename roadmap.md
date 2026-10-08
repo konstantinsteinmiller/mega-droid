@@ -397,3 +397,7 @@ Wait for my "go" to start implementation, ask to review the decisions first.
   Done: the weapon lesson points three yellow arrows at its slot on touch; every hologram wears its input over its head on touch too (the HUD button itself; the stick's ∞ for walking), floating up a little; a free Repair Gel once the gel lesson is learned.
 - [x] #131 if the objective is behind the player the yellow chevrons on the ground fail to show that, therefore show also some chevrons in the players view that make a turnaround towards the objective in a small arc.
   Done: with the walk setting off behind the view, four bigger chevrons lie on the floor ahead in a small U-turn arc toward it (closer in front of a wall, drawn over props), gone once he faces the way.
+- [x] #132 the jump tutorial is a dead end, if the player kills the jumper before he    
+  came close enough to jump on Flux and force the dash, if that happens, show a
+  big fat yellow arrow on the dash button (on mobile and tablet) and on Space   
+  key pressing on screen on desktop with mouse controls. same for the guard droid in the shield lesson room.

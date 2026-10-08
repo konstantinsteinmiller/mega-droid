@@ -53,6 +53,7 @@ import { CombatSystem, type CombatHost } from './combat'
 import { updateEnemy, syncEnemyVisual, PARRY_WINDOW, wake, wakeGolem, createEnemy, frozenDt } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
+import { ChargeShow, showHoldFor } from './chargeShow'
 import { Particles } from '../fx/particles'
 import { FloorMarkers, ShockRings, makeBlobShadow } from '../fx/markers'
 import { ObjectiveTrail, type TrailInput, createTrailPath, buildTrailPath, projectOnPath } from '../fx/objectiveTrail'
@@ -60,7 +61,7 @@ import { sfx } from '../audio/sfx'
 import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
 import { LessonDirector, roomAt, type LessonTick } from './lessons'
-import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed } from './walkthrough'
+import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, roomHoloSpot, type HoloSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed } from './walkthrough'
 import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt'
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
@@ -163,11 +164,24 @@ const FLAT_EYE = 0.45
 /** The slide lesson's Stomper holds at the top of its leap (s into its 0.7 s
  *  arc) until the player slides. */
 const SLIDE_CUE_AT = 0.33
+/** The slide lesson's Stomper down before its leap was ever held: this long
+ *  after (s, the death burst first) the slide input is pointed at anyway. */
+const SLIDE_MISS_AFTER = 0.8
 /** The block lesson holds the Trooper's first shot this far (s) from Flux:
  *  inside the parry window (PARRY_WINDOW), so the block it waits for parries. */
 const BLOCK_CUE_ETA = 0.2
 /** …and keeps the shield up this long after that block (s), tap or hold. */
 const BLOCK_CUE_HOLD = 0.4
+/** The held shot's volley: parried for this long after the block (s)… */
+const VOLLEY_FOR = 1.6
+/** …its rounds (the Trooper's burst), each coming home taking a third… */
+const VOLLEY_ROUNDS = 3
+/** …and the shield up this long (s) after each parry, to see it happen. */
+const VOLLEY_SHIELD = 0.5
+/** The charge hologram stands this far (m) in front of the drones' row… */
+const CHARGE_HOLO_BEFORE = 2.4
+/** …but never nearer the pad than this. */
+const CHARGE_HOLO_MIN = 2.2
 /** The gel hologram shows within this of its spot (m), once its lesson began. */
 const GEL_HOLO_NEAR = 9
 /** The checklist's arrow toward a lesson stays up this long (s). */
@@ -602,6 +616,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The held leap has been answered once: from then a slide counts. */
   private slideCueDone = false
   private slideCued: Enemy | null = null
+  /** The slide lesson's Stomper fell before its leap was held — shot down
+   *  before it ever came close (the lesson was a dead end): since when (-1:
+   *  it stands), and the cue latched on — the slide input pointed at (yellow
+   *  arrows on touch, the Space key pressing on a desktop), any slide counts. */
+  private slideMissAt = -1
+  private slideMissed = false
   private gelHoloOn = false
   /** The block lesson's freeze: the Trooper's first shot held at the parry
    *  moment until the player blocks (`cueBlock`); once a mission. */
@@ -610,6 +630,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** After that block, the shield stays up this long (s) even if the tap was
    *  already let go: the parry it was promised happens. */
   private blockCueHold = 0
+  /** After the block lesson's held shot: the rest of the Trooper's volley is
+   *  parried too, the shield held up, and its shots coming home take it
+   *  apart in even thirds (`hitPlayer`, `reflectShare`). */
+  private blockVolley: { e: Enemy; until: number; landed: number } | null = null
+  /** The tutorial's first charged shot, fired by the game right after the
+   *  landing (`sim/chargeShow.ts`); null once over, or never due. */
+  private chargeShow: ChargeShow | null = null
   /** The weapon lesson room behind the boss (`map.exit`): its pedestal (lit
    *  once the lesson is done: walking onto it beams Flux out), the weapon
    *  copied from the boss, whether its lesson has begun, and the arm
@@ -789,7 +816,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
     this.pad = buildTeleporter(th)
     const [sx, sz] = [this.map.start.x, this.map.start.z]
-    this.pad.root.position.set(sx, 0, sz)
+    // On its room's floor: a stage's beam-in room stands level with the room
+    // it opens into (Gale's: the raised dock), not at 0 — the floor covered it.
+    this.pad.root.position.set(sx, this.padFloor(sx, sz), sz)
     // Under its room's group, like any static prop: hidden with the room.
     this.propParent(sx, sz).add(this.pad.root)
 
@@ -1191,8 +1220,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (this.climb && this.offLevel(e, o.kind, o.fromX, o.fromZ)) return 'miss'
     const toSrc = Math.atan2(-(o.fromX - p.x), -(o.fromZ - p.z))
     const frontal = Math.abs(angDiff(toSrc, p.yaw)) < 1.35
-    if (o.blockable && c.blocking && frontal && c.guardBroken <= 0) {
-      if (this.time - c.blockPressedAt <= PARRY_WINDOW + this.stats.parryBonus) {
+    // The block lesson's volley: every round of it is a perfect block.
+    const v = this.blockVolley
+    const forced = !!v && !!e && e === v.e && o.blockable && this.time < v.until
+    if (o.blockable && ((c.blocking && frontal && c.guardBroken <= 0) || forced)) {
+      if (forced || this.time - c.blockPressedAt <= PARRY_WINDOW + this.stats.parryBonus) {
         // ── PARRY ──
         this.hitStop = Math.max(this.hitStop, 0.14)
         this.shake(0.25)
@@ -1212,8 +1244,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         // The counter: the shield drops so the stunned machine can be shot
         // at once, with the button still down (the firing waits on
         // `!blocking`). A fresh press raises it again.
-        c.riposteT = RIPOSTE
-        c.blocking = false
+        if (forced) {
+          // The volley's rounds keep coming: the shield stays up for each,
+          // and a beat after the last, so every reflection is seen.
+          this.blockCueHold = VOLLEY_SHIELD
+          c.blocking = true
+        } else {
+          c.riposteT = RIPOSTE
+          c.blocking = false
+        }
         this.vm.barrier.impact('parry')
         this.coach.use('parry')
         this.walk?.noteBlock()
@@ -2533,6 +2572,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** Static props hang under their room's mesh group, so portal culling
    *  hides them with the room (ObjectiveHost). */
+  /** A teleporter pad's height: the floor under it (0 off a terrain map). */
+  private padFloor(x: number, z: number): number {
+    const y = floorAt(this.nav, x, z)
+    return Number.isFinite(y) ? y : 0
+  }
+
   propParent(x: number, z: number): Object3D {
     const o = this.level.owner[Math.floor(z / CELL) * this.map.w + Math.floor(x / CELL)] ?? -1
     return o >= 0 ? this.level.rooms[o]! : this.scene
@@ -2873,7 +2918,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (hud.phase === 'beamIn') {
       this.stepBeamIn(dt, first)
     } else if (hud.phase === 'play') {
+      if (this.chargeShow) this.stepChargeShow(dt)
       this.updatePlayer(dt, first)
+      if (this.blockVolley) this.stepBlockVolley()
     } else if (hud.phase === 'dead') {
       this.stepDead(dt, rawDt)
     } else if (hud.phase === 'beamOut') {
@@ -3188,6 +3235,30 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /**
+   * The slide lesson's Stomper shot down before it ever leapt at Flux: no
+   * held leap will come to answer, and the lesson only counted the slide
+   * that answered one — the room's door stayed shut. A beat after it falls,
+   * the slide input is pointed at instead (`hud.slideCue`: the touch button
+   * bounces under yellow arrows, a desktop shows the Space key pressing,
+   * `InputCue`), and from then any slide ticks the lesson off.
+   */
+  private stepSlideMiss(standing: boolean): void {
+    if (this.slideMissed) {
+      if (!hud.slideCue) hud.slideCue = true
+      return
+    }
+    if (standing || this.slideCueDone || this.training.done.has('slide')) {
+      this.slideMissAt = -1
+      return
+    }
+    if (this.slideMissAt < 0) this.slideMissAt = this.time
+    else if (this.time - this.slideMissAt >= SLIDE_MISS_AFTER) {
+      this.slideMissed = true
+      hud.slideCue = true
+    }
+  }
+
+  /**
    * The block lesson's held shot (`CombatHost.cueBlock`): the Trooper's first
    * shot at Flux, while the block is still to learn, stops in the air at the
    * moment a block would parry it, the view on it; the HUD bounces the block
@@ -3210,6 +3281,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return true
   }
 
+  /**
+   * The block room's Trooper takes nothing from Flux until the perfect block
+   * is learned (`CombatHost.lessonShield`): shot down from across the room
+   * before its first shot ever came, there was nothing left to block, and
+   * the room's door (which wants the shield raised and the Trooper down)
+   * stayed shut. Its own shots, parried back at it, finish it after.
+   */
+  lessonShield(e: Enemy): boolean {
+    if (e.kind !== 'trooper' || !this.walk?.active || this.training.done.has('block')) return false
+    const g = this.walk.current
+    return !!g && g.steps.includes('block') && e.room === g.room
+  }
+
   /** The block came: the shield up and fresh, the shot set on its last
    *  stretch straight at Flux's front, and time runs again — it lands inside
    *  the parry window and flies back at the Trooper. The press stays for the
@@ -3227,6 +3311,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.slideT = 0
     c.blockPressedAt = this.time
     this.blockCueHold = BLOCK_CUE_HOLD
+    if (s.source) this.blockVolley = { e: s.source, until: this.time + VOLLEY_FOR, landed: 0 }
     if (s.active && s.source) {
       const sp = Math.hypot(s.vx, s.vy, s.vz) || 1
       const ex = s.source.x - p.x
@@ -3243,6 +3328,80 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     this.freeze.end()
     this.writeHud()
+  }
+
+  /**
+   * One step of the charge show (`sim/chargeShow.ts`), before the player's
+   * own: while it runs the player's hands are out of it — no walking,
+   * looking or pressing — the view turns onto the side drone, fire is held
+   * through the real input record (the hum, the glow, the rings) and let go
+   * in the full charge's sweet spot; the real charged shot pops the drone.
+   */
+  private stepChargeShow(dt: number): void {
+    const s = this.chargeShow!
+    const inp = this.input
+    const c = this.combat
+    const p = this.player
+    const d = this.lessons.demoTargetAt
+    // The drone gone before the shot (a stray shot of the player's): over.
+    if (!d && s.phase !== 'watch') s.stop()
+    const ph = s.phase === 'done' ? 'done' : s.step(dt)
+    if (s.active || s.release) {
+      inp.moveX = inp.moveY = inp.turn = 0
+      inp.lookDX = inp.lookDY = 0
+      inp.taps.length = 0
+      inp.firePressed = inp.fireReleased = inp.fireCancelled = false
+      inp.blockPressed = inp.blockHeld = false
+      inp.slideQueued = inp.tankQueued = false
+      inp.weaponQueued = 0
+    }
+    if (d && (ph === 'aim' || ph === 'hold')) {
+      // The view eases onto the drone and stays on it.
+      const yaw = Math.atan2(-(d.x - p.x), -(d.z - p.z))
+      const pitch = Math.atan2(d.y - (p.y + EYE_H), Math.max(0.8, Math.hypot(d.x - p.x, d.z - p.z)))
+      const k = ph === 'aim' ? Math.min(1, dt * 7) : 1
+      p.yaw += angDiff(yaw, p.yaw) * k
+      p.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, p.pitch + (pitch - p.pitch) * k))
+    }
+    if (ph === 'hold') {
+      // Held from the first step, never pressed: no quick shot goes first.
+      if (!c.charging) {
+        c.charging = true
+        c.charge = 0
+      }
+      inp.fireHeld = true
+    }
+    if (s.release) {
+      inp.fireHeld = false
+      const info = chargeInfo(c.charge, this.stats)
+      if (info.level !== 0) this.fireCharged(info.level, info.perfect)
+      c.charging = false
+      c.charge = 0
+    }
+    const want = ph === 'aim' ? 'aim' : ph === 'hold' ? 'hold' : ph === 'watch' ? 'release' : ''
+    if (hud.chargeShow !== want) hud.chargeShow = want
+    if (ph === 'done') this.chargeShow = null
+  }
+
+  /** CombatHost: the volley's rounds coming home to its Trooper take it
+   *  apart in even thirds — the last one is its end, a normal death. */
+  reflectShare(_s: Shot, e: Enemy): number | undefined {
+    const v = this.blockVolley
+    if (!v || e !== v.e) return undefined
+    v.landed++
+    return Math.max(0, (VOLLEY_ROUNDS - v.landed) / VOLLEY_ROUNDS)
+  }
+
+  /** Per step: the volley over (its window passed, no round of it still on
+   *  its way home): a Trooper a stray round left standing goes down too. */
+  private stepBlockVolley(): void {
+    const v = this.blockVolley
+    if (!v || this.time < v.until) return
+    if (this.system.shots.some(s => s.active && s.kind === 'reflect' && s.homing === v.e)) return
+    this.blockVolley = null
+    const e = v.e
+    if (e.state === 'dead') return
+    this.system.damageEnemy(e, e.hp, { crit: false, charge: 2, fromX: this.player.x, fromZ: this.player.z, x: e.x, y: e.y + e.def.aimY, z: e.z, color: '#7ff4ff', share: 0 })
   }
 
   /** The checklist's tap on an open lesson: point the way for a while. */
@@ -3485,7 +3644,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (!ex || this.setup.quest?.kind !== 'story') return
     this.holdDoor(ex.door)
     const pad = buildTeleporter(this.theme)
-    pad.root.position.set(cellCenter(ex.pad[0]), 0, cellCenter(ex.pad[1]))
+    const [px, pz] = [cellCenter(ex.pad[0]), cellCenter(ex.pad[1])]
+    pad.root.position.set(px, this.padFloor(px, pz), pz)
     this.propParent(pad.root.position.x, pad.root.position.z).add(pad.root)
     this.exitPad = pad
   }
@@ -3566,7 +3726,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // The weapon learned: now the objective is done (it waited, #110).
     if (owed && this.objects.objective.done) this.onObjectiveDone()
     const at = this.exitPad.root.position
-    this.fx.riseRing(at.x, 0.2, at.z, PAL.glowCyan, 1.3, 26)
+    this.fx.riseRing(at.x, at.y + 0.2, at.z, PAL.glowCyan, 1.3, 26)
     this.sfx('beamIn', at.x, at.z)
   }
 
@@ -3749,6 +3909,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (!id) {
+      // Out of the slide room: its missed-leap cue waits for him there.
+      if (this.slideMissed && !this.slideCue) hud.slideCue = false
       // A weapon lesson runs in its own room (the beam-in room, the room
       // behind the boss); out of it, its label and vignette go too.
       if (tr.id && (tr.id !== 'weapon' || here !== this.weaponRoomNow())) tr.leave()
@@ -3769,6 +3931,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         this.trainSpot = { x: e.x, y: e.y + (e.floor ?? 0) + e.def.aimY + e.def.hitR, z: e.z }
         if (id === 'slide') this.stepSlideCue(e)
       }
+      if (id === 'slide') this.stepSlideMiss(!!e && e.state !== 'dead')
       // The block room's door rule met without a shot ever blocked: the
       // lesson ticks off with the door.
       if (id === 'block' && !tr.done.has('block') && walk.blockMet) this.trainDone('block')
@@ -3803,20 +3966,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           z = (fz + tz) / 2
           yaw = Math.atan2(-(tz - fz), tx - fx)
         } else {
-          // Off to one side of the room's middle, where its machines stand,
-          // and playing away from the way in (the start room: from the pad):
-          // seen from behind, the way the player sees his own Flux do it.
-          const [dx, dz] = g.room === walk.plan.gates[0]!.room ? [this.map.start.x, this.map.start.z] : doorwayOf(this.map, g.room)
-          const ix = x - dx
-          const iz = z - dz
-          const il = Math.hypot(ix, iz) || 1
-          const ux = ix / il
-          const uz = iz / il
-          const side = Math.min(2.8, Math.max(0, Math.min(r.w, r.h) * CELL / 2 - 2.2))
-          // Its Flux (2 m behind its middle) stands level with the room's middle.
-          x += -uz * side + ux * 2
-          z += ux * side + uz * 2
-          yaw = Math.atan2(-uz, ux)
+          const at = (id === 'charge' ? this.chargeHoloSpot() : null) ?? roomHoloSpot(this.map, walk.plan, g.room)
+          if (!at) continue
+          x = at.x
+          z = at.z
+          yaw = at.yaw
         }
         this.addHolo(id, g.room, x, z, yaw)
       }
@@ -3831,6 +3985,28 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const k = Math.min(2.6, l * 0.6) / l
       this.addHolo('gel', -1, sx + (gd.x - sx) * k, sz + (gd.z - sz) * k, Math.atan2(-(gd.z - sz), gd.x - sx) + Math.PI / 2)
     }
+  }
+
+  /**
+   * The charge lesson's hologram, in the same view as the drones it teaches
+   * (playtest 2026-10-07: off to the side, players had to turn to find it):
+   * straight ahead of the pad, between it and the drones, playing side-on
+   * across the view so the drones stand behind it — its charged shot flies
+   * right in front of them.
+   */
+  private chargeHoloSpot(): HoloSpot | null {
+    const a = this.lessons.droneAt
+    if (!a) return null
+    const s = this.map.start
+    const fx = -Math.sin(s.yaw)
+    const fz = -Math.cos(s.yaw)
+    const ahead = (a.x - s.x) * fx + (a.z - s.z) * fz
+    const d = Math.max(CHARGE_HOLO_MIN, ahead - CHARGE_HOLO_BEFORE)
+    // Its line runs left to right across the view: Flux on the left (the
+    // hologram's middle is 0.2 m right of its line's), shooting right.
+    const rx = -fz
+    const rz = fx
+    return { x: s.x + fx * d - rx * 0.2, z: s.z + fz * d - rz * 0.2, yaw: Math.atan2(-rz, rx) }
   }
 
   private addHolo(id: HoloId, room: number, x: number, z: number, yaw: number, weaponColor?: string, weapon?: WeaponId): void {
@@ -3902,7 +4078,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private slideCounts(): boolean {
     // In the lesson, only the slide that answers the held leap (#105 note:
     // a slide made before any leap ticked it off, so it never froze).
-    if (this.walk && this.training.id === 'slide' && !this.training.done.has('slide')) return this.slideCueDone
+    if (this.walk && this.training.id === 'slide' && !this.training.done.has('slide')) return this.slideCueDone || this.slideMissed
     return !this.walk || this.training.counts('slide')
   }
 
@@ -4001,6 +4177,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       hud.phase = 'play'
       this.phaseT = 0
       this.startStoryBeat()
+      // The tutorial's start room: the game fires the first charged shot
+      // itself, at the side drone, before the player's turn.
+      if (this.setup.tutorial && !this.setup.snapshot && this.lessons.demoTargetAt && !this.training.done.has('charge')) {
+        this.chargeShow = new ChargeShow(showHoldFor(this.stats.chargeTimeMul, this.stats.perfectMul))
+      }
       // The lab's rewarded gift pays out as he lands, where the fly-in is
       // seen. A resume already had its start (and its gift), so only a fresh
       // mission claims one; a mission quit mid-beam leaves it pending.
@@ -4213,6 +4394,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** The tutorial's crate lesson brings its crate down from the room's crane
    *  (`LessonDirector.bringCrate`): true when a crane took it. */
+  craneCovers(x: number, z: number): boolean {
+    return this.roomCranes.some(r => r.covers(x, z))
+  }
+
   craneDrop(c: Crate): boolean {
     const cr = this.roomCranes.find(r => r.covers(c.x, c.z))
     if (!cr) return false
@@ -4259,7 +4444,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // A lesson hologram shows its own input: the coach hushes all but the
     // thumbs and survival (a fire glyph kept coming back in the shield and
     // slide lessons, pointing at the wrong button).
-    c.quiet = this.lessons.focus(p.x, p.z, p.yaw) || hud.holoAct !== ''
+    c.quiet = this.lessons.focus(p.x, p.z, p.yaw) || hud.holoAct !== '' || !!this.chargeShow?.active
     c.veteran = profile.world.tutorialDone
     c.gelLesson = this.lessons.gelLive || !!this.walk?.gelPending
     c.blockLesson = !!this.walk?.blockPending(p.x, p.z)
@@ -4378,6 +4563,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // A wall-kick shaft takes the slide as a kick (at its foot or on it).
     const kicked = first && inp.slideQueued && !!this.climb && !this.fumble.stunned && this.flatT <= 0 && this.climb.kick(p)
     if (first && inp.slideQueued && this.climb && p.ladder >= 0 && !kicked) this.climb.letGo(p)
+    // The missed-leap cue's slide must happen: no cooldown or empty power
+    // can eat it (as the held leap's, `stepFreeze`).
+    if (first && inp.slideQueued && this.slideMissed && !kicked) {
+      c.slideCd = 0
+      c.power = Math.max(c.power, st.slideCost)
+    }
     if (first && inp.slideQueued && !kicked && c.slideCd <= 0 && c.slideT <= 0 && c.power >= st.slideCost && !this.fumble.stunned && this.flatT <= 0 && (!this.climb || this.climb.canSlide(p))) {
       let dx = 0
       let dz = 0
@@ -4408,6 +4599,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if (this.slideCounts()) {
         this.walk?.noteSlide()
         this.trainDone('slide')
+        if (this.slideMissed) {
+          this.slideMissed = false
+          if (!this.slideCue) hud.slideCue = false
+        }
       }
       this.fx.emit({ x: p.x, y: p.y + 0.2, z: p.z, color: '#dfefff', size: 0.9, sizeEnd: 1.6, life: 0.3 })
     }
@@ -5312,7 +5507,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private applyLook(dt: number): void {
     const p = this.player
     const inp = this.input
-    const live = hud.phase === 'play' && !this.fumble.stunned
+    const live = hud.phase === 'play' && !this.fumble.stunned && !this.chargeShow?.active
     if (live && (inp.lookDX || inp.lookDY)) {
       const s = (inp.device === 'touch' ? LOOK_TOUCH : inp.locked ? LOOK_LOCK : LOOK_MOUSE) * this.lookSens
       // Full speed, always: the soft lock below stands aside while the
@@ -5885,6 +6080,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // A lesson freeze left mid-way (quit from the pause menu): its cue goes.
     hud.slideCue = false
     hud.blockCue = false
+    hud.chargeShow = ''
     for (const c of this.roomCranes) c.dispose()
     this.roomCranes = []
     this.storyScene?.skip()

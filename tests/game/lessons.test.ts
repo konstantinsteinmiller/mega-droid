@@ -8,7 +8,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Group, Scene } from 'three'
-import { generateMap, roomCenter, type MapData } from '@/game/world/levelGen'
+import { generateMap, roomCenter, cellCenter, type MapData } from '@/game/world/levelGen'
 import { generateClimb } from '@/game/world/climbGen'
 import { createNav, hasLineOfSight, isSolidAt, groundAt } from '@/game/world/nav'
 import { profile } from '@/game/state/profile'
@@ -292,6 +292,34 @@ describe('the crate lesson (second room, once quiet)', () => {
     run(d, host, 0.1)
     expect(d.crateBroken).toBe(true)
     expect(crates.filter(c => !c.broken)).toHaveLength(0)
+  })
+
+  it('in the tutorial the crate brought in lands in front of the way out', () => {
+    const { host, map, crates } = makeHost(true)
+    const d = new LessonDirector(host, { guided: true })
+    run(d, host, 0.1)
+    const { room, cx, cz } = otherRoom(map)
+    host.player.x = cx
+    host.player.z = cz
+    // A door of the room other than the one leading in: its way out.
+    const exit = map.doors.findIndex(dr => dr.from === room.id)
+    expect(exit).toBeGreaterThanOrEqual(0)
+    expect(d.startCrate(room.id, exit)).toBe(true)
+    expect(crates).toHaveLength(1)
+    const c = crates[0]!
+    const dr = map.doors[exit]!
+    expect(roomAt(map, c.x, c.z)).toBe(room.id)
+    // A few metres from the exit's mouth (the room's floor cell nearest the
+    // door), and nearer the door than the room's middle is.
+    let mouth = [0, 0]
+    let best = Infinity
+    for (const [i, j] of room.spots) {
+      const l = Math.hypot(cellCenter(i) - cellCenter(dr.i), cellCenter(j) - cellCenter(dr.j))
+      if (l < best) { best = l; mouth = [cellCenter(i), cellCenter(j)] }
+    }
+    expect(Math.hypot(c.x - mouth[0]!, c.z - mouth[1]!)).toBeLessThan(3)
+    const toDoor = Math.hypot(c.x - cellCenter(dr.i), c.z - cellCenter(dr.j))
+    expect(toDoor).toBeLessThan(Math.hypot(cx - cellCenter(dr.i), cz - cellCenter(dr.j)))
   })
 
   it('in the tutorial it is taught again, even to a player who learned it before', () => {

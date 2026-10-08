@@ -7,7 +7,7 @@
     button.act.fire(
       v-if="!desk"
       type="button"
-      :class="[{ held: fireDown }, demoClass('fire')]"
+      :class="[{ held: fireDown, cue: chargeCue }, demoClass('fire')]"
       :aria-label="t('combat.fire')"
       @pointerdown.prevent.stop="fireStart"
       @pointermove.prevent.stop="fireDrag"
@@ -18,7 +18,10 @@
       //- Crosshair ticks round the buster: "this one shoots", at a glance.
       span.fire-ticks(aria-hidden="true")
       span.demo-finger(v-if="demoOn('fire')" aria-hidden="true")
-        InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
+        InputGlyph(kind="finger" :mode="hud.holoDown || hud.chargeShow === 'hold' ? 'hold' : 'tap'")
+      //- The charge show: the game holds this button for the player (`hud.chargeShow`).
+      span.cue-arrows(v-if="chargeCue" aria-hidden="true")
+        span.cue-arrow(v-for="i in 3" :key="i" :class="`a${i}`")
     button.act.block(
       type="button"
       :class="[{ held: hud.blockHeld, cue: hud.blockCue }, demoClass('block')]"
@@ -33,9 +36,8 @@
       span.demo-finger(v-if="demoOn('block')" aria-hidden="true")
         InputGlyph(kind="finger" :mode="hud.holoDown ? 'hold' : 'tap'")
       CoachRing(:hint="touchHint('parry') ?? touchHint('block') ?? urgentBlock" side="rim")
-      //- The block lesson's held shot: press it now (`hud.blockCue`).
-      span.cue-arrows(v-if="hud.blockCue" aria-hidden="true")
-        span.cue-arrow(v-for="i in 3" :key="i" :class="`a${i}`")
+      //- The block lesson's held shot: press it now, once (`hud.blockCue`).
+      PressCue.press-over(v-if="hud.blockCue")
     //- The cooldown is a clock wipe that shrinks away with the seconds left in
     //- the middle, and the button pops when it is back — the same on a phone
     //- (under the thumb) and on a desktop. Short of power it says so instead:
@@ -141,6 +143,7 @@ import GameIcon from '@/components/icons/GameIcon.vue'
 import CoachRing from './CoachRing.vue'
 import KeyCap from './KeyCap.vue'
 import InputGlyph from './InputGlyph.vue'
+import PressCue from './PressCue.vue'
 import type { HintId, HintView } from '@/game/sim/coach'
 import { WEAPON_ICON, type WeaponId } from '@/game/data/weapons'
 import { TEACH_TIP } from '@/game/sim/borrowed'
@@ -168,14 +171,20 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 /** A lesson hologram presses this button on its loop (`fx/lessonHologram.ts`):
  *  on a phone it lights in step, a finger on it — where the player's thumb
  *  will go (a desktop shows the key over the hologram, `LessonGlyph`). */
-const demoNow = (act: string): boolean => hud.holoAct === act && hud.holoDown && !desk.value
+const demoNow = (act: string): boolean =>
+  !desk.value && ((hud.holoAct === act && hud.holoDown) || (act === 'fire' && hud.chargeShow === 'hold'))
+/** The charge show (`sim/chargeShow.ts`): the fire button bounces under
+ *  yellow arrows while the game turns onto the drone and holds it down. */
+const chargeCue = computed(() => hud.chargeShow === 'aim' || hud.chargeShow === 'hold')
 /** The player's turn (the lesson's try): the button the lesson is about
  *  breathes until they have done it. The gel has its own ring. */
 const TRY_ACT: Record<string, string> = { charge: 'fire', block: 'block', slide: 'slide' }
 const tryNow = (act: string): boolean => (hud.trainPhase === 'try' || hud.trainPhase === 'intro') && TRY_ACT[hud.trainId] === act
 /** The weapon lesson wants this slot pressed (#130). */
 const weaponCue = (i: number): boolean => hud.lesson?.id === 'weapon' && !hud.lesson.done && hud.lesson.slot === i + 1
-const demoOn = (act: string): boolean => demoNow(act) || (tryNow(act) && !desk.value)
+// The block lesson's held shot shows its own press glyph: no finger on the
+// shield button then (a hologram's held finger read as "hold it").
+const demoOn = (act: string): boolean => !(act === 'block' && hud.blockCue) && (demoNow(act) || (tryNow(act) && !desk.value))
 const demoClass = (act: string) => (demoNow(act) ? { demo: true, 'demo-down': true } : tryNow(act) ? { demo: true, 'demo-try': true } : {})
 /** A weapon's mark inside its orb (the same glyph as the results screen). */
 const weaponIcon = (id: string) => WEAPON_ICON[id as WeaponId] ?? 'buster'
@@ -798,11 +807,19 @@ watch(() => hud.borrowed.teach, (on, was) => {
   .act.demo-try
     animation: none
 // The slide lesson's held leap: the button bounces, three arrows at it.
-.act.slide.cue, .act.block.cue
+.act.slide.cue, .act.block.cue, .act.fire.cue
   animation: cue-bounce 0.6s ease-in-out infinite
   z-index: 3
 .act.weapon:has(.cue-arrows)
   z-index: 3
+// The press glyph over a button (the block lesson's held shot).
+.press-over
+  position: absolute
+  left: 50%
+  bottom: calc(100% + 8px)
+  width: 46px
+  transform: translateX(-50%)
+  pointer-events: none
 @keyframes cue-bounce
   50%
     transform: translateY(-8px) scale(1.08)
@@ -834,7 +851,7 @@ watch(() => hud.borrowed.teach, (on, was) => {
   50%
     transform: translate(-50%, -50%) var(--r) translateY(-56px)
 @media (prefers-reduced-motion: reduce)
-  .act.slide.cue, .act.block.cue, .cue-arrow
+  .act.slide.cue, .act.block.cue, .act.fire.cue, .cue-arrow
     animation: none
 .demo-finger
   position: absolute

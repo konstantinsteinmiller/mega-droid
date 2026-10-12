@@ -8,7 +8,10 @@
 // the wall's sink and pays its prize once; a resumed stage keeps the buttons
 // mid-puzzle and the alcove open after; Atlas's one hint comes when Flux
 // first nears the buttons on their floor; and the Tower Run carries one
-// secret off its route.
+// secret off its route. The later kinds (#143): a sequence takes its order
+// and starts over on a wrong button; a shot flips a mirror and the beam
+// follows it to the target; plates light underfoot and go out on a second
+// step or a step off them; each keeps its state in a save.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -23,16 +26,21 @@ vi.mock('@/game/world/textures', async (orig) => {
   return { ...(await orig<object>()), glowTexture: () => new Texture(), ringTexture: () => new Texture() }
 })
 
-import { Group, Scene } from 'three'
+import { Group, Mesh, PlaneGeometry, Scene, type BufferGeometry, type Object3D } from 'three'
 import { CELL, cellCenter, type MapData, type SecretSpec } from '@/game/world/levelGen'
 import { createNav, findPath, moveBody, type Nav } from '@/game/world/nav'
 import { generateClimb } from '@/game/world/climbGen'
+import { generateStage } from '@/game/world/stages'
 import { Builder, finish, mirrorX, secretDoorFace, YAW_PX } from '@/game/world/stages/builder'
 import { THEMES } from '@/game/world/themes'
 import { SECTOR_BY_ID } from '@/game/data/regions'
 import { ClimbRun, type ClimbBody, type ClimbHost } from '@/game/sim/climb'
-import { SecretsFeature, press, solved, initialState, targetOf, SINK_T, HINT_R } from '@/game/sim/secrets'
+import { SecretsFeature, press, solved, initialState, targetOf, traceBeam, hintSpots, plateMap, SINK_T, HINT_R } from '@/game/sim/secrets'
 import { CombatSystem, type CombatHost } from '@/game/sim/combat'
+import {
+  iconGeometry, buildBeamLamp, buildBeamTarget, buildFloorPlate, buildMapPanel, buildMirror, buildSequencePanel
+} from '@/game/models/secretProps'
+import { coplanarOverlaps } from './coplanar'
 import { BorrowedRun, LENT_SHOTS, secretWeapon } from '@/game/sim/borrowed'
 import { WEAPON_IDS } from '@/game/data/weapons'
 import type { AtlasLine } from '@/game/sim/atlas'
@@ -57,6 +65,11 @@ const secretMap = (kind: SecretSpec['kind'] = 'lights', prize: SecretSpec['prize
   const b = new Builder(10, 5)
   b.addRoom(0, 0, 6, 4, 'start', 'hall', 3)
   if (kind === 'color') b.secret(0, 'color', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [[0, 0, 'n', 1], [1, 0, 'n', 0], [2, 0, 'n', 1]], [], prize, 1)
+  else if (kind === 'sequence') b.secret(0, 'sequence', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [[0, 0, 'n', 0], [1, 0, 'n', 1], [2, 0, 'n', 2]], [2, 0, 2, 1], prize)
+  // A beam from the north wall of (2, 0) down to a mirror on (2, 2), which
+  // must turn it east along row 2 into the target beside the false wall.
+  else if (kind === 'mirror') b.secret(0, 'mirror', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [], [], prize, undefined, { emitter: [2, 0, 'n'], mirrors: [[2, 2, 1], [4, 0, 0]] })
+  else if (kind === 'tiles') b.secret(0, 'tiles', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [], [], prize, undefined, { tiles: [[1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2]] })
   else if (kind === 'cycle') b.secret(0, 'cycle', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [[0, 0, 'n', 0], [1, 0, 'n', 0], [2, 0, 'n', 0]], [2, 0, 3], prize)
   else b.secret(0, 'lights', [6, 1, 7, 2], { i: 6, j: 1, axis: 'x' }, [[0, 0, 'n'], [1, 0, 'n'], [2, 0, 'n']], [1, 0, 1], prize)
   return finish(b, { x: cellCenter(1), z: cellCenter(2), yaw: YAW_PX }, 1)
@@ -285,6 +298,177 @@ describe('solving a secret', () => {
   })
 })
 
+// ─── The later puzzles (#143) ────────────────────────────────────────────────
+
+/** Brightness of a lamp's colour (to tell lit from dim). */
+const glow = (m: { color: { r: number; g: number; b: number } }): number => m.color.r + m.color.g + m.color.b
+
+/** A shot's step straight through mirror `i`'s plate, from the east. */
+const shootMirror = (r: Rig, i: number): boolean => {
+  const m = r.run.t.secrets![0]!.mirrors![i]!
+  return r.run.shotStep(step([m.x + 2, m.y, m.z], [m.x - 0.3, m.y, m.z]))
+}
+
+describe('the later puzzles', () => {
+  it('sequence: takes the panel\'s order; a wrong button buzzes and starts over (from it, if it is the first step)', () => {
+    const r = rig(secretMap('sequence'))
+    const sounds: string[] = []
+    r.host.sfx = (n) => { sounds.push(n) }
+    const st = () => r.sec.list[0]!.state
+    expect(r.run.t.secrets![0]!.target).toEqual([2, 0, 2, 1])
+    expect(st()).toEqual([0, 0, 0, 0])
+    shootAt(r, 2)
+    shootAt(r, 0)
+    expect(st()).toEqual([1, 1, 0, 0])
+    expect(sounds).toEqual(['uiClick', 'uiClick'])
+    // Wrong (it wants 2 again): all undone, and a buzz.
+    shootAt(r, 1)
+    expect(st()).toEqual([0, 0, 0, 0])
+    expect(sounds).toContain('denied')
+    // A wrong one that is the first step: the order starts over from it.
+    shootAt(r, 2)
+    shootAt(r, 2)
+    expect(st()).toEqual([1, 0, 0, 0])
+    for (const i of [0, 2]) shootAt(r, i)
+    expect(r.sec.isSolved(0)).toBe(false)
+    shootAt(r, 1)
+    expect(r.sec.isSolved(0)).toBe(true)
+  })
+
+  it('sequence: the panel shows each step\'s icon, a light running along the steps not done yet', () => {
+    const r = rig(secretMap('sequence'))
+    const s = r.run.t.secrets![0]!
+    const lamps = r.sec.list[0]!.panel
+    expect(lamps).toHaveLength(4)
+    lamps.forEach((l, i) => expect(l.icon.geometry).toBe(iconGeometry(s.buttons[s.target[i]!]!.color)))
+    // At first the light is on step 0; a moment later on step 1.
+    expect(glow(lamps[0]!.lampMat)).toBeGreaterThan(glow(lamps[1]!.lampMat))
+    tick(r, 0.5)
+    expect(glow(lamps[1]!.lampMat)).toBeGreaterThan(glow(lamps[0]!.lampMat))
+    // A step done stays lit.
+    shootAt(r, 2)
+    tick(r, 1.5)
+    expect(glow(lamps[0]!.lampMat)).toBeGreaterThan(glow(lamps[3]!.lampMat))
+  })
+
+  it('mirror: a shot flips a mirror and the beam follows; on the target the wall opens; the post is a body', () => {
+    const r = rig(secretMap('mirror'))
+    const s = r.run.t.secrets![0]!
+    const rt = r.sec.list[0]!
+    expect(rt.state).toEqual([1, 0])
+    expect(solved(s, rt.state)).toBe(false)
+    expect(r.host.nav.props.some(p => p.x === s.mirrors![0]!.x && p.z === s.mirrors![0]!.z)).toBe(true)
+    // Wrong: the beam turns west at the mirror and runs to the room's west wall.
+    const legs = () => rt.legs.filter(l => l.visible)
+    expect(legs()).toHaveLength(4)
+    const last = legs()[2]!
+    expect(last.rotation.y).toBeCloseTo(-Math.PI / 2)
+    expect(last.position.x - last.scale.z).toBeCloseTo(0.08, 1)
+    // The mirror off the beam turns, and nothing else changes.
+    expect(shootMirror(r, 1)).toBe(true)
+    expect(rt.state).toEqual([1, 1])
+    expect(r.sec.isSolved(0)).toBe(false)
+    // The one on the beam: east along row 2 into the target.
+    expect(shootMirror(r, 0)).toBe(true)
+    expect(r.sec.isSolved(0)).toBe(true)
+    const pts: number[] = []
+    expect(traceBeam(s, rt.state, pts)).toBe(true)
+    expect(pts).toEqual([s.emitter!.x, s.emitter!.z, s.mirrors![0]!.x, s.mirrors![0]!.z, s.panel.x, s.panel.z])
+    // Solved: a shot through a mirror flies on.
+    expect(shootMirror(r, 0)).toBe(false)
+    tick(r, SINK_T + 0.1)
+    expect(r.run.secretOpen(0)).toBe(true)
+  })
+
+  it('mirror: the mirrored map\'s mirrors are turned over, and the same shots solve it', () => {
+    const m = secretMap('mirror')
+    const a = m.terrain!.secrets![0]!
+    const b = mirrorX(m).terrain!.secrets![0]!
+    expect(b.mirrors!.map(x => x.o)).toEqual(a.mirrors!.map(x => 1 - x.o))
+    expect(traceBeam(b, initialState(b))).toBe(false)
+    const st = initialState(b)
+    press(b, st, 0)
+    expect(traceBeam(b, st)).toBe(true)
+  })
+
+  it('tiles: a plate lights underfoot; a lit one again, or a step off them, puts all out; all lit opens', () => {
+    const r = rig(secretMap('tiles'))
+    const sounds: string[] = []
+    r.host.sfx = (n) => { sounds.push(n) }
+    const ps = r.run.t.secrets![0]!.tiles!
+    const st = () => r.sec.list[0]!.state
+    const at = (i: number, ground = true) => r.run.update(DT, 0, { ...body(ps[i]!.x, ps[i]!.z, ps[i]!.y), ground }, true)
+    at(0)
+    at(1)
+    expect(st()).toEqual([1, 1, 0, 0, 0, 0])
+    // Back onto a lit one: out, and that one lit again (a fresh start).
+    at(0)
+    expect(st()).toEqual([1, 0, 0, 0, 0, 0])
+    expect(sounds).toContain('denied')
+    // Over a plate in the air: nothing.
+    at(3, false)
+    expect(st()).toEqual([1, 0, 0, 0, 0, 0])
+    // A step off the plates: all out.
+    at(3)
+    r.run.update(DT, 0, body(cellCenter(1), cellCenter(3)), true)
+    expect(st()).toEqual([0, 0, 0, 0, 0, 0])
+    // One walk over them all.
+    for (const i of [0, 1, 2, 5, 4]) at(i)
+    expect(r.sec.isSolved(0)).toBe(false)
+    at(3)
+    expect(r.sec.isSolved(0)).toBe(true)
+    // Solved: stepping off changes nothing.
+    r.run.update(DT, 0, body(cellCenter(1), cellCenter(3)), true)
+    expect(st()).toEqual([1, 1, 1, 1, 1, 1])
+  })
+
+  it('tiles: the panel is a map of the plates as Flux faces it, lit as they are', () => {
+    const r = rig(secretMap('tiles'))
+    const s = r.run.t.secrets![0]!
+    // The panel faces west (Flux looks east at it): south is his right, the
+    // plates nearest its wall the top row.
+    expect(s.panel.nx).toBe(-1)
+    expect(plateMap(s)).toEqual({ slots: [[0, 2], [0, 1], [0, 0], [1, 2], [1, 1], [1, 0]], cols: 2, rows: 3 })
+    const rt = r.sec.list[0]!
+    const dark = glow(rt.panel[0]!.lampMat)
+    // (Once the plate's step flash is over, the two show the same.)
+    tick(r, 0.3, body(s.tiles![0]!.x, s.tiles![0]!.z))
+    expect(glow(rt.panel[0]!.lampMat)).toBeGreaterThan(dark)
+    expect(rt.panel[0]!.lampMat.color.getHex()).toBe(rt.plates[0]!.lampMat.color.getHex())
+  })
+
+  it('a resumed stage keeps a sequence\'s steps and the mirrors as turned; plates come back out', () => {
+    const seq = secretMap('sequence')
+    const a = rig(seq)
+    shootAt(a, 2)
+    shootAt(a, 0)
+    const b = rig(seq)
+    b.run.restore(JSON.parse(JSON.stringify(a.run.save())))
+    expect(b.sec.list[0]!.state).toEqual([1, 1, 0, 0])
+    shootAt(b, 2)
+    shootAt(b, 1)
+    expect(b.sec.isSolved(0)).toBe(true)
+
+    const mir = secretMap('mirror')
+    const c = rig(mir)
+    shootMirror(c, 1)
+    const d = rig(mir)
+    d.run.restore(JSON.parse(JSON.stringify(c.run.save())))
+    expect(d.sec.list[0]!.state).toEqual([1, 1])
+    expect(d.sec.list[0]!.mirrors[1]!.pivot.rotation.y).toBeCloseTo(Math.PI / 4)
+    shootMirror(d, 0)
+    expect(d.sec.isSolved(0)).toBe(true)
+
+    const til = secretMap('tiles')
+    const e = rig(til)
+    const p = til.terrain!.secrets![0]!.tiles![0]!
+    e.run.update(DT, 0, body(p.x, p.z), true)
+    const f = rig(til)
+    f.run.restore(JSON.parse(JSON.stringify(e.run.save())))
+    expect(f.sec.list[0]!.state).toEqual([0, 0, 0, 0, 0, 0])
+  })
+})
+
 // ─── Save / restore ──────────────────────────────────────────────────────────
 
 describe('a resumed stage', () => {
@@ -361,10 +545,48 @@ describe('Atlas\'s hint', () => {
     expect(r.said).toEqual(['secret.color'])
   })
 
+  // Playtest 2026-10-11: on the Tide stage the line came from the Spillway,
+  // a room early — 7 m reaches through the Pump room's east wall.
+  it('never from another room, on any stage: only once Flux is in the puzzle room', () => {
+    const sectors = ['blaze', 'cryo', 'volt', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor', 'fortress'] as const
+    let checked = 0
+    for (const sector of sectors) {
+      for (const seed of [1, 2, 3]) {
+        const m = generateStage(sector, seed)
+        const t = m.terrain!
+        for (const [n, spec] of (t.secrets ?? []).entries()) {
+          const where = `${sector} seed ${seed} secret ${n}`
+          const r = rig(m)
+          const sec = new SecretsFeature(r.host, t, { openSecret: noop } as never)
+          const spots = hintSpots(spec)
+          // Every walkable cell of another room within reach of a button (a
+          // mirror, a plate), on its floor.
+          for (let k = 0; k < m.w * m.h; k++) {
+            // Corridors (room -1) too: the Tide line came from one.
+            if (m.room[k] === spec.room || t.pit[k]) continue
+            const x = cellCenter(k % m.w)
+            const z = cellCenter(Math.floor(k / m.w))
+            const y = t.floor[k]!
+            const near = spots.some(b => Math.hypot(x - b.x, z - b.z) <= HINT_R && Math.abs(y - b.floor) <= 1.5)
+            if (!near) continue
+            sec.update(DT, 0, body(x, z, y), true)
+            checked++
+          }
+          expect(r.said, where).toEqual([])
+          // In the room, in front of a button (beside a mirror, on a plate): the line.
+          const b = spec.buttons[0] ?? { ...spots[0]!, nx: 0, nz: 0 }
+          sec.update(DT, 0, body(b.x + b.nx * 1.5 + (spec.kind === 'mirror' ? 1.2 : 0), b.z + b.nz * 1.5, spots[0]!.floor), true)
+          expect(r.said, where).toEqual([`secret.${spec.kind}`])
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0)
+  })
+
   it('each kind has its own line', () => {
-    for (const kind of ['lights', 'color', 'cycle'] as const) {
+    for (const kind of ['lights', 'color', 'cycle', 'sequence', 'mirror', 'tiles'] as const) {
       const r = rig(secretMap(kind))
-      const b = r.run.t.secrets![0]!.buttons[1]!
+      const b = hintSpots(r.run.t.secrets![0]!)[1]!
       tick(r, 0.1, body(b.x, b.z + 1.5))
       expect(r.said).toEqual([`secret.${kind}`])
     }
@@ -415,5 +637,43 @@ describe('the Tower Run', () => {
     expect(cols(b)).toEqual(cols(a).slice().reverse())
     expect(a.spec.buttons.length).toBe(4)
     expect(CELL).toBe(3)
+  })
+})
+
+// ─── The later puzzles' props: no z-fighting ─────────────────────────────────
+
+describe('the later puzzles\' props', () => {
+  /** Each opaque mesh of a prop in world space (outlines and glows apart),
+   *  and the floor or wall it stands against. */
+  const parts = (root: Object3D, against: 'floor' | 'wall'): BufferGeometry[] => {
+    root.updateMatrixWorld(true)
+    const out: BufferGeometry[] = []
+    root.traverse((o) => {
+      const m = o as Mesh
+      if (!m.isMesh || m.renderOrder < 0 || (m.material as { transparent?: boolean }).transparent) return
+      out.push(m.geometry.clone().applyMatrix4(m.matrixWorld))
+    })
+    // The floor (y = 0) or the wall a wall thing is hung 6 cm off.
+    const plane = new PlaneGeometry(4, 4)
+    out.push(against === 'floor' ? plane.rotateX(-Math.PI / 2) : plane.translate(0, 0, -0.06))
+    return out
+  }
+
+  it('the plates, mirrors, beam lamp and panels have no two faces in one plane', () => {
+    const th = THEMES.scrapyard
+    expect(coplanarOverlaps(parts(buildFloorPlate(th).root, 'floor'))).toBe(0)
+    expect(coplanarOverlaps(parts(buildMirror(th, 1.5).root, 'floor'))).toBe(0)
+    expect(coplanarOverlaps(parts(buildBeamLamp(th), 'wall'))).toBe(0)
+    expect(coplanarOverlaps(parts(buildBeamTarget(th).root, 'wall'))).toBe(0)
+    expect(coplanarOverlaps(parts(buildSequencePanel(th, 5).root, 'wall'))).toBe(0)
+    expect(coplanarOverlaps(parts(buildMapPanel(th, [[0, 0], [1, 0], [2, 1]], 3, 2).root, 'wall'))).toBe(0)
+  })
+
+  it('a plate\'s face sits over the floor, a few cm (never on it)', () => {
+    const p = buildFloorPlate(THEMES.scrapyard)
+    const face = p.root.children.find(o => (o as Mesh).material === p.lampMat) as Mesh
+    face.geometry.computeBoundingBox()
+    expect(face.geometry.boundingBox!.max.y).toBeGreaterThan(0.03)
+    expect(face.geometry.boundingBox!.min.y).toBeLessThan(0)
   })
 })

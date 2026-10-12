@@ -59,6 +59,15 @@ interface CoverPillar {
   y: number
 }
 
+/** The cells of a map's floor hazards: live panels and magnet rails. */
+const hazardCells = (map: MapData): Set<number> => {
+  const out = new Set<number>()
+  const t = map.terrain
+  for (const v of t?.vents ?? []) if (!v.dx && !v.dz) out.add(v.j * map.w + v.i)
+  for (const m of t?.magnets ?? []) for (let j = m.j0; j <= m.j1; j++) for (let i = m.i0; i <= m.i1; i++) out.add(j * map.w + i)
+  return out
+}
+
 export class BossArena {
   readonly pillars: CoverPillar[] = []
   /** Gels this room's props have paid (at most one). */
@@ -77,13 +86,16 @@ export class BossArena {
       return s / 4294967296
     }
     const r = room
+    // Never on the arena's own floor hazards (a live panel, a magnet rail):
+    // a crate stood on a shock panel, a pillar across a rail.
+    const busy = hazardCells(host.map)
     // Cover: one or two pillars on a diagonal, two cells in from the walls.
     const spots: Array<[number, number]> = [[r.x0 + 2, r.z0 + 2], [r.x0 + r.w - 3, r.z0 + r.h - 3], [r.x0 + r.w - 3, r.z0 + 2], [r.x0 + 2, r.z0 + r.h - 3]]
     const nPillars = rng() < 0.5 ? 1 : 2
     const first = Math.floor(rng() * 2) * 2
     for (let k = 0; k < nPillars; k++) {
       const [i, j] = spots[(first + k) % spots.length]!
-      this.addPillar(i, j)
+      if (!busy.has(j * host.map.w + i)) this.addPillar(i, j)
     }
     // Props: 1–3 along the walls, one cell in (corners and mid-walls).
     const wall: Array<[number, number, number]> = [
@@ -93,6 +105,7 @@ export class BossArena {
     const nProps = 1 + Math.floor(rng() * 3)
     for (let k = 0; k < nProps; k++) {
       const [i, j, yaw] = wall.splice(Math.floor(rng() * wall.length), 1)[0]!
+      if (busy.has(j * host.map.w + i)) continue
       const x = cellCenter(i)
       const z = cellCenter(j)
       const y = Math.max(0, floorAt(host.nav, x, z))

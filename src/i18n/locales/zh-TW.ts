@@ -38,6 +38,7 @@ export default {
     'lastStand': '不屈！系統已重新啟動。',
     'weak': '弱點！',
     'kranck': 'KRANCK!',
+    'tooWeak': '太弱了！',
     'dizzy': '暈眩！',
     'dodge': '閃避！',
     'block': '格擋',
@@ -70,6 +71,7 @@ export default {
     'warden': '守衛者',
     'hornet': '黃蜂旋翼',
     'stalker': '輝光潛行者',
+    'spotter': '探照燈無人機',
     'puffer': '河豚水雷',
     'mole': '鑽地鼴鼠',
     'polar': '磁極小狗',
@@ -91,6 +93,7 @@ export default {
     'warden': '守衛者 | 守衛者',
     'hornet': '黃蜂旋翼 | 黃蜂旋翼',
     'stalker': '輝光潛行者 | 輝光潛行者',
+    'spotter': '探照燈無人機 | 探照燈無人機',
     'puffer': '河豚水雷 | 河豚水雷',
     'mole': '鑽地鼴鼠 | 鑽地鼴鼠',
     'polar': '磁極小狗 | 磁極小狗',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': '疾風大師',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': '至尊大師機器人'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': '餘燼獵犬',
+    'icebreakerBrute': '破冰蠻兵',
+    'arcSpider': '電弧蜘蛛',
+    'stormHornetQueen': '風暴黃蜂女王',
+    'lodestoneGolem': '磁石魔像',
+    'burrowWyrm': '掘地巨蟲',
+    'pufferMatriarch': '河豚母巢',
+    'glitchStalker': '故障潛行者',
+    'sawGyro': '鋸刃陀螺',
+    'sentinelPrototype': '哨兵原型機'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': '挑戰',
+    'cleared': '挑戰成功！+{bolts} 螺絲'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '升到{n}級！系統已完全修復。'
   },
   'tips': {
-    'moveTouch': '拖曳左側移動，拖曳右側轉動視角。輕觸地面就能走過去！',
+    'moveTouch': '拖曳左側移動，拖曳右側轉動視角。',
     'moveKeys': '用{keys}四處移動。',
     'lookMouse': '移動滑鼠環顧四周。',
     'capture': '按一下畫面即可控制鏡頭。',
@@ -340,8 +363,8 @@ export default {
       'interact': '互動'
     },
     'touch': {
-      'move': '左側：拖曳移動。輕觸地面就能走過去。',
-      'fire': '戰鬥中：輕觸射擊，按住蓄力，放開發射。',
+      'move': '左側：拖曳移動。右側：拖曳轉動視角。',
+      'fire': '右側或射擊鍵：輕觸射擊，按住蓄力，放開發射。按住時拖曳可瞄準。',
       'block': '按住護盾格擋——在光圈收攏的瞬間按下就能彈反。',
       'use': '靠近箱子、受困的機器人或門時：輕觸它，或輕觸跳出的按鈕。'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}。核心一露出來就打。',
       'hornet': '{enemy}。它直線俯衝：往旁邊閃！',
       'stalker': '{enemy}。它撲過來就彈反。',
+      'spotter': '{enemy}。快離開光圈，射它的燈。',
       'puffer': '{enemy}。趁它沒脹大先打爆。',
       'mole': '{enemy}。它一冒頭就打。',
       'elite': '金色光圈。菁英。小心。',
@@ -754,6 +778,7 @@ export default {
       'free': '因為它們是自由的。',
     },
     'guardDown': '守衛倒下！路通了。',
+    'challenge': '挑戰之門！裡面有好寶貝。',
     'help': {
       'weapon': '選好新武器，朝無人機開火！',
       'gap': '朝邊緣直走就會自動跳過去！',
@@ -761,6 +786,7 @@ export default {
       'slide': '在紅色光圈碰到你之前滑鏟躲開！',
       'block': '它開火時按住格擋。命中瞬間就是完美時機！',
       'blockMiss': '舉起護盾！命中瞬間格擋，把它彈回去！',
+      'chargeMiss': '按住臂砲按鈕，試試蓄力射擊！',
       'charge': '按住射擊直到臂砲發光，然後放開！',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': '那塊面板上有個圖案。牆上的燈還沒對上。',
       'color': '那個邊框有最喜歡的顏色。只有那種顏色的燈該亮。',
       'cycle': '每打一槍，燈就改一次主意。面板知道它想要什麼。',
+      'sequence': '面板一直閃著同一段旋律。照順序在按鈕上彈回去。',
+      'mirror': '那道光想射進圓環。射一下鏡子，它就會轉。',
+      'tiles': '一口氣走遍所有地板，把它們全點亮。踩兩次或踏出去，就全暗了。',
       'solved': '哎喲，有人喜歡解謎嘛。'
     },
     'landed': '著陸！出發吧。',

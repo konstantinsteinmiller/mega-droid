@@ -111,31 +111,31 @@ export interface CartMesh {
   rotors?: Group[]
 }
 
+/** The quadcopter's landing skids: their soles this far under its deck top
+ *  (m). At rest it stands on them, its deck a step over the floor
+ *  (`sim/stages/rail.ts` REST_LIFT). */
+export const QUAD_SKID = 0.45
+/** Its rotors' height over the deck top (m): up on their motor posts, clear
+ *  of the floor it rests on. */
+export const QUAD_ROTOR_Y = 0.32
+
 /**
  * The Rotor Run's ride: a cargo quadcopter, its deck top at the group's
  * origin (the cart's footprint, so the ride carries Flux the same way),
- * facing −Z: a railed deck on four arms, a rotor in a ring at each corner,
- * running lights (the "pads": bright while it flies).
+ * facing −Z: a railed deck on four arms, a rotor in a ring up on a motor
+ * post at each corner, two landing skids under it (it rests on them in its
+ * slot; its rotors used to sit under the boarding island's floor), running
+ * lights (the "pads": bright while it flies).
  */
 export const buildQuadcopter = (theme: Theme): CartMesh => {
-  const toon: BufferGeometry[] = []
-  const glowG: BufferGeometry[] = []
-  toon.push(paintBy(xform(rbox(2.5, 0.3, 2.6, 0.25), [0, -0.17, 0]), stripes(1.6)))
-  toon.push(xform(paint(rbox(2.2, 0.05, 2.3, 0.2), '#2a2d3e'), [0, 0.0, 0]))
-  for (const sx of [-1, 1]) toon.push(xform(paint(rbox(0.12, 0.5, 2.5, 0.3), theme.pilaster), [sx * 1.2, 0.25, 0]))
-  toon.push(xform(paint(rbox(1.0, 0.4, 0.8, 0.35), theme.pilaster), [0, -0.5, 0]))
+  const { toon, glow: glowG } = quadcopterParts(theme)
   const rotors: Group[] = []
   const root = new Group()
-  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
-    toon.push(xform(paint(rbox(1.1, 0.12, 0.16, 0.3), theme.pilaster), [sx * 1.55, -0.2, sz * 1.55], [0, sx * sz > 0 ? -Math.PI / 4 : Math.PI / 4, 0]))
-    toon.push(xform(paint(torus(0.75, 0.08, 6, 24), DANGER_BLACK), [sx * 2.05, -0.15, sz * 2.05], [Math.PI / 2, 0, 0]))
-    glowG.push(xform(paint(sph(0.1, 8, 6), sz < 0 ? '#ff4a4a' : '#5dff8a'), [sx * 2.05, -0.05, sz * 2.05 + sz * 0.78]))
-  }
   const body = assemble(toon, glowG)
   root.add(body)
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
     const g = new Group()
-    g.position.set(sx * 2.05, -0.1, sz * 2.05)
+    g.position.set(sx * 2.05, QUAD_ROTOR_Y + 0.02, sz * 2.05)
     const blade = merge([
       xform(paint(rbox(1.3, 0.03, 0.16, 0.5, 6, 2), '#e8ecf4'), [0, 0, 0]),
       xform(paint(rbox(0.16, 0.03, 1.3, 0.5, 6, 2), '#e8ecf4'), [0, 0, 0]),
@@ -146,9 +146,35 @@ export const buildQuadcopter = (theme: Theme): CartMesh => {
     root.add(g)
   }
   const padMat = new MeshBasicMaterial({ color: new Color(theme.pipe), toneMapped: false })
-  const pads = merge([-0.75, 0.75].map(sz => xform(rbox(1.7, 0.08, 0.3, 0.5, 8, 4), [0, -0.34, sz])))
+  // The running lights: along the deck's sides, under its rim.
+  const pads = merge([-1, 1].map(sx => xform(rbox(0.08, 0.08, 1.7, 0.5, 8, 4), [sx * 1.26, -0.13, 0])))
   root.add(new Mesh(pads, padMat))
   return { root, padMat, rotors }
+}
+
+/** The quadcopter's body, one geometry per part (`tests/game/rotorRun.test.ts`
+ *  checks them for coplanar faces): the merged toon and glow of its frame. */
+export const quadcopterParts = (theme: Theme): { toon: BufferGeometry[]; glow: BufferGeometry[] } => {
+  const toon: BufferGeometry[] = []
+  const glowG: BufferGeometry[] = []
+  toon.push(paintBy(xform(rbox(2.5, 0.2, 2.6, 0.2), [0, -0.12, 0]), stripes(1.6)))
+  toon.push(xform(paint(rbox(2.2, 0.05, 2.3, 0.2), '#2a2d3e'), [0, 0.0, 0]))
+  for (const sx of [-1, 1]) toon.push(xform(paint(rbox(0.12, 0.5, 2.5, 0.3), theme.pilaster), [sx * 1.2, 0.25, 0]))
+  // The cargo pod between the skids, clear of the floor.
+  toon.push(xform(paint(rbox(0.9, 0.16, 0.8, 0.3), theme.pilaster), [0, -0.27, 0]))
+  // The skids: a tube each side on two struts set up into the deck.
+  for (const sx of [-0.85, 0.85]) {
+    toon.push(xform(paint(rcyl(0.055, 2.3, 0.02, 8), DANGER_BLACK), [sx, -QUAD_SKID + 0.055, 0], [Math.PI / 2, 0, 0]))
+    for (const sz of [-0.7, 0.7]) toon.push(xform(paint(rcyl(0.04, 0.36, 0.01, 6), theme.pilaster), [sx, -0.24, sz]))
+  }
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+    toon.push(xform(paint(rbox(1.1, 0.12, 0.16, 0.3), theme.pilaster), [sx * 1.55, -0.12, sz * 1.55], [0, sx * sz > 0 ? -Math.PI / 4 : Math.PI / 4, 0]))
+    // The motor post up from the arm's end to the rotor's ring.
+    toon.push(xform(paint(rcyl(0.11, QUAD_ROTOR_Y + 0.14, 0.03, 10), theme.pilaster), [sx * 2.05, (QUAD_ROTOR_Y - 0.18) / 2 + 0.02, sz * 2.05]))
+    toon.push(xform(paint(torus(0.75, 0.08, 6, 24), DANGER_BLACK), [sx * 2.05, QUAD_ROTOR_Y - 0.03, sz * 2.05], [Math.PI / 2, 0, 0]))
+    glowG.push(xform(paint(sph(0.1, 8, 6), sz < 0 ? '#ff4a4a' : '#5dff8a'), [sx * 2.05, QUAD_ROTOR_Y + 0.07, sz * 2.05 + sz * 0.78]))
+  }
+  return { toon, glow: glowG }
 }
 
 /**
@@ -221,7 +247,9 @@ export interface ShockPanelMesh {
  */
 export const buildShockPanel = (size: number): ShockPanelMesh => {
   const toon: BufferGeometry[] = []
-  const s = size - 0.1
+  // Its striped rim (0.16 wide on its edge) stays inside its cell: two
+  // panels side by side had their rims in one another, in one plane.
+  const s = size - 0.2
   toon.push(xform(paint(rbox(s, 0.06, s, 0.2, 8, 4), '#1d2038'), [0, 0.01, 0]))
   for (const [x, z, w, d] of [[0, -s / 2, s, 0.16], [0, s / 2, s, 0.16], [-s / 2, 0, 0.16, s], [s / 2, 0, 0.16, s]] as const) {
     toon.push(paintBy(xform(rbox(w, 0.08, d, 0.3, 8, 4), [x, 0.02, z]), stripes(2.4)))

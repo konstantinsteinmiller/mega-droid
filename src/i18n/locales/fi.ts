@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Viimeinen voima! Järjestelmät käynnistetty.',
     'weak': 'HEIKKOUS!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'LIIAN HEIKKO!',
     'dizzy': 'PYÖRRYKSISSÄ!',
     'dodge': 'VÄISTÖ!',
     'block': 'Suojaa',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Valvoja',
     'hornet': 'Herhiläisroottori',
     'stalker': 'Hehkuvaanija',
+    'spotter': 'Valonheitinlennokki',
     'puffer': 'Pallomiina',
     'mole': 'Myyräpora',
     'polar': 'Napapentu',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Valvoja | Valvojaa',
     'hornet': 'Herhiläisroottori | Herhiläisroottoria',
     'stalker': 'Hehkuvaanija | Hehkuvaanijaa',
+    'spotter': 'Valonheitinlennokki | Valonheitinlennokkia',
     'puffer': 'Pallomiina | Pallomiinaa',
     'mole': 'Myyräpora | Myyräporaa',
     'polar': 'Napapentu | Napapentua',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Myrskymestari',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Suurmestaribotti'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Hiilihurtta',
+    'icebreakerBrute': 'Jäänmurtaja-Örkki',
+    'arcSpider': 'Kaarihämähäkki',
+    'stormHornetQueen': 'Myrskyherhiläiskuningatar',
+    'lodestoneGolem': 'Magneettikivigolemi',
+    'burrowWyrm': 'Kaivausmato',
+    'pufferMatriarch': 'Pallokalamatriarkka',
+    'glitchStalker': 'Glitch-Vaanija',
+    'sawGyro': 'Sahagyro',
+    'sentinelPrototype': 'Vartijaprototyyppi'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Haaste',
+    'cleared': 'Haaste voitettu! +{bolts} pulttia'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Taso {n}! Järjestelmät täysin korjattu.'
   },
   'tips': {
-    'moveTouch': 'Vedä vasemmalta liikkuaksesi ja oikealta katsoaksesi. Napauta lattiaa kävelläksesi sinne!',
+    'moveTouch': 'Vedä vasemmalta liikkuaksesi ja oikealta katsoaksesi.',
     'moveKeys': '{keys} liikkumiseen.',
     'lookMouse': 'Liikuta hiirtä katsoaksesi ympärillesi.',
     'capture': 'Klikkaa näkymää ottaaksesi kameran hallintaan.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Käytä'
     },
     'touch': {
-      'move': 'Vasen puoli: vedä liikkuaksesi. Napauta lattiaa kävelläksesi sinne.',
-      'fire': 'Taistelussa: napauta ampuaksesi, pidä ladataksesi, päästä irti laukaistaksesi.',
+      'move': 'Vasen puoli: vedä liikkuaksesi. Oikea puoli: vedä katsoaksesi.',
+      'fire': 'Oikea puoli tai ampumisnappi: napauta ampuaksesi, pidä ladataksesi, päästä irti laukaistaksesi. Vedä pitäessäsi tähdätäksesi.',
       'block': 'Pidä kilpeä suojataksesi – juuri kun rengas sulkeutuu, torjut.',
       'use': 'Arkun, jumiin jääneen botin tai oven lähellä: napauta sitä tai esiin ponnahtavaa painiketta.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Osu ytimeen, kun se aukeaa.',
       'hornet': '{enemy}. Se syöksyy suoraan: väistä sivulle!',
       'stalker': '{enemy}. Torju syöksy.',
+      'spotter': '{enemy}. Pois sen valosta. Ammu lamppua.',
       'puffer': '{enemy}. Puhkaise se ennen kuin se paisuu.',
       'mole': '{enemy}. Osu, kun se nousee esiin.',
       'elite': 'Kultarengas. Eliitti. Varovasti.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Koska ne ovat vapaita.',
     },
     'guardDown': 'Vartija kaatui! Tie on auki.',
+    'challenge': 'Haasteovi! Sisällä hyvää saalista.',
     'help': {
       'weapon': 'Valitse uusi aseesi ja ammu drooneja!',
       'gap': 'Kävele suoraan reunaa kohti, niin hyppäät yli!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Liu\'u pois juuri ennen kuin punainen rengas ehtii luoksesi!',
       'block': 'Pidä suojaa, kun se ampuu. Juuri osuman hetkellä on täydellistä!',
       'blockMiss': 'Kilpi ylös! Suojaa juuri osumahetkellä, niin se palaa takaisin!',
+      'chargeMiss': 'Kokeile ladattua laukausta pitämällä tykin nappia pohjassa!',
       'charge': 'Pidä liipaisinta, kunnes tykki hehkuu, ja päästä irti!',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Tuo paneeli näyttää kuvion. Seinän lamput eivät. Vielä.',
       'color': 'Tuolla kehyksellä on lempiväri. Vain sen lamppujen pitäisi loistaa.',
       'cycle': 'Jokainen osuma muuttaa lampun mielen. Paneeli tietää, mitä se haluaa.',
+      'sequence': 'Paneeli vilkuttaa samaa sävelmää. Soita se napeilla, oikeassa järjestyksessä.',
+      'mirror': 'Tuo säde haluaa renkaaseen. Peilit kääntyvät, kun ammut niitä.',
+      'tiles': 'Sytytä kaikki laatat yhdellä kävelyllä. Kahdesti samalle tai pois niiltä, ja kaikki pimenee taas.',
       'solved': 'No katso. Joku pitää pulmista.'
     },
     'landed': 'Laskeuduttu! Mennään.',

@@ -22,6 +22,6 @@ export const loadStage = async (sector: SectorId, seed: number): Promise<MapData
     case 'rotor': return (await import('./rotor')).generateRotorRun(seed)
     case 'fortress': return (await import('./fortress')).generateVexFortress(seed)
     // A sector without a stage gets the Tower Run (as `generateStage`).
-    default: return generateClimb(seed)
+    default: return generateClimb(seed, sector !== 'scrapyard')
   }
 }

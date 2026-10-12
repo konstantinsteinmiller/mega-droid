@@ -17,6 +17,9 @@ const ES_ONES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete
   'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve']
 const ES_TENS = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa']
 const ES_HUNDREDS = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos']
+const FR_ONES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
+  'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf']
+const FR_TENS = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante']
 const ZH_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
 
 /** Chinese 0–999: 十一 (not 一十一), 二十, 一百零五, 三百二十. */
@@ -33,10 +36,32 @@ const zhNumber = (n) => {
   return `${ZH_DIGITS[h]}百${r < 10 ? '零' : ''}${r < 10 ? ZH_DIGITS[r] : (r < 20 ? '一' : '') + zhNumber(r)}`
 }
 
+/** French 0–99: vingt et un, soixante-dix, soixante et onze, quatre-vingts, quatre-vingt-onze. */
+const frBelow100 = (n) => {
+  if (n < 20) return FR_ONES[n]
+  if (n < 70) {
+    const o = n % 10
+    const t = FR_TENS[Math.floor(n / 10)]
+    return o === 0 ? t : o === 1 ? `${t} et un` : `${t}-${FR_ONES[o]}`
+  }
+  if (n < 80) return n === 71 ? 'soixante et onze' : `soixante-${FR_ONES[n - 60]}`
+  return n === 80 ? 'quatre-vingts' : `quatre-vingt-${FR_ONES[n - 80]}`
+}
+
+/** French 0–999: cent, deux cents, deux cent cinq. */
+const frNumber = (n) => {
+  if (n < 100) return frBelow100(n)
+  const h = Math.floor(n / 100)
+  const r = n % 100
+  const head = h === 1 ? 'cent' : `${FR_ONES[h]} cent${r ? '' : 's'}`
+  return r ? `${head} ${frBelow100(r)}` : head
+}
+
 /** 0–999 as words; anything larger stays digits (no line needs it). */
 export const numberWords = (n, lang) => {
   if (!Number.isInteger(n) || n < 0 || n > 999) return String(n)
   if (lang === 'zh') return zhNumber(n)
+  if (lang === 'fr') return frNumber(n)
   if (lang === 'es') {
     if (n < 30) return ES_ONES[n]
     if (n < 100) {
@@ -67,9 +92,9 @@ export const numberWords = (n, lang) => {
   return `${EN_ONES[Math.floor(n / 100)]} hundred${r ? ` and ${numberWords(r, lang)}` : ''}`
 }
 
-const PERCENT = { en: 'percent', de: 'Prozent', es: 'por ciento' }
+const PERCENT = { en: 'percent', de: 'Prozent', es: 'por ciento', fr: 'pour cent' }
 /** Vex's first body, "Dr. Vex Mk-I": said as a word, not spelled. */
-const MARK_ONE = { en: 'Mark One', de: 'Mark Eins', es: 'Mark Uno', zh: 'Mark 一号' }
+const MARK_ONE = { en: 'Mark One', de: 'Mark Eins', es: 'Mark Uno', zh: 'Mark 一号', fr: 'Mark Un' }
 
 /** "25 %" as said: Chinese puts the per-cent first (百分之二十五). */
 const percent = (n, lang) => (lang === 'zh' ? `百分之${numberWords(n, lang)}` : `${numberWords(n, lang)} ${PERCENT[lang] ?? PERCENT.en}`)

@@ -131,13 +131,15 @@ describe('refused capture: drag to look', () => {
     expect(input.lookDX).toBe(30)
   })
 
-  it('out of a fight a short click still fires — never a walk-to (a sleeping golem is no target)', () => {
+  it('out of a fight a short click still fires (a sleeping golem is no target)', () => {
     fireMode = false
     mouse('mousedown', { button: 0, clientX: 50, clientY: 60 })
     expect(input.firePressed).toBe(true)
     mouse('mouseup', { button: 0, clientX: 50, clientY: 60 })
     expect(input.fireReleased).toBe(true)
-    expect(input.taps).toHaveLength(0)
+    // Reported as a tap too, which only ever opens a chest or door in reach
+    // (`Mission.handleTaps`): there is no tap-to-walk.
+    expect(input.taps).toHaveLength(1)
   })
 
   it('out of a fight a drag still only looks', () => {
@@ -147,5 +149,27 @@ describe('refused capture: drag to look', () => {
     expect(input.fireHeld).toBe(false)
     expect(input.fireCancelled).toBe(true)
     expect(input.lookDX).toBe(40)
+  })
+})
+
+describe('a touch\'s own mouse events', () => {
+  // Chrome sends a compatibility mousedown / mouseup after a tap, flagged
+  // `sourceCapabilities.firesTouchEvents`. After a long press they come past
+  // the old time window: read as a real mouse, the device turned 'mouse' and
+  // the touch HUD swapped for the desktop one mid-game.
+  it('never turn the device to mouse, fire, or capture', () => {
+    input.device = 'touch'
+    const e = new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 })
+    Object.defineProperty(e, 'sourceCapabilities', { value: { firesTouchEvents: true } })
+    surface.dispatchEvent(e)
+    expect(input.device).toBe('touch')
+    expect(input.firePressed).toBe(false)
+    expect(input.taps.length).toBe(0)
+  })
+
+  it('a real mouse still counts', () => {
+    input.device = 'touch'
+    mouse('mousedown', { button: 0 })
+    expect(input.device).toBe('mouse')
   })
 })

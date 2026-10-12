@@ -3,7 +3,7 @@ import { planDecor } from '../world/decor'
 import { RoomCrane, CRANE_G } from './roomCrane'
 import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, SQUASH_FLAT_Y, squashY } from './squash'
 import {
-  Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3, Raycaster, Vector2,
+  Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3,
   Mesh, RingGeometry, CylinderGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
   Frustum, Matrix4, Sphere, SphereGeometry, WebGLRenderTarget, Quaternion, Euler, Shape, ShapeGeometry, type Object3D
 } from 'three'
@@ -30,8 +30,9 @@ import type { Input } from '../engine/input'
 import { consumeEdges } from '../engine/input'
 import { generateMap, type MapData, type SecretSpec, CELL, WALL_H, pitKindOf } from '../world/levelGen'
 import { createSlicer, type Slice } from '../engine/slicer'
-import { createNav, moveCircle, findPath, smoothPath, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
+import { createNav, moveCircle, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
 import { buildLevel, buildWallPlug, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
+import { roomSightSteps } from '../world/roomSight'
 import { THEMES, type Theme, type SectorId } from '../world/themes'
 import { buildDoor, buildTeleporter, type DoorMesh, type PadMesh } from '../models/props'
 import {
@@ -49,8 +50,8 @@ import {
 import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
-import { CombatSystem, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, PARRY_WINDOW, wake, wakeGolem, createEnemy, frozenDt } from './enemies'
+import { CombatSystem, blockCut, type CombatHost } from './combat'
+import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
@@ -66,7 +67,11 @@ import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
 import { chargeHum } from '../audio/synth'
-import type { Quest } from '../data/quests'
+import { isBoardRun, type Quest } from '../data/quests'
+import { hasChallengeRoom, mastersBeaten } from '../data/challenge'
+import { ChallengeRun, type ChallengeReward } from './challenge'
+import { createMiniBoss, updateMiniBoss, syncMiniBoss, miniBossDied, MINI_SHATTER_AT } from './miniBosses'
+import { miniBossFor } from './miniBoss/registry'
 import { SECTOR_BY_ID } from '../data/regions'
 import { MissionObjects, CHEST_DY, type Chest, type Crate, type Core, type ObjectiveHost } from './objectives'
 import {
@@ -84,10 +89,11 @@ import { BossArena, type ArenaHost } from './bossArena'
 import type { BossCrane } from './bossCrane'
 import type { CoreDescent } from './coreDescent'
 import type { GrandMaster } from './grandMaster'
-import { bossHpMul, PROGRESS_HP } from './adaptive'
+import { bossHpMul, runScaling, stageFoeHpMul, PROGRESS_HP } from './adaptive'
 import { LessonHologram, TargetArrow, ArmHologram, holoRetired, type HoloId, type HoloProgress } from '../fx/lessonHologram'
 import { tickLava } from '../models/lava'
 import { Shatter } from '../fx/shatter'
+import { chargeGlowAt, newChargeGlow } from '../fx/chargeGlow'
 import { wantsKillCam, KILLCAM_DUR, KILLCAM_HAZARD_R, KILLCAM_ALERT_R } from './killCam'
 import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import {
@@ -129,6 +135,9 @@ export interface MissionSetup {
    *  Runs as a climb (`climb` is set with it): the same terrain, feet and
    *  hazards, plus the stage's own mechanics (`sim/stageFeatures.ts`). */
   stage?: SectorId
+  /** An optional challenge room off the route (a Tower Run, a supply run,
+   *  from Blaze on: `data/challenge.ts`). */
+  challenge?: boolean
   lookSens?: number
   quest?: Quest
   snapshot?: MissionSnapshot | null
@@ -148,6 +157,7 @@ export const setupFromQuest = (quest: Quest, snapshot: MissionSnapshot | null): 
     tutorial: quest.template === 'tutorial',
     climb: quest.template === 'climb' || quest.template === 'stage' || quest.template === 'tutorial',
     stage: quest.template === 'stage' ? quest.sector : undefined,
+    challenge: hasChallengeRoom(quest.template, quest.sector),
     quest,
     snapshot
   }
@@ -168,7 +178,7 @@ const SLIDE_CUE_AT = 0.33
  *  after (s, the death burst first) the slide input is pointed at anyway. */
 const SLIDE_MISS_AFTER = 0.8
 /** The block lesson holds the Trooper's first shot this far (s) from Flux:
- *  inside the parry window (PARRY_WINDOW), so the block it waits for parries. */
+ *  inside the parry window (`parryWindow`), so the block it waits for parries. */
 const BLOCK_CUE_ETA = 0.2
 /** …and keeps the shield up this long after that block (s), tap or hold. */
 const BLOCK_CUE_HOLD = 0.4
@@ -188,8 +198,6 @@ const GEL_HOLO_NEAR = 9
 const LESSON_POINT_FOR = 6
 /** The tutorial's false wall sinks over this long (s). */
 const FALSE_WALL_SINK = 1.2
-/** Off the pad this far (m) before a beam lesson's drones come. */
-const BEAM_MOVE = 1.2
 /** Which walkthrough step runs which lesson room. */
 const TRAIN_OF: Partial<Record<string, TrainId>> = { charge: 'charge', block: 'block', slide: 'slide', gap: 'gap' }
 /** …and which hologram stands in it (the crate and chest rooms have one too). */
@@ -241,6 +249,9 @@ interface DoorState {
   cellJ: number
   from: number
   to: number
+  /** Its frame (lintel, posts, floor stripes) on a terrain map: drawn with
+   *  the door, never on its own (`LevelMeshes.doorFrames`). */
+  frame?: Object3D
 }
 
 export interface PlayerState {
@@ -271,7 +282,6 @@ export interface PlayerState {
   mz: number
 }
 
-const _v2 = new Vector2()
 const _v3 = new Vector3()
 const _qy = new Quaternion()
 const _e = new Euler()
@@ -291,7 +301,7 @@ const FUMBLE_SPARKS = ['#ff5a3a', '#ffd84a', '#7ff4ff', '#ffffff']
 /** Under this share of health, the heartbeat plays. */
 const LOW_HP_BEAT = 0.25
 /** The machine kinds Atlas has a scan line for (`atlas.scan.<kind>`). */
-const SCAN_KINDS: ReadonlySet<string> = new Set(['hardhat', 'trooper', 'heli', 'hopper', 'roller', 'brute', 'turret', 'golem', 'polar', 'warden', 'hornet', 'stalker', 'puffer', 'mole'])
+const SCAN_KINDS: ReadonlySet<string> = new Set(['hardhat', 'trooper', 'heli', 'hopper', 'roller', 'brute', 'turret', 'golem', 'polar', 'warden', 'hornet', 'stalker', 'spotter', 'puffer', 'mole'])
 /** True the first time ever a teaching line's flag is asked (kept in the profile's tips), false after. */
 const firstEver = (flag: string): boolean => {
   if (profile.tips[flag]) return false
@@ -313,8 +323,6 @@ const ATLAS_MEMORY: AtlasMemory = {
 /** A blackout's sky and fog, and a lightning flash's. */
 const NIGHT = new Color('#04050b')
 const FLASH_WHITE = new Color('#e8eeff')
-/** The Overload's violet (the prototype tier's), mixed into the core as it builds. */
-const OVERLOAD_VIOLET = new Color('#b46cff')
 /** The tutorial compass pin: this far along the walk ahead of Flux (m), and
  *  how often that walk is searched again (s). */
 const COMPASS_AHEAD = 3
@@ -435,6 +443,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   doors: DoorState[] = []
   /** Per room group: visible this frame (portal culling). */
   private roomVis = new Uint8Array(0)
+  /** Per room, the rooms it sees whatever its doors do (`world/roomSight.ts`). */
+  private sight: number[][] = []
   private cullAdded: number[] = []
   pad!: PadMesh
   vm!: Viewmodel
@@ -494,6 +504,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The boss shutter's klaxon has sounded (once per mission). */
   private bossWarned = false
   private vmFlash = 0
+  /** The muzzle's charge glow this frame (`fx/chargeGlow.ts`). */
+  private readonly chargeGlow = newChargeGlow()
   private vmFlashColor = '#ffffff'
   /** The wordless control coach (`sim/coach.ts`). */
   readonly coach = new Coach()
@@ -541,7 +553,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** When the player last steered the camera (drag / keys). */
   private manualLookAt = -10
   private hintsSig = ''
-  private raycaster = new Raycaster()
   private marker!: Mesh
   private markerT = 0
   private shakeAmt = 0
@@ -550,6 +561,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private pullZ = 0
   private pullS = 0
   private pullT = 0
+  /** A web's hold on Flux (`World.slowPlayer`): his walk × slowMul for slowT s. */
+  private slowMul = 1
+  private slowT = 0
   private lookSens: number
   private vmRoot = new Group()
   private hudT = 0
@@ -634,6 +648,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  parried too, the shield held up, and its shots coming home take it
    *  apart in even thirds (`hitPlayer`, `reflectShare`). */
   private blockVolley: { e: Enemy; until: number; landed: number } | null = null
+  /** The last parried shot: its machine and when (`hitPlayer`). The rest of
+   *  that machine's volley, landing within the parry window of it, is parried
+   *  by the same press — a Polar Drone's two orbs land together, and the
+   *  second one used to hit through the shield the first parry had lowered. */
+  private parried: { e: Enemy; at: number } | null = null
   /** The tutorial's first charged shot, fired by the game right after the
    *  landing (`sim/chargeShow.ts`); null once over, or never due. */
   private chargeShow: ChargeShow | null = null
@@ -679,6 +698,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private arenaLight = 1.05
   private darkWant = 0
   private dark = 0
+  /** The stage's darkness, as the machines read it (`World.gloom`). */
+  get gloom(): number { return this.dark }
   private flash = 0
   private readonly skyBase = new Color()
   private readonly fogBase = new Color()
@@ -705,11 +726,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private readonly falseWalls = new Map<number, { mesh: Object3D; slab: Slab; t: number; x: number; y: number; z: number; tall: number }>()
   /** The gap lesson's take-off and landing arrows (the built tutorial). */
   private gapArrows: Mesh[] = []
-  /** A stage's beam-in room: the weapon it teaches before its door opens
-   *  (the newest one not yet taught), whether its drones came, its door. */
-  private beamTeach: WeaponId | null = null
-  private beamStarted = false
-  private beamDoorId = -1
   /** Atlas is flying the lesson intro's arc (in and out). */
   private atlasSwoop = false
   /** The beam-in (`sim/beamIn.ts`): its pose, camera, and whether he landed. */
@@ -724,6 +740,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private humT = 0
   /** Core Masters whose fall has had its banner (once each). */
   private bossBannered = new Set<Enemy>()
+  /** A board run's machines against Flux's kit (`runScaling`), fixed when
+   *  the cast is built; null on every other mission. */
+  private runMul: { hp: number; dmg: number } | null = null
 
   /** The cheap part only. The world is built by `Mission.create` — async and
    *  time-sliced, so nothing ever builds a sector in one frozen task. */
@@ -761,7 +780,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ? generateWakeUpCall(setup.seed)
       : setup.stage
       ? await loadStage(setup.stage, setup.seed)
-      : setup.climb ? generateClimb(setup.seed) : generateMap({ seed: setup.seed, rooms: setup.rooms, boss: setup.boss })
+      : setup.climb ? generateClimb(setup.seed, !!setup.challenge) : generateMap({ seed: setup.seed, rooms: setup.rooms, boss: setup.boss, challenge: setup.challenge })
     this.nav = createNav(this.map)
     onProgress(0.04)
     await slice()
@@ -770,6 +789,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ? await buildClimbLevel(this.map, this.theme, slice, levelProgress)
       : await buildLevel(this.map, this.theme, slice, levelProgress)
     this.roomVis = new Uint8Array(this.level.rooms.length)
+    const sight = roomSightSteps(this.map, this.level.owner, { eye: EYE_H + 0.1, far: this.theme.fogFar + 6 })
+    for (let r = sight.next(); ; r = sight.next()) {
+      if (r.done) {
+        this.sight = r.value
+        break
+      }
+      await slice()
+    }
     this.scene.add(this.level.root)
     this.scene.add(this.level.sky)
     onProgress(0.55)
@@ -794,7 +821,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
     for (const d of this.map.doors) {
       // The corridor lies on the -dir side of the frame (local Z after the turn).
-      const mesh = buildDoor(th, d.boss, d.dir === 1 ? -1 : 1)
+      const mesh = buildDoor(th, d.boss, d.dir === 1 ? -1 : 1, !!d.challenge)
       const [fx, fz] = doorFramePos(d)
       const fy = floorAt(this.nav, (d.i + 0.5) * CELL, (d.j + 0.5) * CELL)
       mesh.root.position.set(fx, fy, fz)
@@ -808,7 +835,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.nav.slabs.push(slab)
       this.nav.pathBlock[d.j * this.map.w + d.i] = d.boss ? 2 : 1
       this.doors.push({
-        id: d.id, mesh, open: 0, opening: false, closing: false, locked: d.boss, held: false, shakeT: 0, slab, x: fx, z: fz, y: fy, axis: d.axis, cellI: d.i, cellJ: d.j, from: d.from, to: d.to
+        id: d.id, mesh, open: 0, opening: false, closing: false, locked: d.boss, held: false, shakeT: 0, slab, x: fx, z: fz, y: fy, axis: d.axis, cellI: d.i, cellJ: d.j, from: d.from, to: d.to,
+        frame: this.level.doorFrames?.[this.map.doors.indexOf(d)]
       })
       await slice()
     }
@@ -868,7 +896,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         chestRooms: new Set(this.objects.chests.map(c => roomAt(this.map, c.x, c.z))), slice, onProgress: spawned
       })
       : setup.climb
-        ? await spawnClimb(this.map, setup.encounters, setup.enemyLevel, { slice, onProgress: spawned })
+        ? await spawnClimb(this.map, setup.encounters, setup.enemyLevel, { slice, onProgress: spawned, tower: setup.quest?.template === 'climb' })
         : await spawnEncounters(this.map, setup.encounters, setup.enemyLevel, { slice, onProgress: spawned })
     onProgress(0.92)
     this.objects.setupEnemyObjectives(this.enemies, (e) => this.enemies.push(e))
@@ -878,10 +906,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Adaptive difficulty (`sim/adaptive.ts`): a boss keeps up with a player
     // geared far past the reference; machines toughen a little with every
     // Core Master beaten, so upgrades stay needed.
+    // A board run (a Tower Run, a supply run) follows his kit as well: every
+    // machine's health and damage; its Core Master takes the larger health
+    // multiplier of the two, never both.
+    this.runMul = isBoardRun(setup.quest) ? runScaling(this.stats, setup.enemyLevel) : null
     if (this.boss) {
-      const mul = bossHpMul(this.stats, setup.enemyLevel)
+      const mul = Math.max(bossHpMul(this.stats, setup.enemyLevel), this.runMul?.hp ?? 1)
       this.boss.maxHp = Math.round(this.boss.maxHp * mul)
       this.boss.hp = this.boss.maxHp
+      if (this.runMul) this.boss.dmg = Math.round(this.boss.dmg * this.runMul.dmg)
     }
     for (const e of this.enemies) if (!e.boss) this.toughen(e)
     // New Game+ (`sim/ngPlus.ts`): every machine and boss a cycle tougher,
@@ -895,6 +928,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         if (e.boss) { e.tempo = ngTempo(ng); e.followUp = ngFollowUp(ng) }
       }
     }
+    this.setupChallenge(ng)
     if (this.boss && this.bossRoom) this.arena = new BossArena(this, this.bossRoom, (setup.quest?.seed ?? 1) ^ 0x51ab)
     // The Scrapper fights under his magnet crane (#108).
     // (Loaded with the Scrapper's arena only: no other map pays for it.)
@@ -944,7 +978,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           shake: (a) => self.shake(a),
           hitPlayer: (e, d, o) => self.hitPlayer(e, d, o),
           hurtMachines: (c, x, z, hit) => self.hurtMachines(c, x, z, hit),
-          fireEnemyShot: (e, x, y, z, dx, dy, dz, sp, d, b) => self.system.spawnEnemyShot(e, x, y, z, dx, dy, dz, sp, d, b),
+          fireEnemyShot: (e, x, y, z, dx, dy, dz, sp, d) => self.system.spawnEnemyShot(e, x, y, z, dx, dy, dz, sp, d),
           spawnWave: (e, x, z, dx, dz, sp, hw, range, d, c) => self.spawnWave(e, x, z, dx, dz, sp, hw, range, d, c),
           pull: (x, z, sp, dur) => self.pull(x, z, sp, dur),
           skyFlash: (a) => self.skyFlash(a),
@@ -1036,6 +1070,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const lessons: readonly TrainId[] = setup.tutorial ? ['charge', 'block', 'slide', 'gel', 'gap', 'weapon'] : q?.kind === 'story' ? ['weapon'] : []
     for (const id of lessons) { prefetchVoice(`atlas.train.${id}`); prefetchVoice(`atlas.help.${id}`) }
     if (lessons.includes('block')) prefetchVoice('atlas.help.blockMiss')
+    if (lessons.includes('charge')) prefetchVoice('atlas.help.chargeMiss')
   }
 
   /**
@@ -1143,7 +1178,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   // ─── World interface ───────────────────────────────────────────────────────
 
-  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean, worldY = false): void {
+  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, worldY = false): void {
     // A shot aimed in world heights already (the golem's rock) was lifted twice
     // here and flew over Flux's head.
     if (this.climb && !worldY) {
@@ -1156,7 +1191,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const hl = Math.hypot(dx, dz)
       if (hd > 0.5 && hl > 1e-4) dy += ((this.player.y - f) / hd) * hl
     }
-    this.system.spawnEnemyShot(e, x, y, z, dx, dy, dz, speed, dmg, blockable)
+    this.system.spawnEnemyShot(e, x, y, z, dx, dy, dz, speed, dmg)
   }
 
   lobShell(e: Enemy, tx: number, tz: number, dur: number, dmg: number): void {
@@ -1182,6 +1217,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.pullT = dur
   }
 
+  slowPlayer(mul: number, dur: number): void {
+    // The stronger hold wins while both last.
+    this.slowMul = this.slowT > 0 ? Math.min(this.slowMul, mul) : mul
+    this.slowT = Math.max(this.slowT, dur)
+  }
+
   shake(amount: number): void {
     this.shakeAmt = Math.min(1, this.shakeAmt + amount)
   }
@@ -1201,6 +1242,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     sfx(name, pan * 0.7, gain)
   }
 
+  /** The perfect block's window now (s): `parryWindow` of the input device
+   *  (a touch screen's is wider) and the Parry skill (`CombatHost`). */
+  parryWindow(): number {
+    return parryWindow(this.input.device, this.stats.parryBonus)
+  }
+
   hitPlayer(e: Enemy | null, dmg: number, o: { blockable: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss' {
     const c = this.combat
     const p = this.player
@@ -1216,15 +1263,23 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (e && !e.boss && this.setup.tutorial) dmg *= TUTORIAL_ENEMY_DAMAGE
     // A boss attack reached Flux: the arena's run of blocked ones is over.
     if (e?.boss) this.arena?.attackLanded()
-    if (c.iframes > 0) return 'miss'
-    if (this.climb && this.offLevel(e, o.kind, o.fromX, o.fromZ)) return 'miss'
     const toSrc = Math.atan2(-(o.fromX - p.x), -(o.fromZ - p.z))
     const frontal = Math.abs(angDiff(toSrc, p.yaw)) < 1.35
+    const win = this.parryWindow()
+    // The rest of a parried machine's volley (`parried`): parried too, through
+    // the parry's own i-frames and the shield it lowered for the counter.
+    const pr = this.parried
+    const chained = !!pr && !!e && e === pr.e && o.kind === 'shot' && o.blockable && frontal && this.time - pr.at <= win
+    if (c.iframes > 0 && !chained) return 'miss'
+    if (this.climb && this.offLevel(e, o.kind, o.fromX, o.fromZ)) return 'miss'
     // The block lesson's volley: every round of it is a perfect block.
     const v = this.blockVolley
     const forced = !!v && !!e && e === v.e && o.blockable && this.time < v.until
-    if (o.blockable && ((c.blocking && frontal && c.guardBroken <= 0) || forced)) {
-      if (forced || this.time - c.blockPressedAt <= PARRY_WINDOW + this.stats.parryBonus) {
+    // What a held shield takes off this hit (`blockCut`): 0 = it cannot.
+    const cut = blockCut(o, !!e)
+    if (cut > 0 && ((c.blocking && frontal && c.guardBroken <= 0) || forced || chained)) {
+      // Only a blockable attack can be parried (a blast is softened at best).
+      if (o.blockable && (forced || chained || this.time - c.blockPressedAt <= win)) {
         // ── PARRY ──
         this.hitStop = Math.max(this.hitStop, 0.14)
         this.shake(0.25)
@@ -1241,6 +1296,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           e.flash = 1
         }
         c.iframes = Math.max(c.iframes, 0.2)
+        if (e && o.kind === 'shot') this.parried = { e, at: this.time }
         // The counter: the shield drops so the stunned machine can be shot
         // at once, with the button still down (the firing waits on
         // `!blocking`). A fresh press raises it again.
@@ -1260,7 +1316,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         return 'parry'
       }
       // ── BLOCK ──
-      const taken = Math.max(1, Math.round(dmg * 0.25 * this.stats.blockDmgMul))
+      const taken = Math.max(1, Math.round(dmg * (1 - cut) * this.stats.blockDmgMul))
       c.power -= dmg * 0.45 * this.stats.blockCostMul
       c.powerDelay = 0.9
       c.hp -= taken
@@ -1626,26 +1682,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return { x, y, z, hang }
   }
 
-  /** Where a tap's ray first meets a floor on the tower (the labyrinth's is
-   *  simply y = 0). False when it meets a wall first, or nothing near. */
-  private rayToFloor(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, out: Vector3): boolean {
-    for (let t = 0.3; t < 45; t += 0.2) {
-      const x = ox + dx * t
-      const y = oy + dy * t
-      const z = oz + dz * t
-      if (isSolidAt(this.nav, x, z)) return false
-      if (y <= floorAt(this.nav, x, z)) {
-        out.set(x, y, z)
-        return true
-      }
-    }
-    return false
-  }
-
   onEnemyKilled(e: Enemy, xp: number): void {
     // An ordinary machine breaks into its parts at once; a boss at the end
     // of its death throes (`stepShatter`).
-    if (!e.boss) this.shatterEnemy(e)
+    // A challenge's mini-boss at the end of its own (`MINI_SHATTER_AT`).
+    if (!e.boss && !e.challenge) this.shatterEnemy(e)
+    if (e.challenge) miniBossDied(this, e)
     this.xp += xp
     this.kills++
     profile.stats.kills++
@@ -1704,7 +1746,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.nav.pathBlock[d.cellJ * this.map.w + d.cellI] = 2
     }
     hud.bossName = b.nameKey
+    hud.bossStyle = ''
     hud.bossHp01 = 0
+    hud.titleStyle = ''
     hud.titleKey = b.nameKey
     hud.titleSub = `sector.${this.setup.sector}`
     hud.titleShownAt = performance.now()
@@ -1908,11 +1952,39 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   shotHitsProp(x: number, y: number, z: number, r: number, dmg: number, charge: number): boolean {
     return this.objects.shotHitsCrate(x, y, z, r, dmg, charge) || this.objects.shotHitsChest(x, y, z, r) ||
-      !!this.climb?.shotHits(x, y, z, r, charge)
+      !!this.climb?.shotHits(x, y, z, r, charge) || this.shotHitsCraneLoad(x, y, z, r, charge)
+  }
+
+  /**
+   * A shot on a room crane's hanging crate (#134: nearly every playtester
+   * shot at it and wondered why a charged shot did nothing). Like a crate on
+   * the floor: a quick shot TINKs off (the charge shot's moment), a charged
+   * one breaks it and its bolts rain down.
+   */
+  private shotHitsCraneLoad(x: number, y: number, z: number, r: number, charge: number): boolean {
+    const cr = this.roomCranes.find(c => c.shotHitsLoad(x, y, z, r))
+    if (!cr) return false
+    if (charge <= 0) {
+      this.fx.sparks(x, y, z, '#ffffff', 6, 4, 0.14)
+      pushHud({ t: 'text', x, y: y + 0.3, z, key: 'combat.tink', color: '#dfe7ff' })
+      this.sfx('tink', x, z)
+      this.coach.deflected()
+      return true
+    }
+    const c = cr.breakLoad()
+    if (!c) return true
+    for (let k = 0; k < 2; k++) this.system.spawnPickup('bolt', 2 + Math.floor(Math.random() * 3), c.x, c.y, c.z)
+    if (Math.random() < 0.12) this.system.spawnPickup(Math.random() < 0.6 ? 'hp' : 'we', 0, c.x, c.y, c.z)
+    return true
   }
 
   shotHitsLesson(s: Shot): 'hit' | 'deflect' | null {
-    return this.lessons.shotHits(s)
+    const r = this.lessons.shotHits(s)
+    // A quick shot off the training drone (#135): the "TOO WEAK!" says it
+    // failed, Atlas says what to do instead — on every one (its cooldown
+    // keeps it from stacking up).
+    if (r === 'deflect') this.say('help.chargeMiss')
+    return r
   }
 
   /** A stage's wall buttons (`sim/secrets.ts`, via `ClimbRun.shotStep`). */
@@ -2079,15 +2151,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /** Story progress toughens machines: PROGRESS_HP more health per Core
-   *  Master beaten (never a boss, never twice). */
+   *  Master beaten (never a boss, never twice); a board run's also follow
+   *  Flux's kit (`runMul`); the Vex Fortress's own take more again
+   *  (`stageFoeHpMul`, #144). */
   private toughen(e: Enemy): void {
     if (e.boss || (e as { toughened?: boolean }).toughened) return
     ;(e as { toughened?: boolean }).toughened = true
     // New Game+: every Core Master was beaten once already.
     const beaten = profile.world.ngPlus > 0 ? Object.values(SECTOR_BY_ID).filter(s => s.boss !== 'vexMk1').length : profile.world.bosses.length
-    const mul = 1 + PROGRESS_HP * beaten
+    const stage = stageFoeHpMul(this.setup.stage, e, this.map.rooms[e.room]?.role === 'challenge')
+    const mul = (1 + PROGRESS_HP * beaten) * (this.runMul?.hp ?? 1) * stage
     e.maxHp = Math.round(e.maxHp * mul)
     e.hp = Math.round(e.hp * mul)
+    if (this.runMul) e.dmg = Math.round(e.dmg * this.runMul.dmg)
   }
 
   /** Atlas says a line (`ClimbHost`: a stage feature's tip or a secret's
@@ -2238,17 +2314,17 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    */
   private updateDoorPrompt(dt: number, playing: boolean): void {
     const walk = this.walk
-    // Held doors: the walkthrough's gates, or a stage's beam-in door while
-    // its weapon lesson is owed.
-    const beamNeed = this.beamTeach ? this.beamDoorId : -1
-    if (!walk && beamNeed < 0) {
+    // Held doors: the walkthrough's gates. (A stage's beam-in room used to
+    // hold its door for a weapon lesson too; a weapon is taught only in the
+    // room behind its boss now, playtest 2026-10-11.)
+    if (!walk) {
       // Nothing held any more (the walkthrough is over): the prompt goes.
       // It used to keep its last "Finish first: use a Repair Gel" up to the
       // end of the tutorial (playtest 2026-10-07).
       this.doorView.alpha = 0
       return
     }
-    const needAt = (id: number): WalkNeed | null => walk ? walk.needAt(id) : id === beamNeed ? 'weapon' : null
+    const needAt = (id: number): WalkNeed | null => walk.needAt(id)
     const p = this.player
     const o = this.doorTick
     o.time = this.time
@@ -2303,8 +2379,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     v.need = need
     // The very first gate: "Finish the Tutorial first" (players took the
     // shut door for a dead end); every later one names its lesson.
-    v.label = !walk ? 'walk.finishLessonOn' : walk.passed === 0 ? 'walk.finishTutorial' : 'walk.finishLessonNamed'
-    v.weapon = this.beamTeach ?? ''
+    v.label = walk.passed === 0 ? 'walk.finishTutorial' : 'walk.finishLessonNamed'
     v.x = d.x
     v.y = d.y + 1.35
     v.z = d.z
@@ -2401,6 +2476,28 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.holdDoor(id)
     d.open = was
     d.closing = was > 0
+  }
+
+  /** How far door `id` stands open, 0 shut .. 1 (`ClimbHost.doorOpen`). */
+  doorOpen(id: number): number {
+    return this.doors[id]?.open ?? 0
+  }
+
+  /** Door `id` is held shut by something (`ClimbHost.doorHeld`). */
+  doorHeld(id: number): boolean {
+    return !!this.doors[id]?.held
+  }
+
+  /** Room `room`'s machines came and are all down (`ClimbHost.roomClear`;
+   *  one waiting offstage — a boss before its entrance — still stands). */
+  roomClear(room: number): boolean {
+    let any = false
+    for (const e of this.enemies) {
+      if (e.room !== room) continue
+      if (e.state !== 'dead') return false
+      any = true
+    }
+    return any
   }
 
   /** The walkthrough's chest: one already standing in the chest room, else
@@ -2930,9 +3027,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     for (const e of this.enemies) {
       const edt = frozenDt(e, dt)
       if (e.boss) updateBoss(this, e, edt, this.bossRoom)
+      else if (e.challenge) { updateMiniBoss(this, e, edt); settle(this, e) }
       else updateEnemy(this, e, edt)
       // The climb: a machine keeps to its platform, a drone to Flux's height.
-      if (this.climb && !e.boss) this.climb.tendFoe(e, p.y, dt)
+      if (this.climb && !e.boss && !e.challenge) this.climb.tendFoe(e, p.y, dt)
       // Status effects from special weapons
       if (e.state !== 'dead') {
         if (e.burnT > 0) {
@@ -2978,6 +3076,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         sfx('heartbeat')
       }
     } else this.heartT = 0
+    // The challenge room: its door, its fight, its prize (`sim/challenge.ts`).
+    this.challenge?.update(dt, this.time, hud.phase === 'play' && !flow.modal)
     // Entering the boss room triggers the Core Master
     if (this.boss && !this.bossStarted && this.bossRoom && hud.phase === 'play') {
       const i = Math.floor(p.x / CELL)
@@ -3110,7 +3210,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.fx.update(dt)
     this.system.rubble.update(dt, this.nav)
     this.shocks.update(dt)
-    for (const e of this.enemies) if (e.state === 'dead' && !e.boss) updateEnemy(this, e, dt)
+    for (const e of this.enemies) {
+      if (e.state !== 'dead' || e.boss) continue
+      if (e.challenge) updateMiniBoss(this, e, dt)
+      else updateEnemy(this, e, dt)
+    }
     this.freezeFx(dt)
     const r = this.rescue
     if (r?.spikes && this.freeze.t < RESCUE_IMPACT && Math.random() < 0.5) {
@@ -3452,7 +3556,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     for (const id of ['charge', 'block', 'slide', 'gel', 'gap', 'weapon'] as TrainId[]) {
       if (profile.tips[`train:${id}`]) this.training.done.add(id)
     }
-    this.setupBeamLesson()
     this.setupGuards()
     this.setupExitRoom()
     this.setupLava()
@@ -3480,12 +3583,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.buildGapArrows()
   }
 
-  /**
-   * A stage's beam-in room teaches the newest weapon not yet taught (the one
-   * the last Core Master gave): its door into the level stays shut until the
-   * lesson is done. It is slotted first if it is not (a weapon the player
-   * cannot fire cannot be taught). No weapon to teach: the door just opens.
-   */
+  /** The challenge room's runtime (`sim/challenge.ts`), when the map has one. */
+  challenge: ChallengeRun | null = null
+
   /** The guard rooms' exits, held at the start (`Terrain.guards`). */
   private guardDoors: Array<{ room: number; door: number }> = []
 
@@ -3512,68 +3612,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
-  private setupBeamLesson(): void {
-    const beam = this.map.beam
-    if (!beam || this.setup.tutorial) return
-    this.beamDoorId = beam.door
-    const owned = profile.hero.weapons
-    let id: WeaponId | null = null
-    for (let k = owned.length - 1; k >= 0; k--) {
-      const w = owned[k]!
-      if (!profile.tips[`train:weapon:${w}`]) { id = w; break }
-    }
-    if (!id) return
-    const slots = profile.hero.slots
-    if (slots[0] !== id && slots[1] !== id) {
-      if (!slots[0]) slots[0] = id
-      else if (!slots[1]) slots[1] = id
-      else slots[0] = id
-      saveProfile()
-    }
-    this.beamTeach = id
-    this.holdDoor(beam.door)
-    // Its hologram: along the room's long side, playing toward the door.
-    const r = this.map.rooms[beam.room]!
-    const d = this.doors[beam.door]
-    const cx = (r.x0 + r.w / 2) * CELL
-    const cz = (r.z0 + r.h / 2) * CELL
-    const along = r.w >= r.h ? [1, 0] : [0, 1]
-    const s = d && (d.x - cx) * along[0]! + (d.z - cz) * along[1]! < 0 ? -1 : 1
-    this.addHolo('weapon', beam.room, cx - along[0]! * s * 0.5, cz - along[1]! * s * 0.5, Math.atan2(-along[1]! * s, along[0]! * s), WEAPONS[id].color, id)
-  }
-
-  /** Per step while a beam lesson is owed: the drones come once Flux moves
-   *  off the pad (never before he has his bearings); energy stays topped up
-   *  for more tries; done, the door opens. */
-  private stepBeamLesson(playing: boolean): void {
-    const id = this.beamTeach
-    const beam = this.map.beam
-    if (!id || !beam || !playing) return
-    const p = this.player
-    const tr = this.training
-    if (!this.beamStarted) {
-      if (Math.hypot(p.x - this.map.start.x, p.z - this.map.start.z) < BEAM_MOVE) return
-      this.beamStarted = true
-      if (!this.lessons.teachWeapon(beam.room, id)) {
-        // No row of drones fits: nothing to teach here; let him on.
-        this.beamTeach = null
-        this.releaseDoor(beam.door)
-        return
-      }
-      tr.enter('weapon', this.time)
-    }
-    const at = this.lessons.weaponDronesAt
-    this.trainSpot = at ? { x: at.x, y: at.y, z: at.z } : null
-    this.combat.we = Math.max(this.combat.we, Math.min(this.combat.maxWe, this.weaponCost(id) * 2))
-    if (this.lessons.weaponLearned === id) {
-      markTip(`train:weapon:${id}`)
-      this.trainDone('weapon')
-      this.beamTeach = null
-      this.releaseDoor(beam.door)
-      tr.leave()
-    }
-  }
-
   // ─── Machines fall apart (#105) ─────────────────────────────────────────
 
   /** `e` breaks into the parts of its own model, here and now (once). */
@@ -3596,6 +3634,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private stepShatter(dt: number): void {
     for (const e of this.enemies) {
       if (e.boss && e.state === 'dead' && !e.shattered && e.deathT >= 1.55) this.shatterEnemy(e, 1.5)
+      else if (e.challenge && e.state === 'dead' && !e.shattered && e.deathT >= MINI_SHATTER_AT) this.shatterEnemy(e, 1.3)
     }
     this.shatter?.update(dt)
   }
@@ -3713,7 +3752,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** The room a weapon lesson runs in now, or -1. */
   private weaponRoomNow(): number {
-    if (this.beamTeach && this.map.beam) return this.map.beam.room
     if (this.exitStarted && !this.exitLit && this.map.exit) return this.map.exit.room
     return -1
   }
@@ -3880,7 +3918,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const walk = this.walk
     const tr = this.training
     const p = this.player
-    if (this.beamTeach) this.stepBeamLesson(playing)
     // The gap arrows breathe until the gap has been crossed.
     const gapOpen = !tr.done.has('gap')
     for (const a of this.gapArrows) {
@@ -4080,6 +4117,75 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // a slide made before any leap ticked it off, so it never froze).
     if (this.walk && this.training.id === 'slide' && !this.training.done.has('slide')) return this.slideCueDone || this.slideMissed
     return !this.walk || this.training.counts('slide')
+  }
+
+  // ─── The challenge room (`sim/challenge.ts`) ───────────────────────────────
+
+  /** The challenge room's mini-boss (`MapData.challenge`): the sector's
+   *  (`miniBoss/registry.ts`), waiting offstage on its spot, as tough as a
+   *  Core Master at this level would be for this player (the same
+   *  `bossHpMul` / run scaling, New Game+ on top). Spawned after the cast,
+   *  last in the list: a resume's enemy indices stay what they were. */
+  private setupChallenge(ng: number): void {
+    hud.bossStyle = ''
+    hud.titleStyle = ''
+    const ch = this.map.challenge
+    if (!ch) return
+    const room = this.map.rooms[ch.room]
+    if (!room) return
+    const setup = this.setup
+    const x = cellCenter(ch.at[0])
+    const z = cellCenter(ch.at[1])
+    const spec = miniBossFor(setup.sector)
+    if (!spec) return
+    const e = createMiniBoss(spec, setup.enemyLevel, x, z, room)
+    const mul = Math.max(bossHpMul(this.stats, setup.enemyLevel), this.runMul?.hp ?? 1) * (ng > 0 ? ngHpMul(ng) : 1)
+    e.maxHp = Math.round(e.maxHp * mul)
+    e.hp = e.maxHp
+    if (this.runMul) e.dmg = Math.round(e.dmg * this.runMul.dmg)
+    if (this.map.terrain) e.floor = floorAt(this.nav, x, z)
+    e.yaw = Math.atan2(cellCenter(this.map.doors[ch.door]!.i) - x, cellCenter(this.map.doors[ch.door]!.j) - z)
+    this.enemies.push(e)
+    this.scene.add(e.root, e.shadow, e.ring)
+    const self = this
+    this.challenge = new ChallengeRun({
+      get map() { return self.map },
+      get player() { return self.player },
+      shutDoor: (id) => self.shutDoor(id),
+      releaseDoor: (id) => self.releaseDoor(id),
+      say: (l) => self.say(l),
+      sfx: (n, sx, sz) => self.sfx(n, sx, sz),
+      music: (fight) => setMusicTrack(fight ? 'boss' : setup.sector),
+      reward: (r, rx, rz) => self.challengeReward(r, rx, rz)
+    }, e, {
+      level: setup.enemyLevel,
+      masters: mastersBeaten(profile.world.bosses, profile.world.ngPlus),
+      boltMul: this.stats.boltMul,
+      rng: Math.random
+    }, this.doors.find(d => d.id === ch.door)?.mesh.beacon ?? null)
+  }
+
+  /** The challenge's prize where its mini-boss fell: a Repair Gel past the
+   *  cap, a fountain of bolts (picked up into the mission's bolts), an item
+   *  card (in the mission's items) and the toast with the bolts. */
+  private challengeReward(r: ChallengeReward, x: number, z: number): void {
+    const y = this.map.terrain ? floorAt(this.nav, x, z) : 0
+    this.giftGel()
+    const n = 8
+    const each = Math.floor(r.bolts / n)
+    for (let k = 0; k < n; k++) this.system.spawnPickup('bolt', k === n - 1 ? r.bolts - each * (n - 1) : each, x, y + 1.2, z)
+    const seed = (this.map.seed ^ 0xc4a11e ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0
+    const it = rollItem(seed, r.ilvl, { rarity: r.rarity })
+    profile.inv.items.push(it)
+    profile.inv.fresh.push(it.id)
+    this.itemsFound.push(it)
+    pushHud({ t: 'loot', item: it })
+    pushHud({ t: 'toast', key: 'challenge.cleared', params: { bolts: r.bolts }, color: '#ffd84a' })
+    pushHud({ t: 'flash', color: '#ffd84a', strength: 0.3 })
+    this.fx.riseRing(x, y + 0.1, z, '#ffd84a', 1.4, 28)
+    sfx('objective')
+    sfx('loot')
+    this.dirty = true
   }
 
   /** A lesson done by the player's own hand: ticked off for good. */
@@ -4678,6 +4784,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (this.climb) this.climb.setPull(pvx, pvz)
+    // A web underfoot (an Arc Spider's): the walk and a slide drag.
+    if (this.slowT > 0) {
+      this.slowT -= dt
+      if (!air) {
+        tx *= this.slowMul
+        tz *= this.slowMul
+      }
+    }
     const mod = this.climb?.moveMod(p)
     // Wading (the Tidewater Locks' water): the walk slows; a slide too.
     if (mod?.speed !== undefined && mod.speed < 1 && !air) {
@@ -5147,12 +5261,16 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   /**
-   * Portal culling. The walls stand 4.2 m against a 1.6 m eye, so the only
-   * way to see into another room is through a door. Visible = the room the
-   * player stands in, then out through every door that is open (even a crack)
-   * AND on screen, up to PORTAL_DEPTH doors deep; a shut door is opaque. Fog
-   * distance still caps it. Enemies in a hidden room are hidden with it, which
-   * also spares their skinning.
+   * Portal culling. In the labyrinth the walls stand 4.2 m against a 1.6 m
+   * eye, so the only way to see into another room is through a door.
+   * Visible = the room the player stands in, then out through every door
+   * that is open (even a crack) AND on screen, up to PORTAL_DEPTH doors deep;
+   * a shut door is opaque. A terrain map's rooms also see over their walls
+   * (taller next door, open sides over the sky, the gap over a door): what a
+   * room sees whatever its doors do, the next rooms on the route among them,
+   * is always drawn with it (`world/roomSight.ts`, playtest 2026-10-11).
+   * Fog distance still caps it. Enemies in a hidden room are hidden with it,
+   * which also spares their skinning.
    */
   private updateRoomCulling(): void {
     const p = this.player
@@ -5202,6 +5320,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         if (!added.length) break
         for (const r of added) vis[r] = 1
       }
+      const sight = this.sight
+      for (const r of sight[here] ?? []) vis[r] = 1
+      if (camHere >= 0) for (const r of sight[camHere] ?? []) vis[r] = 1
     }
     for (let i = 0; i < n; i++) {
       const bb = lv.bounds[i]!
@@ -5212,7 +5333,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // doors of every room behind the walls were all drawn every frame.
     for (const d of this.doors) {
       d.mesh.root.visible = (vis[d.from] === 1 || vis[d.to] === 1) && Math.hypot(d.x - p.x, d.z - p.z) < far + CELL
+      if (d.frame) d.frame.visible = d.mesh.root.visible
     }
+    this.climb?.cull(vis)
     for (const e of this.enemies) {
       const alive = e.state !== 'dead' || e.deathT < 0.2
       const near = Math.hypot(e.x - p.x, e.z - p.z) < far
@@ -5222,47 +5345,23 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
-  /** Right-side presses count as FIRE while in combat or an enemy is in the sights. */
+  /** A right-side press is FIRE whenever play allows a shot — in a fight or
+   *  not, a target in the sights or not (playtest 2026-10-08: out of the
+   *  auto-aim a press only looked, so a charge could not even be started). */
   wantsFire(): boolean {
-    const p = this.player
-    return hud.phase === 'play' && (hud.combat || this.aimCandidate || this.lessons.inSights(p.x, p.z, p.yaw))
+    return hud.phase === 'play'
   }
 
-  // ─── Taps: walk-to / interact ────────────────────────────────────────────
+  // ─── Taps: interact ──────────────────────────────────────────────────────
 
+  /** A tap on a chest, a stranded bot or a locked door in reach opens it.
+   *  Nothing else: there is no tap-to-walk any more (an FPS moves on the
+   *  left stick; a tap that walked fought every look and every shot). */
   private handleTaps(): void {
     if (hud.phase !== 'play') return
     for (const tap of this.input.taps) {
-      const w = getRenderer().domElement.clientWidth || 1
-      const h = getRenderer().domElement.clientHeight || 1
-      // Tapped an object (chest / bot)? Open it if in reach, else walk to it.
       const hit = this.tappedObject(tap.x, tap.y)
-      if (hit) {
-        const p = this.player
-        if (this.interact && this.interact.ref === hit.ref) this.doInteract()
-        else {
-          const dx = p.x - hit.x
-          const dz = p.z - hit.z
-          const d = Math.hypot(dx, dz) || 1
-          if (this.walkTo(hit.x + (dx / d) * 1.6, hit.z + (dz / d) * 1.6)) this.coach.use('walk')
-        }
-        continue
-      }
-      _v2.set((tap.x / w) * 2 - 1, -(tap.y / h) * 2 + 1)
-      this.raycaster.setFromCamera(_v2, this.camera)
-      const ray = this.raycaster.ray
-      if (this.climb) {
-        // The tower's floors are at many heights: march the ray to the first.
-        const o = ray.origin
-        const d = ray.direction
-        if (!this.rayToFloor(o.x, o.y, o.z, d.x, d.y, d.z, _v3)) continue
-      } else {
-        if (ray.direction.y >= -0.01) continue
-        const t = -ray.origin.y / ray.direction.y
-        if (t > 45) continue
-        ray.at(t, _v3)
-      }
-      if (this.walkTo(_v3.x, _v3.z)) this.coach.use('walk')
+      if (hit && this.interact && this.interact.ref === hit.ref) this.doInteract()
     }
   }
 
@@ -5285,30 +5384,6 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (n && !n.rescued) consider(n, n.x, 0.8, n.z)
     if (!this.bossStarted) for (const d of this.doors) if (d.locked && !d.held) consider(d, d.x, d.y + 1.6, d.z)
     return best
-  }
-
-  walkTo(x: number, z: number): boolean {
-    const p = this.player
-    if (isSolidAt(this.nav, x, z)) {
-      const dx = x - p.x
-      const dz = z - p.z
-      const len = Math.hypot(dx, dz)
-      let found = false
-      for (let s = len; s > 0.5; s -= 0.5) {
-        const cx = p.x + (dx / len) * s
-        const cz = p.z + (dz / len) * s
-        if (!isSolidAt(this.nav, cx, cz)) { x = cx; z = cz; found = true; break }
-      }
-      if (!found) return false
-    }
-    const raw = findPath(this.nav, p.x, p.z, x, z, 1400, 1)
-    if (!raw) return false
-    p.path = smoothPath(this.nav, p.x, p.z, raw, PLAYER_R)
-    this.marker.position.x = x
-    this.marker.position.y = floorAt(this.nav, x, z) + 0.03
-    this.marker.position.z = z
-    this.markerT = 0.5
-    return true
   }
 
   // ─── HUD mirror (≤ 15 Hz) ────────────────────────────────────────────────
@@ -5607,6 +5682,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     for (const e of this.enemies) {
       if (!e.root.visible && e.state !== 'dead') continue
       if (e.boss) syncBossVisual(e, alpha)
+      else if (e.challenge) syncMiniBoss(e, alpha, this.time)
       else syncEnemyVisual(e, alpha, this.time)
       // The climb: the machine's platform lifts it, its shadow and its ring.
       if (e.floor) {
@@ -6013,36 +6089,24 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       haloMat.opacity = (0.2 + Math.random() * 0.35) * fl
       this.vm.core.scale.setScalar(1 + Math.random() * 0.8 * fl)
       this.vm.halo.scale.setScalar(0.5 + Math.random() * 0.5 * fl)
-    } else if (c.charging && info.level === 3) {
-      // Overloaded: a gold-white core in a violet halo that breathes and
-      // turns (2.5 Hz, under the 3-flashes-a-second line), the arm trembling
-      // and spitting violet sparks.
-      const pulse = 0.5 + 0.5 * Math.sin(this.time * Math.PI * 5)
-      coreMat.color.set('#fff6d6')
-      haloMat.color.set(pulse > 0.5 ? '#b46cff' : '#d38bff')
-      haloMat.opacity = 0.6 + 0.3 * pulse
-      this.vm.core.scale.setScalar(2.5 + pulse * 0.3)
-      this.vm.halo.scale.setScalar(2.0 + pulse * 0.4)
-      this.vm.halo.rotation.z += dt * 5
-      vm.rotation.z += Math.sin(this.time * 47) * 0.012
-      if (Math.random() < 0.3) {
-        const m = this.muzzle()
-        this.fx.sparks(m[0], m[1], m[2], '#d38bff', 2, 3, 0.08)
+    } else if (c.charging && (info.level === 3 || info.toL1 > 0.25)) {
+      // The charge's own look (`fx/chargeGlow.ts`, the intro's too): green,
+      // the full charge's flickering cyan, bleeding to the Overload's violet.
+      const g = chargeGlowAt(info, this.time, this.vm.coreColor, this.chargeGlow)
+      coreMat.color.copy(g.core)
+      haloMat.color.copy(g.halo)
+      haloMat.opacity = g.haloOpacity
+      this.vm.core.scale.setScalar(g.coreScale)
+      this.vm.halo.scale.setScalar(g.haloScale)
+      if (g.over) {
+        // Overloaded: the halo turns, the arm trembles and spits violet sparks.
+        this.vm.halo.rotation.z += dt * 5
+        vm.rotation.z += Math.sin(this.time * 47) * 0.012
+        if (Math.random() < 0.3) {
+          const m = this.muzzle()
+          this.fx.sparks(m[0], m[1], m[2], '#d38bff', 2, 3, 0.08)
+        }
       }
-    } else if (c.charging && info.toL1 > 0.25) {
-      const lv = info.level
-      const flick = lv >= 2 ? (Math.floor(this.time * 30) % 2 === 0 ? 1 : 0.55) : 1
-      if (info.perfect) coreMat.color.set('#ffd84a')
-      // Building toward the Overload: the full-charge cyan bleeds to violet.
-      else if (lv >= 2 && info.toL3 > 0) coreMat.color.set('#7ff4ff').lerp(OVERLOAD_VIOLET, info.toL3 * 0.7)
-      else if (lv >= 2) coreMat.color.set('#7ff4ff')
-      else if (lv === 1) coreMat.color.set('#c8ff7a')
-      else coreMat.color.copy(this.vm.coreColor)
-      haloMat.color.copy(coreMat.color)
-      haloMat.opacity = (0.25 + 0.45 * (lv >= 1 ? 1 : info.toL1)) * flick
-      const sc = 1 + info.toL1 * 0.6 + info.toL2 * 0.9
-      this.vm.core.scale.setScalar(sc)
-      this.vm.halo.scale.setScalar(0.6 + info.toL1 * 0.6 + info.toL2 * 0.8 + (info.perfect ? 0.3 : 0))
     } else {
       coreMat.color.copy(this.vm.coreColor)
       haloMat.opacity = Math.max(0, haloMat.opacity - dt * 6)

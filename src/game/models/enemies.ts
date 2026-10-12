@@ -22,7 +22,9 @@ import { legL, legR, gaitDir, gaitLegs, stanceDrop, poseLegs } from './gait'
  * and elites (gold trim) reuse the same rig.
  */
 
-export type EnemyKind = 'hardhat' | 'trooper' | 'heli' | 'hopper' | 'roller' | 'brute' | 'turret' | 'golem' | 'polar' | 'mole' | 'puffer' | 'stalker' | 'hornet' | 'warden' | 'gatekeeper' | 'echo'
+/** `miniboss`: a challenge room's mini-boss (`sim/miniBosses.ts`); its rig,
+ *  stats and AI are its registry entry's, like an `echo`'s are its Master's. */
+export type EnemyKind = 'hardhat' | 'trooper' | 'heli' | 'hopper' | 'roller' | 'brute' | 'turret' | 'golem' | 'polar' | 'mole' | 'puffer' | 'stalker' | 'spotter' | 'hornet' | 'warden' | 'gatekeeper' | 'echo' | 'miniboss'
 
 export interface EnemyColors {
   main: string
@@ -53,13 +55,17 @@ export const BASE_COLORS: Record<EnemyKind, EnemyColors> = {
   puffer: { main: '#ffc94a', deep: '#a8661a', accent: '#ff5a3a', eye: '#2a3a5a', metal: '#d8dde8' },
   // The Glow Stalker: near-black plating, magenta seams, eyes that burn.
   stalker: { main: '#22223a', deep: '#14141f', accent: '#ff3fd2', eye: '#3ff4ff', metal: '#3a3a52' },
+  // The Searchlight Drone: a violet hull, a magenta radio tip, a warm lamp.
+  spotter: { main: '#4a3a78', deep: '#1c1830', accent: '#ff3f9e', eye: '#fff1b0', metal: '#8a92b0' },
   // The Hornet Rotor: wasp stripes, a stinger, twin rotors.
   hornet: { main: '#ffd23a', deep: '#22232e', accent: '#ff4a3a', eye: '#ff2a2a', metal: '#c8ccd6' },
   // The Fortress's machines: Vex's black-and-red.
   warden: { main: '#3a3e4c', deep: '#1c1e26', accent: '#ff3f5f', eye: '#ff3f5f', metal: '#8a8f9e' },
   gatekeeper: { main: '#454a5a', deep: '#22252e', accent: '#ff3f5f', eye: '#ffcf3a', metal: '#8a8f9e' },
   // A Master's echo wears its Master's rig (`buildEnemyRig` with a boss id).
-  echo: { main: '#ff3f5f', deep: '#22252e', accent: '#ff3f5f', eye: '#ff3f5f', metal: '#8a8f9e' }
+  echo: { main: '#ff3f5f', deep: '#22252e', accent: '#ff3f5f', eye: '#ff3f5f', metal: '#8a8f9e' },
+  // A challenge mini-boss's breakup colours (its rig is its own): amber.
+  miniboss: { main: '#ffb03a', deep: '#3b3434', accent: '#ffd24a', eye: '#fff06a', metal: '#6b4a3a' }
 }
 
 // ─── Motion layer (idle, walk, eased attacks) ────────────────────────────────
@@ -579,6 +585,73 @@ export const poseStalker = (rig: Rig, flare: number, lunge: number, t: number, m
   scaleBone(rig, 'head', 1 + 0.06 * flare * Math.sin(T * 40))
 }
 
+// ─── Searchlight Drone ───────────────────────────────────────────────────────
+
+/** Where the lamp's lens sits on the rig (rig units, the body's frame): the
+ *  beam (`fx/searchBeam.ts`) starts here. */
+export const SPOTTER_LENS = { y: -0.13, z: 0.42 } as const
+
+/**
+ * A rooftop searchlight that learned to fly (the Blackout Boulevard): a
+ * stubby violet hull on two ducted fans, a big lamp slung under its nose (the
+ * eye a player sees in the dark, and its weak spot), a radio mast whose tip
+ * blinks while it calls a strike in. `lock` 0..1 leans it into its lamp and
+ * sets the mast blinking; `lamp` 1 lit … 0 shot out (it droops and shivers).
+ */
+export const buildSpotter = (c: EnemyColors = BASE_COLORS.spotter): Rig => spotterParts(c).build({ outline: 0.016, height: 0.9 })
+
+/** The Searchlight Drone's rig, not yet built (the z-fighting test reads its parts). */
+export const spotterParts = (c: EnemyColors = BASE_COLORS.spotter): RigBuilder => {
+  const b = new RigBuilder()
+  b.bone('body', null, [0, 0, 0])
+    .bone('lamp', 'body', [0, SPOTTER_LENS.y, 0.2])
+    .bone('fanL', 'body', [-0.5, 0.04, -0.04])
+    .bone('fanR', 'body', [0.5, 0.04, -0.04])
+    .bone('tip', 'body', [0, 0.5, -0.14])
+  // The hull: a rounded pod, a dark keel under it, a tail fin.
+  b.part('body', ell(0.34, 0.25, 0.42, 18, 12), c.main, { p: [0, 0.06, 0] })
+  b.part('body', ell(0.26, 0.1, 0.34, 16, 8), c.deep, { p: [0, -0.13, -0.04] })
+  b.part('body', rbox(0.05, 0.22, 0.2, 0.4), c.deep, { p: [0, 0.27, -0.33], r: [-0.35, 0, 0] })
+  // Two small eyes over the lamp, and a glowing brow between them.
+  eye(b, 'body', [-0.12, 0.15, 0.33], 0.065, c.accent, 0, true)
+  eye(b, 'body', [0.12, 0.15, 0.33], 0.065, c.accent, 0, true)
+  b.part('body', cap(0.022, 0.16, 8, 2), c.accent, { p: [0, 0.27, 0.27], r: [0, 0, Math.PI / 2], glow: true, outline: false })
+  // The mast; its tip (its own bone) blinks while it calls a strike.
+  b.part('body', cap(0.018, 0.2, 8, 2), c.metal, { p: [0, 0.38, -0.14] })
+  b.part('tip', sph(0.045, 10, 8), c.accent, { glow: true, outline: false })
+  // The struts out to the fans.
+  b.mirror((s) => {
+    b.part('body', rbox(0.3, 0.06, 0.09, 0.3), c.deep, { p: [s * 0.33, 0.04, -0.04] })
+  })
+  // The fans: a duct ring, a hub, two crossed blades (they spin).
+  b.mirror((_s, t) => {
+    b.part(`fan${t}`, torus(0.2, 0.045, 8, 22), c.metal, { r: [Math.PI / 2, 0, 0] })
+    b.part(`fan${t}`, sph(0.045, 10, 8), c.accent)
+    b.part(`fan${t}`, ell(0.17, 0.012, 0.045), c.deep, { p: [0, 0.01, 0] })
+    b.part(`fan${t}`, ell(0.045, 0.012, 0.17), c.deep, { p: [0, -0.01, 0] })
+  })
+  // The lamp: a barrel along +Z on a neck, a rim, the lens (glowing, bulged).
+  b.part('body', cap(0.05, 0.06, 8, 2), c.metal, { p: [0, -0.06, 0.18] })
+  b.part('lamp', rcyl(0.17, 0.26, 0.04, 18), c.metal, { p: [0, 0, 0.08], r: [Math.PI / 2, 0, 0] })
+  b.part('lamp', torus(0.165, 0.028, 8, 22), c.deep, { p: [0, 0, 0.215] })
+  b.part('lamp', ell(0.15, 0.15, 0.05, 18, 10), c.eye, { p: [0, 0, 0.215], glow: true, outline: false })
+  return b
+}
+
+/** `aim`: the lamp's pitch down toward its spot (rad). */
+export const poseSpotter = (rig: Rig, aim: number, lock: number, lamp: number, t: number, m?: EnemyMotion): void => {
+  const T = m ? t * m.tempo : t
+  const out = 1 - lamp
+  nudge(rig, 'body', 0, 0.05 * Math.sin(T * 2.1) - 0.08 * out, 0)
+  pose(rig, 'body', 0.1 + 0.18 * lock + 0.05 * out * Math.sin(T * 23), m ? 0.25 * m.look * m.calm : 0, 0.06 * Math.sin(T * 1.5) + 0.12 * out * Math.sin(T * 9))
+  // The body leans 0.1–0.28 itself; the lamp makes up the rest of the pitch.
+  pose(rig, 'lamp', clamp(aim - 0.1 - 0.18 * lock, -0.3, 1.25) + 0.5 * out, 0, 0)
+  const spin = T * (26 + 16 * lock)
+  pose(rig, 'fanL', 0, spin, 0)
+  pose(rig, 'fanR', 0, -spin, 0)
+  scaleBone(rig, 'tip', 1 + 0.7 * lock * (Math.sin(T * 24) > 0 ? 1 : 0))
+}
+
 // ─── Hornet Rotor ────────────────────────────────────────────────────────────
 
 /**
@@ -587,7 +660,11 @@ export const poseStalker = (rig: Rig, flare: number, lunge: number, t: number, m
  * telegraph) and dives in a straight line that does not turn: sidestep, or
  * parry and it crashes.
  */
-export const buildHornet = (c: EnemyColors = BASE_COLORS.hornet): Rig => {
+export const buildHornet = (c: EnemyColors = BASE_COLORS.hornet): Rig => hornetParts(c).build({ outline: 0.015, height: 0.8 })
+
+/** The Hornet Rotor's rig, not yet built (the Storm Hornet Queen,
+ *  `models/miniBoss/stormHornetQueen.ts`, builds on it). */
+export const hornetParts = (c: EnemyColors = BASE_COLORS.hornet): RigBuilder => {
   const b = new RigBuilder()
   b.bone('body', null, [0, 0, 0])
     .bone('rotorL', 'body', [-0.32, 0.3, 0])
@@ -603,7 +680,7 @@ export const buildHornet = (c: EnemyColors = BASE_COLORS.hornet): Rig => {
     b.part(`rotor${t}`, ell(0.3, 0.015, 0.05), c.metal, { p: [0, 0.02, 0] })
     b.part(`rotor${t}`, ell(0.05, 0.015, 0.3), c.metal, { p: [0, 0.02, 0] })
   })
-  return b.build({ outline: 0.015, height: 0.8 })
+  return b
 }
 
 export const poseHornet = (rig: Rig, spin: number, dive: number, t: number, m?: EnemyMotion): void => {
@@ -845,7 +922,11 @@ export const poseRoller = (rig: Rig, wheelAngle: number, t: number, lean: number
 
 // ─── Guardroid (brute) ───────────────────────────────────────────────────────
 
-export const buildBrute = (c: EnemyColors = BASE_COLORS.brute): Rig => {
+export const buildBrute = (c: EnemyColors = BASE_COLORS.brute): Rig => bruteParts(c).build({ outline: 0.024, height: 2.45 })
+
+/** The Guardroid's rig, not yet built (the Icebreaker Brute,
+ *  `models/miniBoss/icebreakerBrute.ts`, builds on it). */
+export const bruteParts = (c: EnemyColors = BASE_COLORS.brute): RigBuilder => {
   const b = new RigBuilder()
   b.bone('hips', null, [0, 1.0, 0])
     .bone('chest', 'hips', [0, 0.38, 0])
@@ -877,7 +958,7 @@ export const buildBrute = (c: EnemyColors = BASE_COLORS.brute): Rig => {
     b.part(`knee${t}`, cap(0.14, 0.16), c.deep, { p: [0, -0.16, 0] })
     b.part(`knee${t}`, ell(0.22, 0.15, 0.3), c.main, { p: [0, -0.46, 0.06] })
   })
-  return b.build({ outline: 0.024, height: 2.45 })
+  return b
 }
 
 /** The Guardroid's L arm at rest (R mirrors y and z): a hunched gorilla
@@ -1257,10 +1338,13 @@ export const buildEnemyRig = (kind: EnemyKind, colors?: EnemyColors): Rig => {
     case 'mole': return buildMole(c)
     case 'puffer': return buildPuffer(c)
     case 'stalker': return buildStalker(c)
+    case 'spotter': return buildSpotter(c)
     case 'hornet': return buildHornet(c)
     case 'warden': return buildWarden(c)
     case 'gatekeeper': return buildGatekeeper(c)
     // Built from its Master's rig by `createEnemy` (it knows which).
     case 'echo': return buildWarden(c)
+    // Built from its registry entry by `createMiniBoss` (it knows which).
+    case 'miniboss': return buildBrute(c)
   }
 }

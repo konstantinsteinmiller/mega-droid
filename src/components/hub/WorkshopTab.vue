@@ -18,7 +18,8 @@
           span {{ TANK_PRICE }}
       //- Out of bolts for the next upgrade of the best buster: a rewarded
       //- top-up worth two of its upgrades (Pip's catch-up points here).
-      div.tank-row.drop(v-if="canOfferReward && shortForUpgrade" data-lesson="bolts-ad")
+      //- One video-for-bolts row at a time: the better of the two (`adOffer`).
+      div.tank-row.drop(v-if="adOffer === 'upgrade'" data-lesson="bolts-ad")
         div.tank-ico.drop-ico
           GameIcon(name="anvil")
         div.tank-info
@@ -30,11 +31,10 @@
           :aria-label="t('workshop.dropAria', { n: upgradeAdAmount })"
           @click="claimUpgradeAd"
         )
-          span.ad-chip
-            RewardAdIcon.ad-mark
+          RewardAdBadge
           span +{{ upgradeAdAmount }}
           GameIcon.bi(name="nut")
-      div.tank-row.drop(v-if="canOfferReward")
+      div.tank-row.drop(v-if="adOffer === 'drop'" data-lesson="bolts-ad")
         div.tank-ico.drop-ico
           GameIcon(name="gift")
         div.tank-info
@@ -48,9 +48,7 @@
           @click="claimDrop"
         )
           //- A film clapper for "+60" and the nut: signed, like every reward.
-          //- White on a dark chip, so the mark reads at a glance on the gold.
-          span.ad-chip
-            RewardAdIcon.ad-mark
+          RewardAdBadge
           span +{{ dropAmount }}
           GameIcon.bi(name="nut")
       div.section-title {{ t('workshop.upgrade') }}
@@ -97,7 +95,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import RewardAdIcon from '@/components/atoms/RewardAdIcon.vue'
+import RewardAdBadge from '@/components/atoms/RewardAdBadge.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import ItemDetail from './ItemDetail.vue'
 import { SLOT_ICON } from './gearFormat'
@@ -163,6 +161,17 @@ const claimUpgradeAd = async () => {
     resumeMusicAfterAd()
   }
 }
+/**
+ * Which video-for-bolts row shows: never both (playtest 2026-10-12: "+6122"
+ * beside "+860" for the same video read as nonsense — the level-scaled drop
+ * falls far behind two upgrades of a late cannon). The bigger one that can be
+ * claimed now; the drop with its cooldown only when no top-up is offered.
+ */
+const adOffer = computed<'upgrade' | 'drop' | null>(() => {
+  if (!canOfferReward.value) return null
+  if (!shortForUpgrade.value) return 'drop'
+  return dropLeft.value === 0 && dropAmount.value > upgradeAdAmount.value ? 'drop' : 'upgrade'
+})
 const stats = computed(() => { void profile.hero.skills; return computeStats() })
 const items = computed(() => [...profile.inv.items]
   .sort((a, b) => Number(!!isEquipped(b.id)) - Number(!!isEquipped(a.id)) || itemPower(b) - itemPower(a)))
@@ -226,16 +235,6 @@ const upgrade = () => {
 .tc
   font-size: clamp(11px, 2.4vmin, 13px)
   color: #9fe6ff
-.ad-chip
-  display: grid
-  place-items: center
-  padding: 3px 5px
-  border-radius: 7px
-  background: #141a33
-  color: #ffffff
-.ad-mark
-  width: 1.7em
-  height: 1.3em
 .buy
   display: flex
   align-items: center

@@ -41,7 +41,8 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
 /** One storey (m), as on the climb. */
 const STOREY = 3
 const GRID_W = 40
-const GRID_H = 35
+/** (Rows 35.. hold the challenge room under the exit station.) */
+const GRID_H = 42
 /** The rail's corners are rounded to this radius (m), and its course is
  *  sampled this finely (m). */
 const RAIL_TURN = 3.4
@@ -320,6 +321,10 @@ export const generateRailRush = (seed: number): MapData => {
   const start = { x: cellCenter(4) + CELL / 2, z: cellCenter(10), yaw: YAW_NZ }
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): south off the exit station,
+  // between the secret's false wall and the chest — the door Flux faces as
+  // he steps off the cart; the way on is east.
+  b.challengeRoom(6, { mouth: { i: 7, j: 31, di: 0, dj: 1 } })
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

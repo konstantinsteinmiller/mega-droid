@@ -166,20 +166,47 @@ let gameplayStartedActive = false
  */
 let bridgePaused = false
 let bridgeHidden = false
+/**
+ * An ad just closed and left the frame without focus (#139). The Bridge reads
+ * window `blur` as "hidden" — and with it, paused — and only `focus` as
+ * visible again. An ad overlay takes the focus and never hands it back, so the
+ * game stood frozen after every interstitial (the fly-out cutscene too) until
+ * the player clicked into the frame. While this holds, that leftover
+ * blur-pause is not a pause; the Bridge's next visibility or pause change (a
+ * click focusing the frame, a real tab switch, a portal pause) ends it.
+ */
+let adBlurOverride = false
 
 const applyPauseAggregate = (): void => {
-  if (bridgePaused || bridgeHidden) pauseGame()
+  if (!adBlurOverride && (bridgePaused || bridgeHidden)) pauseGame()
   else resumeGame()
 }
 
+/** An ad (any ad — ours, or one the portal ran) opened or ended. */
+const onAdState = (state: unknown): void => {
+  if (state === 'opened') {
+    if (adBlurOverride) { adBlurOverride = false; applyPauseAggregate() }
+    return
+  }
+  if (state !== 'closed' && state !== 'failed') return
+  // Ask for the focus back first: when it comes, the Bridge's own `focus`
+  // listener clears "hidden" the proper way.
+  try { window.focus() } catch { /* ignore */ }
+  if (!bridgeHidden) return
+  adBlurOverride = true
+  applyPauseAggregate()
+}
+
 const setBridgePaused = (paused: boolean): void => {
-  if (paused === bridgePaused) return
+  if (paused === bridgePaused && !adBlurOverride) return
+  adBlurOverride = false
   bridgePaused = paused
   applyPauseAggregate()
 }
 
 const setBridgeHidden = (hidden: boolean): void => {
-  if (hidden === bridgeHidden) return
+  if (hidden === bridgeHidden && !adBlurOverride) return
+  adBlurOverride = false
   bridgeHidden = hidden
   applyPauseAggregate()
 }
@@ -315,6 +342,9 @@ export const playgamaPlugin = (): Promise<void> => {
       bridge.on(EVENT.VISIBILITY_STATE_CHANGED, (state: unknown) => {
         setBridgeHidden(state === 'hidden')
       })
+      // An ad's end resumes the game by itself, focus or not (#139).
+      bridge.on(EVENT.INTERSTITIAL_STATE_CHANGED, onAdState)
+      bridge.on(EVENT.REWARDED_STATE_CHANGED, onAdState)
       // Portal mute is its own audio slot, NOT a pause: muting the portal
       // chrome must silence the game without freezing it, and a mute that
       // arrives before the music exists must still gate its start

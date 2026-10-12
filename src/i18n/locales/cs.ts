@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Poslední vzdor! Systémy restartovány.',
     'weak': 'SLABINA!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'MOC SLABÉ!',
     'dizzy': 'OMRÁČEN!',
     'dodge': 'ÚHYB!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Strážce',
     'hornet': 'Rotorový sršeň',
     'stalker': 'Zářivý lovec',
+    'spotter': 'Světlometný dron',
     'puffer': 'Nafukovací mina',
     'mole': 'Krtek vrtač',
     'polar': 'Polární štěně',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Strážce | Strážce | Strážců',
     'hornet': 'Rotorového sršně | Rotorové sršně | Rotorových sršňů',
     'stalker': 'Zářivého lovce | Zářivé lovce | Zářivých lovců',
+    'spotter': 'Světlometný dron | Světlometné drony | Světlometných dronů',
     'puffer': 'Nafukovací minu | Nafukovací miny | Nafukovacích min',
     'mole': 'Krtka vrtače | Krtky vrtače | Krtků vrtačů',
     'polar': 'Polární štěně | Polární štěňata | Polárních štěňat',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Mistr Vichru',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Velmistr'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Škvárový pes',
+    'icebreakerBrute': 'Ledoborec Hromotluk',
+    'arcSpider': 'Obloukový pavouk',
+    'stormHornetQueen': 'Královna bouřných sršňů',
+    'lodestoneGolem': 'Magnetovcový golem',
+    'burrowWyrm': 'Hrabavý červ',
+    'pufferMatriarch': 'Matriarcha čtverzubec',
+    'glitchStalker': 'Glitch slídil',
+    'sawGyro': 'Pilový gyro',
+    'sentinelPrototype': 'Prototyp strážce'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Výzva',
+    'cleared': 'Výzva splněna! +{bolts} šroubů'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Úroveň {n}! Systémy plně opraveny.'
   },
   'tips': {
-    'moveTouch': 'Táhni vlevo pro pohyb, vpravo pro rozhlížení. Klepni na podlahu a dojdeš tam!',
+    'moveTouch': 'Táhni vlevo pro pohyb, vpravo pro rozhlížení.',
     'moveKeys': 'Pohybuj se klávesami {keys}.',
     'lookMouse': 'Pohybem myši se rozhlížíš.',
     'capture': 'Klikni do scény a převezmi kontrolu nad kamerou.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Akce'
     },
     'touch': {
-      'move': 'Levá strana: táhni pro pohyb. Klepni na podlahu a dojdeš tam.',
-      'fire': 'V boji: klepni pro výstřel, podrž pro nabití, pusť pro palbu.',
+      'move': 'Levá strana: táhni pro pohyb. Pravá strana: táhni pro rozhlížení.',
+      'fire': 'Pravá strana nebo tlačítko palby: klepni pro výstřel, podrž pro nabití, pusť pro palbu. Při držení táhni pro míření.',
       'block': 'Drž štít a blokuj — přesně když se kruh zavírá, vykryješ.',
       'use': 'U bedny, uvízlého robota nebo dveří: klepni na ně nebo na tlačítko, které se objeví.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Zasáhni jádro, až se otevře.',
       'hornet': '{enemy}. Nalétá rovně: uskoč stranou!',
       'stalker': '{enemy}. Vykryj jeho výpad.',
+      'spotter': '{enemy}. Uteč z jeho světla. Střílej do lampy.',
       'puffer': '{enemy}. Sestřel ji, než se nafoukne.',
       'mole': '{enemy}. Zasáhni ho, až vyleze.',
       'elite': 'Zlatý kruh. Elita. Opatrně.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Protože jsou svobodní.',
     },
     'guardDown': 'Strážce padl! Cesta je volná.',
+    'challenge': 'Dveře výzvy! Uvnitř je kořist.',
     'help': {
       'weapon': 'Vyber novou zbraň a pal na drony!',
       'gap': 'Jdi rovnou na okraj a přeskočíš!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Uklouzni těsně předtím, než tě červený kruh zasáhne!',
       'block': 'Drž blok, když pálí. Přesně v momentě zásahu je to perfektní!',
       'blockMiss': 'Štít nahoru! Blokuj přesně při zásahu a pošli to zpět!',
+      'chargeMiss': 'Zkus nabitou ránu: podrž tlačítko děla!',
       'charge': 'Drž palbu, dokud dělo nezáří, pak pusť!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Ten panel ukazuje vzor. Lampy na zdi zatím ne.',
       'color': 'Ten rám má oblíbenou barvu. Svítit mají jen jeho lampy.',
       'cycle': 'Každý zásah lampu přemluví. Panel ví, co chce.',
+      'sequence': 'Panel bliká pořád stejnou melodii. Zahraj ji na tlačítkách, popořadě.',
+      'mirror': 'Ten paprsek chce do kruhu. Zrcadla se otočí, když do nich střelíš.',
+      'tiles': 'Rozsviť všechny desky jednou procházkou. Dvakrát na jednu nebo mimo ně – a je zase tma.',
       'solved': 'No vida. Někdo má rád hádanky.'
     },
     'landed': 'Přistání! Jdeme na to.',

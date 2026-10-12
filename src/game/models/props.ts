@@ -1,7 +1,7 @@
 import { Group, Mesh, MeshBasicMaterial, AdditiveBlending, Color, CylinderGeometry, DoubleSide, BufferGeometry, Float32BufferAttribute, PlaneGeometry, CanvasTexture, SRGBColorSpace } from 'three'
 import { drawVexFace } from './street'
 import { buildEnemyRig, type EnemyColors } from './enemies'
-import { rcyl, rbox, torus, sph, ell, cap, xform, paint, paintBy, merge, lathe } from './kit'
+import { rcyl, rbox, torus, sph, ell, cap, xform, paint, paintBy, merge, lathe, stripUv } from './kit'
 import { toonVC, glowVC, outlineMat } from './toon'
 import { PAL, RARITY_COLOR } from './palette'
 import type { Theme } from '../world/themes'
@@ -89,6 +89,9 @@ export interface DoorMesh {
   lampMat: MeshBasicMaterial
   /** Boss door only. */
   warn: BossDoorFx | null
+  /** Challenge door only (`buildDoor`'s `challenge`): its beacons' material,
+   *  pulsed amber by the mission while the mini-boss behind it stands. */
+  beacon?: MeshBasicMaterial
 }
 
 // The danger livery is the same in every sector — yellow and black like a
@@ -161,30 +164,39 @@ const additive = (color: string, opacity: number, vertexColors = false): MeshBas
  * classic boss-gate silhouette — set in a hazard-striped frame with a robot
  * skull over it, warning beacons and a red pool of light on the approach
  * side (`approach`: the sign of local Z the corridor lies on).
+ *
+ * A `challenge` door (an optional mini-boss room, `sim/challenge.ts`) is a
+ * plain door in a livery of its own: royal blue leaves with gold edges, in a
+ * gold frame under a blue banner with a glowing gold star, two amber beacons
+ * on its posts. A trophy waits, not a Core Master: no skull, no hazard
+ * stripes, no red light.
  */
-export const buildDoor = (theme: Theme, boss: boolean, approach: 1 | -1 = 1): DoorMesh => {
+export const buildDoor = (theme: Theme, boss: boolean, approach: 1 | -1 = 1, challenge = false): DoorMesh => {
   const root = new Group()
   const panels: Group[] = []
   const w = CELL
   const h = WALL_H - 0.9
   if (boss) return buildBossDoor(root, panels, w, h, approach)
+  const leaf = challenge
+    ? { body: CHALLENGE_BLUE, stripe: CHALLENGE_GOLD, trim: CHALLENGE_BLUE_DEEP, disc: CHALLENGE_GOLD, glow: CHALLENGE_AMBER }
+    : { body: theme.crate, stripe: theme.hazard, trim: theme.crateTrim, disc: theme.crateTrim, glow: theme.accent }
   // Both halves in one body, one outline and one glow (three draw calls, not
   // six): each half lies wholly on its own side of x = 0, and a morph target
   // slides every vertex 0.35 m outward along x by its side.
   const toon: BufferGeometry[] = []
   const glowG: BufferGeometry[] = []
   for (const s of [-1, 1]) {
-    toon.push(xform(paint(rbox(w / 2 - 0.05, h, 0.34, 0.3), theme.crate), [s * (w / 4), h / 2, 0]))
-    // Chevron stripes on the leading edges
+    toon.push(xform(paint(rbox(w / 2 - 0.05, h, 0.34, 0.3), leaf.body), [s * (w / 4), h / 2, 0]))
+    // Chevron stripes on the leading edges (a challenge door's: gold bands)
     toon.push(paintBy(
       xform(rbox(0.26, h - 0.3, 0.4, 0.3), [s * 0.16, h / 2, 0]),
-      (_x, y) => (Math.floor(y * 2.6) & 1 ? theme.hazard : theme.crateTrim)
+      (_x, y) => (Math.floor(y * 2.6) & 1 ? leaf.stripe : leaf.trim)
     ))
-    toon.push(xform(paint(ell(0.36, 0.36, 0.08), theme.crateTrim), [s * (w / 4), h * 0.62, 0.18]))
-    toon.push(xform(paint(ell(0.36, 0.36, 0.08), theme.crateTrim), [s * (w / 4), h * 0.62, -0.18]))
+    toon.push(xform(paint(ell(0.36, 0.36, 0.08), leaf.disc), [s * (w / 4), h * 0.62, 0.18]))
+    toon.push(xform(paint(ell(0.36, 0.36, 0.08), leaf.disc), [s * (w / 4), h * 0.62, -0.18]))
     glowG.push(
-      xform(paint(sph(0.12, 10, 8), theme.accent), [s * (w / 4), h * 0.62, 0.24]),
-      xform(paint(sph(0.12, 10, 8), theme.accent), [s * (w / 4), h * 0.62, -0.24])
+      xform(paint(sph(0.12, 10, 8), leaf.glow), [s * (w / 4), h * 0.62, 0.24]),
+      xform(paint(sph(0.12, 10, 8), leaf.glow), [s * (w / 4), h * 0.62, -0.24])
     )
   }
   const leaves = assemble([partMorph(merge(toon))], [partMorph(merge(glowG))], 0.025)
@@ -194,11 +206,112 @@ export const buildDoor = (theme: Theme, boss: boolean, approach: 1 | -1 = 1): Do
   leaves.root.traverse((o) => { if ((o as Mesh).morphTargetInfluences) slid.push(o as Mesh) })
   const part = (k: number): void => { for (const m of slid) m.morphTargetInfluences![0] = k }
   const lampMat = new MeshBasicMaterial({ color: new Color(PAL.glowGreen), toneMapped: false })
+  if (challenge) {
+    const fx = challengeFrame(root, w, h, lampMat)
+    return { root, panels, part, boss, lamp: fx.lamp, lampMat, warn: null, beacon: fx.beacon }
+  }
   const lamp = new Mesh(new CylinderGeometry(0.16, 0.16, 0.12, 12), lampMat)
   lamp.rotation.x = Math.PI / 2
   lamp.position.set(0, h + 0.35, 0)
   root.add(lamp)
   return { root, panels, part, boss, lamp, lampMat, warn: null }
+}
+
+// The challenge livery: royal blue and gold, amber light. Every sector the
+// same, like the boss door's danger livery: "a challenge waits here" is one
+// sign the player learns once.
+const CHALLENGE_BLUE = '#2c3f9e'
+const CHALLENGE_BLUE_DEEP = '#18225c'
+const CHALLENGE_GOLD = '#f2b51f'
+const CHALLENGE_GOLD_DEEP = '#a8700f'
+const CHALLENGE_AMBER = '#ffc04a'
+
+/**
+ * A five-pointed star plate, `depth` thick along z (centred on z = 0), its
+ * top point up: indexed, with normals, so it merges with the kit's parts.
+ */
+export const starPlate = (rOut: number, rIn: number, depth: number): BufferGeometry => {
+  const ring: Array<[number, number]> = []
+  for (let k = 0; k < 10; k++) {
+    const a = Math.PI / 2 + (k * Math.PI) / 5
+    const r = k % 2 ? rIn : rOut
+    ring.push([Math.cos(a) * r, Math.sin(a) * r])
+  }
+  const pos: number[] = []
+  const idx: number[] = []
+  const zf = depth / 2
+  // Faces: a centre vertex and the ring, front (+z) and back (-z).
+  for (const z of [zf, -zf]) {
+    const c = pos.length / 3
+    pos.push(0, 0, z)
+    for (const [x, y] of ring) pos.push(x, y, z)
+    for (let k = 0; k < 10; k++) {
+      const a = c + 1 + k
+      const b = c + 1 + ((k + 1) % 10)
+      if (z > 0) idx.push(c, a, b)
+      else idx.push(c, b, a)
+    }
+  }
+  // Sides: a quad per ring edge.
+  for (let k = 0; k < 10; k++) {
+    const [x0, y0] = ring[k]!
+    const [x1, y1] = ring[(k + 1) % 10]!
+    const b = pos.length / 3
+    pos.push(x0, y0, zf, x1, y1, zf, x1, y1, -zf, x0, y0, -zf)
+    idx.push(b, b + 2, b + 1, b, b + 3, b + 2)
+  }
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3))
+  g.setIndex(idx)
+  g.computeVertexNormals()
+  return g
+}
+
+/**
+ * The challenge door's frame (static, never part of the leaves): two gold
+ * posts a hand's width off the corridor walls, a blue banner across the top
+ * with a gold rim and a glowing gold star on both faces, the state lamps as
+ * two pucks through the banner, amber beacon globes on the posts. Depths are
+ * staggered (posts ±0.35, banner ±0.28, rim ±0.24, star through its face)
+ * and no top is level with another: nothing lies in one plane with anything
+ * else (`tests/game/challenge.test.ts`).
+ */
+const challengeFrame = (root: Group, w: number, h: number, lampMat: MeshBasicMaterial): { lamp: Mesh; beacon: MeshBasicMaterial } => {
+  const p = challengeFrameParts(w, h)
+  const f = assemble(p.toon, p.glow, 0.026)
+  root.add(f.root)
+  const lamp = new Mesh(merge(p.lamps), lampMat)
+  root.add(lamp)
+  const beacon = new MeshBasicMaterial({ color: new Color(CHALLENGE_AMBER), toneMapped: false })
+  root.add(new Mesh(merge(p.globes), beacon))
+  return { lamp, beacon }
+}
+
+/** The challenge door frame's parts, each its own geometry (`challengeFrame`
+ *  merges them; the z-fighting test reads them apart). */
+export const challengeFrameParts = (w = CELL, h = WALL_H - 0.9): { toon: BufferGeometry[]; glow: BufferGeometry[]; lamps: BufferGeometry[]; globes: BufferGeometry[] } => {
+  const toon: BufferGeometry[] = []
+  const glowG: BufferGeometry[] = []
+  const px = w / 2 - 0.2
+  const postTop = h + 0.78
+  for (const s of [-1, 1]) {
+    toon.push(paintBy(xform(rbox(0.3, postTop, 0.7, 0.22), [s * px, postTop / 2, 0]),
+      (_x, y) => (y > postTop - 0.5 || (y > 0.35 && y < 0.6) ? CHALLENGE_GOLD_DEEP : CHALLENGE_GOLD)))
+  }
+  // The banner: blue, its gold rim a slightly bigger, thinner plate behind it.
+  const by = h + 0.36
+  toon.push(xform(paint(rbox(w - 0.62, 0.62, 0.56, 0.2), CHALLENGE_BLUE), [0, by, 0]))
+  toon.push(xform(paint(rbox(w - 0.5, 0.74, 0.48, 0.2), CHALLENGE_GOLD), [0, by, 0]))
+  // The star on both faces, sunk into the banner, and its glowing halo.
+  for (const s of [-1, 1]) {
+    glowG.push(xform(paint(starPlate(0.27, 0.12, 0.1), CHALLENGE_GOLD), [0, by, s * 0.3]))
+    glowG.push(xform(paint(torus(0.34, 0.025, 6, 28), CHALLENGE_AMBER), [0, by, s * 0.3]))
+  }
+  // The state lamps: two pucks through the banner, beside the star.
+  const puck = (x: number) => xform(stripUv(new CylinderGeometry(0.09, 0.09, 0.66, 12)), [x, by, 0], [Math.PI / 2, 0, 0])
+  // Amber beacon globes on the posts.
+  const globes = [-1, 1].map(s => xform(sph(0.17, 14, 10), [s * px, postTop + 0.1, 0]))
+  return { toon, glow: glowG, lamps: [puck(-0.82), puck(0.82)], globes }
 }
 
 /** How far each half of a plain door slides aside when parted (m). */

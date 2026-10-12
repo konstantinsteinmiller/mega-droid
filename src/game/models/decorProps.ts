@@ -118,7 +118,7 @@ const carStack = (): DecorParts => {
 
 /** A junk heap: scrap rocks in rust and steel, two tyres, a bent pipe. */
 const scrapHeap = (): DecorParts => P([
-  at(paint(rock(0.75, 3, 9, 7), '#5d5a52'), [0, 0.22 - SINK, 0], [0, 0.4, 0], [1.1, 0.55, 1]),
+  at(paint(rock(0.75, 3, 9, 7), '#5d5a52'), [0, 0.34 - SINK, 0], [0, 0.4, 0], [1.1, 0.55, 1]),
   at(paint(rock(0.45, 7, 9, 7), RUST), [0.45, 0.42, 0.15], [0, 1, 0], [1, 0.7, 1]),
   at(paint(torus(0.26, 0.09, 8, 16), HAZ_K), [-0.45, 0.32, 0.35], [1.1, 0.3, 0]),
   at(paint(torus(0.26, 0.09, 8, 16), HAZ_K), [-0.25, 0.55, 0.05], [0.3, 0.9, 0.4]),

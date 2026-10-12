@@ -18,6 +18,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { addHudTicker } from '@/game/state/hud'
 import { currentMission } from '@/game/boot'
 import { chargeInfo } from '@/game/sim/stats'
+import { initChargeRing, paintChargeRing } from './chargeRing'
 
 /**
  * Crosshair + charge ring + lock-on bracket. Updated every frame by the HUD
@@ -34,16 +35,13 @@ const xh = ref<HTMLElement | null>(null)
 const l1 = ref<SVGCircleElement | null>(null)
 const l2 = ref<SVGCircleElement | null>(null)
 const lock = ref<HTMLElement | null>(null)
-const C1 = 2 * Math.PI * 40
-const C2 = 2 * Math.PI * 46
 const pt = { x: 0, y: 0, visible: false }
 const top = { x: 0, y: 0, visible: false }
 let off: (() => void) | null = null
 let t = 0
 
 onMounted(() => {
-  l1.value!.style.strokeDasharray = `${C1}`
-  l2.value!.style.strokeDasharray = `${C2}`
+  initChargeRing(l1.value!, l2.value!)
   off = addHudTicker((dt) => {
     t += dt
     const m = currentMission()
@@ -51,16 +49,7 @@ onMounted(() => {
     const c = m.combat
     const info = chargeInfo(c.charging ? c.charge : 0, m.stats)
     const showing = c.charging && info.toL1 > 0.12
-    l1.value!.style.strokeDashoffset = `${C1 * (1 - (showing ? info.toL1 : 0))}`
-    l2.value!.style.strokeDashoffset = `${C2 * (1 - (showing ? info.toL2 : 0))}`
-    const full = info.level >= 2
-    const flick = full && Math.floor(t * 24) % 2 === 0
-    // Past full charge with the Overload: the inner ring refills in violet.
-    if (info.toL3 > 0) l1.value!.style.strokeDashoffset = `${C1 * (1 - info.toL3)}`
-    xh.value.dataset.state = info.perfect ? 'perfect'
-      : info.level === 3 ? 'over'
-        : info.toL3 > 0 ? 'build'
-          : full ? (flick ? 'full' : 'full2') : info.level === 1 ? 'l1' : 'idle'
+    paintChargeRing(xh.value, l1.value!, l2.value!, info, showing, t)
     xh.value.style.transform = `translate(-50%, -50%) scale(${1 + (showing ? 0.25 + info.toL2 * 0.25 : 0) + c.recoil * 0.12})`
     // Lock bracket
     const tg = c.target
@@ -88,6 +77,7 @@ onUnmounted(() => off?.())
 </script>
 
 <style scoped lang="sass">
+@use './chargeRing'
 .xh-layer
   position: absolute
   inset: 0
@@ -99,47 +89,7 @@ onUnmounted(() => off?.())
   width: clamp(44px, 9vmin, 64px)
   height: clamp(44px, 9vmin, 64px)
   transform: translate(-50%, -50%)
-  svg
-    width: 100%
-    height: 100%
-    overflow: visible
-  circle
-    fill: none
-  .track
-    stroke: rgba(255, 255, 255, 0.18)
-    stroke-width: 4
-  .l1, .l2
-    transform: rotate(-90deg)
-    transform-origin: 50% 50%
-    stroke-linecap: round
-  .l1
-    stroke: #c8ff7a
-    stroke-width: 6
-  .l2
-    stroke: #7ff4ff
-    stroke-width: 5
-  .dot
-    fill: #fff
-    stroke: #141a33
-    stroke-width: 2.5
-  &[data-state='full'] .l2
-    stroke: #ffffff
-  &[data-state='full2'] .l2
-    stroke: #3cc8ff
-  &[data-state='build'] .l1
-    stroke: #b46cff
-  &[data-state='over']
-    .l1, .l2
-      stroke: #b46cff
-      filter: drop-shadow(0 0 6px #d38bff)
-    .dot
-      fill: #fff6d6
-  &[data-state='perfect']
-    .l1, .l2
-      stroke: #ffd84a
-      filter: drop-shadow(0 0 6px #ffd84a)
-    .dot
-      fill: #ffd84a
+  +chargeRing.look
 .lock
   position: absolute
   left: 0

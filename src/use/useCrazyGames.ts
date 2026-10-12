@@ -27,7 +27,6 @@
 
 import { ref } from 'vue'
 import { isCrazyWeb } from '@/use/useUser'
-import { isCrazyGamesFullRelease } from '@/use/useMatch'
 import type { SaveStrategy } from '@/utils/save/types'
 
 // The CrazyGames SDK is loaded globally via a script tag in index.html.
@@ -295,52 +294,30 @@ export const stopGameplay = (): void => {
 
 // ─── Gameplay lifecycle policy ──────────────────────────────────────────────
 //
-// WHICH events we send depends on the release flag, and that decision belongs
-// here rather than in a view — it is a platform contract, and keeping it in the
-// SFC made it untestable.
+// One contract in every build (#138): `gameplayStart()` when the player gets
+// control, `gameplayStop()` on every break we own (the pause menu, any modal,
+// an ad, the result screen, a finished run), `gameplayStart()` again when play
+// resumes. Never two starts in a row and never a stop without a start before
+// it: `startGameplay` / `stopGameplay` collapse a repeat of the state CG was
+// last told (`gameplayActive`).
 //
-// PRE-RELEASE (`VITE_APP_CRAZY_GAMES_FULL_RELEASE=false`)
-//   Exactly one `gameplayStart()`, once loading has finished. Never stopped.
-//   The pre-release build is a QA artefact with no ad inventory, so a full
-//   start/stop lifecycle here emits a stream of events around ads that will
-//   never play and menus opened only to be inspected. One event says "the game
-//   got in", and nothing else lies.
+// The pre-release build used to send only ONE start "once loading has
+// finished", from a `signalGameplayLoaded()` that nothing ever called — so a
+// pre-release build sent no gameplay event at all, and QA found the first
+// start missing when the player landed in the tutorial. The release flag still
+// gates ads (`useAdGate`), not this.
 //
-// FULL RELEASE (`=true`)
-//   The real contract: stop on every break we own (an ad, a modal, the result
-//   screen, a finished run), start again when play resumes. Deliberately NOT
-//   tied to tab visibility — CG handles focus loss itself and asks us not to
-//   signal it.
+// Deliberately NOT tied to tab visibility — CG handles focus loss itself and
+// asks us not to signal it (`isCrazyGameplayLive`).
 
-let firedLoadedStart = false
-
-/**
- * Report that loading has finished and the player is in.
- *
- * A no-op on the full release, where `syncGameplayLifecycle` owns the events.
- * Idempotent: safe to call from a boot path that can run more than once.
- */
-export const signalGameplayLoaded = (): void => {
-  if (isCrazyGamesFullRelease || firedLoadedStart) return
-  firedLoadedStart = true
-  startGameplay()
-}
-
-/**
- * Drive the start/stop pair from whether gameplay is live.
- *
- * A no-op outside the full release, where the single loaded-start above is the
- * whole lifecycle.
- */
+/** Drive the start/stop pair from whether gameplay is live (`isCrazyGameplayLive`). */
 export const syncGameplayLifecycle = (live: boolean): void => {
-  if (!isCrazyGamesFullRelease) return
   if (live) startGameplay()
   else stopGameplay()
 }
 
-/** Test seam: forget that the one-shot start already fired. */
+/** Test seam: forget what CG was last told. */
 export const __resetGameplayLifecycle = (): void => {
-  firedLoadedStart = false
   gameplayActive = false
 }
 

@@ -21,7 +21,7 @@ import {
   LEVEL_TYPES, levelTypes, levelEntries, buildLevel, levelMap, rollAs, levelQuery, parseLevelQuery, levelFromHash,
   type LevelPick
 } from '@/game/data/levelCatalog'
-import { JOB_TEMPLATES, rollJob, climbJob, storyQuest, bossQuest, tutorialQuest, type Quest, type QuestTemplate } from '@/game/data/quests'
+import { JOB_TEMPLATES, rollJob, climbJob, storyQuest, bossQuest, tutorialQuest, isBoardRun, type Quest, type QuestTemplate } from '@/game/data/quests'
 import { SECTORS, SECTOR_BY_ID } from '@/game/data/regions'
 import { MAX_LEVEL } from '@/game/data/progression'
 import { setupFromQuest } from '@/game/sim/mission'
@@ -41,7 +41,8 @@ const expectSound = (q: Quest, template: QuestTemplate, sector: string) => {
   expect(q.kind).toBe(template === 'tutorial' || template === 'boss' || template === 'stage' ? 'story' : 'job')
   expect(Number.isInteger(q.seed) && q.seed >= 0 && q.seed <= 0xffffffff).toBe(true)
   expect(q.level).toBeGreaterThanOrEqual(s.levels[0])
-  expect(q.level).toBeLessThanOrEqual(s.levels[1])
+  // A board run (a Tower Run, a supply run) follows Flux past the band's top.
+  expect(q.level).toBeLessThanOrEqual(isBoardRun(q) ? MAX_LEVEL : s.levels[1])
   expect(q.rooms).toBeGreaterThan(0)
   expect(q.count).toBeGreaterThanOrEqual(1)
   expect(q.reward.xp).toBeGreaterThan(0)

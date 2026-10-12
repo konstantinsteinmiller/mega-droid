@@ -68,6 +68,10 @@ export interface StageFeature {
   save?(): unknown
   restore?(s: unknown): void
   dispose?(): void
+  /** Portal culling's verdict this frame, per room (1 drawn): a part hung at
+   *  the scene root (it moves across rooms, or spans them) shows only while
+   *  a room it stands in does (`Mission.updateRoomCulling`). */
+  cull?(vis: Uint8Array): void
 }
 
 /** What `StageFeature.move` writes: start at friction 1, no push; each

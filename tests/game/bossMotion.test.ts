@@ -19,6 +19,7 @@ import { Matrix4, Vector3 } from 'three'
 import { createBoss, startBossIntro, updateBoss, syncBossVisual } from '@/game/sim/bosses'
 import { stepMotion } from '@/game/sim/enemies'
 import { buildBossRig, poseBoss, type BossId, type BossAct } from '@/game/models/bosses'
+import { poseVex } from '@/game/models/vexMk1'
 import { newMotion, BOSS_FIDGET_LEN, BOSS_GAIT, cycleLen, swingA, frac, TAU, type EnemyMotion } from '@/game/models/motion'
 import { pose, nudge, scaleBone, type Rig } from '@/game/models/kit'
 import { createNav } from '@/game/world/nav'
@@ -26,22 +27,13 @@ import type { MapData } from '@/game/world/levelGen'
 import type { Enemy, World } from '@/game/sim/world'
 
 const HUMANOIDS: BossId[] = ['scrapper', 'blazeMaster', 'frostMaster', 'voltMaster', 'galeMaster', 'magnetMaster', 'drillMaster', 'tideMaster', 'neonMaster', 'rotorMaster']
-const ALL: BossId[] = [...HUMANOIDS, 'vexMk1']
 const ACTS: BossAct[] = ['idle', 'walk', 'tele', 'attack', 'stun', 'air']
 const DT = 1 / 60
 const DEG = 180 / Math.PI
 
-/** HEAD's poseBoss, verbatim: the oracle for the no-motion path and the act poses. */
+/** HEAD's poseBoss for the humanoid bosses, verbatim: the oracle for the
+ *  no-motion path and the act poses. (Dr. Vex's own pose: vexRig.test.ts.) */
 const legacyPoseBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number): void => {
-  if (id === 'vexMk1') {
-    nudge(rig, 'body', 0, Math.sin(t * 1.4) * 0.12, 0)
-    pose(rig, 'body', Math.sin(t * 0.9) * 0.05, 0, Math.sin(t * 1.1) * 0.05)
-    const open = act === 'tele' ? k : act === 'attack' ? 1 - k : 0
-    pose(rig, 'clawL', -open * 0.9, 0, -0.3 - open * 0.4)
-    pose(rig, 'clawR', -open * 0.9, 0, 0.3 + open * 0.4)
-    scaleBone(rig, 'dome', 1 + (act === 'tele' ? 0.06 * Math.sin(t * 20) : 0))
-    return
-  }
   const walk = act === 'walk' ? 1 : 0
   const w = Math.sin(t * 7) * walk
   pose(rig, 'hipL', w * 0.5, 0, 0)
@@ -186,7 +178,7 @@ const armAngles = (rig: Rig, side: 'L' | 'R'): { outward: number; forward: numbe
 
 describe('boss motion: poses', () => {
   it('without the motion record render byte-for-byte as before (ModelLab, store art)', () => {
-    for (const id of ALL) {
+    for (const id of HUMANOIDS) {
       for (const act of ACTS) {
         for (const [t, k] of [[0, 0], [1.3, 0.4], [7.9, 1], [33.3, 0.75]] as const) {
           const [a, b] = pair(id)
@@ -202,8 +194,9 @@ describe('boss motion: poses', () => {
     const r = rng(3)
     for (const act of ACTS) {
       const [a, b] = pair('vexMk1')
-      legacyPoseBoss(a, 'vexMk1', 4.2, act, 0.6)
-      poseBoss(b, 'vexMk1', 4.2, act, 0.6, randomMotion('vexMk1', r))
+      const m = randomMotion('vexMk1', r)
+      poseVex(a, 4.2, act, 0.6, m)
+      poseBoss(b, 'vexMk1', 4.2, act, 0.6, m)
       expect(snap(b), act).toEqual(snap(a))
     }
   })

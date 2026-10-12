@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Pēdējā pretestība! Sistēmas pārstartētas.',
     'weak': 'VĀJŠ!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'PĀRĀK VĀJŠ!',
     'dizzy': 'APDULLIS!',
     'dodge': 'IZVAIRĪTIES!',
     'block': 'Bloks',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Sargs',
     'hornet': 'Rotora sirsenis',
     'stalker': 'Mirdzošais mednieks',
+    'spotter': 'Prožektora drons',
     'puffer': 'Uzpūšamā mīna',
     'mole': 'Kurmis urbējs',
     'polar': 'Polārais kucēns',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Sargus | Sargu | Sargus',
     'hornet': 'Rotora sirseņus | Rotora sirseni | Rotora sirseņus',
     'stalker': 'Mirdzošos medniekus | Mirdzošo mednieku | Mirdzošos medniekus',
+    'spotter': 'Prožektora dronus | Prožektora dronu | Prožektora dronus',
     'puffer': 'Uzpūšamās mīnas | Uzpūšamo mīnu | Uzpūšamās mīnas',
     'mole': 'Kurmjus urbējus | Kurmi urbēju | Kurmjus urbējus',
     'polar': 'Polāros kucēnus | Polāro kucēnu | Polāros kucēnus',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Vētras Meistars',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robots Lielmeistars'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Kvēļu dzinējsuns',
+    'icebreakerBrute': 'Ledlauzis milzis',
+    'arcSpider': 'Loka zirneklis',
+    'stormHornetQueen': 'Vētras sirseņu karaliene',
+    'lodestoneGolem': 'Magnetīta golems',
+    'burrowWyrm': 'Rokošais tārps',
+    'pufferMatriarch': 'Pūšļzivs matriarhe',
+    'glitchStalker': 'Glitch glūņa',
+    'sawGyro': 'Zāģa žiroskops',
+    'sentinelPrototype': 'Sarga prototips'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Izaicinājums',
+    'cleared': 'Izaicinājums uzvarēts! +{bolts} skrūves'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '{n}. līmenis! Sistēmas pilnībā salabotas.'
   },
   'tips': {
-    'moveTouch': 'Velc kreiso pusi, lai kustētos, labo, lai skatītos apkārt. Pieskaries grīdai, lai tur aizietu!',
+    'moveTouch': 'Velc kreiso pusi, lai kustētos, labo, lai skatītos apkārt.',
     'moveKeys': 'Pārvietojies ar taustiņiem {keys}.',
     'lookMouse': 'Kustini peli, lai skatītos apkārt.',
     'capture': 'Noklikšķini uz ainas, lai pārņemtu kameras vadību.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Darbība'
     },
     'touch': {
-      'move': 'Kreisā puse: velc, lai kustētos. Pieskaries grīdai, lai tur aizietu.',
-      'fire': 'Cīņā: pieskaries, lai šautu, turi, lai lādētu, atlaid, lai izšautu.',
+      'move': 'Kreisā puse: velc, lai kustētos. Labā puse: velc, lai skatītos apkārt.',
+      'fire': 'Labā puse vai šaušanas poga: pieskaries, lai šautu, turi, lai lādētu, atlaid, lai izšautu. Turot velc, lai notēmētu.',
       'block': 'Turi vairogu, lai bloķētu — tieši gredzenam aizveroties, tu atvairi.',
       'use': 'Pie lādes, iestrēguša robota vai durvīm: pieskaries tiem vai pogai, kas parādās.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Trāpi kodolā, kad tas atveras.',
       'hornet': '{enemy}. Pikē taisni: lec sāņus!',
       'stalker': '{enemy}. Atvairi lēcienu.',
+      'spotter': '{enemy}. Izej no tā gaismas. Šauj lampā.',
       'puffer': '{enemy}. Sašauj to, pirms tā uzpūšas.',
       'mole': '{enemy}. Trāpi, kad tas izlien.',
       'elite': 'Zelta gredzens. Elite. Uzmanīgi.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Jo viņi ir brīvi.',
     },
     'guardDown': 'Sargs kritis! Ceļš ir brīvs.',
+    'challenge': 'Izaicinājuma durvis! Iekšā laupījums.',
     'help': {
       'weapon': 'Izvēlies jauno ieroci un šauj uz droniem!',
       'gap': 'Ej taisni uz malu, un tu pārlēksi!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Aizslīdi tieši pirms sarkanais gredzens tevi sasniedz!',
       'block': 'Turi bloku, kad tas šauj. Tieši trāpījuma brīdī ir ideāli!',
       'blockMiss': 'Vairogu augšā! Bloķē tieši trāpījumā, un tas lido atpakaļ!',
+      'chargeMiss': 'Izmēģini lādētu šāvienu, turot nospiestu lielgabala pogu!',
       'charge': 'Turi šaušanu, līdz lielgabals iemirdzas, tad atlaid!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Tas panelis rāda rakstu. Lampas uz sienas vēl ne.',
       'color': 'Tam rāmim ir mīļākā krāsa. Spīdēt drīkst tikai tā lampas.',
       'cycle': 'Katrs trāpījums liek lampai pārdomāt. Panelis zina, ko grib.',
+      'sequence': 'Panelis mirgo vienu un to pašu meldiņu. Atskaņo to uz pogām, pēc kārtas.',
+      'mirror': 'Tas stars grib gredzenā. Spoguļi pagriežas, kad tajos šauj.',
+      'tiles': 'Iededz visas plāksnes vienā gājienā. Divreiz uz vienas vai nost no tām, un atkal tumšs.',
       'solved': 'Nu, nu. Kādam patīk mīklas.'
     },
     'landed': 'Nolaišanās! Aiziet.',

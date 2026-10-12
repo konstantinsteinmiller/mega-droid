@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Soʻnggi marra! Tizimlar qayta ishga tushdi.',
     'weak': 'ZAIF!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'JUDA ZAIF!',
     'dizzy': 'GANGIDI!',
     'dodge': 'CHETLANDI!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Qoʻriqchi',
     'hornet': 'Rotorli qovogʻari',
     'stalker': 'Yorqin ovchi',
+    'spotter': 'Projektor dron',
     'puffer': 'Puffer baliq minasi',
     'mole': 'Burgʻuvchi koʻrsichqon',
     'polar': 'Qutb kuchukchasi',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Qoʻriqchi | Qoʻriqchi',
     'hornet': 'Rotorli qovogʻari | Rotorli qovogʻari',
     'stalker': 'Yorqin ovchi | Yorqin ovchi',
+    'spotter': 'Projektor dron | Projektor dron',
     'puffer': 'Puffer baliq minasi | Puffer baliq minasi',
     'mole': 'Burgʻuvchi koʻrsichqon | Burgʻuvchi koʻrsichqon',
     'polar': 'Qutb kuchukchasi | Qutb kuchukchasi',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Boʻron ustasi',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Buyuk Usta bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Cho‘g‘ tozi',
+    'icebreakerBrute': 'Muzyorar Bahaybat',
+    'arcSpider': 'Yoy o‘rgimchagi',
+    'stormHornetQueen': 'Bo‘ron arisi malikasi',
+    'lodestoneGolem': 'Magnit tosh golemi',
+    'burrowWyrm': 'Kovlovchi chuvalchang',
+    'pufferMatriarch': 'Puffer matriarxi',
+    'glitchStalker': 'Glitch ovchisi',
+    'sawGyro': 'Arra girosi',
+    'sentinelPrototype': 'Qo‘riqchi prototipi'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Sinov',
+    'cleared': 'Sinovdan o‘tding! +{bolts} bolt'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '{n}-daraja! Tizimlar toʻliq tiklandi.'
   },
   'tips': {
-    'moveTouch': 'Yurish uchun chap tomonni, qarash uchun oʻng tomonni suring. U yerga borish uchun polga bosing!',
+    'moveTouch': 'Yurish uchun chap tomonni, qarash uchun oʻng tomonni suring.',
     'moveKeys': '{keys} — yurish.',
     'lookMouse': 'Atrofga qarash uchun sichqonchani harakatlantiring.',
     'capture': 'Kamerani boshqarish uchun oʻyin ekraniga cherting.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Amal'
     },
     'touch': {
-      'move': 'Chap tomon: yurish uchun suring. U yerga borish uchun polga bosing.',
-      'fire': 'Jangda: otish uchun bosing; zaryadlash uchun bosib turing va qoʻyib yuboring.',
+      'move': 'Chap tomon: yurish uchun suring. Oʻng tomon: qarash uchun suring.',
+      'fire': 'Oʻng tomon yoki otish tugmasi: otish uchun bosing; zaryadlash uchun bosib turing va qoʻyib yuboring. Nishonga olish uchun bosib turgan holda suring.',
       'block': 'Bloklash uchun qalqonni bosib turing — qaytarish uchun halqa yopilayotgan payt bosing.',
       'use': 'Sandiq, qamalib qolgan bot yoki eshik yonida: unga yoki paydo boʻlgan tugmaga bosing.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Ochilganda yadrosiga ur.',
       'hornet': '{enemy}. Toʻgʻriga shoʻngʻiydi: chetga qoch!',
       'stalker': '{enemy}. Sakrashini qaytar.',
+      'spotter': '{enemy}. Uning nuridan chiq. Chiroqni ot.',
       'puffer': '{enemy}. Shishmasidan oldin yor.',
       'mole': '{enemy}. Yuzaga chiqqanda ur.',
       'elite': 'Oltin halqa. Elita. Ehtiyot boʻl.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Chunki ular erkin.',
     },
     'guardDown': 'Qoʻriqchi yiqildi! Yoʻl ochiq.',
+    'challenge': 'Sinov eshigi! Ichkarida o‘lja bor.',
     'help': {
       'weapon': 'Yangi qurolingizni tanlang va dronlarga oting!',
       'gap': 'Chekkaga qarab toʻgʻri yuring, oʻzingiz sakrab oʻtasiz!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Qizil halqa sizga yetmasdan oldin sirpanib keting!',
       'block': 'U otayotganda blokni bosib turing. Aynan tegayotgan payt mukammal!',
       'blockMiss': 'Qalqonni ko\'tar! Tegayotgan payt blokla, u qaytadi!',
+      'chargeMiss': 'Toʻp tugmasini bosib turib, zaryadlangan oʻq otib koʻr!',
       'charge': 'Qoʻl topi yorqinlashguncha otishni bosib turing, soʻng qoʻyib yuboring!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Anavi panelda naqsh bor. Devordagi chiroqlar hali unday emas.',
       'color': 'U ramkaning sevimli rangi bor. Faqat oʻsha rangdagi chiroqlar yonishi kerak.',
       'cycle': 'Har bir oʻq chiroqning fikrini oʻzgartiradi. Panel nima istashini biladi.',
+      'sequence': 'Panel bir xil kuyni qayta-qayta miltillatyapti. Uni tugmalarda tartib bilan takrorla.',
+      'mirror': 'U nur halqaga yetmoqchi. Oynalarga otsang, ular buriladi.',
+      'tiles': 'Hamma plitalarni bir yurishda yoq. Biriga ikki marta bossang yoki tushib ketsang, hammasi yana qorongʻi.',
       'solved': 'Qarang-a. Kimdir jumboqlarni yaxshi koʻrar ekan.'
     },
     'landed': 'Qoʻndik! Ketdik.',

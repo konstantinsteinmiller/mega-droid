@@ -59,3 +59,25 @@ describe('voice QA in Chinese and Spanish', () => {
     expect(judge(take('es', 'Núcleo en línea. Buenos días, Flux.', 'Nucleo en linea. Buenos dias, Flux.'), 3).ok).toBe(true)
   })
 })
+
+// The first French run (2026-10-08): 17 of 23 failing lines were right takes
+// Whisper wrote another way — French spells one sound many ways and ends
+// words in silent letters. French is compared by sound (`frKey`).
+describe('voice QA in French', () => {
+  const take = (text: string, heard: string) => ({ lang: 'fr', text, heard, seconds: 2, peak: -3 })
+  it('takes homophones and silent endings as the same speech', () => {
+    for (const [text, heard] of [
+      ['Sept allumés. Continue comme ça !', "C'est allumé. Continue comme ça."],
+      ['Huit ! Plus que deux Maîtres.', 'Huit, plus que deux mètres.'],
+      ['Essaim de drones lui fait mal !', 'Et sein de drone lui fait mal.'],
+      ["Ils te surclassent. Entraîne-toi d'abord.", "Il te surclasse. Entraîne-toi d'abord."],
+      ["Énergie d'arme faible !", "Énergie d'armes faibles."],
+      ['Gardroïde. Pare, puis riposte.', 'Garderoïde par Puripost.'],
+      ["Pilonneur. Sors de l'anneau.", "Pyloneur, sort de l'anneau."]
+    ]) expect(judge(take(text, heard), 3).ok, text).toBe(true)
+  })
+  it('still fails a French take that says something else', () => {
+    expect(judge(take("Énergie d'arme faible !", 'Énergie de lame forte.'), 3).ok).toBe(false)
+    expect(judge(take('Pas de point faible. Reste mobile !', 'Pas de pain frais. Reste immobile.'), 3).ok).toBe(false)
+  })
+})

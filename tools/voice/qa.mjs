@@ -85,6 +85,52 @@ const ZH_SOUNDS = /[嘶哔哼呼哇哎哟嘿咦嗯呃噗嘀嘟]/gu
 const sounded = (w, lang) => (lang !== 'de' ? w
   : w.replace(/([b-df-hj-np-tv-xz])/g, '$1').replace(/d$/, 't').replace(/b$/, 'p').replace(/g$/, 'k').replace(/dt$/, 't'))
 
+/**
+ * French as it sounds, as one run of letters: a rough phonetic key, enough to
+ * see that a read-back is the same speech written another way. French spells
+ * one sound many ways and ends words in silent letters, so Whisper's French
+ * differs from the line on takes that are right: "Sept allumés" heard as
+ * "C'est allumé", "Maître" as "mètre", "Essaim de drones" as "Et sein de
+ * drone", "Pare son bond" as "Par son bond", "Ils te surclassent" as "Il te
+ * surclasse" (the first French run, 2026-10-08: 17 of 23 failing lines).
+ * An elision joins its words (l'aimant, c'est); the key drops silent final
+ * letters and merges the spellings of one vowel, nasal or consonant.
+ */
+export const frKey = (s) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/['’]/g, '')
+  .replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ')
+  .split(/\s+/).filter(Boolean)
+  .map((w) => {
+    let k = w
+      .replace(/eaux|eau|aux|au/g, 'o')
+      .replace(/qu/g, 'k').replace(/ph/g, 'f').replace(/ch/g, '§').replace(/h/g, '')
+      .replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k').replace(/g(?=[eiy])/g, 'j')
+      .replace(/y/g, 'i')
+      .replace(/(aim|ain|ein)(?![aeiou])/g, 'I')
+      .replace(/(er|ez|et)$/, 'e').replace(/ai|ei/g, 'e')
+      .replace(/([a-z§])\1+/g, '$1')
+    // Silent endings: a plural s or x, then a mute e, then the final t, d,
+    // z, p or s before it ("riposte", "célestes", "sept").
+    if (k.length > 2) k = k.replace(/[sx]$/, '')
+    if (k.length > 2) k = k.replace(/e$/, '')
+    if (k.length > 2) k = k.replace(/[tdzps]+$/, '')
+    return k
+      .replace(/(im|in|um|un)(?![aeiou])/g, 'I')
+      .replace(/(am|an|em|en)(?![aeiou])/g, 'A')
+      .replace(/(om|on)(?![aeiou])/g, 'O')
+      .replace(/oi/g, 'wa')
+  })
+  .join('')
+
+/** French: the read-back sounds like the line (`frKey`) — a letter or two of
+ *  slack, about one in twelve on a long line. */
+const frSoundsSame = (ref, hyp, lang) => {
+  if (lang !== 'fr' || hyp == null) return false
+  const a = [...frKey(ref)]
+  const b = [...frKey(hyp)]
+  return a.length > 0 && distance(a, b) <= Math.max(2, Math.ceil(a.length / 12))
+}
+
 /** The read only ADDS one word to the text (an article, an "Ah"): every word of the line is there, in order. */
 const oneWordAdded = (ref, hyp) => {
   const r = words(ref)
@@ -135,7 +181,7 @@ export const judge = (take, max) => {
   if (take.loose) {
     // A bark or a laugh is a sound, not words: Whisper cannot read "Nnngh!" back. Only added speech fails it.
     if (heard != null && words(heard).length > n + 1) reasons.push(`words: heard "${take.heard}" (more than the sound)`)
-  } else if (e != null && e > Math.max(LIMITS.wer, n <= 3 ? 1 / n : 0) && cer(text, heard) > LIMITS.cer && letterEdits(text, heard) > 1 && !oneWordAdded(text, heard) && !onlyOpenerDiffers(text, heard) && !soundsHeardAsWords(take.text, text, heard, lang)) {
+  } else if (e != null && e > Math.max(LIMITS.wer, n <= 3 ? 1 / n : 0) && cer(text, heard) > LIMITS.cer && letterEdits(text, heard) > 1 && !oneWordAdded(text, heard) && !onlyOpenerDiffers(text, heard) && !soundsHeardAsWords(take.text, text, heard, lang) && !frSoundsSame(text, heard, lang)) {
     reasons.push(`words: heard "${take.heard}" (${Math.round(e * 100)} % off)`)
   }
   const budget = budgetFor(take.text, max, lang)

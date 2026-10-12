@@ -20,6 +20,7 @@ import { orientation } from '@/use/useUser'
 import { installUiScale } from '@/use/useUiScale'
 import { useRenderGate } from '@/platforms/renderGate'
 import { installBrowserGuard } from '@/use/useBrowserGuard'
+import { installMuteKey } from '@/use/useMuteKey'
 
 const { t } = useI18n()
 // The menus' scale on small screens (`--ui-scale`, read by the Lab and FModal).
@@ -28,6 +29,8 @@ const { initMusic, pauseMusic, continueMusic } = useMusic()
 useExtensionGuard()
 const { resourceCache } = useAssets()
 useCrazyMuteSync()
+// F2 mutes on every screen, ahead of every other key handler.
+installMuteKey()
 // Attach the "cmarc" debug-unlock key listener at app boot (App.vue is eager),
 // so typing it anywhere flips debug mode — the lazy game scene used to be the
 // only importer, which tree-shook the listener out of production builds.

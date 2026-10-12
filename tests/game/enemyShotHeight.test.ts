@@ -23,7 +23,7 @@ const host = () => {
     system: { spawnEnemyShot: (_e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number) => { spawned.push([x, y, z, dx, dy, dz]) } }
   }
   const fire = (worldY: boolean) => Mission.prototype.fireEnemyShot.call(
-    self as unknown as Mission, { floor: 4 } as Enemy, 0, 1.2, 0, 1, 0, 0, 10, 5, true, worldY)
+    self as unknown as Mission, { floor: 4 } as Enemy, 0, 1.2, 0, 1, 0, 0, 10, 5, worldY)
   return { spawned, fire }
 }
 

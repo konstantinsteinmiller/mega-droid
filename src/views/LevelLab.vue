@@ -179,7 +179,7 @@ const roleCounts = (m: MapData): string => {
 // ─── The top-down map ────────────────────────────────────────────────────────
 
 const ROLE_COLOR: Record<RoomRole, string> = {
-  start: '#2fb872', combat: '#35609a', treasure: '#b98f1c', objective: '#d9791a', boss: '#c23a44'
+  start: '#2fb872', combat: '#35609a', treasure: '#b98f1c', objective: '#d9791a', boss: '#c23a44', challenge: '#e0a21a'
 }
 const BG = '#070c19'
 const CORRIDOR = '#4f5b73'

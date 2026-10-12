@@ -95,7 +95,7 @@ describe('generateVexFortress', () => {
       expect(t.bossStages).toHaveLength(3)
       expect(t.bossStages!.map(id => t.sections[id])).toEqual(['arena', 'arena', 'arena'])
       expect(m.rooms[t.bossStages![0]!]!.role).toBe('boss')
-      expect(t.sections.length - 3 - (m.beam ? 1 : 0)).toBe(STAGE_LENGTH.fortress)
+      expect(t.sections.length - 3 - (m.beam ? 1 : 0) - (m.challenge ? 1 : 0)).toBe(STAGE_LENGTH.fortress)
       expect(STAGE_LENGTH.fortress).toBe(Math.max(...Object.values(STAGE_LENGTH)))
       mirrored.add(m.start.x > m.w * CELL / 2)
     }

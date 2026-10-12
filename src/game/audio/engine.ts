@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { getAudioContext, isAudioSuspended, audioUnlocked } from '@/use/useAssets'
-import useUser from '@/use/useUser'
+import useUser, { playerMuted } from '@/use/useUser'
 import { isMobileAudioMuted } from '@/use/useMobileAudioMute'
 import { isPlatformAudioMuted } from '@/use/useGamePauseAudio'
 
@@ -87,7 +87,7 @@ export const audio = (): AudioGraph | null => {
   if (!watching) {
     watching = true
     const { userSoundVolume, userMusicVolume } = useUser()
-    watch([userSoundVolume, userMusicVolume, isMobileAudioMuted, isPlatformAudioMuted], applyVolumes)
+    watch([userSoundVolume, userMusicVolume, isMobileAudioMuted, isPlatformAudioMuted, playerMuted], applyVolumes)
   }
   return audioUnlocked() ? { ctx: c, sfx: sfxBus, music: musicBus, voice: voiceBus } : null
 }
@@ -118,7 +118,7 @@ export const duckMusic = (seconds: number): void => {
 const applyVolumes = (): void => {
   if (!ctx || !sfxBus || !musicBus) return
   const { userSoundVolume, userMusicVolume } = useUser()
-  const muted = isMobileAudioMuted.value || isPlatformAudioMuted.value
+  const muted = isMobileAudioMuted.value || isPlatformAudioMuted.value || playerMuted.value
   const t = ctx.currentTime
   sfxBus.gain.setTargetAtTime(muted ? 0 : SFX_BASE * (userSoundVolume.value ?? 0.7), t, 0.02)
   voiceBus?.gain.setTargetAtTime(muted ? 0 : SFX_BASE * VOICE_BASE * (userSoundVolume.value ?? 0.7), t, 0.02)

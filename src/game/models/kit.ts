@@ -260,6 +260,127 @@ export const merge = (geos: BufferGeometry[], groups = false): BufferGeometry =>
   return out
 }
 
+// ─── The outline's pull ──────────────────────────────────────────────────────
+//
+// The inverted hull's visible rim is its BACK faces, which sit on the far side
+// of the part. Anything that reaches into the part's back half — a shin into
+// its boot cuff, an eye socket set into a round head, a foot into the floor —
+// is nearer than that rim and covers it, so the line broke exactly where two
+// parts meet (playtest #140). Each hull vertex therefore slides toward the eye
+// by most of half the part's LOCAL thickness there (`outlinePull`): far enough
+// to win over what pokes in from behind, never so far it covers the part's own
+// face or anything in front of the part's middle. Local, because one number
+// per part fails a hollow cuff (wide, but a thin wall) and an L-shaped boot.
+// The cap at `PULL_CAP·sqrt(half·thickness)` keeps the rim of a big round part
+// from thickening inward, where its near and far faces converge.
+
+const PULL_CAP = 1.4
+/** Short of the part's middle: a slide of the full half-thickness lands a rim
+ *  vertex level with the part's own nearest face, and the two flicker. */
+const PULL_DEPTH = 0.7
+
+/**
+ * Half the part's thickness at each vertex: straight in, against its normal,
+ * to the nearest vertex of the same part on the far side (one within a cone
+ * of that line). 0 where nothing lies opposite (an open sheet).
+ */
+export const halfThickness = (geo: BufferGeometry): Float32Array => {
+  const pos = geo.attributes.position!
+  const nor = geo.attributes.normal
+  const n = pos.count
+  const out = new Float32Array(n)
+  if (!nor) return out
+  // Unique positions only: the seams of a merged part repeat them.
+  const keyOf = new Map<string, number>()
+  const ux: number[] = []
+  const uy: number[] = []
+  const uz: number[] = []
+  for (let i = 0; i < n; i++) {
+    const k = `${pos.getX(i).toFixed(4)},${pos.getY(i).toFixed(4)},${pos.getZ(i).toFixed(4)}`
+    if (keyOf.has(k)) continue
+    keyOf.set(k, ux.length)
+    ux.push(pos.getX(i))
+    uy.push(pos.getY(i))
+    uz.push(pos.getZ(i))
+  }
+  const m = ux.length
+  for (let i = 0; i < n; i++) {
+    const px = pos.getX(i)
+    const py = pos.getY(i)
+    const pz = pos.getZ(i)
+    const nx = nor.getX(i)
+    const ny = nor.getY(i)
+    const nz = nor.getZ(i)
+    let best = Infinity
+    for (let j = 0; j < m; j++) {
+      const dx = px - ux[j]!
+      const dy = py - uy[j]!
+      const dz = pz - uz[j]!
+      const along = dx * nx + dy * ny + dz * nz
+      if (along <= 1e-5 || along >= best) continue
+      const side2 = dx * dx + dy * dy + dz * dz - along * along
+      // Within a cone of ~35° around the inward line.
+      if (side2 <= along * along * 0.5) best = along
+    }
+    out[i] = Number.isFinite(best) ? best / 2 : 0
+  }
+  // Copies of one position (a seam) must slide alike, or the hull cracks open
+  // along the seam: each takes the thinnest of them.
+  const thin = new Float32Array(m).fill(Infinity)
+  const at = new Int32Array(n)
+  for (let i = 0; i < n; i++) {
+    at[i] = keyOf.get(`${pos.getX(i).toFixed(4)},${pos.getY(i).toFixed(4)},${pos.getZ(i).toFixed(4)}`)!
+    thin[at[i]!] = Math.min(thin[at[i]!]!, out[i]!)
+  }
+  for (let i = 0; i < n; i++) out[i] = thin[at[i]!]!
+  return out
+}
+
+/** How far a hull vertex slides toward the eye, for a hull `thickness` thick. */
+export const pullFor = (half: number, thickness: number): number =>
+  Math.max(0, Math.min(PULL_DEPTH * half, PULL_CAP * Math.sqrt(half * thickness)))
+
+/**
+ * Measured halves by part SHAPE. Every spawn of an enemy builds the same parts
+ * afresh, and the measure is quadratic in a part's vertices (4–12 ms a rig),
+ * so a mid-fight spawn would hitch on a phone: the shape (positions + normals,
+ * hashed) finds the measure of the last one. Bounded; cleared when full.
+ */
+const halfCache = new Map<string, Float32Array>()
+const HALF_CACHE_MAX = 4096
+const shapeKey = (geo: BufferGeometry): string => {
+  let h1 = 0x811c9dc5
+  let h2 = 0x01000193
+  const bits = new Uint32Array(1)
+  const f = new Float32Array(bits.buffer)
+  for (const name of ['position', 'normal']) {
+    const a = geo.attributes[name]
+    if (!a) continue
+    const arr = a.array
+    for (let i = 0; i < arr.length; i++) {
+      f[0] = arr[i]!
+      h1 = Math.imul(h1 ^ bits[0]!, 0x01000193)
+      h2 = Math.imul(h2 + bits[0]!, 0x5bd1e995) ^ (h2 >>> 15)
+    }
+  }
+  return `${geo.attributes.position!.count}:${h1 >>> 0}:${h2 >>> 0}`
+}
+
+/** Tag every vertex of `geo` with its pull (see above). */
+export const tagOutlinePull = (geo: BufferGeometry, thickness: number): BufferGeometry => {
+  const key = shapeKey(geo)
+  let half = halfCache.get(key)
+  if (!half) {
+    half = halfThickness(geo)
+    if (halfCache.size >= HALF_CACHE_MAX) halfCache.clear()
+    halfCache.set(key, half)
+  }
+  const pull = new Float32Array(half.length)
+  for (let i = 0; i < half.length; i++) pull[i] = pullFor(half[i]!, thickness)
+  geo.setAttribute('outlinePull', new Float32BufferAttribute(pull, 1))
+  return geo
+}
+
 // ─── Rig builder: one skinned mesh per character ─────────────────────────────
 //
 // Parts are authored in their BONE's local space. `build()` bakes every part
@@ -322,6 +443,12 @@ export class RigBuilder {
     return this.part(bone, geo, '#ffffff', opts)
   }
 
+  /** Each part's geometry, in model space once `build` has run (a part is
+   *  moved into its bone's place there): the z-fighting tests read them. */
+  get partGeometries(): BufferGeometry[] {
+    return this.parts.map(p => p.geo)
+  }
+
   /** Mirror helper: calls `fn` for side = -1 (left) and +1 (right). */
   mirror(fn: (side: -1 | 1, tag: 'L' | 'R') => void): this {
     fn(-1, 'L')
@@ -337,9 +464,12 @@ export class RigBuilder {
     const toonGeos: BufferGeometry[] = []
     const glowGeos: BufferGeometry[] = []
     const outlineGeos: BufferGeometry[] = []
+    const thickness = opts.outline ?? 0.025
     for (const part of this.parts) {
       const g = part.geo
       g.applyMatrix4(this.bones[part.bone]!.matrixWorld)
+      // Every part (glow too: one merged geometry needs one attribute set).
+      tagOutlinePull(g, thickness)
       const n = g.attributes.position!.count
       const idx = new Uint16Array(n * 4)
       const w = new Float32Array(n * 4)
@@ -375,7 +505,6 @@ export class RigBuilder {
     mesh.frustumCulled = false
 
     let outline: SkinnedMesh | null = null
-    const thickness = opts.outline ?? 0.025
     if (thickness > 0 && outlineGeos.length > 0) {
       const og = outlineGeos.length === this.parts.length && glowGeos.length === 0
         ? geometry
@@ -432,6 +561,7 @@ export const scaleBone = (rig: Rig, name: string, sx: number, sy = sx, sz = sx):
 export const staticProp = (toonGeos: BufferGeometry[], glowGeos: BufferGeometry[], material: Material, glowMaterial: Material, outline = 0.02): Group => {
   const g = new Group()
   if (toonGeos.length) {
+    if (outline > 0) for (const t of toonGeos) tagOutlinePull(t, outline)
     const geo = merge(toonGeos)
     g.add(new Mesh(geo, material))
     if (outline > 0) {

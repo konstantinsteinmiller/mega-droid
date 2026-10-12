@@ -15,7 +15,9 @@ import type { Particles } from '../fx/particles'
  * nothing, lets go — the crate falls, lands with a thud and a dust ring, and
  * is the lesson's crate (it stood there all along for the lesson's logic).
  * Over the golem room it holds the sleeping golem until Flux walks in, then
- * drops it (`Mission`'s golem drop). Looks only: it never touches a body.
+ * drops it (`Mission`'s golem drop). Looks only: it never touches a body —
+ * except its idle crate, which a charged shot breaks (#134: nearly every
+ * playtester shot at it): its loot rains down, and the hook stays empty.
  */
 
 export interface RoomCraneHost {
@@ -34,6 +36,8 @@ const IDLE_EVERY = 7
 const IDLE_JITTER = 5
 /** A crate's height (props.ts: buildCrate's 1.15 m box). */
 const CRATE_H = 1.15
+/** The hanging crate's reach for a shot, round its middle (m). */
+const LOAD_R = 0.62
 
 interface Delivery {
   obj: Object3D
@@ -56,6 +60,8 @@ export class RoomCrane {
   private readonly cz: number
   private readonly alongX: boolean
   private readonly idleLoad: Object3D | null
+  /** The idle crate was shot down: the hook stays empty. */
+  loadBroken = false
   private job: Delivery | null = null
   /** Over a spot, held there (the golem): no wandering. */
   private parked = false
@@ -63,7 +69,7 @@ export class RoomCrane {
   private wander = { from: { u: 0, v: 0 }, to: { u: 0, v: 0 }, t: 1 }
   private readonly tipY: number
 
-  constructor(private readonly host: RoomCraneHost, readonly spot: CraneSpot, theme: Theme) {
+  constructor(private readonly host: RoomCraneHost, readonly spot: CraneSpot, private readonly theme: Theme) {
     this.alongX = spot.alongX
     this.cx = (spot.x0 + spot.x1) / 2
     this.cz = (spot.z0 + spot.z1) / 2
@@ -102,6 +108,35 @@ export class RoomCrane {
   covers(x: number, z: number): boolean {
     const s = this.spot
     return x > s.x0 && x < s.x1 && z > s.z0 && z < s.z1
+  }
+
+  /** The idle crate's middle, while it hangs there (null: none, broken, or
+   *  away while the hook carries a delivery). */
+  loadAt(): { x: number; y: number; z: number } | null {
+    if (!this.idleLoad || this.loadBroken || this.job) return null
+    const h = this.hookAt()
+    return { x: h.x, y: h.y - 0.02 - CRATE_H / 2, z: h.z }
+  }
+
+  /** A shot (x, y, z, radius r) on the idle crate. */
+  shotHitsLoad(x: number, y: number, z: number, r: number): boolean {
+    const c = this.loadAt()
+    if (!c) return false
+    return Math.abs(y - c.y) <= CRATE_H / 2 + r && Math.hypot(x - c.x, z - c.z) <= LOAD_R + r
+  }
+
+  /** The idle crate breaks: splinters, a bonk, the hook left empty. Where
+   *  it was (for its loot), or null when there was none to break. */
+  breakLoad(): { x: number; y: number; z: number } | null {
+    const c = this.loadAt()
+    if (!c) return null
+    this.loadBroken = true
+    this.idleLoad!.visible = false
+    this.idleLoad!.removeFromParent()
+    this.host.fx.sparks(c.x, c.y, c.z, this.theme.crate, 14, 5, 0.22)
+    this.host.fx.emit({ x: c.x, y: c.y, z: c.z, color: '#ffffff', size: 1.1, sizeEnd: 1.8, life: 0.18 })
+    this.host.sfx('bonk', c.x, c.z)
+    return c
   }
 
   /** Straight over (x, z), and stay there (the golem it holds). */
@@ -158,7 +193,7 @@ export class RoomCrane {
         j.obj.position.set(j.x, j.groundY, j.z)
         this.landed(j.x, j.groundY, j.z)
         this.job = null
-        if (this.idleLoad) this.idleLoad.visible = true
+        if (this.idleLoad && !this.loadBroken) this.idleLoad.visible = true
         j.onLand?.()
         this.wanderT = IDLE_EVERY
         return

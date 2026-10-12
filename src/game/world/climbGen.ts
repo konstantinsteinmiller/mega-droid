@@ -30,6 +30,9 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './stag
  * numbers from the seed, so the tower is the one it always was. Nor does its
  * secret (`Terrain.secrets`, `sim/secrets.ts`): a lamp puzzle on the ground
  * hall's front wall behind the pad, and an alcove with a Repair Gel.
+ * Nor does its challenge room (`Builder.challengeRoom`, `sim/challenge.ts`):
+ * off the foot of the drop descent, behind the challenge door, a mini-boss
+ * the run never has to fight — room 7, after the arena, off the route.
  *
  * The toolkit it is built with (`Builder`, `finish`, `mirrorX`) lives in
  * `world/stages/builder.ts`, shared with the platform stages.
@@ -42,12 +45,14 @@ export const STOREY = 3
 export const BALL_R = 0.55
 const GRID_W = 32
 const GRID_H = 19
+/** The drop descent's room (section 6): the challenge room hangs off it. */
+const DESCENT = 5
 
 /**
  * Build the tower for `seed`. Every storey is STOREY metres: floor levels
  * L0..L5 = 0, 3, … 15.
  */
-export const generateClimb = (seed: number): MapData => {
+export const generateClimb = (seed: number, challenge = true): MapData => {
   const rng = mulberry32(seed ^ 0xc11b)
   const b = new Builder(GRID_W, GRID_H)
   const L = (n: number) => n * STOREY
@@ -180,6 +185,12 @@ export const generateClimb = (seed: number): MapData => {
 
   // ── 7 Arena ───────────────────────────────────────────────────────────────
   b.addRoom(8, 10, 7, 7, 'boss', 'arena', L(0))
+
+  // ── The challenge room ────────────────────────────────────────────────────
+  // North off the descent's floor (its first column), in the gap under the
+  // rolling stairs: a side room the route walks past, never through.
+  // (Not in the Scrapyard's tower: `challenge` false, `data/challenge.ts`.)
+  if (challenge) b.challengeRoom(DESCENT, { mouth: { i: 17, j: 11, di: 0, dj: -1 } })
 
   // Start: on the pad in the hall, facing the stairs.
   const sx = cellCenter(3)

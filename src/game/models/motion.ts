@@ -263,12 +263,16 @@ export const FIDGET_LEN: Record<EnemyKind, readonly number[]> = {
   puffer: [],
   // None: it sways on its wheel (its pose's idle).
   stalker: [],
+  // None: it hovers, its fans hum and its lamp searches (its pose's idle).
+  spotter: [],
   // None: it hovers and buzzes (its pose's idle).
   hornet: [],
   // None: the Fortress's machines stand their post.
   warden: [],
   gatekeeper: [],
-  echo: []
+  echo: [],
+  // None: a mini-boss runs its own pose (`sim/miniBosses.ts`).
+  miniboss: []
 }
 
 export const smoothstep = (a: number, b: number, x: number): number => {

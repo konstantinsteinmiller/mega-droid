@@ -159,7 +159,7 @@ const VARY: ReadonlySet<SfxName> = new Set<SfxName>([
 ])
 
 /** The big stings: the music steps back under them (seconds). */
-const DUCK_FOR: Partial<Record<SfxName, number>> = { bossIntro: 1.6, levelUp: 1.4 }
+const DUCK_FOR: Partial<Record<SfxName, number>> = { bossIntro: 1.6, levelUp: 1.4, challenge: 1.3 }
 
 /** The loudest hits, trimmed 2–3 dB under the frequent ones (#114 mix pass). */
 const TRIM: Partial<Record<SfxName, number>> = { explode: 0.75, stomp: 0.8, chargeShotBig: 0.85 }
@@ -173,7 +173,7 @@ const CAP = 24
 const CAP_WINDOW = 0.25
 const recent: number[] = []
 const NEVER_DROP: ReadonlySet<SfxName> = new Set<SfxName>([
-  'hurt', 'bossIntro', 'levelUp', 'charge1', 'charge2', 'charge3', 'chargeShot', 'chargeShotBig', 'parry', 'denied', 'uiClick', 'uiOpen', 'uiClose', 'objective', 'heartbeat'
+  'hurt', 'bossIntro', 'challenge', 'levelUp', 'charge1', 'charge2', 'charge3', 'chargeShot', 'chargeShotBig', 'parry', 'denied', 'uiClick', 'uiOpen', 'uiClose', 'objective', 'heartbeat'
 ])
 
 /** Open (a muffle of 0 has no filter at all) and fully muffled cutoffs (Hz). */
@@ -368,6 +368,20 @@ const RECIPES: Record<SfxName, (pan: number, g: number) => void> = {
   bossIntro: (_p, g) => {
     arp([45, 48, 51, 54, 57], 0.12, 'p50', 0.2 * g, 0.2)
     tone({ wave: 'tri', f0: 55, dur: 0.9, vol: 0.35 * g, vib: 3, vibRate: 7 })
+  },
+  // A challenge's name card: a bright brass call (a rising major fanfare and
+  // a held fifth over a drum hit) — a dare, not the boss's dread.
+  challenge: (_p, g) => {
+    burst({ dur: 0.18, vol: 0.22 * g, type: 'lowpass', f0: 900, f1: 120 })
+    arp([60, 64, 67, 72], 0.08, 'p25', 0.18 * g, 0.12)
+    tone({ wave: 'p50', f0: midiHz(79), dur: 0.55, vol: 0.14 * g, at: 0.34, vib: 6, vibRate: 9 })
+    tone({ wave: 'tri', f0: midiHz(48), dur: 0.7, vol: 0.3 * g, at: 0.32 })
+  },
+  // The Cinder Hound's howl: a rising, wavering wail through a roar of fire.
+  howl: (p, g) => {
+    tone({ wave: 'saw', f0: 220, f1: 520, dur: 0.9, vol: 0.12 * g, vib: 14, vibRate: 7, pan: p })
+    tone({ wave: 'p25', f0: 330, f1: 740, dur: 0.85, vol: 0.07 * g, at: 0.05, vib: 18, vibRate: 6, pan: p })
+    burst({ dur: 1.0, vol: 0.18 * g, type: 'bandpass', f0: 500, f1: 1400, q: 0.9, pan: p })
   },
   // The objective locator's triangle appearing: a soft rising sonar blip, a
   // hint rather than an alarm, so it never reads as danger mid-fight.

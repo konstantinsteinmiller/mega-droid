@@ -1204,12 +1204,14 @@ const boss = (): Song => {
 //            at half speed over a choir
 //   56–80    the charge: a riser, a 16th bass pedal, a snare roll; the
 //            release (a hit, 80)
-//   80–225   the showcase: the band plays on at full tilt, a hit on each
+//   80–265   the showcase: the band plays on at full tilt, a hit on each
 //            move (the shot lands 82, the parry 100, the volley's blocks
 //            134/140/146, drone 2 down 154, the ring 162 and the slide under
-//            it 170, the finish 182, the gel's bell burst 196), the hero riff
-//            on top — then the closing chord as the last pose holds (225), and
-//            a groove bar to loop on, should anything hold (244–260)
+//            it 170, the finish 182; the Guardroid lands 188, the Overload
+//            builds like the first charge into the KRANCK 214; the gel's bell
+//            burst 236), the hero riff on top — then the closing chord as the
+//            last pose holds (265), and a groove bar to loop on, should
+//            anything hold (292–308)
 //
 // The valley to the beam (written from 110; it plays from 0):
 //
@@ -1242,7 +1244,7 @@ const boss = (): Song => {
 const STREET_STEP = 460
 
 const intro = (): Song => {
-  const S = new Score(45)
+  const S = new Score(48)
   const rng = mulberry32(1700)
   /** Where the block being written lands: the street STREET_STEP later,
    *  the valley to the beam 110 earlier. */
@@ -1311,12 +1313,13 @@ const intro = (): Song => {
   at(80, 'crash', 0, 1, 0.7)
   at(80, 'bkick', 0, 1, 1)
 
-  // ── 80–225 · The showcase: the band plays on, a hit on every move ──
-  kit(88, 224, { kick: 4, snare: 8, hats: 16, v: 0.9 })
-  for (const from of [88, 120, 152, 184]) {
+  // ── 80–265 · The showcase: the band plays on, a hit on every move ──
+  kit(88, 184, { kick: 4, snare: 8, hats: 16, v: 0.9 })
+  kit(216, 264, { kick: 4, snare: 8, hats: 16, v: 0.9 })
+  for (const from of [88, 120, 152, 216]) {
     bassLine(from, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2', 'C3', 'C3', 'C4', 'C3', 'D3', 'D3', 'D4', 'D3'], 2, 0.85)
   }
-  for (let s = 216; s < 225; s++) at(s, 'bass', 'E2', 1, jitter(rng, 0.7, 0.05))
+  for (let s = 248; s < 265; s++) at(s, 'bass', 'E2', 1, jitter(rng, 0.7, 0.05))
   // The shot lands: the Trooper staggers.
   at(82, 'hit', 0, 1, 0.8)
   at(82, 'bkick', 0, 1, 0.9)
@@ -1341,21 +1344,40 @@ const intro = (): Song => {
   at(182, 'hit', 0, 1, 1)
   at(182, 'crash', 0, 1, 0.85)
   at(182, 'bkick', 0, 1, 1)
+  // The Overload (#137): the big Guardroid lands on a hit and a tritone
+  // stab; the charge as the first one — a 16th bass pedal, a riser, a roll —
+  // with a high bell as it tips into the Overload (207); the release, and
+  // the KRANCK on a hit (214), a taiko as it blows apart.
+  at(188, 'hit', 0, 1, 0.85)
+  at(188, 'taiko', 40, 1, 0.9)
+  at(188, 'bkick', 0, 1, 0.9)
+  chord(188, 'brass', ['E2', 'A#2'], 6, 0.7)
+  kit(184, 212, { kick: 4, hats: 16, v: 0.85 })
+  for (let s = 190; s < 212; s++) at(s, 'bass', 'E2', 1, jitter(rng, 0.5 + 0.018 * (s - 190), 0.05))
+  at(190, 'riser', 0, 22, 0.8)
+  chord(193, 'choir', ['E3', 'B3', 'E4'], 19, 0.4)
+  at(207, 'bell', 'E6', 6, 0.45)
+  chord(207, 'choir', ['F3', 'B3', 'F4'], 6, 0.35)
+  roll(198, 212, 0.3, 0.8)
+  at(212, 'bkick', 0, 1, 1)
+  at(214, 'hit', 0, 1, 1)
+  at(214, 'crash', 0, 1, 0.9)
+  at(217, 'taiko', 40, 1, 0.85)
   // The gel: a bell burst climbing, the choir in E major; the hero riff at
   // the top into the freeze.
-  for (const [s, n] of [[190, 'B5'], [192, 'E6'], [194, 'G#6'], [196, 'B6']] as const) at(s, 'bell', n, 4, 0.42)
-  chord(196, 'choir', ['E3', 'G#3', 'B3', 'E4'], 28, 0.5)
-  line(200, 'cLead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.75)
-  line(200, 'lead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.45, -1)
+  for (const [s, n] of [[230, 'B5'], [232, 'E6'], [234, 'G#6'], [236, 'B6']] as const) at(s, 'bell', n, 4, 0.42)
+  chord(236, 'choir', ['E3', 'G#3', 'B3', 'E4'], 28, 0.5)
+  line(240, 'cLead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.75)
+  line(240, 'lead', 'E5:0:2 G5:2:2 A5:4:2 B5:6:3 D6:9:1 E6:10:6 D6:16:2 B5:18:2 E6:20:4', 0.45, -1)
   // The last pose: one E-major chord ringing out as the tutorial takes over.
-  at(225, 'hit', 0, 1, 0.9)
-  at(225, 'crash', 0, 1, 0.8)
-  chord(225, 'choir', ['E3', 'G#3', 'B3', 'E4'], 16, 0.55)
-  chord(225, 'brass', ['E2', 'B2', 'E3'], 12, 0.6)
-  // ── 244–260 · A groove to hold on (the loop) ──
-  kit(244, 260, { kick: 4, hats: 8, v: 0.8 })
-  bassLine(244, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2'], 2, 0.75)
-  chord(244, 'pad', ['E3', 'G3', 'B3'], 16, 0.35)
+  at(265, 'hit', 0, 1, 0.9)
+  at(265, 'crash', 0, 1, 0.8)
+  chord(265, 'choir', ['E3', 'G#3', 'B3', 'E4'], 16, 0.55)
+  chord(265, 'brass', ['E2', 'B2', 'E3'], 12, 0.6)
+  // ── 292–308 · A groove to hold on (the loop) ──
+  kit(292, 308, { kick: 4, hats: 8, v: 0.8 })
+  bassLine(292, ['E2', 'E2', 'E3', 'E2', 'G2', 'E2', 'A2', 'B2'], 2, 0.75)
+  chord(292, 'pad', ['E3', 'G3', 'B3'], 16, 0.35)
 
   // The valley to the beam: it opens the intro, 110 steps earlier than written.
   off = -110
@@ -1492,8 +1514,8 @@ const intro = (): Song => {
   return {
     id: 'intro',
     bpm: 150,
-    bars: 45,
-    loopBar: 44,
+    bars: 48,
+    loopBar: 47,
     swing: 0,
     // Its loud sections (cold open, beam) sit at the boss fight's level; the
     // whole pass, quiet shots included, at the Scrapyard's it hands over to.

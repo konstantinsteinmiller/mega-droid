@@ -135,13 +135,61 @@ interface ZoneRt {
 const SPIN_FULL = 14
 const SPIN_EASE = 1.6
 
-/** The turbine's spot: the middle of the zone's upwind edge, a cell out. */
-const turbineSpot = (d: WindZone): { x: number; z: number } => {
-  const cx = ((d.i0 + d.i1 + 1) / 2) * CELL
-  const cz = ((d.j0 + d.j1 + 1) / 2) * CELL
-  const x = d.dx > 0 ? d.i0 * CELL - CELL * 0.35 : d.dx < 0 ? (d.i1 + 1) * CELL + CELL * 0.35 : cx
-  const z = d.dz > 0 ? d.j0 * CELL - CELL * 0.35 : d.dz < 0 ? (d.j1 + 1) * CELL + CELL * 0.35 : cz
-  return { x, z }
+/** A turbine's foot (half its side, m) and how far it stands in from the
+ *  wall when it stands inside its zone (m). */
+const TURBINE_FOOT = 0.6
+const TURBINE_IN = 0.8
+/** Its duct's reach either side of its mast (m): clear of side walls. */
+const TURBINE_SPAN = 1.6
+/** Its body (m): a post round its mast and foot that bodies walk round, as
+ *  round a pillar (`nav.props`). Flux walked through it (placement audit,
+ *  2026-10-12). Its cell stays on the paths: the post fills under half of
+ *  it, and its spot keeps TURBINE_SPAN clear either side. */
+export const TURBINE_R = 0.75
+
+/**
+ * The turbine's spot: on the zone's upwind edge, a cell out — on that cell's
+ * floor when it is the zone's own room at the zone's height; else (the zone
+ * runs to the wall, as in an arena) just inside the edge, its foot by the
+ * wall. The middle of the edge first, then the cells out from it; never on
+ * a doorway (it stood in the Sky Docks' boss corridor) and never in a wall
+ * (a gust zone wall to wall put it inside the wall's mass).
+ */
+export const turbineSpot = (map: MapData, d: WindZone, y: number): { x: number; z: number } => {
+  const t = map.terrain!
+  const alongX = d.dx === 0
+  const a0 = alongX ? d.i0 : d.j0
+  const a1 = alongX ? d.i1 : d.j1
+  const mid = ((a0 + a1 + 1) / 2) * CELL
+  const along = [mid, ...Array.from({ length: a1 - a0 + 1 }, (_, n) => (a0 + n + 0.5) * CELL).sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid))]
+  const edge = d.dx > 0 ? d.i0 * CELL : d.dx < 0 ? (d.i1 + 1) * CELL : d.dz > 0 ? d.j0 * CELL : (d.j1 + 1) * CELL
+  const up = -(d.dx || d.dz)
+  const at = (a: number, depth: number): { x: number; z: number } => (alongX ? { x: a, z: edge + up * depth } : { x: edge + up * depth, z: a })
+  const floorOk = (x: number, z: number): boolean => {
+    const i = Math.floor(x / CELL)
+    const j = Math.floor(z / CELL)
+    if (i < 0 || j < 0 || i >= map.w || j >= map.h) return false
+    const k = j * map.w + i
+    if (map.cell[k] !== Cell.Room || map.room[k] !== d.room || t.pit[k] || t.ramp[k] || Math.abs(t.floor[k]! - y) > 0.05) return false
+    return !map.doors.some(o => Math.abs(o.i - i) + Math.abs(o.j - j) <= 1)
+  }
+  const open = (x: number, z: number): boolean => {
+    const i = Math.floor(x / CELL)
+    const j = Math.floor(z / CELL)
+    return i >= 0 && j >= 0 && i < map.w && j < map.h && map.cell[j * map.w + i] !== Cell.Void &&
+      !map.doors.some(o => Math.abs(o.i - i) + Math.abs(o.j - j) <= 1)
+  }
+  const fits = (p: { x: number; z: number }): boolean => {
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) if (!floorOk(p.x + sx * TURBINE_FOOT, p.z + sz * TURBINE_FOOT)) return false
+    return [-1, 1].every(s => (alongX ? open(p.x + s * TURBINE_SPAN, p.z) : open(p.x, p.z + s * TURBINE_SPAN)))
+  }
+  for (const depth of [CELL * 0.35, -TURBINE_IN]) {
+    for (const a of along) {
+      const p = at(a, depth)
+      if (fits(p)) return p
+    }
+  }
+  return at(mid, CELL * 0.35)
 }
 
 export class WindFeature implements StageFeature {
@@ -164,11 +212,12 @@ export class WindFeature implements StageFeature {
     }))
     // One turbine per zone, on its upwind edge, blowing down the wind.
     for (const z of this.zones) {
-      const at = turbineSpot(z.def)
+      const at = turbineSpot(map, z.def, z.y)
       const tb = buildTurbine()
       tb.root.position.set(at.x, z.y, at.z)
       tb.root.rotation.y = Math.atan2(z.def.dx, z.def.dz)
       host.propParent(at.x, at.z).add(tb.root)
+      host.nav.props.push({ x: at.x, z: at.z, r: TURBINE_R, active: true })
       z.turbine = tb
     }
     let q: 'low' | 'full' = 'full'
@@ -204,6 +253,12 @@ export class WindFeature implements StageFeature {
       z.warned = warn
     }
     this.stepStreaks(dt, near, time)
+  }
+
+  /** The streaks are one mesh at the scene root: drawn while a room they
+   *  blow in is. */
+  cull(vis: Uint8Array): void {
+    if (this.fx.mesh.visible && !this.zones.some(z => vis[z.def.room] === 1)) this.fx.mesh.visible = false
   }
 
   move(p: ClimbBody, out: MoveMod): void {

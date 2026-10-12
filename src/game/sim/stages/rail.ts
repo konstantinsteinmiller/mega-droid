@@ -1,7 +1,7 @@
 import { Color } from 'three'
 import { CELL, type RailSpec } from '../../world/levelGen'
-import { groundAt } from '../../world/nav'
-import { buildRail, buildCart, buildMineCart, buildQuadcopter, type CartMesh, type RailMesh } from '../../models/stageProps/rail'
+import { groundAt, type Plat } from '../../world/nav'
+import { buildRail, buildCart, buildMineCart, buildQuadcopter, QUAD_SKID, type CartMesh, type RailMesh } from '../../models/stageProps/rail'
 import type { ClimbBody, ClimbHost } from '../climb'
 import type { StageFeature } from '../stageFeatures'
 
@@ -38,6 +38,16 @@ const LOST = 3
 /** Spark crackles along the rail near Flux (s between two). */
 const SPARK_EVERY = 0.09
 const SPARK_NEAR = 26
+/** The quadcopter stands on its skids: its deck this far over the course
+ *  (the floor of its slot), all the way, so it lands on them as well. A
+ *  step up to board (under STEP_UP): its deck is a platform (`nav.plats`)
+ *  while it rests. */
+export const REST_LIFT = QUAD_SKID
+/** The deck's half footprint (m): across and along its heading. */
+const DECK_HW = 1.25
+const DECK_HL = 1.3
+/** Where the deck's platform waits while it flies (m): out of the level. */
+const PARK = -1e4
 
 export type RailState = 'wait' | 'board' | 'ride' | 'done'
 
@@ -93,6 +103,12 @@ export class RailFeature implements StageFeature {
   private readonly bj: number
   private readonly rail: RailMesh
   private readonly cart: CartMesh
+  /** The rooms the track runs over: it is drawn while one of them is. */
+  private readonly over: number[]
+  /** The quadcopter's deck over its course (REST_LIFT; 0 for a cart), and
+   *  its deck as a platform to step onto while it rests (none for a cart). */
+  private lift = 0
+  private deck: Plat | null = null
 
   constructor(host: ClimbHost, def: RailSpec) {
     this.host = host
@@ -126,7 +142,39 @@ export class RailFeature implements StageFeature {
     this.rail.root.visible = !this.air
     this.cart = this.air ? buildQuadcopter(host.theme) : this.mine ? buildMineCart(host.theme) : buildCart(host.theme)
     host.scene.add(this.cart.root)
+    if (this.air && host.nav.plats) {
+      this.lift = REST_LIFT
+      this.deck = { x0: 0, z0: 0, x1: 0, z1: 0, top: -Infinity, dx: 0, dz: 0 }
+      host.nav.plats.push(this.deck)
+    }
+    const over = new Set<number>()
+    for (let n = 1; n < P.length; n++) {
+      const a = P[n - 1]!
+      const c = P[n]!
+      const steps = Math.ceil(Math.hypot(c.x - a.x, c.z - a.z) / (CELL / 2))
+      for (let k = 0; k <= steps; k++) {
+        const o = this.ownerAt(a.x + (c.x - a.x) * k / steps, a.z + (c.z - a.z) * k / steps)
+        if (o >= 0) over.add(o)
+      }
+    }
+    this.over = [...over]
     this.place(0)
+  }
+
+  private ownerAt(x: number, z: number): number {
+    const map = this.host.map
+    const i = Math.floor(x / CELL)
+    const j = Math.floor(z / CELL)
+    return i >= 0 && j >= 0 && i < map.w && j < map.h ? this.host.level.owner[j * map.w + i] ?? -1 : -1
+  }
+
+  /** Track and cart stand at the scene root (the track runs through several
+   *  rooms, the cart rides from one to the next): each shows only while a
+   *  room it is in does. */
+  cull(vis: Uint8Array): void {
+    this.rail.root.visible = !this.air && this.over.some(r => vis[r] === 1)
+    const o = this.ownerAt(this.x, this.z)
+    this.cart.root.visible = o < 0 || vis[o] === 1
   }
 
   /**
@@ -170,12 +218,25 @@ export class RailFeature implements StageFeature {
     this.sample(s, q)
     this.s = Math.max(0, Math.min(this.length, s))
     this.x = q.x
-    this.y = q.y
+    this.y = q.y + this.lift
     this.z = q.z
     this.dirX = q.dx
     this.dirZ = q.dz
     const root = this.cart.root
-    root.position.set(q.x, q.y, q.z)
+    root.position.set(q.x, this.y, q.z)
+    // At rest its deck is a step to stand on; in flight Flux is carried.
+    const d = this.deck
+    if (d) {
+      const along = Math.abs(q.dz) >= Math.abs(q.dx)
+      const hx = along ? DECK_HW : DECK_HL
+      const hz = along ? DECK_HL : DECK_HW
+      const away = this.state === 'ride'
+      d.x0 = away ? PARK : q.x - hx
+      d.x1 = away ? PARK : q.x + hx
+      d.z0 = away ? PARK : q.z - hz
+      d.z1 = away ? PARK : q.z + hz
+      d.top = away ? PARK : this.y
+    }
     root.rotation.order = 'YXZ'
     root.rotation.y = Math.atan2(-q.dx, -q.dz)
     root.rotation.x = q.pitch

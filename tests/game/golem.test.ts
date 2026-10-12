@@ -24,7 +24,7 @@ import {
   createEnemy, updateEnemy, syncEnemyVisual, wake, golemShielded, shotThreatens, golemColors,
   GOLEM_UNFOLD, GOLEM_DODGE_MIN, GOLEM_DODGE_CD, GOLEM_RAM_R, GOLEM_RAM_TELE, GOLEM_RAM_TIME
 } from '@/game/sim/enemies'
-import { CombatSystem, type CombatHost } from '@/game/sim/combat'
+import { CombatSystem, shotBlockable, type CombatHost } from '@/game/sim/combat'
 import { spawnEncounters, spawnTutorial, placeGolems } from '@/game/sim/spawn'
 import { planWalkthrough } from '@/game/sim/walkthrough'
 import { MissionObjects, objectiveTarget, type ObjectiveHost, type TargetSource } from '@/game/sim/objectives'
@@ -119,7 +119,7 @@ describe('the crate golem\'s throw', () => {
     for (let i = 0; i < 300 && !(r.w.fireEnemyShot as ReturnType<typeof vi.fn>).mock.calls.length; i++) tick(r.w, r.e)
     const calls = (r.w.fireEnemyShot as ReturnType<typeof vi.fn>).mock.calls
     expect(calls.length).toBeGreaterThan(0)
-    expect(calls[0]![10]).toBe(true)
+    expect(calls[0]![9]).toBe(true)
   })
 })
 
@@ -454,8 +454,10 @@ describe('crate golem: its attacks', () => {
     expect(kinds).toEqual(['throw', 'throw', 'lob'])
     const fire = w.fireEnemyShot as unknown as ReturnType<typeof vi.fn>
     expect(fire).toHaveBeenCalledTimes(2)
-    const [, ox, oy, oz, vx, vy, vz, speed, , blockable] = fire.mock.calls[0]!
-    expect(blockable).toBe(true)
+    const [, ox, oy, oz, vx, vy, vz, speed, , worldY] = fire.mock.calls[0]!
+    expect(worldY).toBe(true) // aimed in world heights already
+    // A thrown rock flies AT Flux: the shield takes it (`shotBlockable`).
+    expect(shotBlockable('rock')).toBe(true)
     // Launched up-and-out, it falls onto Flux's chest where he stood
     expect(vy).toBeGreaterThan(0)
     expect(Math.hypot(vx, vy, vz)).toBeCloseTo(speed, 6)
@@ -467,7 +469,7 @@ describe('crate golem: its attacks', () => {
   it('its rock is a real stone on an arc, and a parried one goes back to it as a stone', () => {
     const r = setup(9)
     awake(r)
-    r.sys.spawnEnemyShot(r.e, 60, 1.8, 30.2, 0, 0.3, 1, 13, 12, true)
+    r.sys.spawnEnemyShot(r.e, 60, 1.8, 30.2, 0, 0.3, 1, 13, 12)
     const s = r.sys.shots.find(x => x.active && x.owner === 'enemy')!
     expect(s.kind).toBe('rock')
     expect(s.rock?.visible).toBe(true)

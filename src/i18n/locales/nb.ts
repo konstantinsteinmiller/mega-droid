@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Siste skanse! Systemer startet på nytt.',
     'weak': 'SVAKT PUNKT!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'FOR SVAKT!',
     'dizzy': 'SVIMMEL!',
     'dodge': 'UNNVIKT!',
     'block': 'Blokker',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Vokter',
     'hornet': 'Kvefsrotor',
     'stalker': 'Glødlusker',
+    'spotter': 'Lyskasterdrone',
     'puffer': 'Kulefiskmine',
     'mole': 'Moldvarpbor',
     'polar': 'Polarvalp',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Vokter | Voktere',
     'hornet': 'Kvefsrotor | Kvefsrotorer',
     'stalker': 'Glødlusker | Glødluskere',
+    'spotter': 'Lyskasterdrone | Lyskasterdroner',
     'puffer': 'Kulefiskmine | Kulefiskminer',
     'mole': 'Moldvarpbor | Moldvarpbor',
     'polar': 'Polarvalp | Polarvalper',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Stormmester',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Stormester-Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Gløhund',
+    'icebreakerBrute': 'Isbryter-Brute',
+    'arcSpider': 'Buespinn',
+    'stormHornetQueen': 'Stormveps-Dronning',
+    'lodestoneGolem': 'Magnetstein-Golem',
+    'burrowWyrm': 'Graveorm',
+    'pufferMatriarch': 'Kulefisk-Matriark',
+    'glitchStalker': 'Glitch-Luskar',
+    'sawGyro': 'Saggyro',
+    'sentinelPrototype': 'Vokter-Prototyp'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Utfordring',
+    'cleared': 'Utfordring klart! +{bolts} bolter'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nivå {n}! Systemene er helt reparert.'
   },
   'tips': {
-    'moveTouch': 'Dra på venstre side for å gå, på høyre for å se. Trykk på gulvet for å gå dit!',
+    'moveTouch': 'Dra på venstre side for å gå, på høyre for å se.',
     'moveKeys': '{keys} for å gå rundt.',
     'lookMouse': 'Beveg musa for å se deg rundt.',
     'capture': 'Klikk på scenen for å ta kontroll over kameraet.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Bruk'
     },
     'touch': {
-      'move': 'Venstre side: dra for å gå. Trykk på gulvet for å gå dit.',
-      'fire': 'I kamp: trykk for å skyte, hold for å lade, slipp for å fyre.',
+      'move': 'Venstre side: dra for å gå. Høyre side: dra for å se.',
+      'fire': 'Høyre side eller skyteknappen: trykk for å skyte, hold for å lade, slipp for å fyre. Dra mens du holder for å sikte.',
       'block': 'Hold skjoldet for å blokkere — akkurat når en ring lukker seg for å parere.',
       'use': 'Ved en kiste, en strandet bot eller en dør: trykk på den, eller på knappen som dukker opp.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Treff kjernen når den åpner seg.',
       'hornet': '{enemy}. Den stuper rett fram: til siden!',
       'stalker': '{enemy}. Parer utfallet.',
+      'spotter': '{enemy}. Kom deg ut av lyset. Skyt lampen.',
       'puffer': '{enemy}. Sprekk den før den sveller.',
       'mole': '{enemy}. Treff den når den dukker opp.',
       'elite': 'Gullring. Elite. Forsiktig.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Fordi de er frie.',
     },
     'guardDown': 'Vakten er nede! Veien er åpen.',
+    'challenge': 'En utfordringsdør! Godt bytte der inne.',
     'help': {
       'weapon': 'Velg det nye våpenet ditt og skyt på dronene!',
       'gap': 'Gå rett mot kanten, så hopper du over!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Skli unna rett før den røde ringen når deg!',
       'block': 'Hold blokk når den skyter. Akkurat idet det treffer er perfekt!',
       'blockMiss': 'Skjold opp! Blokker idet det treffer, så flyr det tilbake!',
+      'chargeMiss': 'Prøv et ladet skudd ved å holde kanonknappen inne!',
       'charge': 'Hold skyt til kanonen gløder, og slipp!',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Det panelet viser et mønster. Lampene på veggen gjør det ikke. Ennå.',
       'color': 'Den rammen har en yndlingsfarge. Bare lampene dens skal lyse.',
       'cycle': 'Hvert treff får en lampe til å ombestemme seg. Panelet vet hva det vil.',
+      'sequence': 'Panelet blinker den samme lille melodien. Spill den på knappene, i rekkefølge.',
+      'mirror': 'Den strålen vil inn i ringen. Speilene snur seg når du skyter på dem.',
+      'tiles': 'Tenn alle platene på én tur. To ganger på én, eller av dem, og alt er mørkt igjen.',
       'solved': 'Se der, ja. Noen liker gåter.'
     },
     'landed': 'Landet! Kom igjen.',

@@ -23,7 +23,7 @@ import { xpToNext, MAX_LEVEL } from '../data/progression'
 import { GM_HP_MUL } from './grandMasterTune'
 import { rewardFor } from '../data/quests'
 import { SECTORS, enemyLevelFor, type Sector } from '../data/regions'
-import { bossHpMul, powerIndex, powerRatio, refPower, PROGRESS_HP } from './adaptive'
+import { bossHpMul, powerIndex, powerRatio, refPower, PROGRESS_HP, STAGE_GATE_HP } from './adaptive'
 
 export interface PlayerProfile {
   name: string
@@ -200,8 +200,9 @@ export const simulate = (p: PlayerProfile, cycles = 0): MissionRow[] => {
     }
     if (kind !== 'job') bosses++
     const fortress = kind === 'story' && sector.id === 'fortress'
-    const gateTtk = fortress ? Math.round(scaleHp(ENEMIES.gatekeeper.hp, lvl) * ngHp / dps) : 0
-    const twinTtk = fortress ? Math.round(scaleHp(ENEMIES.echo.hp, lvl) * ngHp / dps) : 0
+    const gateHp = ngHp * (STAGE_GATE_HP.fortress ?? 1)
+    const gateTtk = fortress ? Math.round(scaleHp(ENEMIES.gatekeeper.hp, lvl) * gateHp / dps) : 0
+    const twinTtk = fortress ? Math.round(scaleHp(ENEMIES.echo.hp, lvl) * gateHp / dps) : 0
     const gmTtk = fortress ? Math.round(bossTtk * GM_HP_MUL) : 0
     rows.push({
       n, cycle, sector: sector.id, kind, level: lvl, playerLevel: level, arm: armName(arm), gateTtk, twinTtk, gmTtk,

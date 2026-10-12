@@ -16,6 +16,7 @@ import { flushPersist } from '@/use/useGameState'
 import { tutorialQuest } from '@/game/data/quests'
 import type { Enemy, Shot } from '@/game/sim/world'
 import type { Crate } from '@/game/sim/objectives'
+import { hudEvents } from '@/game/state/hud'
 
 // The real rig bakes canvas textures jsdom cannot draw: a plain record is
 // all the director needs from a drone.
@@ -156,7 +157,10 @@ describe('the charge lesson (first beam-in)', () => {
 
   it('turns quick shots away (a nudge each) and pops to a charged one', () => {
     const { host, d, buf } = withDrone()
+    hudEvents.length = 0
     expect(d.shotHits(shotAt(buf[0]!, buf[1]!, buf[2]!, 'pellet'))).toBe('deflect')
+    // Says why, in the weak spot's big amber wobble.
+    expect(hudEvents).toContainEqual(expect.objectContaining({ t: 'kranck', key: 'combat.tooWeak' }))
     expect(d.shotHits(shotAt(buf[0]!, buf[1]!, buf[2]!, 'pellet'))).toBe('deflect')
     expect(d.view()?.nudge).toBe(2)
     expect(lessonDone('charge')).toBe(false)
@@ -341,19 +345,36 @@ describe('the special-weapon lesson (sleeping drones)', () => {
     profile.hero.slots = ['scrapBurst', '']
   })
 
-  const intoQuietRoom = () => {
+  /** Into a quiet room, where the mission teaches the weapon (`teachWeapon`:
+   *  the room behind the boss it was copied from). */
+  const intoQuietRoom = (teach = true) => {
     const h = makeHost(false)
     const d = new LessonDirector(h.host)
     run(d, h.host, 0.1)
-    const { cx, cz } = otherRoom(h.map)
+    const { room, cx, cz } = otherRoom(h.map)
     h.host.player.x = cx
     h.host.player.z = cz
     run(d, h.host, 1.5)
-    return { ...h, d }
+    const taught = teach ? d.teachWeapon(room.id, 'scrapBurst') : false
+    return { ...h, d, room, taught }
   }
 
+  it('never starts by itself — not in a quiet room, not in the landing room (only the room behind the boss teaches)', () => {
+    // An owned, slotted weapon never taught: walking about starts nothing.
+    const { d, host, enemies } = intoQuietRoom(false)
+    run(d, host, 5)
+    expect(d.view()).toBeNull()
+    expect(enemies).toHaveLength(0)
+    const start = makeHost(false)
+    const s = new LessonDirector(start.host)
+    run(s, start.host, 5)
+    expect(s.view()).toBeNull()
+    expect(start.enemies).toHaveLength(0)
+  })
+
   it('beams in three sleeping drones, one spread-angle apart, with energy to spare', () => {
-    const { d, host, enemies } = intoQuietRoom()
+    const { d, host, enemies, taught } = intoQuietRoom()
+    expect(taught).toBe(true)
     expect(d.view()?.id).toBe('weapon')
     expect(d.view()?.slot).toBe(1)
     expect(enemies).toHaveLength(3)
@@ -375,23 +396,24 @@ describe('the special-weapon lesson (sleeping drones)', () => {
     d.weaponFired()
     for (const e of enemies) e.state = 'dead'
     run(d, host, 0.1)
-    expect(lessonDone('weapon')).toBe(true)
+    expect(d.weaponLearned).toBe('scrapBurst')
     expect(d.weaponLive).toBe(false)
   })
 
-  it('shot down with the buster is not learned: it tries again later, then gives up', () => {
+  it('shot down with the buster is not learned: the drones come back in a beat', () => {
     const { d, host, enemies } = intoQuietRoom()
     for (const e of enemies) e.state = 'dead'
+    run(d, host, 0.1)
+    expect(d.weaponLearned).toBeNull()
     run(d, host, 2)
-    expect(lessonDone('weapon')).toBe(false)
-    // Not again in the same room.
-    expect(enemies).toHaveLength(3)
-    expect(d.view()).toBeNull()
+    expect(d.view()?.id).toBe('weapon')
+    expect(enemies.filter(e => e.state !== 'dead')).toHaveLength(3)
   })
 
   it('never without a slotted weapon', () => {
     profile.hero.slots = ['', '']
-    const { d, enemies } = intoQuietRoom()
+    const { d, enemies, taught } = intoQuietRoom()
+    expect(taught).toBe(false)
     expect(d.view()).toBeNull()
     expect(enemies).toHaveLength(0)
   })
@@ -407,6 +429,7 @@ describe('the special-weapon lesson (sleeping drones)', () => {
         run(d, h.host, 0.1)
         Object.assign(h.host.player, { x: cp.x, z: cp.z, yaw: cp.yaw, y: cp.y })
         run(d, h.host, 1.5)
+        d.teachWeapon(cp.room, 'scrapBurst')
         if (!h.enemies.length) continue
         rows++
         expect(h.enemies).toHaveLength(3)
@@ -420,18 +443,6 @@ describe('the special-weapon lesson (sleeping drones)', () => {
     }
     // Enough ledges fit a row that the rule is exercised, not just avoided.
     expect(rows).toBeGreaterThan(3)
-  })
-
-  it('never in the tutorial (the weapon is won at its end)', () => {
-    const h = makeHost(true)
-    const d = new LessonDirector(h.host)
-    run(d, h.host, 0.1)
-    const { cx, cz } = otherRoom(h.map)
-    h.host.player.x = cx
-    h.host.player.z = cz
-    run(d, h.host, 1.5)
-    expect(d.view()).toBeNull()
-    expect(h.enemies).toHaveLength(0)
   })
 })
 

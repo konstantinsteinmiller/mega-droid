@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Son Müqavimət! Sistemlər yenidən başladıldı.',
     'weak': 'ZƏİF!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'ÇOX ZƏİF!',
     'dizzy': 'BAŞI DÖNDÜ!',
     'dodge': 'YAYINDI!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Mühafizəçi',
     'hornet': 'Pərli Eşşəkarısı',
     'stalker': 'Parıltı Ovçusu',
+    'spotter': 'Projektor Dronu',
     'puffer': 'Şişkin Mina',
     'mole': 'Burğu Köstəbək',
     'polar': 'Qütb Balası',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Mühafizəçi | Mühafizəçi',
     'hornet': 'Pərli Eşşəkarısı | Pərli Eşşəkarısı',
     'stalker': 'Parıltı Ovçusu | Parıltı Ovçusu',
+    'spotter': 'Projektor Dronu | Projektor Dronu',
     'puffer': 'Şişkin Mina | Şişkin Mina',
     'mole': 'Burğu Köstəbək | Burğu Köstəbək',
     'polar': 'Qütb Balası | Qütb Balası',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Tufan Ustası',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Böyük Usta Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Köz Tazısı',
+    'icebreakerBrute': 'Buzqıran Nəhəng',
+    'arcSpider': 'Qövs Hörümçəyi',
+    'stormHornetQueen': 'Fırtına Eşşəkarısı Kraliçası',
+    'lodestoneGolem': 'Maqnit Daşı Qolemi',
+    'burrowWyrm': 'Qazan Qurd',
+    'pufferMatriarch': 'Kirpi Balıq Matriarxı',
+    'glitchStalker': 'Qliç Ovçusu',
+    'sawGyro': 'Mişar Firfırası',
+    'sentinelPrototype': 'Keşikçi Prototipi'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Çağırış',
+    'cleared': 'Çağırış qazanıldı! +{bolts} bolt'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Səviyyə {n}! Sistemlər tam təmir olundu.'
   },
   'tips': {
-    'moveTouch': 'Hərəkət üçün sol tərəfi, baxmaq üçün sağ tərəfi sürüşdür. Ora getmək üçün yerə toxun!',
+    'moveTouch': 'Hərəkət üçün sol tərəfi, baxmaq üçün sağ tərəfi sürüşdür.',
     'moveKeys': 'Hərəkət etmək üçün {keys}.',
     'lookMouse': 'Ətrafa baxmaq üçün siçanı hərəkət etdir.',
     'capture': 'Kameranı idarə etmək üçün səhnəyə klik et.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Qarşılıqlı əlaqə'
     },
     'touch': {
-      'move': 'Sol tərəf: hərəkət üçün sürüşdür. Ora getmək üçün yerə toxun.',
-      'fire': 'Döyüşdə: atəş üçün toxun, yükləmək üçün basılı saxla, atmaq üçün burax.',
+      'move': 'Sol tərəf: hərəkət üçün sürüşdür. Sağ tərəf: baxmaq üçün sürüşdür.',
+      'fire': 'Sağ tərəf və ya atəş düyməsi: atəş üçün toxun, yükləmək üçün basılı saxla, atmaq üçün burax. Nişan almaq üçün basılı saxlayaraq sürüşdür.',
       'block': 'Blok üçün qalxanı basılı saxla — dəf etmək üçün halqa bağlanan anda.',
       'use': 'Sandığın, ilişib qalmış robotun və ya qapının yanında: ona və ya çıxan düyməyə toxun.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Açılanda nüvəyə vur.',
       'hornet': '{enemy}. Düz şığıyır: yana çəkil!',
       'stalker': '{enemy}. Sıçrayışını dəf et.',
+      'spotter': '{enemy}. İşığından çıx. Lampanı vur.',
       'puffer': '{enemy}. Şişməmiş partlat.',
       'mole': '{enemy}. Üzə çıxanda vur.',
       'elite': 'Qızıl halqa. Elit. Ehtiyatlı ol.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Çünki onlar azaddır.',
     },
     'guardDown': 'Keşikçi yıxıldı! Yol açıqdır.',
+    'challenge': 'Çağırış qapısı! İçəridə qənimət var.',
     'help': {
       'weapon': 'Yeni silahını seç və dronlara atəş aç!',
       'gap': 'Kənara doğru düz get, avtomatik tullanacaqsan!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Qırmızı halqa sənə çatmamış sürüşüb qaç!',
       'block': 'O atəş açanda bloku basılı saxla. Düz dəyən anda — mükəmməldir!',
       'blockMiss': 'Qalxanı qaldır! Dəyən anda blokla, geri qayıtsın!',
+      'chargeMiss': 'Top düyməsini basılı saxlayaraq yüklü atəş et!',
       'charge': 'Top parlayana qədər atəşi basılı saxla, sonra burax!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'O panel bir naxış göstərir. Divardakı lampalar hələ yox.',
       'color': 'O çərçivənin sevimli rəngi var. Yalnız onun lampaları yanmalıdır.',
       'cycle': 'Hər zərbə bir lampanın fikrini dəyişir. Panel nə istədiyini bilir.',
+      'sequence': 'Panel eyni melodiyanı yanıb-sönür. Onu düymələrdə ardıcıl təkrarla.',
+      'mirror': 'O şüa halqanı istəyir. Güzgülərə atəş açanda fırlanırlar.',
+      'tiles': 'Bütün plitələri bir gedişdə yandır. Birinə iki dəfə bassan, ya da kənara çıxsan, hamısı yenə qaranlıqdır.',
       'solved': 'Bax belə. Kimsə tapmacaları sevir.'
     },
     'landed': 'Endik! Gedək.',

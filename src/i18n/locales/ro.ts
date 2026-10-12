@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Ultima Rezistență! Sisteme repornite.',
     'weak': 'SLAB!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'PREA SLAB!',
     'dizzy': 'AMEȚIT!',
     'dodge': 'EVITAT!',
     'block': 'Blochează',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Gardian',
     'hornet': 'Rotor-Viespe',
     'stalker': 'Pândar Luminos',
+    'spotter': 'Dronă Reflector',
     'puffer': 'Mină-Balon',
     'mole': 'Cârtiță Sfredel',
     'polar': 'Cățel Polar',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Gardian | Gardieni | de Gardieni',
     'hornet': 'Rotor-Viespe | Rotoare-Viespe | de Rotoare-Viespe',
     'stalker': 'Pândar Luminos | Pândari Luminoși | de Pândari Luminoși',
+    'spotter': 'Dronă Reflector | Drone Reflector | de Drone Reflector',
     'puffer': 'Mină-Balon | Mine-Balon | de Mine-Balon',
     'mole': 'Cârtiță Sfredel | Cârtițe Sfredel | de Cârtițe Sfredel',
     'polar': 'Cățel Polar | Căței Polari | de Căței Polari',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Maestrul Vântului',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robotul Marele Maestru'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Copoiul de Jar',
+    'icebreakerBrute': 'Brutul Spărgător de Gheață',
+    'arcSpider': 'Păianjenul de Arc',
+    'stormHornetQueen': 'Regina Viespilor de Furtună',
+    'lodestoneGolem': 'Golemul de Magnetit',
+    'burrowWyrm': 'Viermele Săpător',
+    'pufferMatriarch': 'Matriarha Pește-Balon',
+    'glitchStalker': 'Pânditorul Glitch',
+    'sawGyro': 'Giro-Fierăstrău',
+    'sentinelPrototype': 'Prototipul Santinelă'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Provocare',
+    'cleared': 'Provocare reușită! +{bolts} șuruburi'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nivelul {n}! Sisteme reparate complet.'
   },
   'tips': {
-    'moveTouch': 'Trage de partea stângă ca să te miști și de cea dreaptă ca să privești. Atinge podeaua ca să mergi acolo!',
+    'moveTouch': 'Trage de partea stângă ca să te miști și de cea dreaptă ca să privești.',
     'moveKeys': '{keys} ca să te miști.',
     'lookMouse': 'Mișcă mouse-ul ca să privești în jur.',
     'capture': 'Dă click pe scenă ca să controlezi camera.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Interacțiune'
     },
     'touch': {
-      'move': 'Partea stângă: trage ca să te miști. Atinge podeaua ca să mergi acolo.',
-      'fire': 'În luptă: atinge ca să tragi, ține apăsat ca să încarci, eliberează ca să tragi.',
+      'move': 'Partea stângă: trage ca să te miști. Partea dreaptă: trage ca să privești.',
+      'fire': 'Partea dreaptă sau butonul de foc: atinge ca să tragi, ține apăsat ca să încarci, eliberează ca să tragi. Mișcă degetul cât ții apăsat ca să ochești.',
       'block': 'Ține apăsat scutul ca să blochezi — exact când se închide un inel, ca să parezi.',
       'use': 'Lângă o ladă, un robot blocat sau o ușă: atinge-l sau atinge butonul care apare.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Lovește nucleul când se deschide.',
       'hornet': '{enemy}. Plonjează drept: ferește-te!',
       'stalker': '{enemy}. Parează-i saltul.',
+      'spotter': '{enemy}. Ieși din lumina lui. Trage în lampă.',
       'puffer': '{enemy}. Sparge-o înainte să se umfle.',
       'mole': '{enemy}. Lovește-o când iese.',
       'elite': 'Inel auriu. Elită. Ai grijă.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Pentru că sunt liberi.',
     },
     'guardDown': 'Garda a căzut! Drumul e liber.',
+    'challenge': 'O ușă de provocare! Pradă bună înăuntru.',
     'help': {
       'weapon': 'Alege-ți arma nouă și trage în drone!',
       'gap': 'Mergi drept spre margine și o să sari peste!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Alunecă într-o parte chiar înainte să te prindă inelul roșu!',
       'block': 'Ține apăsat pe blocare când trage. Perfect e exact la impact!',
       'blockMiss': 'Scutul sus! Blochează exact la impact și trimite-l înapoi!',
+      'chargeMiss': 'Încearcă o lovitură încărcată ținând apăsat butonul tunului!',
       'charge': 'Ține apăsat pe foc până strălucește tunul, apoi eliberează!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Panoul ăla arată un model. Lămpile de pe perete nu. Încă.',
       'color': 'Rama aia are o culoare preferată. Doar lămpile ei ar trebui să lumineze.',
       'cycle': 'Fiecare lovitură face o lampă să se răzgândească. Panoul știe ce vrea.',
+      'sequence': 'Panoul clipește mereu aceeași melodie. Cânt-o pe butoane, în ordine.',
+      'mirror': 'Raza aceea vrea în inel. Oglinzile se rotesc când tragi în ele.',
+      'tiles': 'Aprinde toate plăcile dintr-o singură plimbare. De două ori pe una, sau pe lângă ele, și iar e întuneric.',
       'solved': 'Ia te uită. Cuiva îi plac ghicitorile.'
     },
     'landed': 'Am aterizat! Hai!',

@@ -17,16 +17,26 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  *   3 Stalker alley   a fight among vents
  *   4 The switch      lit bridge to a middle roof; shoot the switch for
  *                     the next one (and the first goes dark)
- *   5 Billboard drop  down a storey
- *   6 Roof garden     a fight; the wall-kick shaft up to the weapon ledge
+ *   5 Billboard drop  down a storey; a Searchlight Drone (the stage's
+ *                     second machine) over the upper roof
+ *   6 Roof garden     a fight; the wall-kick shaft up to the weapon ledge;
+ *                     a Searchlight Drone over the Stalkers
  *   7 Blink run       two pulse bridges in a row: out with the blackout
- *   8 Neon gallery    a fight among billboards
+ *   8 Neon gallery    a fight among billboards, a Searchlight Drone over it
  *   9 Switch gauntlet the switch again, a Stalker on the middle roof
  *  10 Fire escape     two flights down
  *  11 Gutter leaps    one-cell gaps between low roofs
  *  12 Sign shop       a secret alcove behind its north wall
- *  13 Approach        down to the boss shutter
+ *  13 Approach        down to the boss shutter: a Stalker, a Rotor Drone
+ *                     and a Searchlight Drone
  *  14 Arena           the Neon Master, floor at y = 0
+ *
+ * The SEARCHLIGHT DRONE (#142, `sim/enemies.ts`): met alone on the
+ * Billboard Drop's upper roof (the Stalker below waits on its own level),
+ * where its light, its lock and the strike it calls can be learned; then
+ * over the Stalkers in the Roof Garden (the tower block hides Flux), in the
+ * Neon Gallery (billboards, a Wall Cannon) and on the Approach — in the dark
+ * its light sweeps faster.
  *
  * And the BLACKOUT (#110): every BLACKOUT_PERIOD s the whole boulevard goes
  * dark (a two-dip warning and a power-down whine first), and the Blink Run's
@@ -111,13 +121,15 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   // ── 4 The switch ──────────────────────────────────────────────────────────
   // A chasm with a roof in its middle. The lit bridge (magenta) reaches it;
   // the switch on the east wall lights the far one (cyan) — and darkens
-  // the first.
+  // the first. It hangs on the near roof's wall, at the chasm's edge: over
+  // the gap itself there is no wall (open sky), and it hung in the air there
+  // (playtest 2026-10-12).
   b.addRoom(24, 8, 8, 8, 'combat', 'islands', ROOF_Y)
   b.pits(24, 10, 31, 13)
   island(27, 11, 28, 12, ROOF_Y)
   b.bridge(27, 10, ROOF_Y, 2, 1, { group: 0 })
   b.bridge(27, 13, ROOF_Y, 2, 1, { group: 1 })
-  sw(31, 11, 'e')
+  sw(31, 9, 'e')
   b.checkpoint(28, 8, YAW_PZ, cells(26, 8, 30, 9))
   b.checkpoint(28, 15, YAW_PZ, cells(26, 14, 30, 15))
   b.foe('flyer', 25, 12, YAW_PZ, [24, 8, 31, 15], [ROOF_Y, ROOF_Y + 2])
@@ -129,7 +141,9 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.checkpoint(29, 20, YAW_NX, cells(28, 19, 31, 21))
   b.checkpoint(25, 20, YAW_NX, cells(24, 19, 26, 21))
   b.foe('ground', 25, 22, YAW_NX, [24, 18, 26, 22], undefined, 'stalker')
-  b.foe('turret', 31, 22, YAW_NX, [31, 22, 31, 22])
+  // The Searchlight Drone's first showing, alone over the upper roof (it
+  // took the Wall Cannon's place: one floor marker to read at a time)
+  b.foe('flyer', 30, 21, YAW_NX, [27, 18, 31, 22], [ROOF_Y, ROOF_Y], 'spotter')
   b.corridor(23, 20, -1, 0, 2, M)
 
   // ── 6 Roof garden ─────────────────────────────────────────────────────────
@@ -143,6 +157,7 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.checkpoint(20, 20, YAW_NX, cells(19, 19, 21, 21))
   b.foe('ground', 14, 20, YAW_PX, [13, 17, 21, 22], undefined, 'stalker')
   b.foe('ground', 20, 18, YAW_NX, [13, 17, 21, 22], undefined, 'stalker')
+  b.foe('flyer', 17, 21, YAW_PX, [13, 17, 21, 22], [M, M], 'spotter')
   b.corridor(12, 20, -1, 0, 2, M)
 
   // ── 7 Blink run ───────────────────────────────────────────────────────────
@@ -169,7 +184,7 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.checkpoint(2, 26, YAW_PZ, cells(1, 25, 3, 26))
   b.foe('ground', 5, 28, YAW_PX, [3, 25, 10, 29], undefined, 'stalker')
   b.foe('ground', 8, 27, YAW_NX, [3, 25, 10, 29], undefined, 'stalker')
-  b.foe('flyer', 6, 26, YAW_NX, [1, 25, 10, 29], [M, M + 2])
+  b.foe('flyer', 6, 26, YAW_NX, [1, 25, 10, 29], [M, M + 2], 'spotter')
   b.foe('turret', 10, 29, YAW_NX, [10, 29, 10, 29])
   b.corridor(11, 27, 1, 0, 2, M)
 
@@ -219,8 +234,10 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.chest(20, 34, YAW_PX)
   b.checkpoint(19, 36, YAW_NX, cells(19, 35, 20, 37))
   b.foe('ground', 16, 36, YAW_PX, [13, 34, 18, 38], undefined, 'stalker')
-  b.secret(11, 'color', [12, 33, 13, 33], { i: 13, j: 33, axis: 'z' },
-    [[12, 35, 'w', 1], [15, 38, 's', 0], [18, 38, 's', 1], [20, 37, 'e', 2]], [], 'tank', 1)
+  // A beam from the east wall, three mirrors to the target by the false
+  // wall, each found once the one before it is turned (#143).
+  b.secret(11, 'mirror', [12, 33, 13, 33], { i: 13, j: 33, axis: 'z' }, [], [], 'tank', undefined,
+    { emitter: [20, 38, 'e'], mirrors: [[17, 38, 1], [17, 35, 1], [14, 35, 1]] })
   b.corridor(11, 36, -1, 0, 2, LOW)
 
   // ── 13 Approach ───────────────────────────────────────────────────────────
@@ -231,6 +248,7 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.checkpoint(2, 37, YAW_PZ, cells(1, 36, 3, 38))
   b.foe('ground', 2, 35, YAW_PZ, [1, 34, 4, 38], undefined, 'stalker')
   b.foe('flyer', 7, 37, YAW_NX, [1, 34, 9, 38], [0, LOW])
+  b.foe('flyer', 3, 37, YAW_PX, [1, 34, 9, 38], [0, LOW], 'spotter')
   b.corridor(3, 39, 0, 1, 2, 0, true)
 
   // ── 14 Arena ──────────────────────────────────────────────────────────────
@@ -240,6 +258,10 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): south off the gutter leaps'
+  // first roof, a walled rooftop hall at its height — the door is beside
+  // Flux as he comes down the fire escape; the way on is west, over the gaps.
+  b.challengeRoom(10, { mouth: { i: 29, j: 38, di: 0, dj: 1 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open air under the roofs: a fall is the rescue's, not a spike pit.
   map.terrain!.clouds = true

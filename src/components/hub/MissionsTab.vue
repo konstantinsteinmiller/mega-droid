@@ -43,7 +43,7 @@
           @click="claimGift"
         )
           //- A video for "+1" and the flask: signed, like every reward.
-          GameIcon.bi(name="video")
+          RewardAdBadge
           span +1
           GameIcon.bi(name="flask")
       div.section-title
@@ -59,6 +59,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import RewardAdBadge from '@/components/atoms/RewardAdBadge.vue'
 import QuestCard from './QuestCard.vue'
 import MasterPortrait from '@/components/atoms/MasterPortrait.vue'
 import type { PortraitState } from '@/components/atoms/portraitState'

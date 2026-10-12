@@ -60,8 +60,13 @@ export interface Enemy {
   hang?: number
   /** A mini-boss (the Fortress's gatekeepers): no kill-cam, a checkpoint. */
   mini?: boolean
+  /** A challenge room's mini-boss (`sim/miniBosses.ts`): its registry entry,
+   *  its room and its module's scratch. Its own AI runs it, not `updateEnemy`. */
+  challenge?: import('./miniBoss/types').MiniBossState
   /** Crate golem only: its state beyond the shared machine (sim/enemies.ts). */
   golem?: import('./enemies').GolemState
+  /** Searchlight Drone only: its pool of light, its lamp, a called strike. */
+  spot?: import('./enemies').SpotState
   state: EnemyState
   st: number
   cd: number
@@ -133,6 +138,9 @@ export interface Enemy {
    *  `y` stays relative to it, so the AI is the flat one; only the world
    *  position (drawing, shot origins, hit tests) adds it. Absent = 0. */
   floor?: number
+  /** The climb: the last spot that stood on ground it fits (`tendFoe`). */
+  safeX?: number
+  safeZ?: number
   /** The climb: the rectangle (x0, z0, x1, z1) it may not leave — its own
    *  platform — and, for a flyer, the band of heights it follows the player
    *  through. */
@@ -265,11 +273,14 @@ export interface World {
   /** Every projectile in flight (the CombatSystem's pool, which puts itself
    *  here): a crate golem watches for charged shots coming its way. */
   shots?: readonly Shot[]
+  /** The stage's darkness now (0 lit … 1 a blackout): a Searchlight Drone
+   *  sweeps faster in the dark. Absent: lit. */
+  gloom?: number
   /** What a machine can read of Flux's kit: how long his charge takes. */
   stats?: { readonly chargeTimeMul: number }
   /** `worldY`: the shot is already aimed in world heights (the crate golem's
    *  rock), so a climb must not lift and tip it again. */
-  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean, worldY?: boolean): void
+  fireEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, worldY?: boolean): void
   lobShell(e: Enemy, tx: number, tz: number, dur: number, dmg: number): void
   /** Boss hazards (see CombatSystem). */
   spawnWave(e: Enemy, x: number, z: number, dx: number, dz: number, speed: number, halfWidth: number, range: number, dmg: number, color: string): void
@@ -277,6 +288,10 @@ export interface World {
   fireOrb(e: Enemy, x: number, y: number, z: number, speed: number, dmg: number): void
   /** Drag the player toward (x, z) at `speed` m/s for `dur` s (a boss's pull). */
   pull?(x: number, z: number, speed: number, dur: number): void
+  /** Flux walks at `mul` of his speed for `dur` s (an Arc Spider's web). */
+  slowPlayer?(mul: number, dur: number): void
+  /** A machine joins the fight mid-mission (a Hornet Queen's drones). */
+  addEnemy?(e: Enemy): void
   /** Melee / AoE / contact damage from an enemy to the player. */
   hitPlayer(e: Enemy | null, dmg: number, opts: { blockable: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss'
   shake(amount: number): void

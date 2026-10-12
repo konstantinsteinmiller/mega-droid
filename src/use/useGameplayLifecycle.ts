@@ -96,10 +96,21 @@ export const isGameplayLive = (i: GameplayLiveInputs): boolean =>
   && !i.platformPaused
 
 /**
- * Report whether gameplay is live. Idempotent on every platform: each portal
- * arm collapses a repeat of the state it is already in, so callers may fire it
- * as often as their reactive source changes.
+ * CrazyGames' reading of the same rule (#138). Two differences, both theirs:
+ *
+ *   • the INTRO is not play. CG QA expects the first `gameplayStart()` when
+ *     the player lands in the tutorial and gets control — a start during the
+ *     film reads as "gameplay began" while nobody can play, and the landing
+ *     then had no start of its own (the bracket stayed open through it);
+ *   • a hidden tab is not a pause — CG handles focus loss itself and asks
+ *     games not to signal it.
+ *
+ * Everything else pauses it as it pauses every portal: the pause menu and
+ * any other modal, an ad, the portal's own pause.
  */
+export const isCrazyGameplayLive = (i: GameplayLiveInputs): boolean =>
+  isGameplayLive({ ...i, introPlay: false, visibilityHidden: false })
+
 /**
  * What the portals were last TOLD — not what the game is doing.
  *
@@ -109,10 +120,18 @@ export const isGameplayLive = (i: GameplayLiveInputs): boolean =>
  * no watcher ever observes.
  */
 let reported = false
+let reportedCrazy = false
 
-export const syncGameplayLifecycle = (live: boolean): void => {
+/**
+ * Report whether gameplay is live — `live` for Poki and Playgama, `crazyLive`
+ * (`isCrazyGameplayLive`, defaults to `live`) for CrazyGames. Idempotent on
+ * every platform: each portal arm collapses a repeat of the state it is
+ * already in, so callers may fire it as often as their reactive source changes.
+ */
+export const syncGameplayLifecycle = (live: boolean, crazyLive: boolean = live): void => {
   reported = live
-  syncCrazyGameplay(live)
+  reportedCrazy = crazyLive
+  syncCrazyGameplay(crazyLive)
 
   if (import.meta.env.VITE_APP_POKI === 'true') {
     if (live) pokiGameplayStart()
@@ -173,10 +192,12 @@ export const __gameplayFanoutIdle = (): Promise<void> => playgamaChain
 export const restartGameplayBracket = (): void => {
   // Already closed — a result screen, a reveal, an ad or a hidden tab ended the
   // play, and the flag that closed it will open the next one.
-  if (!reported) return
-  syncGameplayLifecycle(false)
-  syncGameplayLifecycle(true)
+  if (!reported && !reportedCrazy) return
+  const live = reported
+  const crazyLive = reportedCrazy
+  syncGameplayLifecycle(false, false)
+  syncGameplayLifecycle(live, crazyLive)
 }
 
 /** Test seam: forget what the portals were told. */
-export const __resetGameplayBracket = (): void => { reported = false }
+export const __resetGameplayBracket = (): void => { reported = false; reportedCrazy = false }

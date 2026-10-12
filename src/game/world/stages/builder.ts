@@ -2,7 +2,8 @@ import {
   CELL, Cell, Ramp, cellCenter, type MapData, type Room, type RoomRole, type Door, type Terrain, type SectionKind,
   type Ladder, type Lift, type Crusher, type RollerLane, type Checkpoint, type RewardSpot, type FoePost,
   type ChestSpot, type SecretSpec, type PitKind, type WindZone, type RailSpec, type WaveSpec, type VentSpec, type NavLink,
-  type IcePillar, type IcicleSpec, type CrumbleSpec, type MagnetRail, type WaterZone, type NeonBridge, type NeonSwitch, type BlackoutSpec, type ChestLoot
+  type IcePillar, type IcicleSpec, type CrumbleSpec, type MagnetRail, type WaterZone, type NeonBridge, type NeonSwitch, type BlackoutSpec, type ChestLoot,
+  type Pillar, challengeSpot
 } from '../levelGen'
 
 /**
@@ -32,6 +33,12 @@ const ARENA_WALL = 4.2
 const BUTTON_OFF = 0.06
 export const BUTTON_Y = 1.6
 const PANEL_Y = 1.5
+/** A pool's basin under its rim (m; `Builder.pool`): with its half-way
+ *  ledge, two steps of STEP_UP or less — and under the 0.9 m drop that
+ *  earns a ledge's hazard stripes (`climbMesh`): its coping is its lip. */
+export const POOL_DEEP = 0.85
+/** A pool's still surface stands this far under its rim (m). */
+export const POOL_FREEBOARD = 0.15
 
 /** Facing yaw (the game's convention: forward = (−sin, −cos)) toward +X etc.
  *  For a chest or a wall spot: the wall it backs onto. */
@@ -90,6 +97,10 @@ export class Builder {
   beam: { room: number; door: number } | null = null
   /** The room behind the boss, if the stage has one (`exitRoom`). */
   exit: MapData['exit'] | null = null
+  /** The optional mini-boss room, if the map has one (`challengeRoom`). */
+  challenge: MapData['challenge'] | null = null
+  /** Round cover posts standing on the floor (`MapData.pillars`; `coverPillar`). */
+  pillars: Pillar[] = []
   links: NavLink[] = []
 
   constructor(W: number, H: number) {
@@ -265,6 +276,100 @@ export class Builder {
     this.checkpoints.push({ x: (x0 + w / 2) * CELL, z: (z0 + h / 2) * CELL, y, yaw: Math.atan2(-di, -dj), room: id, cells })
   }
 
+  /**
+   * An optional challenge room (a mini-boss behind the challenge door,
+   * `sim/challenge.ts`) off room `from`: a room of its own, not on the chain
+   * (like `exitRoom`), at the end of an `n`-cell corridor out of `from`'s
+   * wall, with a cell of void kept round it. Level with the floor of the
+   * cell it opens off, which must be plain floor (no pit, no stair).
+   *
+   * `mouth` pins the corridor: it leaves `from` past cell (i, j) along
+   * (di, dj); else every wall of `from` is tried, middle first. Sizes are
+   * tried biggest first (`sizes`). Call it after the arena (and after
+   * `beamRoom` / `exitRoom`): no room number on the route moves. Returns the
+   * room's id, or -1 when nothing fits (the map simply has none).
+   */
+  challengeRoom(
+    from: number,
+    opts: { mouth?: { i: number; j: number; di: number; dj: number }; n?: number; sizes?: ReadonlyArray<readonly [number, number]> } = {}
+  ): number {
+    const host = this.rooms[from]
+    if (!host || this.challenge) return -1
+    const N = opts.n ?? 2
+    const voidAt = (i: number, j: number) => i >= 1 && j >= 1 && i < this.W - 1 && j < this.H - 1 && this.cell[this.k(i, j)] === Cell.Void
+    // Every mouth: a cell of `from` on its edge and the step out of it.
+    const mouths: Array<{ i: number; j: number; di: number; dj: number }> = []
+    if (opts.mouth) mouths.push(opts.mouth)
+    else {
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const along = di !== 0 ? host.h : host.w
+        const order = Array.from({ length: Math.max(0, along - 2) }, (_, k) => k + 1)
+          .sort((a, b) => Math.abs(a - (along - 1) / 2) - Math.abs(b - (along - 1) / 2))
+        for (const o of order) {
+          const i = di > 0 ? host.x0 + host.w - 1 : di < 0 ? host.x0 : host.x0 + o
+          const j = dj > 0 ? host.z0 + host.h - 1 : dj < 0 ? host.z0 : host.z0 + o
+          mouths.push({ i, j, di, dj })
+        }
+      }
+    }
+    for (const [w, h] of opts.sizes ?? [[6, 6], [6, 5], [5, 6], [5, 5], [5, 4], [4, 5], [4, 4]]) {
+      for (const m of mouths) {
+        const mk = this.k(m.i, m.j)
+        if (this.room[mk] !== from || this.pit[mk] || this.ramp[mk]) continue
+        const ci = m.i + m.di
+        const cj = m.j + m.dj
+        const ex = ci + m.di * N
+        const ez = cj + m.dj * N
+        const x0 = m.di > 0 ? ex : m.di < 0 ? ex - w + 1 : ex - Math.floor(w / 2)
+        const z0 = m.dj > 0 ? ez : m.dj < 0 ? ez - h + 1 : ez - Math.floor(h / 2)
+        let free = true
+        for (let j = z0 - 1; j <= z0 + h && free; j++) for (let i = x0 - 1; i <= x0 + w && free; i++) free = voidAt(i, j)
+        for (let s = 0; s < N && free; s++) {
+          const i = ci + m.di * s
+          const j = cj + m.dj * s
+          free = voidAt(i, j) && voidAt(i + m.dj, j + m.di) && voidAt(i - m.dj, j - m.di)
+        }
+        if (!free) continue
+        return this.carveChallenge(from, this.floor[mk]!, x0, z0, w, h, ci, cj, m.di, m.dj, N)
+      }
+    }
+    return -1
+  }
+
+  private carveChallenge(from: number, y: number, x0: number, z0: number, w: number, h: number, ci: number, cj: number, di: number, dj: number, n: number): number {
+    const id = this.rooms.length
+    const r: Room = { id, x0, z0, w, h, depth: 0, parent: -1, children: [], role: 'challenge', door: -1, spots: [], wallSpots: [] }
+    this.rooms.push(r)
+    this.sections.push('hall')
+    for (let j = z0; j < z0 + h; j++) {
+      for (let i = x0; i < x0 + w; i++) {
+        const k = this.k(i, j)
+        this.cell[k] = Cell.Room
+        this.room[k] = id
+        this.floor[k] = y
+      }
+    }
+    for (let s = 0; s < n; s++) {
+      const k = this.k(ci + di * s, cj + dj * s)
+      this.cell[k] = Cell.Corridor
+      this.floor[k] = y
+    }
+    const door = this.doors.length
+    this.doors.push({
+      id: door, i: ci + di * (n - 1), j: cj + dj * (n - 1), axis: di !== 0 ? 'x' : 'z',
+      dir: (di !== 0 ? di : dj) as 1 | -1, from, to: id, boss: false, challenge: true
+    })
+    this.challenge = { room: id, door, at: challengeSpot(x0, z0, w, h, di, dj) }
+    return id
+  }
+
+  /** A round cover post in the middle of cell (i, j) (`MapData.pillars`):
+   *  solid, a shot or a beam stops at it (`hasLineOfSight`), no path
+   *  through its cell; the level mesh stands it on the cell's floor. */
+  coverPillar(i: number, j: number, r = 0.7): void {
+    this.pillars.push({ x: cellCenter(i), z: cellCenter(j), r })
+  }
+
   /** A bridge of light (`sim/stages/neon.ts`) at top `y` over the w × d
    *  cells from (i, j), which become pit: solid only while lit. */
   bridge(i: number, j: number, y: number, w: number, d: number, o: Pick<NeonBridge, 'group' | 'period' | 'phase' | 'on' | 'pulse'>): void {
@@ -295,6 +400,24 @@ export class Builder {
     this.ramp[k] = dir
     this.floor[k] = lo
     this.rise[k] = rise
+  }
+
+  /**
+   * A pool let into the floor (the Tidewater Locks' water, `sim/stages/
+   * water.ts`): cells (i0, j0)–(i1, j1) sunk `deep` m under the `rim`
+   * around them. With an `exit` side its last row or column is a step
+   * ledge half-way up, so the way out is two steps of no more than STEP_UP
+   * (`world/nav.ts`) — there is no jump, an edge is the only one. Returns
+   * the still surface: POOL_FREEBOARD under the rim, never level with a
+   * floor, so the water reads as filling a basin and never stands on one.
+   */
+  pool(i0: number, j0: number, i1: number, j1: number, rim: number, exit: WallSide | null, deep = POOL_DEEP): number {
+    this.level(i0, j0, i1, j1, rim - deep)
+    if (exit === 'e') this.level(i1, j0, i1, j1, rim - deep / 2)
+    else if (exit === 'w') this.level(i0, j0, i0, j1, rim - deep / 2)
+    else if (exit === 's') this.level(i0, j1, i1, j1, rim - deep / 2)
+    else if (exit === 'n') this.level(i0, j0, i1, j0, rim - deep / 2)
+    return rim - POOL_FREEBOARD
   }
 
   /** A straight corridor out of the last room: `n` cells from (i, j) along
@@ -351,11 +474,15 @@ export class Builder {
    * and hidden until solved. `door` is the alcove cell whose face along
    * `axis` opens onto a room cell (the false wall). Each button sits on the
    * named wall side of its cell; `color` defaults to the button's index.
-   * For `color` the target is derived from `key`; otherwise it is `target`.
+   * For `color` the target is derived from `key`; otherwise it is `target`
+   * ('sequence': the button indices in order). `parts` holds a 'mirror'
+   * puzzle's beam lamp (a wall side of a cell) and mirrors (cells, and how
+   * each starts: `SecretSpec.mirrors`), a 'tiles' puzzle's plates (cells).
    */
   secret(
     room: number, kind: SecretSpec['kind'], alcove: [number, number, number, number], door: SecretSpec['door'],
-    buttons: Array<[number, number, WallSide, number?]>, target: number[], prize: SecretSpec['prize'], key?: number
+    buttons: Array<[number, number, WallSide, number?]>, target: number[], prize: SecretSpec['prize'], key?: number,
+    parts: { emitter?: [number, number, WallSide]; mirrors?: Array<[number, number, number]>; tiles?: Array<[number, number]> } = {}
   ): SecretSpec {
     const [i0, j0, i1, j1] = alcove
     const inAlcove = (i: number, j: number) => i >= i0 && i <= i1 && j >= j0 && j <= j1
@@ -428,8 +555,35 @@ export class Builder {
     // target the buttons start on, is no puzzle (the wall would never open,
     // or the first shot would un-solve it).
     if (kind === 'color' && !bs.some(b => b.color === key)) throw new Error(`[builder] secret in room ${room}: no button has the key colour ${key}`)
+    if (kind === 'sequence') {
+      if (new Set(bs.map(b => b.color)).size !== bs.length) throw new Error(`[builder] sequence secret in room ${room}: two buttons share a colour`)
+      if (target.length < 2 || target.some(n => !bs[n])) throw new Error(`[builder] sequence secret in room ${room}: a bad order`)
+    }
+    // A mirror puzzle's target is the panel beside the false wall (never on
+    // it: it sinks), so the beam runs along a line of cell centres to it.
+    if (kind === 'mirror' && Math.abs(Math.abs(along) - CELL) > 1e-6) throw new Error(`[builder] mirror secret in room ${room}: no wall beside the false wall for the target`)
+    const onFloor = (i: number, j: number, what: string): number => {
+      const k = this.k(i, j)
+      if (this.room[k] !== room || inAlcove(i, j) || this.pit[k] || this.ramp[k]) throw new Error(`[builder] secret in room ${room}: ${what} (${i},${j}) is not on its floor`)
+      return this.floor[k]!
+    }
+    const extra: Pick<SecretSpec, 'emitter' | 'mirrors' | 'tiles'> = {}
+    if (kind === 'mirror') {
+      if (!parts.emitter || !parts.mirrors?.length) throw new Error(`[builder] mirror secret in room ${room}: a beam lamp and mirrors`)
+      const [ei, ej, side] = parts.emitter
+      const [di, dj] = SIDE[side]
+      extra.emitter = {
+        x: cellCenter(ei) + di * (CELL / 2 - BUTTON_OFF), y: onFloor(ei, ej, 'beam lamp') + PANEL_Y,
+        z: cellCenter(ej) + dj * (CELL / 2 - BUTTON_OFF), nx: di ? -di : 0, nz: dj ? -dj : 0
+      }
+      extra.mirrors = parts.mirrors.map(([i, j, o]) => ({ x: cellCenter(i), y: onFloor(i, j, 'mirror') + PANEL_Y, z: cellCenter(j), o: o ? 1 : 0 }))
+    }
+    if (kind === 'tiles') {
+      if ((parts.tiles?.length ?? 0) < 2) throw new Error(`[builder] tiles secret in room ${room}: no plates`)
+      extra.tiles = parts.tiles!.map(([i, j]) => ({ x: cellCenter(i), y: onFloor(i, j, 'plate'), z: cellCenter(j) }))
+    }
     const want = target.slice()
-    if (kind !== 'color' && want.length) {
+    if (kind !== 'color' && kind !== 'sequence' && want.length) {
       const start = bs.map(b => (kind === 'cycle' ? ((b.color % 4) + 4) % 4 : 0))
       if (start.every((v, n) => v === (want[n] ?? 0))) want[0] = kind === 'cycle' ? (start[0]! + 1) % 4 : 1
     }
@@ -438,7 +592,8 @@ export class Builder {
       target: kind === 'color' ? bs.map(b => (b.color === key ? 1 : 0)) : want,
       key: kind === 'color' ? key : undefined,
       panel, door: { ...door }, cells, prize,
-      prizeAt: { x: cellCenter(pi), y, z: cellCenter(pj) }
+      prizeAt: { x: cellCenter(pi), y, z: cellCenter(pj) },
+      ...extra
     }
     if (spec.key === undefined) delete spec.key
     this.secrets.push(spec)
@@ -504,14 +659,16 @@ export const finish = (b: Builder, start: { x: number; z: number; yaw: number },
     terrain.icePillars = b.icePillars
     for (const p of b.icePillars) navBlock[b.k(p.i, p.j)] = 1
   }
+  for (const p of b.pillars) navBlock[b.k(Math.floor(p.x / CELL), Math.floor(p.z / CELL))] = 1
   if (b.icicles.length) terrain.icicles = b.icicles
   if (b.crumbles.length) terrain.crumbles = b.crumbles
   const map: MapData = {
     seed, w: b.W, h: b.H, cell: b.cell, room: b.room, navBlock, rooms: b.rooms,
-    doors: b.doors, pillars: [], start, terrain
+    doors: b.doors, pillars: b.pillars.map(p => ({ ...p })), start, terrain
   }
   if (b.beam) map.beam = b.beam
   if (b.exit) map.exit = b.exit
+  if (b.challenge) map.challenge = b.challenge
   return map
 }
 
@@ -556,7 +713,11 @@ export const mirrorX = (m: MapData): MapData => {
       panel: { ...s.panel, x: X - s.panel.x, nx: -s.panel.nx },
       door: { ...s.door, i: mi(s.door.i) },
       cells: s.cells.map(mk),
-      prizeAt: { ...s.prizeAt, x: X - s.prizeAt.x }
+      prizeAt: { ...s.prizeAt, x: X - s.prizeAt.x },
+      // A mirror turned over: the beam it sent to +z it now sends to −z.
+      ...(s.emitter ? { emitter: { ...s.emitter, x: X - s.emitter.x, nx: -s.emitter.nx } } : {}),
+      ...(s.mirrors ? { mirrors: s.mirrors.map(m => ({ ...m, x: X - m.x, o: 1 - m.o })) } : {}),
+      ...(s.tiles ? { tiles: s.tiles.map(p => ({ ...p, x: X - p.x })) } : {})
     }))
   }
   if (t.ice) terrain.ice = flip(t.ice)
@@ -606,6 +767,7 @@ export const mirrorX = (m: MapData): MapData => {
     doors: m.doors.map(d => ({ ...d, i: mi(d.i), dir: (d.axis === 'x' ? -d.dir : d.dir) as 1 | -1 })),
     start: { x: X - m.start.x, z: m.start.z, yaw: -m.start.yaw },
     ...(m.exit ? { exit: { ...m.exit, pad: [mi(m.exit.pad[0]), m.exit.pad[1]] as [number, number] } } : {}),
+    ...(m.challenge ? { challenge: { ...m.challenge, at: [mi(m.challenge.at[0]), m.challenge.at[1]] as [number, number] } } : {}),
     terrain
   }
 }

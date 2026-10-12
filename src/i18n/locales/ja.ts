@@ -38,6 +38,7 @@ export default {
     'lastStand': '食いしばり！ システム再起動。',
     'weak': '弱点！',
     'kranck': 'KRANCK!',
+    'tooWeak': '弱すぎる！',
     'dizzy': 'フラフラ！',
     'dodge': '回避！',
     'block': 'ガード',
@@ -70,6 +71,7 @@ export default {
     'warden': 'ウォーデン',
     'hornet': 'ホーネットローター',
     'stalker': 'グロウストーカー',
+    'spotter': 'サーチライトドローン',
     'puffer': 'フグ機雷',
     'mole': 'モグラドリラー',
     'polar': 'ポーラーパップ',
@@ -91,6 +93,7 @@ export default {
     'warden': 'ウォーデン | ウォーデン',
     'hornet': 'ホーネットローター | ホーネットローター',
     'stalker': 'グロウストーカー | グロウストーカー',
+    'spotter': 'サーチライトドローン | サーチライトドローン',
     'puffer': 'フグ機雷 | フグ機雷',
     'mole': 'モグラドリラー | モグラドリラー',
     'polar': 'ポーラーパップ | ポーラーパップ',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'ゲイルマスター',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'グランドマスターボット'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'シンダーハウンド',
+    'icebreakerBrute': 'アイスブレイカー・ブルート',
+    'arcSpider': 'アークスパイダー',
+    'stormHornetQueen': 'ストームホーネット・クイーン',
+    'lodestoneGolem': 'ロードストーン・ゴーレム',
+    'burrowWyrm': 'バロウワーム',
+    'pufferMatriarch': 'パファー・マトリアーク',
+    'glitchStalker': 'グリッチストーカー',
+    'sawGyro': 'ソウジャイロ',
+    'sentinelPrototype': 'センチネル・プロトタイプ'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'チャレンジ',
+    'cleared': 'チャレンジ達成！ +{bolts} ネジ'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'レベル{n}！ システム完全修復。'
   },
   'tips': {
-    'moveTouch': '左側をドラッグで移動、右側で視点操作。床をタップするとそこへ歩くよ！',
+    'moveTouch': '左側をドラッグで移動、右側で視点操作。',
     'moveKeys': '{keys}で移動。',
     'lookMouse': 'マウスを動かして周りを見渡そう。',
     'capture': '画面をクリックするとカメラを操作できるよ。',
@@ -315,8 +338,8 @@ export default {
       'interact': 'アクション'
     },
     'touch': {
-      'move': '左側：ドラッグで移動。床をタップするとそこへ歩く。',
-      'fire': '戦闘中：タップで射撃、長押しでチャージ、離して発射。',
+      'move': '左側：ドラッグで移動。右側：ドラッグで視点操作。',
+      'fire': '右側か発射ボタン：タップで射撃、長押しでチャージ、離して発射。長押ししたままドラッグで狙いを定める。',
       'block': 'シールドを長押しでガード — 輪が閉じる瞬間ならパリィ。',
       'use': 'チェスト・取り残されたロボ・扉の近くで：それか、出てきたボタンをタップ。'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}。開いたらコアを狙って。',
       'hornet': '{enemy}。まっすぐ突っ込んでくる。横へ！',
       'stalker': '{enemy}。飛びかかりをパリィ。',
+      'spotter': '{enemy}。光から出ろ。ライトを撃て。',
       'puffer': '{enemy}。膨らむ前に割って。',
       'mole': '{enemy}。飛び出したら撃って。',
       'elite': '金の輪。エリートだ。気をつけて。',
@@ -730,6 +754,7 @@ export default {
       'free': '自由だからだよ。',
     },
     'guardDown': '番兵ダウン！道が開いたよ。',
+    'challenge': 'チャレンジの扉だ！中にお宝があるよ。',
     'help': {
       'weapon': '新しい武器を選んでドローンを撃とう！',
       'gap': '端に向かってまっすぐ歩けば自動で飛び越えるよ！',
@@ -737,6 +762,7 @@ export default {
       'slide': '赤い輪が届く直前にスライディングでかわそう！',
       'block': '撃たれたらガードを長押し。当たる瞬間がパーフェクトだよ！',
       'blockMiss': 'シールドを構えて！当たる瞬間にガードで跳ね返せ！',
+      'chargeMiss': 'キャノンのボタンを長押しして、チャージショットを撃ってみて！',
       'charge': 'キャノンが光るまで撃ち続けて、離そう！',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'あのパネルに模様がある。壁のランプはまだ違うね。',
       'color': 'あの枠にはお気に入りの色がある。光っていいのはその色のランプだけ。',
       'cycle': '撃つたびにランプは気が変わる。パネルは答えを知ってるよ。',
+      'sequence': 'パネルが同じメロディを点滅させてる。ボタンで順番どおりに弾き返して。',
+      'mirror': 'あの光線はリングに届きたいんだ。鏡は撃つと向きが変わるよ。',
+      'tiles': 'ひと歩きで全部のパネルを光らせて。同じのを二度踏むか、外に出たら真っ暗に戻るよ。',
       'solved': 'おやおや。パズル好きがいるみたい。'
     },
     'landed': '着陸！行こう。',

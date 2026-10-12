@@ -35,7 +35,7 @@ const fake = (stomper: { state: string } | null) => {
     blockMet: false
   }
   Object.assign(m, {
-    training: tr, lessons: {}, gapArrows: [], beamTeach: null, gelHoloOn: false, walk,
+    training: tr, lessons: {}, gapArrows: [], gelHoloOn: false, walk,
     map: { w: 1, h: 1, room: [0] }, player: { x: 1, z: 1 }, time: 0,
     slideCue: null, slideCueDone: false, slideCued: null, slideMissAt: -1, slideMissed: false,
     trainSpot: null, coach: { master: () => {} }, dirty: false, learnedHere: new Set()

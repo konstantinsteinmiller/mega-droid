@@ -30,22 +30,27 @@ describe('the balance simulation', () => {
     }
   })
 
-  it('a Core Master is survivable: with two full-heal gels, dodging or blocking half its hits wins', () => {
-    for (const r of story) expect(r.bossTtd * 3).toBeGreaterThanOrEqual(r.bossTtk * 0.5)
+  // Vex, the last boss, takes 1.5× his first draft's health (playtest
+  // 2026-10-12): against him it takes dodging or blocking two hits in three.
+  it('a Core Master is survivable: with two full-heal gels, dodging or blocking half its hits wins (Vex: two in three)', () => {
+    for (const r of story) expect(r.bossTtd * 3, r.sector).toBeGreaterThanOrEqual(r.bossTtk * (r.sector === 'fortress' ? 1 / 3 : 0.5))
   })
 
-  it('the Grand Master is the longest fight of the game: about two minutes for the reference player (#101)', () => {
+  // Its parts follow Vex's health, 1.5× since playtest 2026-10-12: ~2:40.
+  it('the Grand Master is the longest fight of the game: two to three minutes for the reference player (#101)', () => {
     const f = simulate(REFERENCE).find(r => r.sector === 'fortress' && r.kind === 'story')!
     expect(f.gmTtk).toBeGreaterThan(f.bossTtk)
     expect(f.gmTtk).toBeGreaterThanOrEqual(80)
-    expect(f.gmTtk).toBeLessThanOrEqual(150)
+    expect(f.gmTtk).toBeLessThanOrEqual(180)
   })
 
-  it('the Fortress mini-bosses are proper fights, shorter than Vex: the Gatekeeper, then each Twin Master', () => {
+  // The gates take twice their formula's health on the story stage (playtest
+  // 2026-10-12): the Gatekeeper is now as long as Vex, never longer.
+  it('the Fortress mini-bosses are proper fights, never longer than Vex: the Gatekeeper, then each Twin Master', () => {
     const f = story.find(r => r.sector === 'fortress')!
-    expect(f.gateTtk).toBeGreaterThanOrEqual(12)
-    expect(f.gateTtk).toBeLessThan(f.bossTtk)
-    expect(f.twinTtk).toBeGreaterThanOrEqual(6)
+    expect(f.gateTtk).toBeGreaterThanOrEqual(24)
+    expect(f.gateTtk).toBeLessThanOrEqual(f.bossTtk)
+    expect(f.twinTtk).toBeGreaterThanOrEqual(12)
     expect(f.twinTtk * 2).toBeLessThanOrEqual(f.bossTtk + 10)
   })
 

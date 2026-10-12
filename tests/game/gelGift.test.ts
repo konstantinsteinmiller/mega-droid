@@ -21,7 +21,7 @@ const fake = (learnedBefore: boolean) => {
   if (learnedBefore) tr.done.add('gel')
   tr.enter('gel', 0)
   Object.assign(m, {
-    training: tr, lessons: { gelEnded: true }, gapArrows: [], beamTeach: null, gelHoloOn: false,
+    training: tr, lessons: { gelEnded: true }, gapArrows: [], gelHoloOn: false,
     walk: null, player: { x: 0, z: 0 }, coach: { master: () => {} }, dirty: false, learnedHere: new Set()
   })
   return m as unknown as { stepTrainingBeats(playing: boolean): void; training: Training }

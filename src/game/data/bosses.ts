@@ -96,8 +96,10 @@ export const BOSSES: Record<BossId, BossDef> = {
     id: 'rotorMaster', hp: 840, dmg: 24, element: 'none', weakTo: 'neonBlade', color: MASTER_COLOR.rotorMaster,
     patterns: ['droneSwarm', 'downdraft', 'dive'], patterns2: ['rotorStorm']
   }),
+  // 1.5× the first draft's 1100 (playtest 2026-10-12); the Grand Master
+  // Bot's parts follow (GM_HP_MUL of his max).
   vexMk1: base({
-    id: 'vexMk1', hp: 1100, dmg: 22, element: 'none', weakTo: null, scale: 1, fly: 1.6, radius: 1.3, hitR: 1.3, aimY: 0.2,
+    id: 'vexMk1', hp: 1650, dmg: 22, element: 'none', weakTo: null, scale: 1, fly: 1.6, radius: 1.3, hitR: 1.3, aimY: 0.2,
     speed: 2.2, range: [6, 11], xp: 600, bolts: [150, 220], color: MASTER_COLOR.vexMk1,
     patterns: ['flameBurst', 'iceVolley', 'orbStorm', 'lobBarrage'], patterns2: ['voltRing', 'fireWave', 'dive']
   })

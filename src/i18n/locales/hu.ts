@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Utolsó Kiállás! Rendszerek újraindítva.',
     'weak': 'GYENGE!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TÚL GYENGE!',
     'dizzy': 'SZÉDÜL!',
     'dodge': 'KITÉRÉS!',
     'block': 'Védés',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Őrző',
     'hornet': 'Darázsrotor',
     'stalker': 'Izzó cserkész',
+    'spotter': 'Reflektoros drón',
     'puffer': 'Gömbhalakna',
     'mole': 'Fúróvakond',
     'polar': 'Sarki kölyök',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Őrző | Őrző',
     'hornet': 'Darázsrotor | Darázsrotor',
     'stalker': 'Izzó cserkész | Izzó cserkész',
+    'spotter': 'Reflektoros drón | Reflektoros drón',
     'puffer': 'Gömbhalakna | Gömbhalakna',
     'mole': 'Fúróvakond | Fúróvakond',
     'polar': 'Sarki kölyök | Sarki kölyök',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Szélmester',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Nagymester-robot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Parázskopó',
+    'icebreakerBrute': 'Jégtörő Behemót',
+    'arcSpider': 'Ívpók',
+    'stormHornetQueen': 'Viharlódarázs-királynő',
+    'lodestoneGolem': 'Mágnesköves Gólem',
+    'burrowWyrm': 'Fúróféreg',
+    'pufferMatriarch': 'Gömbhal-matriarcha',
+    'glitchStalker': 'Glitch-lesvadász',
+    'sawGyro': 'Fűrészpörgettyű',
+    'sentinelPrototype': 'Őrszem Prototípus'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Kihívás',
+    'cleared': 'Kihívás teljesítve! +{bolts} csavar'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '{n}. szint! Rendszerek teljesen megjavítva.'
   },
   'tips': {
-    'moveTouch': 'Húzd a bal oldalt a mozgáshoz, a jobb oldalt a körbenézéshez. Koppints a padlóra, és odasétálsz!',
+    'moveTouch': 'Húzd a bal oldalt a mozgáshoz, a jobb oldalt a körbenézéshez.',
     'moveKeys': 'Mozgás: {keys}.',
     'lookMouse': 'Mozgasd az egeret a körbenézéshez.',
     'capture': 'Kattints a jelenetre, hogy irányítsd a kamerát.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Használat'
     },
     'touch': {
-      'move': 'Bal oldal: húzd a mozgáshoz. Koppints a padlóra, és odasétálsz.',
-      'fire': 'Harcban: koppints a lövéshez, tartsd a töltéshez, engedd el a tüzeléshez.',
+      'move': 'Bal oldal: húzd a mozgáshoz. Jobb oldal: húzd a körbenézéshez.',
+      'fire': 'Jobb oldal vagy a tűzgomb: koppints a lövéshez, tartsd a töltéshez, engedd el a tüzeléshez. Nyomva tartva húzd a célzáshoz.',
       'block': 'Tartsd lenyomva a pajzsot a védéshez — épp, amikor bezárul egy gyűrű, és hárítasz.',
       'use': 'Láda, rekedt robot vagy ajtó mellett: koppints rá, vagy a felugró gombra.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Találd el a magot, amikor kinyílik.',
       'hornet': '{enemy}. Egyenesen csap le: lépj oldalra!',
       'stalker': '{enemy}. Hárítsd az ugrását.',
+      'spotter': '{enemy}. Lépj ki a fényéből. Lőj a lámpára.',
       'puffer': '{enemy}. Lődd ki, mielőtt felfúvódik.',
       'mole': '{enemy}. Találd el, amikor felbukkan.',
       'elite': 'Aranygyűrű. Elit. Óvatosan.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Mert szabadok.',
     },
     'guardDown': 'Lent a védelem! Szabad az út.',
+    'challenge': 'Kihívásajtó! Bent jó zsákmány vár.',
     'help': {
       'weapon': 'Válaszd ki az új fegyvered, és lőj a drónokra!',
       'gap': 'Sétálj egyenesen a perem felé, és átugrasz!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Csússz el, mielőtt a piros gyűrű elér!',
       'block': 'Tartsd lenyomva a védést, amikor tüzel. Épp a becsapódáskor a tökéletes!',
       'blockMiss': 'Pajzsot fel! Védj épp a becsapódáskor, és visszarepül!',
+      'chargeMiss': 'Próbálj töltött lövést: tartsd lenyomva az ágyú gombját!',
       'charge': 'Tartsd lenyomva a tüzet, amíg az ágyú izzik, aztán engedd el!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Az a panel egy mintát mutat. A falon lévő lámpák nem. Még.',
       'color': 'Annak a keretnek van egy kedvenc színe. Csak az ő lámpáinak kell világítaniuk.',
       'cycle': 'Minden találat meggondoltat egy lámpát. A panel tudja, mit akar.',
+      'sequence': 'A tábla ugyanazt a dallamot villogja. Játszd le a gombokon, sorrendben.',
+      'mirror': 'Az a sugár a gyűrűbe akar jutni. A tükrök elfordulnak, ha rájuk lősz.',
+      'tiles': 'Gyújtsd fel az összes lapot egyetlen sétával. Kétszer egyre, vagy le róluk, és megint sötét.',
       'solved': 'Nocsak, nocsak. Valaki szereti a rejtvényeket.'
     },
     'landed': 'Landoltunk! Gyerünk.',

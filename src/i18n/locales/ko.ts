@@ -38,6 +38,7 @@ export default {
     'lastStand': '불굴! 시스템 재가동.',
     'weak': '약점!',
     'kranck': 'KRANCK!',
+    'tooWeak': '너무 약해!',
     'dizzy': '어질어질!',
     'dodge': '회피!',
     'block': '막기',
@@ -70,6 +71,7 @@ export default {
     'warden': '워든',
     'hornet': '호넷 로터',
     'stalker': '글로우 스토커',
+    'spotter': '서치라이트 드론',
     'puffer': '복어 기뢰',
     'mole': '두더지 드릴러',
     'polar': '폴라 강아지',
@@ -91,6 +93,7 @@ export default {
     'warden': '워든 | 워든',
     'hornet': '호넷 로터 | 호넷 로터',
     'stalker': '글로우 스토커 | 글로우 스토커',
+    'spotter': '서치라이트 드론 | 서치라이트 드론',
     'puffer': '복어 기뢰 | 복어 기뢰',
     'mole': '두더지 드릴러 | 두더지 드릴러',
     'polar': '폴라 강아지 | 폴라 강아지',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': '질풍 마스터',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': '그랜드 마스터 봇'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': '잿불 사냥개',
+    'icebreakerBrute': '쇄빙 브루트',
+    'arcSpider': '아크 거미',
+    'stormHornetQueen': '폭풍 말벌 여왕',
+    'lodestoneGolem': '자철석 골렘',
+    'burrowWyrm': '굴착 웜',
+    'pufferMatriarch': '복어 여왕',
+    'glitchStalker': '글리치 스토커',
+    'sawGyro': '톱날 자이로',
+    'sentinelPrototype': '센티널 프로토타입'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': '도전',
+    'cleared': '도전 성공! +{bolts} 나사'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '레벨 {n}! 시스템 완전 복구.'
   },
   'tips': {
-    'moveTouch': '왼쪽을 드래그해 이동, 오른쪽으로 시점 조작. 바닥을 탭하면 그곳으로 걸어가요!',
+    'moveTouch': '왼쪽을 드래그해 이동, 오른쪽으로 시점 조작.',
     'moveKeys': '{keys}로 이동해요.',
     'lookMouse': '마우스를 움직여 주위를 둘러보세요.',
     'capture': '화면을 클릭하면 카메라를 조작할 수 있어요.',
@@ -315,8 +338,8 @@ export default {
       'interact': '상호작용'
     },
     'touch': {
-      'move': '왼쪽: 드래그로 이동. 바닥을 탭하면 그곳으로 걸어갑니다.',
-      'fire': '전투 중: 탭으로 사격, 길게 눌러 차지, 떼면 발사.',
+      'move': '왼쪽: 드래그로 이동. 오른쪽: 드래그로 시점 조작.',
+      'fire': '오른쪽 또는 발사 버튼: 탭으로 사격, 길게 눌러 차지, 떼면 발사. 누른 채 드래그해 조준.',
       'block': '방패를 길게 눌러 막기 — 링이 닫히는 순간이면 패링.',
       'use': '상자, 고립된 로봇, 문 근처에서: 그것이나 나타나는 버튼을 탭하세요.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. 열릴 때 코어를 노려.',
       'hornet': '{enemy}. 일직선으로 덮쳐. 옆으로 피해!',
       'stalker': '{enemy}. 달려들 때 패링해.',
+      'spotter': '{enemy}. 빛에서 벗어나. 램프를 쏴.',
       'puffer': '{enemy}. 부풀기 전에 터뜨려.',
       'mole': '{enemy}. 튀어나올 때 맞혀.',
       'elite': '금색 링. 엘리트야. 조심해.',
@@ -730,6 +754,7 @@ export default {
       'free': '자유니까.',
     },
     'guardDown': '경비 격파! 길이 열렸어.',
+    'challenge': '도전의 문이야! 안에 전리품이 있어.',
     'help': {
       'weapon': '새 무기를 골라서 드론에게 쏘세요!',
       'gap': '가장자리를 향해 똑바로 걸으면 자동으로 뛰어넘어요!',
@@ -737,6 +762,7 @@ export default {
       'slide': '빨간 링이 닿기 직전에 슬라이딩으로 피하세요!',
       'block': '공격할 때 막기를 누르세요. 맞는 순간 딱 맞추면 퍼펙트예요!',
       'blockMiss': '방패를 들어요! 맞는 순간 막으면 되돌려 보내요!',
+      'chargeMiss': '캐논 버튼을 길게 눌러 차지 샷을 쏴 봐!',
       'charge': '캐논이 빛날 때까지 사격을 누르고 있다가 놓으세요!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': '저 패널에 무늬가 있어. 벽의 램프는 아직 아니고.',
       'color': '저 테두리엔 좋아하는 색이 있어. 그 색 램프만 켜져야 해.',
       'cycle': '쏠 때마다 램프가 마음을 바꿔. 패널은 뭘 원하는지 알아.',
+      'sequence': '패널이 같은 멜로디를 계속 깜빡여. 버튼으로 순서대로 따라 쳐 봐.',
+      'mirror': '저 빛줄기는 고리에 닿고 싶어 해. 거울은 쏘면 돌아가.',
+      'tiles': '한 번에 걸어서 모든 판을 밝혀. 한 판을 두 번 밟거나 밖으로 나가면 다시 깜깜해져.',
       'solved': '오호. 누가 퍼즐을 좋아하나 보네.'
     },
     'landed': '착륙! 가자.',

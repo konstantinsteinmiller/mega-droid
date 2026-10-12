@@ -10,6 +10,15 @@
       div.atlas-glyph.corner(ref="cornerEl")
     div.vex-bubble(v-if="cine.vex" ref="bubbleEl" aria-hidden="true")
       span.vex-text {{ t(`story.vex.${cine.vex}`) }}
+    //- The Overload preview (#137): the game's charge ring on the weak spot
+    //- Flux aims at, and the game's "KRANCK!" when the shot lands in it.
+    div.charge-xh(ref="xhEl" aria-hidden="true")
+      svg(viewBox="0 0 100 100")
+        circle.track(cx="50" cy="50" r="40")
+        circle.l1(ref="xhL1El" cx="50" cy="50" r="40")
+        circle.l2(ref="xhL2El" cx="50" cy="50" r="46")
+        circle.dot(cx="50" cy="50" r="5")
+    span.kranck(ref="kranckEl" aria-hidden="true") {{ t('combat.kranck') }}
     div.fp-hud(ref="hudEl" aria-hidden="true")
       div.hp
         div.cells
@@ -72,7 +81,10 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { addHudTicker } from '@/game/state/hud'
 import { cine, cineLive, openGate, skipCutscene } from '@/game/story/cine'
-import { ATLAS_HOLD, VEX_ON, ramp } from '@/game/story/introScript'
+import { ATLAS_HOLD, VEX_ON, OVER_STATS, ramp } from '@/game/story/introScript'
+import { chargeInfo } from '@/game/sim/stats'
+import { initChargeRing, paintChargeRing } from '@/components/hud/chargeRing'
+import { KRANCK_LIFE, kranckTransform } from '@/components/hud/kranck'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { LOGO_SVG } from './logoLockup'
 
@@ -127,6 +139,10 @@ const lidBottomEl = ref<HTMLElement | null>(null)
 const blackEl = ref<HTMLElement | null>(null)
 const flashEl = ref<HTMLElement | null>(null)
 const logoEl = ref<HTMLElement | null>(null)
+const xhEl = ref<HTMLElement | null>(null)
+const xhL1El = ref<SVGCircleElement | null>(null)
+const xhL2El = ref<SVGCircleElement | null>(null)
+const kranckEl = ref<HTMLElement | null>(null)
 
 /** A pop: overshoot then settle, over `len` seconds from `age` 0. */
 const pop = (age: number, len = 0.32): number => {
@@ -146,6 +162,7 @@ let off: (() => void) | null = null
 let lastHold = -1
 onMounted(() => {
   window.addEventListener('keydown', onAnyKey)
+  if (xhL1El.value && xhL2El.value) initChargeRing(xhL1El.value, xhL2El.value)
   off = addHudTicker(() => {
     const L = cineLive
     const tt = L.t
@@ -166,6 +183,27 @@ onMounted(() => {
       const x = Math.min(Math.max(L.bubbleX * w, 12), w - bw - 12)
       const y = Math.min(Math.max(L.bubbleY * h - bh, 12 + h * 0.06), h - bh - 12)
       b.style.transform = `translate3d(${x.toFixed(0)}px, ${y.toFixed(0)}px, 0) scale(${s.toFixed(3)}) rotate(${((1 - Math.min(1, s)) * -8).toFixed(2)}deg)`
+    }
+    // The Overload preview: the charge ring as the crosshair's in play (the
+    // same painter, the same states), sitting on the weak spot…
+    const xh = xhEl.value
+    if (xh && xhL1El.value && xhL2El.value) {
+      const on = L.charge >= 0 && L.ringX >= 0
+      xh.style.visibility = on ? 'visible' : 'hidden'
+      if (on) {
+        const info = chargeInfo(L.charge, OVER_STATS)
+        const showing = info.toL1 > 0.12
+        paintChargeRing(xh, xhL1El.value, xhL2El.value, info, showing, tt)
+        xh.style.transform = `translate3d(${(L.ringX * w).toFixed(0)}px, ${(L.ringY * h).toFixed(0)}px, 0) translate(-50%, -50%) scale(${(1 + (showing ? 0.25 + info.toL2 * 0.25 : 0)).toFixed(3)})`
+      }
+    }
+    // …and "KRANCK!" over it when the shot lands.
+    const kr = kranckEl.value
+    if (kr) {
+      const age = tt - L.kranckAt
+      const on = age >= 0 && age < KRANCK_LIFE
+      kr.style.visibility = on ? 'visible' : 'hidden'
+      if (on) kr.style.transform = `translate3d(${(L.kranckX * w).toFixed(0)}px, ${(L.kranckY * h).toFixed(0)}px, 0) translate(-50%, -50%) ${kranckTransform(age)}`
     }
     // First person: eyelids, focus, the HUD booting.
     const lid = L.eyelid
@@ -226,6 +264,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="sass">
+@use '../hud/chargeRing'
+@use '../hud/kranck'
 // ── The start gate ──
 .start-gate
   position: absolute
@@ -371,6 +411,28 @@ onUnmounted(() => {
   background: linear-gradient(115deg, rgba(20, 26, 51, 0.9) 0 9%, transparent 9% 91%, rgba(20, 26, 51, 0.9) 91%)
 
 // ── Dr. Vex's bubble: ornate, gilded and red ──
+// The Overload preview's charge ring (the crosshair's size and look) and
+// "KRANCK!" (the call-out's), placed by the ticker.
+.charge-xh
+  position: absolute
+  left: 0
+  top: 0
+  width: clamp(44px, 9vmin, 64px)
+  height: clamp(44px, 9vmin, 64px)
+  pointer-events: none
+  visibility: hidden
+  will-change: transform
+  +chargeRing.look
+.kranck
+  position: absolute
+  left: 0
+  top: 0
+  line-height: 1
+  white-space: nowrap
+  pointer-events: none
+  visibility: hidden
+  will-change: transform
+  +kranck.look
 .vex-bubble
   position: absolute
   left: 0

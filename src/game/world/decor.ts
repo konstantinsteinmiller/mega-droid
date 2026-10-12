@@ -126,9 +126,18 @@ export const reservedCells = (map: MapData, spotsFree: readonly number[] = []): 
     for (const b of s.buttons) cellAt(b.x, b.z)
     cellAt(s.panel.x, s.panel.z)
     ij(s.door.i, s.door.j)
+    // A mirror puzzle's beam lamp and mirrors, a tiles puzzle's plates.
+    if (s.emitter) cellAt(s.emitter.x, s.emitter.z)
+    for (const m of s.mirrors ?? []) cellAt(m.x, m.z)
+    for (const p of s.tiles ?? []) cellAt(p.x, p.z)
   }
   for (const c of t.crumbles ?? []) box(c.i, c.j, c.i + (c.w ?? 1) - 1, c.j + (c.d ?? 1) - 1)
-  for (const z of t.wind ?? []) box(z.i0, z.j0, z.i1, z.j1)
+  for (const z of t.wind ?? []) {
+    box(z.i0, z.j0, z.i1, z.j1)
+    // And the strip a cell upwind of it, where its turbine stands (`sim/stages/wind.ts`).
+    if (z.dx) box(z.dx > 0 ? z.i0 - 1 : z.i1 + 1, z.j0, z.dx > 0 ? z.i0 - 1 : z.i1 + 1, z.j1)
+    if (z.dz) box(z.i0, z.dz > 0 ? z.j0 - 1 : z.j1 + 1, z.i1, z.dz > 0 ? z.j0 - 1 : z.j1 + 1)
+  }
   for (const m of t.magnets ?? []) { box(m.i0, m.j0, m.i1, m.j1); if (m.panel) ij(m.panel.i, m.panel.j) }
   for (const w of t.water ?? []) box(w.i0, w.j0, w.i1, w.j1, 1)
   for (const n of t.neon ?? []) box(n.i, n.j, n.i + n.w - 1, n.j + n.d - 1, 1)
@@ -153,29 +162,75 @@ export const reservedCells = (map: MapData, spotsFree: readonly number[] = []): 
   return out
 }
 
-/** Wall faces a level's own wall things use: puzzle buttons and panels,
- *  switches, valves, magnet panels, ladders and kick shafts. */
+/** A wall thing's face, `"<cell index>:<di>,<dj>"` (the room cell in front
+ *  and the edge's outward step), from its spot and its normal into the room. */
+const faceOf = (W: number, x: number, z: number, nx: number, nz: number): string => {
+  const i = Math.floor((x + nx * 0.5) / CELL)
+  const j = Math.floor((z + nz * 0.5) / CELL)
+  return `${j * W + i}:${-Math.sign(nx)},${-Math.sign(nz)}`
+}
+
+/**
+ * The wall faces a secret's buttons, hint panel and beam lamp are mounted on: the puzzle
+ * audit checks them against the rule (`tests/game/puzzleAudit.test.ts`).
+ */
+export const secretWallFaces = (t: Terrain, W: number): Set<string> => {
+  const out = new Set<string>()
+  for (const s of t.secrets ?? []) {
+    for (const b of s.buttons) out.add(faceOf(W, b.x, b.z, b.nx, b.nz))
+    out.add(faceOf(W, s.panel.x, s.panel.z, s.panel.nx, s.panel.nz))
+    if (s.emitter) out.add(faceOf(W, s.emitter.x, s.emitter.z, s.emitter.nx, s.emitter.nz))
+  }
+  return out
+}
+
+/**
+ * Every wall face a thing the player must SEE or SHOOT hangs on: a secret's
+ * buttons and hint panel, a neon switch, a sluice valve, a magnet rail's
+ * polarity panel. Nothing of the dressing goes on them — no prop, and the
+ * level mesh draws no pipe or light strip there (`climbMesh.ts`): a Polarity
+ * Works pipe ran right across a polarity panel (playtest 2026-10-08), as a
+ * Sky Docks pipe once hid a blue button.
+ */
+export const wallThingFaces = (t: Terrain, W: number): Set<string> => {
+  const out = secretWallFaces(t, W)
+  const side = (i: number, j: number, s: string): void => { const d = SIDE[s]!; out.add(`${j * W + i}:${d[0]},${d[1]}`) }
+  for (const s of t.neonSwitches ?? []) side(s.i, s.j, s.side)
+  for (const w of t.water ?? []) if (w.valve) side(w.valve.i, w.valve.j, w.valve.side)
+  // A flood's inlets stand on the walls by its lowest floor (`sim/stages/water.ts`).
+  for (const w of t.water ?? []) {
+    if (!w.flood) continue
+    let low = Infinity
+    for (let j = w.j0; j <= w.j1; j++) for (let i = w.i0; i <= w.i1; i++) if (!t.pit[j * W + i]) low = Math.min(low, t.floor[j * W + i]!)
+    for (let j = w.j0; j <= w.j1; j++) {
+      for (let i = w.i0; i <= w.i1; i++) {
+        if (t.pit[j * W + i] || t.ramp[j * W + i] || t.floor[j * W + i] !== low) continue
+        for (const s of ['n', 's', 'e', 'w']) side(i, j, s)
+      }
+    }
+  }
+  for (const m of t.magnets ?? []) if (m.panel) side(m.panel.i, m.panel.j, m.panel.side)
+  return out
+}
+
+/** Wall faces a level's own wall things use (`wallThingFaces`), ladders and
+ *  kick shafts. */
 const reservedFaces = (map: MapData): Set<string> => {
   const W = map.w
   const t = map.terrain!
-  const out = new Set<string>()
-  const face = (i: number, j: number, di: number, dj: number): void => { out.add(`${j * W + i}:${di},${dj}`) }
-  const side = (i: number, j: number, s: string): void => { const d = SIDE[s]!; face(i, j, d[0], d[1]) }
-  const near = (x: number, z: number, nx: number, nz: number): void => {
-    // A thing on a wall, its normal (nx, nz) into the room: the wall is the
-    // cell's face the other way.
-    const i = Math.floor((x + nx * 0.5) / CELL)
-    const j = Math.floor((z + nz * 0.5) / CELL)
-    face(i, j, -Math.sign(nx), -Math.sign(nz))
+  const out = wallThingFaces(t, W)
+  for (const l of t.ladders) out.add(`${l.j * W + l.i}:${l.di},${l.dj}`)
+  // A wall vent's or frost nozzle's block, a chest's walls, an ice pillar's
+  // cell: a wall prop there ran into them (the placement audit,
+  // `tests/game/placementAudit.test.ts`).
+  for (const v of t.vents ?? []) if (v.dx || v.dz) out.add(`${v.j * W + v.i}:${-Math.round(v.dx)},${-Math.round(v.dz)}`)
+  for (const c of t.chests ?? []) {
+    // Every wall of its cell: the one behind it, and the one beside it (a
+    // breaker box hung over a chest's lid in its corner).
+    const k = Math.floor(c.z / CELL) * W + Math.floor(c.x / CELL)
+    for (const [di, dj] of DIRS) out.add(`${k}:${di},${dj}`)
   }
-  for (const s of t.secrets ?? []) {
-    for (const b of s.buttons) near(b.x, b.z, b.nx, b.nz)
-    near(s.panel.x, s.panel.z, s.panel.nx, s.panel.nz)
-  }
-  for (const s of t.neonSwitches ?? []) side(s.i, s.j, s.side)
-  for (const w of t.water ?? []) if (w.valve) side(w.valve.i, w.valve.j, w.valve.side)
-  for (const m of t.magnets ?? []) if (m.panel) side(m.panel.i, m.panel.j, m.panel.side)
-  for (const l of t.ladders) face(l.i, l.j, l.di, l.dj)
+  for (const p of t.icePillars ?? []) for (const [di, dj] of DIRS) out.add(`${p.j * W + p.i}:${di},${dj}`)
   return out
 }
 

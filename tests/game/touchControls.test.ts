@@ -109,3 +109,41 @@ describe('on a desktop', () => {
     expect(input.joyActive).toBe(false)
   })
 })
+
+// Playtest 2026-10-08: the right half is the second stick of an FPS. A press
+// shoots and charges whenever play allows a shot — no target needed — and a
+// drag looks while the charge stays held (it used to be dropped, so turning
+// after a machine that left the auto-aim killed every charge).
+describe('the right half on touch', () => {
+  beforeEach(() => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(PHONE)
+    surface = document.createElement('div')
+    surface.getBoundingClientRect = () => ({ left: 0, top: 0, width: 800, height: 400, right: 800, bottom: 400, x: 0, y: 0, toJSON: () => ({}) })
+    document.body.appendChild(surface)
+    input = createInput()
+    detach = attachInput(surface, input, { fireMode: () => true, canLock: () => true })
+  })
+
+  it('a press shoots and charges; a drag looks and keeps the charge; letting go fires it', () => {
+    pointer('pointerdown', 600, 200)
+    expect(input.firePressed).toBe(true)
+    expect(input.fireHeld).toBe(true)
+    pointer('pointermove', 640, 210)
+    pointer('pointermove', 660, 190)
+    expect(input.fireCancelled).toBe(false)
+    expect(input.fireHeld).toBe(true)
+    // One look rate: the view follows the finger exactly.
+    expect(input.lookDX).toBe(60)
+    expect(input.lookDY).toBe(-10)
+    pointer('pointerup', 660, 190)
+    expect(input.fireReleased).toBe(true)
+    expect(input.taps).toHaveLength(0)
+  })
+
+  it('a short still tap still reports where it was (to open a chest in reach)', () => {
+    pointer('pointerdown', 600, 200)
+    pointer('pointerup', 602, 201)
+    expect(input.fireReleased).toBe(true)
+    expect(input.taps).toEqual([{ x: 602, y: 201 }])
+  })
+})

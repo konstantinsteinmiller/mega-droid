@@ -106,7 +106,9 @@ describe('generateClimb', () => {
       const m = generateClimb(seed)
       mirrored.add(m.start.x > m.w * CELL / 2)
       crushers.add(m.terrain!.crushers.length)
-      expect(m.terrain!.sections).toEqual(['hall', 'ladder', 'rolling', 'lift', 'crusher', 'descent', 'arena'])
+      // The seven screens, then the challenge room off the descent (a side room, off the route).
+      expect(m.terrain!.sections).toEqual(['hall', 'ladder', 'rolling', 'lift', 'crusher', 'descent', 'arena', 'hall'])
+      expect(m.rooms[7]!.role).toBe('challenge')
     }
     expect(mirrored.size).toBe(2)
     expect(crushers.size).toBe(2)

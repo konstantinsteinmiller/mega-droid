@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Laatste adem! Systemen herstart.',
     'weak': 'ZWAKTE!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TE ZWAK!',
     'dizzy': 'DUIZELIG!',
     'dodge': 'ONTWEKEN!',
     'block': 'Blokkeren',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Wachter',
     'hornet': 'Hoornaarrotor',
     'stalker': 'Gloeisluiper',
+    'spotter': 'Zoeklichtdrone',
     'puffer': 'Kogelvismijn',
     'mole': 'Molboorder',
     'polar': 'Poolpup',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Wachter | Wachters',
     'hornet': 'Hoornaarrotor | Hoornaarrotors',
     'stalker': 'Gloeisluiper | Gloeisluipers',
+    'spotter': 'Zoeklichtdrone | Zoeklichtdrones',
     'puffer': 'Kogelvismijn | Kogelvismijnen',
     'mole': 'Molboorder | Molboorders',
     'polar': 'Poolpup | Poolpups',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Stormmeester',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Grootmeester-bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Sintelhond',
+    'icebreakerBrute': 'IJsbreker-Bruut',
+    'arcSpider': 'Boogspin',
+    'stormHornetQueen': 'Stormhorzel-Koningin',
+    'lodestoneGolem': 'Magneetsteen-Golem',
+    'burrowWyrm': 'Graafworm',
+    'pufferMatriarch': 'Kogelvis-Matriarch',
+    'glitchStalker': 'Glitch-Sluiper',
+    'sawGyro': 'Zaaggyro',
+    'sentinelPrototype': 'Wachter-Prototype'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Uitdaging',
+    'cleared': 'Uitdaging gehaald! +{bolts} bouten'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Level {n}! Systemen volledig hersteld.'
   },
   'tips': {
-    'moveTouch': 'Sleep links om te lopen en rechts om rond te kijken. Tik op de vloer om erheen te lopen!',
+    'moveTouch': 'Sleep links om te lopen en rechts om rond te kijken.',
     'moveKeys': '{keys} om rond te lopen.',
     'lookMouse': 'Beweeg de muis om rond te kijken.',
     'capture': 'Klik op de scène om de camera over te nemen.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interactie'
     },
     'touch': {
-      'move': 'Linkerkant: sleep om te lopen. Tik op de vloer om erheen te lopen.',
-      'fire': 'In gevecht: tik om te schieten, houd vast om op te laden, laat los om te vuren.',
+      'move': 'Linkerkant: sleep om te lopen. Rechterkant: sleep om rond te kijken.',
+      'fire': 'Rechterkant of de vuurknop: tik om te schieten, houd vast om op te laden, laat los om te vuren. Sleep tijdens het vasthouden om te richten.',
       'block': 'Houd het schild vast om te blokkeren — precies als een ring sluit om te pareren.',
       'use': 'Bij een kist, een gestrande bot of een deur: tik erop, of op de knop die verschijnt.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Raak de kern als die opengaat.',
       'hornet': '{enemy}. Hij duikt rechtdoor: opzij!',
       'stalker': '{enemy}. Pareer de uitval.',
+      'spotter': '{enemy}. Uit zijn licht. Schiet op de lamp.',
       'puffer': '{enemy}. Knal hem stuk voor hij opzwelt.',
       'mole': '{enemy}. Raak hem als hij opduikt.',
       'elite': 'Gouden ring. Elite. Voorzichtig.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Omdat ze vrij zijn.',
     },
     'guardDown': 'Bewaker neer! De weg is vrij.',
+    'challenge': 'Een uitdagingsdeur! Goede buit binnen.',
     'help': {
       'weapon': 'Kies je nieuwe wapen en vuur op de drones!',
       'gap': 'Loop recht op de rand af en je springt er vanzelf overheen!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Glij weg vlak voordat de rode ring je bereikt!',
       'block': 'Houd blokkeren ingedrukt als hij vuurt. Precies bij de inslag is perfect!',
       'blockMiss': 'Schild omhoog! Blokkeer precies bij de inslag en stuur hem terug!',
+      'chargeMiss': 'Probeer een geladen schot door de kanonknop ingedrukt te houden!',
       'charge': 'Houd vuren ingedrukt tot het kanon gloeit, laat dan los!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Dat paneel toont een patroon. De lampen aan de muur nog niet.',
       'color': 'Die lijst heeft een lievelingskleur. Alleen haar lampen horen te branden.',
       'cycle': 'Elk schot laat een lamp van gedachten veranderen. Het paneel weet wat het wil.',
+      'sequence': 'Het paneel knippert steeds hetzelfde deuntje. Speel het na op de knoppen, op volgorde.',
+      'mirror': 'Die straal wil de ring in. Spiegels draaien als je erop schiet.',
+      'tiles': 'Laat elke plaat oplichten in één wandeling. Twee keer op één, of eraf, en alles is weer donker.',
       'solved': 'Kijk eens aan. Iemand houdt van puzzels.'
     },
     'landed': 'Geland! Daar gaan we.',

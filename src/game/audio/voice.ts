@@ -31,9 +31,9 @@ import { englishVoice, hasOwnVoice } from '@/use/useEnglishVoice'
  * duck the music, one at a time among themselves).
  */
 
-export type VoiceLang = 'en' | 'de' | 'es' | 'zh'
+export type VoiceLang = 'en' | 'de' | 'es' | 'zh' | 'fr'
 
-/** The voice language for a UI locale: German, Spanish or Mandarin (zh-TW
+/** The voice language for a UI locale: German, Spanish, French or Mandarin (zh-TW
  *  too: the same spoken language, its subtitles stay Traditional), English
  *  for the rest. */
 export const voiceLangFor = (locale: string | null | undefined): VoiceLang => {
@@ -41,6 +41,7 @@ export const voiceLangFor = (locale: string | null | undefined): VoiceLang => {
   if (l.startsWith('de')) return 'de'
   if (l.startsWith('es')) return 'es'
   if (l.startsWith('zh')) return 'zh'
+  if (l.startsWith('fr')) return 'fr'
   return 'en'
 }
 

@@ -46,6 +46,8 @@ export type AtlasLine =
   | `story.${SectorId}`
   | `arc.${number}`
   | 'bossAhead' | 'bossDown' | 'vexDown' | 'guardDown'
+  /** A challenge door ahead (`sim/challenge.ts`): optional, tough, good loot. */
+  | 'challenge'
   /** After `bossAhead`: the weapon the Master is weak to (Flux carries it),
    *  or that this one has no weakness at all. */
   | `weak.${WeaponId}` | 'noWeak'
@@ -74,7 +76,7 @@ export const ATLAS_LINES: readonly AtlasLine[] = [
   'story.scrapyard', 'story.blaze', 'story.cryo', 'story.volt', 'story.gale', 'story.magnet', 'story.drill', 'story.tide',
   'story.neon', 'story.rotor', 'story.fortress',
   ...Array.from({ length: ARC_LINES }, (_, n) => `arc.${n + 1}` as AtlasLine),
-  'bossAhead', 'bossDown', 'vexDown', 'guardDown', 'lowHp', 'lowHpGel', 'lowWe', 'trap', 'plate',
+  'bossAhead', 'bossDown', 'vexDown', 'guardDown', 'challenge', 'lowHp', 'lowHpGel', 'lowWe', 'trap', 'plate',
   ...Object.values(BOSSES).flatMap(b => b.weakTo ? [`weak.${b.weakTo}` as AtlasLine] : []), 'noWeak',
   'exit', 'levelUp', 'idle.1', 'idle.2', 'idle.3', 'idle.4'
 ]
@@ -103,8 +105,9 @@ const prioOf = (l: AtlasLine): number =>
  * line on the way in, every warning, a lesson, the objective done.
  */
 const CHATTER = /^(scan|arc|idle)\.|^(levelUp|hint\.levelUp|hint\.locator|hint\.upgrade)$/
-/** A scan Atlas should not sit on: a machine that is not what it seems. */
-const IMPORTANT: ReadonlySet<string> = new Set(['scan.golem'])
+/** A scan Atlas should not sit on: a machine that is not what it seems, or
+ *  one whose answer is not plain to see (a Searchlight Drone's light). */
+const IMPORTANT: ReadonlySet<string> = new Set(['scan.golem', 'scan.spotter'])
 export const isChatter = (l: AtlasLine): boolean => CHATTER.test(l) && !IMPORTANT.has(l)
 
 /** Stage hints that warn of a danger as it happens: every mission, not once in a save. */
@@ -121,7 +124,9 @@ const COOLDOWN: Partial<Record<AtlasLine, number>> = {
   lowHp: 30, lowHpGel: 30, lowWe: 120, trap: 25, plate: 25, levelUp: 10,
   'warn.gel': 30, 'warn.critical': 30, 'warn.weEmpty': 60, 'warn.down': 1, 'hint.levelUp': 10,
   // Said on each unblocked hit in the block lesson (#129), never on top of itself.
-  'help.blockMiss': 9
+  'help.blockMiss': 9,
+  // Said on each quick shot off the training drone (#135), the same way.
+  'help.chargeMiss': 9
 }
 /** A borrowed weapon can be refilled and run dry again: its last-shot line may return. */
 const cooldownOf = (id: AtlasLine): number | undefined =>

@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Tử Thủ! Hệ thống đã khởi động lại.',
     'weak': 'YẾU ĐIỂM!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'QUÁ YẾU!',
     'dizzy': 'CHOÁNG!',
     'dodge': 'NÉ!',
     'block': 'Chặn',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Lính Gác',
     'hornet': 'Ong Bắp Cày Cánh Quạt',
     'stalker': 'Kẻ Rình Phát Sáng',
+    'spotter': 'Drone Đèn Pha',
     'puffer': 'Thủy Lôi Cá Nóc',
     'mole': 'Chuột Chũi Khoan',
     'polar': 'Cún Từ Cực',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Lính Gác | Lính Gác',
     'hornet': 'Ong Bắp Cày Cánh Quạt | Ong Bắp Cày Cánh Quạt',
     'stalker': 'Kẻ Rình Phát Sáng | Kẻ Rình Phát Sáng',
+    'spotter': 'Drone Đèn Pha | Drone Đèn Pha',
     'puffer': 'Thủy Lôi Cá Nóc | Thủy Lôi Cá Nóc',
     'mole': 'Chuột Chũi Khoan | Chuột Chũi Khoan',
     'polar': 'Cún Từ Cực | Cún Từ Cực',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Chúa Tể Gió',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Đại Chúa Tể'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Chó Săn Than Hồng',
+    'icebreakerBrute': 'Gã Khổng Lồ Phá Băng',
+    'arcSpider': 'Nhện Hồ Quang',
+    'stormHornetQueen': 'Nữ Hoàng Ong Bão',
+    'lodestoneGolem': 'Golem Đá Nam Châm',
+    'burrowWyrm': 'Sâu Đào Hầm',
+    'pufferMatriarch': 'Mẹ Cá Nóc',
+    'glitchStalker': 'Kẻ Rình Glitch',
+    'sawGyro': 'Con Quay Cưa',
+    'sentinelPrototype': 'Lính Gác Nguyên Mẫu'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Thử thách',
+    'cleared': 'Đã vượt thử thách! +{bolts} bu lông'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Cấp {n}! Hệ thống đã được sửa chữa hoàn toàn.'
   },
   'tips': {
-    'moveTouch': 'Kéo bên trái để di chuyển, bên phải để nhìn. Chạm vào sàn để đi tới đó!',
+    'moveTouch': 'Kéo bên trái để di chuyển, bên phải để nhìn.',
     'moveKeys': '{keys} để di chuyển.',
     'lookMouse': 'Di chuyển chuột để nhìn xung quanh.',
     'capture': 'Nhấp vào màn hình game để điều khiển camera.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Tương tác'
     },
     'touch': {
-      'move': 'Bên trái: kéo để di chuyển. Chạm vào sàn để đi tới đó.',
-      'fire': 'Khi chiến đấu: chạm để bắn, giữ để tụ lực, thả để khai hỏa.',
+      'move': 'Bên trái: kéo để di chuyển. Bên phải: kéo để nhìn.',
+      'fire': 'Bên phải hoặc nút bắn: chạm để bắn, giữ để tụ lực, thả để khai hỏa. Vừa giữ vừa kéo để ngắm.',
       'block': 'Giữ khiên để chặn — đúng lúc vòng khép lại để gạt đòn.',
       'use': 'Gần rương, robot bị kẹt hoặc cửa: chạm vào nó, hoặc nút hiện lên.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Bắn vào lõi khi nó mở.',
       'hornet': '{enemy}. Nó lao thẳng: né sang bên!',
       'stalker': '{enemy}. Gạt đòn khi nó vồ tới.',
+      'spotter': '{enemy}. Ra khỏi vùng sáng. Bắn vào đèn.',
       'puffer': '{enemy}. Bắn nổ trước khi nó phồng.',
       'mole': '{enemy}. Bắn khi nó trồi lên.',
       'elite': 'Vòng vàng. Tinh anh. Cẩn thận.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Vì họ tự do.',
     },
     'guardDown': 'Hạ gục lính gác! Đường đã mở.',
+    'challenge': 'Cửa thử thách! Bên trong có báu vật.',
     'help': {
       'weapon': 'Chọn vũ khí mới và bắn vào lũ drone!',
       'gap': 'Đi thẳng về phía mép, cậu sẽ tự động nhảy qua!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Trượt né ngay trước khi vòng đỏ chạm tới cậu!',
       'block': 'Giữ chặn khi nó bắn. Đúng lúc trúng đòn là hoàn hảo!',
       'blockMiss': 'Giơ khiên lên! Chặn đúng lúc trúng để đánh bật lại!',
+      'chargeMiss': 'Thử bắn tích lực bằng cách giữ nút pháo!',
       'charge': 'Giữ bắn cho tới khi pháo phát sáng, rồi thả ra!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Tấm bảng kia có một hình mẫu. Đèn trên tường thì chưa.',
       'color': 'Khung kia có một màu yêu thích. Chỉ đèn màu đó mới được sáng.',
       'cycle': 'Mỗi phát bắn làm đèn đổi ý. Tấm bảng biết nó muốn gì.',
+      'sequence': 'Bảng đèn cứ nháy mãi một giai điệu. Chơi lại nó trên các nút, đúng thứ tự.',
+      'mirror': 'Tia sáng đó muốn tới chiếc vòng. Bắn vào gương thì gương sẽ xoay.',
+      'tiles': 'Thắp sáng mọi tấm sàn trong một lần đi. Giẫm hai lần một tấm, hoặc bước ra ngoài, là tối lại hết.',
       'solved': 'Chà chà. Có người thích giải đố đây.'
     },
     'landed': 'Hạ cánh! Đi thôi.',

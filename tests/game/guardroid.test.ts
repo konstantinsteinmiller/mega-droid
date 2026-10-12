@@ -19,6 +19,7 @@ import { Scene } from 'three'
 import {
   createEnemy, updateEnemy, syncEnemyVisual, BRUTE_RUSH_MIN, BRUTE_RUSH_MAX, BRUTE_RUSH_TIME, BRUTE_WALL_STUN
 } from '@/game/sim/enemies'
+import { shotBlockable } from '@/game/sim/combat'
 import { createNav } from '@/game/world/nav'
 import { THEMES } from '@/game/world/themes'
 import type { MapData } from '@/game/world/levelGen'
@@ -140,7 +141,9 @@ describe('the elite arm cannon', () => {
       fired = fireEnemyShot.mock.calls.length
       if (fired) {
         expect(fired % 3).toBe(0)
-        expect(fireEnemyShot.mock.calls.every(c => c[9] === true)).toBe(true) // blockable
+        // Straight bullets (no world-height arc): blockable by the rule.
+        expect(fireEnemyShot.mock.calls.every(c => c[9] === undefined)).toBe(true)
+        expect(shotBlockable('enemy')).toBe(true)
       }
     }
     expect(fired).toBeGreaterThanOrEqual(3)

@@ -1,6 +1,6 @@
 import {
   Scene, PerspectiveCamera, Color, HemisphereLight, DirectionalLight, Fog, Group, Mesh, MeshBasicMaterial,
-  AdditiveBlending, CylinderGeometry, DoubleSide, type BufferGeometry
+  AdditiveBlending, CylinderGeometry, DoubleSide, Quaternion, Vector3, type BufferGeometry
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
@@ -16,6 +16,60 @@ import { buildGauss, poseGauss, newGaussPose, setGaussGlow, type GaussRig } from
 import { Particles } from '../fx/particles'
 import { makeBlobShadow } from '../fx/markers'
 import { tickHud } from '../state/hud'
+
+/** The ceiling lamp: its glowing ring (radius, height) round a housing. */
+export const LAMP_R = 3.6
+export const LAMP_Y = 7.2
+/** The gantry the lamp hangs from: its beams' middle height, and its
+ *  posts' distance out (behind the back wall's ends and its middle). */
+export const GANTRY_Y = 8.6
+const GANTRY_OUT = 8.6
+const SPOKES = 6
+
+/** A straight member from `a` to `b` (each end set into what it joins). */
+export interface LampMount { a: [number, number, number]; b: [number, number, number]; r: number }
+
+/** Every member that holds the lamp up, from the ring to the floor: six
+ *  spokes ring → housing, a hanger rod housing → gantry, the gantry's two
+ *  beams and its three posts down to the floor. The ring used to float at
+ *  7.2 m with nothing above it (placement audit 2026-10-12). */
+export const labLampMounts = (): LampMount[] => {
+  const out: LampMount[] = []
+  for (let k = 0; k < SPOKES; k++) {
+    const a = (k / SPOKES) * Math.PI * 2 + Math.PI / SPOKES
+    out.push({ a: [Math.cos(a) * 1.15, LAMP_Y + 0.38, Math.sin(a) * 1.15], b: [Math.cos(a) * LAMP_R, LAMP_Y, Math.sin(a) * LAMP_R], r: 0.045 })
+  }
+  // The hanger: from inside the housing's dome up into the cross beam.
+  out.push({ a: [0, LAMP_Y + 0.6, 0], b: [0, GANTRY_Y, 0], r: 0.09 })
+  // The posts: behind the back wall's two ends and its middle, up into the beams.
+  for (const [x, z] of [[-GANTRY_OUT, 0], [GANTRY_OUT, 0], [0, -GANTRY_OUT]] as const) out.push({ a: [x, -0.1, z], b: [x, GANTRY_Y, z], r: 0.28 })
+  return out
+}
+
+/** The lamp's parts, one geometry each (`tests/game/labLamp.test.ts` checks
+ *  them for coplanar faces): the ring, its housing, the members, the beams. */
+export const labLampParts = (): { toon: BufferGeometry[]; glow: BufferGeometry[] } => {
+  const toon: BufferGeometry[] = []
+  const glow: BufferGeometry[] = [xform(paint(torus(LAMP_R, 0.09, 6, 48), '#bff3ff'), [0, LAMP_Y, 0], [Math.PI / 2, 0, 0])]
+  toon.push(xform(paint(ell(1.4, 0.4, 1.4, 20, 10), '#2f4580'), [0, LAMP_Y + 0.4, 0]))
+  const up = new Vector3(0, 1, 0)
+  const dir = new Vector3()
+  const q = new Quaternion()
+  for (const m of labLampMounts()) {
+    dir.set(m.b[0] - m.a[0], m.b[1] - m.a[1], m.b[2] - m.a[2])
+    const len = dir.length()
+    q.setFromUnitVectors(up, dir.normalize())
+    const g = paint(rcyl(m.r, len, m.r * 0.3, 10), m.r > 0.2 ? '#5d6a82' : '#8a97ad')
+    g.applyQuaternion(q)
+    g.translate((m.a[0] + m.b[0]) / 2, (m.a[1] + m.b[1]) / 2, (m.a[2] + m.b[2]) / 2)
+    toon.push(g)
+  }
+  // The gantry: a beam across the lab over the posts at the wall's ends, and
+  // a slimmer one from the back post to it (its faces inside the first's).
+  toon.push(xform(paint(rbox(GANTRY_OUT * 2 + 0.8, 0.44, 0.5, 0.12), '#3b4458'), [0, GANTRY_Y + 0.12, 0]))
+  toon.push(xform(paint(rbox(0.38, 0.32, GANTRY_OUT + 0.4, 0.1), '#3b4458'), [0, GANTRY_Y + 0.12, -GANTRY_OUT / 2]))
+  return { toon, glow }
+}
 
 /**
  * The lab set: the round platform, the dome's glowing panels, the consoles and
@@ -50,9 +104,10 @@ export const buildLabSet = (): Group => {
     glow.push(xform(paint(lathe([[0, 0], [0.42, 0.05], [0.42, 2.6], [0, 2.65]], 20), s > 0 ? '#7fffc8' : '#8ab8ff'), [s * 5.4, 0.35, -0.6]))
     toon.push(xform(paint(sph(0.35, 14, 10), '#9aa7bd'), [s * 5.4, 1.6, -0.6]))
   }
-  // Ceiling lamp ring
-  glow.push(xform(paint(torus(3.6, 0.09, 6, 48), '#bff3ff'), [0, 7.2, 0], [Math.PI / 2, 0, 0]))
-  toon.push(xform(paint(ell(1.4, 0.4, 1.4, 20, 10), '#2f4580'), [0, 7.6, 0]))
+  // Ceiling lamp ring, hung from its gantry
+  const lamp = labLampParts()
+  toon.push(...lamp.toon)
+  glow.push(...lamp.glow)
   const geo = merge(toon)
   g.add(new Mesh(geo, toonVC()))
   const ol = new Mesh(geo, outlineMat(0.03))

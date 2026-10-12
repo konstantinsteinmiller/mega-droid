@@ -11,12 +11,14 @@
  *     A faint resting stick always sits low on the left (`joyHome*`, placed
  *     by the HUD): a press on it grabs the stick at its centre, so a player
  *     who never discovers "drag anywhere" still finds the movement control.
- *   • RIGHT side: press = shoot and start charging when a shot is wanted
- *     (`fireMode`); hold still to charge, release to fire the charge. The
- *     moment the press DRAGS it becomes a look instead: the charge is dropped
- *     (`fireCancelled`), never fired. Out of fire mode a drag looks and a
- *     short tap walks / interacts. (Deciding fire-vs-look at the press used
- *     to make a drag near any enemy a charge — the camera would not move.)
+ *   • RIGHT side: the second stick of an FPS (playtest 2026-10-08). A press
+ *     shoots and starts charging whenever play allows a shot (`fireMode`) —
+ *     no target needed; a drag looks around and KEEPS the charge (it used to
+ *     drop it, so following a machine out of the auto-aim killed every
+ *     charge, and out of a fight a press only looked or walked); letting go
+ *     fires the charge. A short still tap is also reported (`taps`), for
+ *     opening a chest or a door in reach — never to walk: there is no
+ *     tap-to-walk, the left stick moves.
  *   • HUD buttons write straight into the record (`blockHeld`, `slideQueued`…),
  *     the FIRE button included — it fires whatever is in fire mode, so a crate
  *     or a barrel can be shot with no machine anywhere near.
@@ -121,6 +123,18 @@ export const touchFirst = (): boolean => {
   return (navigator.maxTouchPoints ?? 0) > 0 &&
     typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 }
+
+/**
+ * A mouse event a touch made: the browser's compatibility mousedown / mouseup
+ * after a tap. Chrome flags them (`sourceCapabilities.firesTouchEvents`); the
+ * time check covers the rest. Read as a real mouse, a long press on the view
+ * turned the device to 'mouse' and the touch HUD swapped for the desktop one
+ * mid-game (the compatibility events of a press come at its END, past the
+ * old 900 ms window from its start).
+ */
+const fromTouch = (e: MouseEvent, lastTouchAt: number): boolean =>
+  (e as MouseEvent & { sourceCapabilities?: { firesTouchEvents?: boolean } }).sourceCapabilities?.firesTouchEvents === true ||
+  performance.now() - lastTouchAt < 900
 
 const lockSupported = (): boolean =>
   typeof document !== 'undefined' && 'pointerLockElement' in document &&
@@ -254,10 +268,12 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   let lookStartT = 0
   let lookMoved = 0
   let lookIsFire = false
+  /** A touch fire press that has started dragging: it looks, charge kept. */
+  let fireLooking = false
   /** Unlocked mouse fallback: a left-button press in progress. */
   let mouseDrag = false
   let skipNextLook = false
-  /** Last touch press: a touch also emits compatibility mouse events. */
+  /** Last touch press or release: a touch also emits compatibility mouse events. */
   let lastTouchAt = -1e9
   /** Phone / tablet: a mouse is a finger, and the device never turns 'mouse'. */
   const touchOnly = touchFirst()
@@ -291,6 +307,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     lookStartY = lookLastY = y
     lookStartT = performance.now()
     lookMoved = 0
+    fireLooking = false
     // A free mouse has no FIRE button of its own: its left click always
     // shoots (a drag still looks). Deciding it by `fireMode` made every click
     // on a sleeping crate golem a walk-to — the tutorial's last room could
@@ -309,7 +326,21 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     lookLastX = x
     lookLastY = y
     lookMoved += Math.abs(dx) + Math.abs(dy)
-    if (lookIsFire && Math.hypot(x - lookStartX, y - lookStartY) > (mouse ? DRAG_TO_LOOK_MOUSE : DRAG_TO_LOOK_TOUCH)) {
+    if (lookIsFire && !mouse) {
+      // Touch: past the drag threshold the press looks too, and the charge
+      // stays held (the fire knob's rule, one look rate). The travel so far
+      // counts, so the view does not lag the finger.
+      if (fireLooking) {
+        input.lookDX += dx
+        input.lookDY += dy
+      } else if (Math.hypot(x - lookStartX, y - lookStartY) > DRAG_TO_LOOK_TOUCH) {
+        fireLooking = true
+        input.lookDX += x - lookStartX
+        input.lookDY += y - lookStartY
+      }
+      input.fireX = x
+      input.fireY = y
+    } else if (lookIsFire && Math.hypot(x - lookStartX, y - lookStartY) > DRAG_TO_LOOK_MOUSE) {
       // It is a drag after all: look, and drop the charge unfired. The
       // travel so far counts, so the view does not lag the finger.
       lookIsFire = false
@@ -330,9 +361,8 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     if (lookIsFire) {
       input.fireHeld = false
       input.fireReleased = true
-    } else if (dt < TAP_MAX_MS && lookMoved < TAP_MAX_MOVE) {
-      input.taps.push({ x, y })
     }
+    if (dt < TAP_MAX_MS && lookMoved < TAP_MAX_MOVE) input.taps.push({ x, y })
   }
 
   // ── Touch / pen: pointer events ──
@@ -413,6 +443,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
 
   const onUp = (e: PointerEvent) => {
     if (!asTouch(e)) return
+    lastTouchAt = performance.now()
     if (e.pointerId === joyId) {
       joyId = null
       input.joyActive = false
@@ -432,7 +463,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   /** Mouse buttons holding block: 1 the middle, 2 the right. */
   let blockButtons = 0
   const onMouseDown = (e: MouseEvent) => {
-    if (touchOnly || performance.now() - lastTouchAt < 900) return
+    if (touchOnly || fromTouch(e, lastTouchAt)) return
     input.touched = true
     input.device = 'mouse'
     input.anyPressed = true
@@ -489,7 +520,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   }
 
   const onMouseUp = (e: MouseEvent) => {
-    if (touchOnly) return
+    if (touchOnly || (!input.locked && !mouseDrag && blockButtons === 0 && fromTouch(e, lastTouchAt))) return
     if (e.button === 1 || e.button === 2) {
       // Block stays held while either blocking button still is.
       blockButtons &= ~(e.button === 1 ? 1 : 2)

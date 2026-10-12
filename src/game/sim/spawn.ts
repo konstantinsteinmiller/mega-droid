@@ -46,7 +46,8 @@ export const spawnEncounters = async (
   /** Wall spots each room's turrets took from the front (golems go next). */
   const wallsUsed = new Map<number, number>()
   for (const room of map.rooms) {
-    if (room.role === 'start' || room.role === 'boss') continue
+    // A challenge room's only machine is its mini-boss (`sim/challenge.ts`).
+    if (room.role === 'start' || room.role === 'boss' || room.role === 'challenge') continue
     const area = room.w * room.h
     let n: number
     if (room.role === 'treasure') n = 1 + (rng() < 0.5 ? 1 : 0)
@@ -152,7 +153,7 @@ export const spawnTutorial = async (
 ): Promise<Enemy[]> => {
   const out: Enemy[] = []
   for (const room of map.rooms) {
-    if (room.role === 'start' || room.role === 'boss') continue
+    if (room.role === 'start' || room.role === 'boss' || room.role === 'challenge') continue
     const gate = plan.gates.find(g => g.room === room.id)
     const kinds: EnemyKind[] = []
     // A built tutorial casts some rooms itself (the fighting rooms after the lessons).

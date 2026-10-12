@@ -14,7 +14,7 @@
 // mid-mission left an open bracket behind them.
 
 import { describe, expect, it } from 'vitest'
-import { isGameplayLive, type GameplayLiveInputs } from '@/use/useGameplayLifecycle'
+import { isCrazyGameplayLive, isGameplayLive, type GameplayLiveInputs } from '@/use/useGameplayLifecycle'
 
 /** A player mid-mission with nothing in the way. Each test negates one thing. */
 const playing: GameplayLiveInputs = {
@@ -124,5 +124,34 @@ describe('isGameplayLive', () => {
     expect(isGameplayLive({ ...stopped, anyModalOpen: false })).toBe(false)
     expect(isGameplayLive({ ...stopped, visibilityHidden: false, anyModalOpen: false }))
       .toBe(true)
+  })
+})
+
+// #138: CrazyGames QA found the first `gameplayStart()` missing when the
+// player lands in the tutorial after the intro. On CG the intro is not play:
+// the first start is the landing, and the pause menu stops and restarts it.
+describe('CrazyGames: the first play starts at the tutorial landing', () => {
+  const film: GameplayLiveInputs = { ...playing, screen: 'intro', phase: 'boot', introPlay: true }
+
+  it('is not live through the film, the build overlay or the beam-in; live on control', () => {
+    const steps: GameplayLiveInputs[] = [
+      film,
+      { ...film, screen: 'mission', phase: 'boot' },
+      { ...film, screen: 'mission', phase: 'beamIn' },
+      { ...film, screen: 'mission', phase: 'play' },
+      { ...playing }
+    ]
+    expect(steps.map(isCrazyGameplayLive)).toEqual([false, false, false, true, true])
+  })
+
+  it('the pause menu stops it, and closing it starts it again', () => {
+    expect(isCrazyGameplayLive({ ...playing, flowModal: true })).toBe(false)
+    expect(isCrazyGameplayLive(playing)).toBe(true)
+  })
+
+  it('a hidden tab is not a pause on CG (it handles focus itself); ads and its own pause are', () => {
+    expect(isCrazyGameplayLive({ ...playing, visibilityHidden: true })).toBe(true)
+    expect(isCrazyGameplayLive({ ...playing, adShowing: true })).toBe(false)
+    expect(isCrazyGameplayLive({ ...playing, platformPaused: true })).toBe(false)
   })
 })

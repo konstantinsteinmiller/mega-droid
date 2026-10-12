@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Son Direniş! Sistemler yeniden başlatıldı.',
     'weak': 'ZAYIF!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'ÇOK ZAYIF!',
     'dizzy': 'SERSEM!',
     'dodge': 'KAÇTI!',
     'block': 'Blokla',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Muhafız',
     'hornet': 'Pervaneli Eşek Arısı',
     'stalker': 'Işıltı Avcısı',
+    'spotter': 'Projektör Dronu',
     'puffer': 'Balon Balığı Mayını',
     'mole': 'Matkap Köstebek',
     'polar': 'Kutup Yavrusu',
@@ -93,6 +95,7 @@ export default {
     'warden': 'Muhafız | Muhafız',
     'hornet': 'Pervaneli Eşek Arısı | Pervaneli Eşek Arısı',
     'stalker': 'Işıltı Avcısı | Işıltı Avcısı',
+    'spotter': 'Projektör Dronu | Projektör Dronu',
     'puffer': 'Balon Balığı Mayını | Balon Balığı Mayını',
     'mole': 'Matkap Köstebek | Matkap Köstebek',
     'polar': 'Kutup Yavrusu | Kutup Yavrusu',
@@ -133,6 +136,26 @@ export default {
     'galeMaster': 'Fırtına Ustası',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Büyük Usta Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Kor Tazı',
+    'icebreakerBrute': 'Buzkıran Kaba',
+    'arcSpider': 'Ark Örümceği',
+    'stormHornetQueen': 'Fırtına Eşekarısı Kraliçesi',
+    'lodestoneGolem': 'Mıknatıs Taşı Golemi',
+    'burrowWyrm': 'Kazıcı Solucan',
+    'pufferMatriarch': 'Balon Balığı Ana',
+    'glitchStalker': 'Glitch Avcısı',
+    'sawGyro': 'Testere Topacı',
+    'sentinelPrototype': 'Nöbetçi Prototipi'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Meydan Okuma',
+    'cleared': 'Meydan okuma kazanıldı! +{bolts} cıvata'
   },
 
   'sector': {
@@ -218,7 +241,7 @@ export default {
     'levelUp': 'Seviye {n}! Sistemler tamamen onarıldı.'
   },
   'tips': {
-    'moveTouch': 'Hareket için sol tarafı, bakmak için sağ tarafı sürükle. Oraya yürümek için zemine dokun!',
+    'moveTouch': 'Hareket için sol tarafı, bakmak için sağ tarafı sürükle.',
     'moveKeys': 'Etrafta dolaşmak için {keys}.',
     'lookMouse': 'Etrafa bakmak için fareyi hareket ettir.',
     'capture': 'Kamerayı kontrol etmek için sahneye tıkla.',
@@ -317,8 +340,8 @@ export default {
       'interact': 'Etkileşim'
     },
     'touch': {
-      'move': 'Sol taraf: hareket için sürükle. Oraya yürümek için zemine dokun.',
-      'fire': 'Çatışmada: ateş için dokun, şarj için basılı tut, atış için bırak.',
+      'move': 'Sol taraf: hareket için sürükle. Sağ taraf: bakmak için sürükle.',
+      'fire': 'Sağ taraf veya ateş düğmesi: ateş için dokun, şarj için basılı tut, atış için bırak. Nişan almak için basılı tutarken sürükle.',
       'block': 'Bloklamak için kalkanı basılı tut — savuşturmak için halka kapanırken bas.',
       'use': 'Bir sandık, mahsur kalan bir robot ya da kapının yanında: ona ya da beliren düğmeye dokun.'
     },
@@ -710,6 +733,7 @@ export default {
       'warden': '{enemy}. Açılınca çekirdeğe vur.',
       'hornet': '{enemy}. Dümdüz dalar: yana kaç!',
       'stalker': '{enemy}. Atılışını savuştur.',
+      'spotter': '{enemy}. Işığından çık. Lambayı vur.',
       'puffer': '{enemy}. Şişmeden patlat.',
       'mole': '{enemy}. Yüzeye çıkınca vur.',
       'elite': 'Altın halka. Elit. Dikkatli ol.',
@@ -732,6 +756,7 @@ export default {
       'free': 'Çünkü onlar özgür.',
     },
     'guardDown': 'Bekçi düştü! Yol açık.',
+    'challenge': 'Meydan okuma kapısı! İçeride ganimet var.',
     'help': {
       'weapon': 'Yeni silahını seç ve dronlara ateş et!',
       'gap': 'Kenara doğru dümdüz yürü, otomatik olarak atlarsın!',
@@ -739,6 +764,7 @@ export default {
       'slide': 'Kırmızı halka sana ulaşmadan hemen önce kay!',
       'block': 'O ateş ederken blokla tuşunu basılı tut. Tam vurduğu an mükemmeldir!',
       'blockMiss': 'Kalkan yukarı! Tam vurduğu an blokla, geri gitsin!',
+      'chargeMiss': 'Top tuşunu basılı tutarak şarjlı atış dene!',
       'charge': 'Kol topu parlayana kadar ateşi basılı tut, sonra bırak!',
     },
     'train': {
@@ -836,6 +862,9 @@ export default {
       'lights': 'O panel bir desen gösteriyor. Duvardaki lambalar henüz değil.',
       'color': 'O çerçevenin sevdiği bir renk var. Sadece o rengin lambaları yanmalı.',
       'cycle': 'Her atış bir lambanın fikrini değiştirir. Panel ne istediğini biliyor.',
+      'sequence': 'Pano hep aynı melodiyi yakıp söndürüyor. Düğmelerde sırayla çal onu.',
+      'mirror': 'O ışın halkaya ulaşmak istiyor. Aynalara ateş edince dönüyorlar.',
+      'tiles': 'Tüm plakaları tek yürüyüşte yak. Birine iki kez basarsan ya da dışarı çıkarsan, her şey yine karanlık.',
       'solved': 'Vay vay. Birileri bulmaca seviyor.'
     },
     'landed': 'İniş tamam! Hadi bakalım.',

@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Ultimo Baluardo! Sistemi riavviati.',
     'weak': 'DEBOLE!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TROPPO DEBOLE!',
     'dizzy': 'STORDITO!',
     'dodge': 'SCHIVATA!',
     'block': 'Blocca',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Guardiano',
     'hornet': 'Rotore Calabrone',
     'stalker': 'Predatore Luminoso',
+    'spotter': 'Drone Faro',
     'puffer': 'Mina Pesce Palla',
     'mole': 'Talpa Trivella',
     'polar': 'Cucciolo Polare',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Guardiano | Guardiani',
     'hornet': 'Rotore Calabrone | Rotori Calabrone',
     'stalker': 'Predatore Luminoso | Predatori Luminosi',
+    'spotter': 'Drone Faro | Droni Faro',
     'puffer': 'Mina Pesce Palla | Mine Pesce Palla',
     'mole': 'Talpa Trivella | Talpe Trivella',
     'polar': 'Cucciolo Polare | Cuccioli Polari',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Maestro Vento',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Gran Maestro'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Segugio di Brace',
+    'icebreakerBrute': 'Bruto Rompighiaccio',
+    'arcSpider': 'Ragno ad Arco',
+    'stormHornetQueen': 'Regina Calabrone della Tempesta',
+    'lodestoneGolem': 'Golem Magnetite',
+    'burrowWyrm': 'Verme Scavatore',
+    'pufferMatriarch': 'Matriarca Palla',
+    'glitchStalker': 'Predatore Glitch',
+    'sawGyro': 'Giro Sega',
+    'sentinelPrototype': 'Prototipo Sentinella'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Sfida',
+    'cleared': 'Sfida vinta! +{bolts} bulloni'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Livello {n}! Sistemi completamente riparati.'
   },
   'tips': {
-    'moveTouch': 'Trascina a sinistra per muoverti, a destra per guardarti intorno. Tocca il pavimento per andarci!',
+    'moveTouch': 'Trascina a sinistra per muoverti, a destra per guardarti intorno.',
     'moveKeys': '{keys} per muoverti.',
     'lookMouse': 'Muovi il mouse per guardarti intorno.',
     'capture': 'Clicca sulla scena per controllare la telecamera.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interagisci'
     },
     'touch': {
-      'move': 'Lato sinistro: trascina per muoverti. Tocca il pavimento per andarci.',
-      'fire': 'In combattimento: tocca per sparare, tieni premuto per caricare, rilascia per fare fuoco.',
+      'move': 'Lato sinistro: trascina per muoverti. Lato destro: trascina per guardarti intorno.',
+      'fire': 'Lato destro o pulsante di fuoco: tocca per sparare, tieni premuto per caricare, rilascia per fare fuoco. Trascina tenendo premuto per mirare.',
       'block': 'Tieni premuto lo scudo per bloccare — premilo mentre un anello si chiude per parare.',
       'use': 'Vicino a una cassa, un robot bloccato o una porta: toccalo, o tocca il pulsante che appare.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Colpisci il nucleo quando si apre.',
       'hornet': '{enemy}. Si tuffa dritto: scansati!',
       'stalker': "{enemy}. Para l'affondo.",
+      'spotter': '{enemy}. Esci dalla sua luce. Spara al faro.',
       'puffer': '{enemy}. Falla scoppiare prima che si gonfi.',
       'mole': '{enemy}. Colpiscila quando spunta.',
       'elite': "Anello d'oro. Élite. Attento.",
@@ -730,6 +754,7 @@ export default {
       'free': 'Perché sono liberi.',
     },
     'guardDown': 'Guardia giù! La strada è libera.',
+    'challenge': 'Porta della sfida! Bel bottino dentro.',
     'help': {
       'weapon': 'Scegli la tua nuova arma e spara ai droni!',
       'gap': "Cammina dritto verso il bordo e salterai dall'altra parte!",
@@ -737,6 +762,7 @@ export default {
       'slide': "Scivola via appena prima che l'anello rosso ti raggiunga!",
       'block': "Tieni premuto blocca quando spara. Il momento perfetto è proprio all'impatto!",
       'blockMiss': 'Scudo su! Para proprio all\'impatto per rimandarlo indietro!',
+      'chargeMiss': 'Prova un colpo caricato tenendo premuto il pulsante del cannone!',
       'charge': 'Tieni premuto il fuoco finché il cannone non brilla, poi rilascia!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Quel pannello mostra uno schema. Le lampade sul muro, non ancora.',
       'color': 'Quella cornice ha un colore preferito. Solo le sue lampade devono brillare.',
       'cycle': 'Ogni colpo fa cambiare idea a una lampada. Il pannello sa cosa vuole.',
+      'sequence': 'Il pannello lampeggia sempre la stessa melodia. Ripetila sui pulsanti, in ordine.',
+      'mirror': "Quel raggio vuole l'anello. Gli specchi girano quando gli spari.",
+      'tiles': 'Accendi tutte le piastre in una sola passeggiata. Due volte su una, o fuori, e torna tutto buio.',
       'solved': 'Bene, bene. A qualcuno piacciono gli enigmi.'
     },
     'landed': 'Atterrati! Andiamo.',

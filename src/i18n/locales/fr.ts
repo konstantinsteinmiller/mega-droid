@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Dernier rempart ! Systèmes redémarrés.',
     'weak': 'FAIBLESSE !',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TROP FAIBLE !',
     'dizzy': 'SONNÉ !',
     'dodge': 'ESQUIVE !',
     'block': 'Bloquer',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Gardien',
     'hornet': 'Rotor frelon',
     'stalker': 'Traqueur Lumineux',
+    'spotter': 'Drone Projecteur',
     'puffer': 'Mine Fugu',
     'mole': 'Taupe Foreuse',
     'polar': 'Chiot Polaire',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Gardien | Gardiens',
     'hornet': 'Rotor frelon | Rotors frelons',
     'stalker': 'Traqueur Lumineux | Traqueurs Lumineux',
+    'spotter': 'Drone Projecteur | Drones Projecteurs',
     'puffer': 'Mine Fugu | Mines Fugu',
     'mole': 'Taupe Foreuse | Taupes Foreuses',
     'polar': 'Chiot Polaire | Chiots Polaires',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Maître Rafale',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Grand Maître'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Molosse de Braise',
+    'icebreakerBrute': 'Brute Brise-Glace',
+    'arcSpider': 'Araignée à Arc',
+    'stormHornetQueen': 'Reine Frelon des Tempêtes',
+    'lodestoneGolem': 'Golem Magnétite',
+    'burrowWyrm': 'Ver Fouisseur',
+    'pufferMatriarch': 'Matriarche Fugu',
+    'glitchStalker': 'Rôdeur Glitch',
+    'sawGyro': 'Gyro-Scie',
+    'sentinelPrototype': 'Prototype Sentinelle'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Défi',
+    'cleared': 'Défi relevé ! +{bolts} boulons'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Niveau {n} ! Systèmes entièrement réparés.'
   },
   'tips': {
-    'moveTouch': 'Glisse à gauche pour bouger, à droite pour regarder. Touche le sol pour y aller !',
+    'moveTouch': 'Glisse à gauche pour bouger, à droite pour regarder.',
     'moveKeys': '{keys} pour te déplacer.',
     'lookMouse': 'Bouge la souris pour regarder autour de toi.',
     'capture': 'Clique sur la scène pour prendre le contrôle de la caméra.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interagir'
     },
     'touch': {
-      'move': 'Côté gauche : glisse pour bouger. Touche le sol pour y aller.',
-      'fire': 'En combat : touche pour tirer, maintiens pour charger, relâche pour faire feu.',
+      'move': 'Côté gauche : glisse pour bouger. Côté droit : glisse pour regarder.',
+      'fire': 'Côté droit ou bouton de tir : touche pour tirer, maintiens pour charger, relâche pour faire feu. Glisse en maintenant pour viser.',
       'block': 'Maintiens le bouclier pour bloquer — pile quand un anneau se ferme pour parer.',
       'use': 'Près d’un coffre, d’un robot bloqué ou d’une porte : touche-le, ou le bouton qui apparaît.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': "{enemy}. Vise le noyau quand il s'ouvre.",
       'hornet': '{enemy}. Il plonge tout droit : écarte-toi !',
       'stalker': '{enemy}. Pare son bond.',
+      'spotter': '{enemy}. Sors de sa lumière. Tire sur le projecteur.',
       'puffer': "{enemy}. Crève-la avant qu'elle gonfle.",
       'mole': '{enemy}. Frappe quand elle sort de terre.',
       'elite': 'Anneau doré. Élite. Prudence.',
@@ -730,6 +754,7 @@ export default {
       'free': "Parce qu'ils sont libres.",
     },
     'guardDown': 'Garde à terre ! La voie est libre.',
+    'challenge': 'Une porte de défi ! Bon butin dedans.',
     'help': {
       'weapon': 'Choisis ta nouvelle arme et tire sur les drones !',
       'gap': 'Marche droit vers le bord, tu sauteras automatiquement !',
@@ -737,6 +762,7 @@ export default {
       'slide': "Glisse juste avant que l'anneau rouge ne t'atteigne !",
       'block': "Maintiens bloquer quand il tire. Pile à l'impact, c'est parfait !",
       'blockMiss': 'Bouclier levé ! Bloque pile à l\'impact pour le renvoyer !',
+      'chargeMiss': 'Essaie un tir chargé en maintenant le bouton du canon !',
       'charge': "Maintiens le tir jusqu'à ce que le canon brille, puis relâche !",
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Ce panneau montre un motif. Les lampes du mur, pas encore.',
       'color': 'Ce cadre a une couleur préférée. Seules ses lampes doivent briller.',
       'cycle': "Chaque tir fait changer une lampe d'avis. Le panneau sait ce qu'il veut.",
+      'sequence': "Le panneau clignote toujours le même petit air. Rejoue-le sur les boutons, dans l'ordre.",
+      'mirror': "Ce rayon veut atteindre l'anneau. Les miroirs tournent quand tu leur tires dessus.",
+      'tiles': "Allume toutes les dalles en une seule marche. Deux fois sur une, ou à côté, et tout s'éteint.",
       'solved': "Tiens, tiens. Quelqu'un aime les énigmes."
     },
     'landed': 'Atterrissage ! On y va.',

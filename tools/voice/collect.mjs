@@ -30,6 +30,8 @@ const SAY = {
   // "Rotorflug" comes out "Roter Pflüg" in every ElevenLabs take, "Rotor-Flug"
   // too: two words, the long o's spelled out.
   'de/atlas_story_rotor': 'Rohtohr Fluhg. Wind in meiner Antenne!',
+  // "Labor" came out English ("LAY-bor"): the German stress on the long o.
+  'de/atlas_debrief_toLab': 'Ab ins Laboor.',
   // Barks the model spells out as letters or pads with words: a pronounceable sound instead.
   ...Object.fromEntries([1, 2, 3].flatMap(n => [
     [`en/flux_hurt_lowHp_${n}`, 'Unnngh!'],

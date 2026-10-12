@@ -3,6 +3,7 @@ import {
   CELL, Cell, pitKindOf, type MapData, type Terrain, type Ladder, type Lift, type Crusher, type RollerLane, type RewardSpot, type SecretSpec
 } from '../world/levelGen'
 import { floorAt, groundAt, moveBody, platUnder, STEP_UP, type Nav, type Plat, type Slab } from '../world/nav'
+import { tooTallFor } from './enemies'
 import { BALL_R } from '../world/climbGen'
 import { secretDoorFace } from '../world/stages/builder'
 import type { LevelMeshes } from '../world/levelMesh'
@@ -167,7 +168,7 @@ export interface ClimbHost {
    *  Flux's height) — for a feature's machines that fire on their own
    *  rhythm (the rail's wave flyers). Optional: a host without it gets
    *  none. */
-  fireEnemyShot?(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean): void
+  fireEnemyShot?(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number): void
   /** Atlas says a line: a stage's `hint.<id>` (a tip on the danger ahead)
    *  or `secret.<id>` (a nudge toward a secret), once a mission each. */
   say(line: AtlasLine): void
@@ -190,6 +191,16 @@ export interface ClimbHost {
    *  more, even over the cap; 'weapon' / 'power' a borrowed Core Master
    *  weapon's charges (`sim/borrowed.ts`). ('hp' is `onPickup('hpBig')`.) */
   secretPrize?(prize: SecretSpec['prize'], x: number, y: number, z: number): void
+  /** A sealed flood room (`sim/stages/water.ts`) works its doorways: how far
+   *  door `id` stands open (0 shut .. 1), whether something already holds
+   *  it shut, slamming it shut and held, letting it go again; and whether a
+   *  room's machines are all down (some came, none stands). A host without
+   *  them has no doors: its floods count as sealed. */
+  doorOpen?(id: number): number
+  doorHeld?(id: number): boolean
+  shutDoor?(id: number): void
+  releaseDoor?(id: number): void
+  roomClear?(room: number): boolean
 }
 
 interface LadderRt {
@@ -568,6 +579,11 @@ export class ClimbRun {
 
   /** Lifts, crushers, balls, rewards, checkpoints. Before the player moves:
    *  the lifts' motion this step is what carries a rider. */
+  /** Portal culling's rooms this frame, for the features' scene-root parts. */
+  cull(vis: Uint8Array): void {
+    for (const f of this.features) f.cull?.(vis)
+  }
+
   update(dt: number, time: number, p: ClimbBody, playing: boolean): void {
     for (const lf of this.lifts) this.stepLift(lf, dt, time, p)
     for (const cr of this.crushers) this.stepCrusher(cr, time, p, playing)
@@ -1108,13 +1124,16 @@ export class ClimbRun {
     // backing off after a swoop sank into the Sky Docks' raised decks (the
     // 2-D wall test only knows walls, not floor heights). Such a step is
     // undone, the way a wall stops it.
-    if (e.state !== 'dead') {
-      const g = groundAt(this.host.map, e.x, e.z)
-      const body = (e.floor ?? 0) + Math.max(0, e.y) - 0.25
-      if (g > body + STEP_UP && g > (e.floor ?? 0) + STEP_UP) {
-        e.x = e.px
-        e.z = e.pz
-      }
+    // Undone to the last spot that passed this test, not the frame's start:
+    // anything that moved it between frames (a hit, a shove) may have put
+    // that inside a block already, and then the undo kept it there. Dead too:
+    // a wreck falls where the machine stood, never inside a block.
+    if (tooTallFor(this.host.map, e, e.x, e.z)) {
+      e.x = e.safeX ?? e.px
+      e.z = e.safeZ ?? e.pz
+    } else {
+      e.safeX = e.x
+      e.safeZ = e.z
     }
     const h = e.hover
     if (h && e.state !== 'dead') {

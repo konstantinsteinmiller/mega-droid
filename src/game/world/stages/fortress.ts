@@ -1,6 +1,6 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift, type MagnetRail, type WaterZone } from '../levelGen'
 import { mulberry32 } from '../rng'
-import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { Builder, finish, mirrorX, POOL_FREEBOARD, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
 
 /**
  * ─── Vex Fortress (the last story stage) ─────────────────────────────────────
@@ -40,6 +40,11 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  *                      cycling round it; at 30 % the floor goes again and
  *                      it ends on a narrow ring round the Core. The hall and
  *                      the ring have no doors: the falls carry Flux there.
+ *
+ * The final test, and meant to be (#144): its regular machines come in
+ * close to twice the numbers of the first draft (46, was 26) and take three
+ * times the health (`stageFoeHpMul`, `sim/adaptive.ts`); the gates'
+ * mini-bosses and Vex are left as they were.
  *
  * Deterministic from the seed: the hand and the clocks vary, never the
  * route.
@@ -91,6 +96,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.addRoom(1, 1, 6, 5, 'start', 'dock', BASE)
   b.checkpoint(2, 3, YAW_PX, cells(1, 2, 2, 4))
   b.foe('ground', 5, 4, YAW_NX, [4, 3, 6, 5], undefined, 'warden')
+  b.foe('ground', 4, 2, YAW_NX, [3, 1, 6, 3], undefined, 'stalker')
   b.corridor(7, 2, 1, 0, 2, BASE)
 
   // ── 2 Gate court ──────────────────────────────────────────────────────────
@@ -106,6 +112,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.foe('turret', 18, 1, YAW_NX, [18, 1, 18, 1])
   b.foe('ground', 14, 4, YAW_NX, [12, 3, 16, 5], undefined, 'warden')
   b.foe('ground', 16, 6, YAW_NX, [14, 5, 18, 7], undefined, 'warden')
+  b.foe('flyer', 15, 2, YAW_NX, [11, 1, 18, 7], [BASE + 1, BASE + 4], 'hornet')
   b.corridor(19, 3, 1, 0, 2, BASE)
 
   // ── 3 Moat ────────────────────────────────────────────────────────────────
@@ -120,6 +127,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(22, 3, YAW_PX, cells(21, 2, 23, 5))
   b.foe('flyer', 25, 1, YAW_NX, [21, 1, 30, 6], [BASE, BASE + 3], 'hornet')
   b.foe('turret', 30, 1, YAW_NX, [30, 1, 30, 1])
+  b.foe('flyer', 28, 5, YAW_NX, [24, 1, 30, 6], [BASE + 1, BASE + 3], 'polar')
   b.corridor(29, 7, 0, 1, 2, BASE)
 
   // ── 4 Wall climb ──────────────────────────────────────────────────────────
@@ -132,6 +140,8 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(29, 14, YAW_PX, cells(28, 13, 30, 15))
   b.foe('turret', 31, 15, YAW_NZ, [31, 15, 31, 15])
   b.foe('flyer', 27, 11, YAW_PZ, [26, 9, 31, 15], [BASE, TOP], 'hornet')
+  b.foe('ground', 31, 11, YAW_NZ, [30, 11, 31, 12], undefined, 'warden')
+  b.foe('turret', 26, 15, YAW_NZ, [26, 15, 26, 15])
   b.corridor(32, 14, 1, 0, 2, TOP)
 
   // ── 5 Battlements ─────────────────────────────────────────────────────────
@@ -143,6 +153,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.foe('ground', 40, 10, YAW_NX, [38, 9, 43, 11], undefined, 'warden')
   b.foe('ground', 42, 14, YAW_NX, [39, 14, 43, 15], undefined, 'stalker')
   b.foe('turret', 43, 9, YAW_NX, [43, 9, 43, 9])
+  b.foe('flyer', 40, 12, YAW_NX, [36, 9, 43, 15], [TOP + 1, TOP + 3], 'hornet')
   b.corridor(44, 12, 1, 0, 2, TOP)
 
   // ── 6 Gate hall (mini-boss: the Gatekeeper) ───────────────────────────────
@@ -165,6 +176,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(50, 19, YAW_PZ, cells(48, 19, 52, 19))
   b.foe('flyer', 47, 21, YAW_PX, [44, 19, 54, 23], [TOP, TOP + 2], 'polar')
   b.foe('turret', 44, 19, YAW_PX, [44, 19, 44, 19])
+  b.foe('flyer', 52, 22, YAW_NZ, [44, 19, 54, 23], [TOP + 1, TOP + 3], 'hornet')
   b.corridor(43, 21, -1, 0, 2, TOP)
 
   // ── 8 Light bridges ───────────────────────────────────────────────────────
@@ -180,6 +192,8 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(35, 21, YAW_NX, cells(34, 19, 35, 22))
   b.foe('ground', 34, 23, YAW_NX, [34, 18, 35, 23], undefined, 'stalker')
   b.foe('flyer', 38, 18, YAW_NX, [30, 18, 41, 23], [TOP, TOP + 2], 'hornet')
+  b.foe('turret', 30, 18, YAW_PX, [30, 18, 30, 18])
+  b.foe('flyer', 32, 22, YAW_PX, [30, 18, 37, 23], [TOP, TOP + 2], 'polar')
   b.corridor(29, 21, -1, 0, 2, TOP)
 
   // ── 9 Flood vault ─────────────────────────────────────────────────────────
@@ -187,11 +201,12 @@ export const generateVexFortress = (seed: number): MapData => {
   for (let j = 18; j <= 24; j++) b.stair(25, j, Ramp.PX, TOP - STOREY, STOREY)
   b.level(20, 18, 24, 24, TOP - STOREY)
   for (let j = 18; j <= 24; j++) b.stair(19, j, Ramp.NX, TOP - STOREY, STOREY)
-  water({ i0: 19, j0: 18, i1: 25, j1: 24, lo: TOP - STOREY - 0.2, hi: TOP + 0.3, valve: { i: 26, j: 18, side: 'n' } })
+  water({ i0: 19, j0: 18, i1: 25, j1: 24, lo: TOP - STOREY - 0.2, hi: TOP - POOL_FREEBOARD, valve: { i: 26, j: 18, side: 'n' } })
   b.rewards.push({ x: cellCenter(22), z: cellCenter(24), y: TOP - STOREY, room: room(), kind: 'we' })
   b.checkpoint(27, 21, YAW_NX, cells(26, 19, 27, 23))
   b.foe('flyer', 22, 21, YAW_NX, [18, 18, 27, 24], [TOP - STOREY, TOP + 1], 'puffer')
   b.foe('ground', 18, 23, YAW_PX, [18, 18, 18, 24], undefined, 'warden')
+  b.foe('flyer', 23, 19, YAW_PX, [18, 18, 27, 24], [TOP - STOREY + 1, TOP + 1], 'hornet')
   b.corridor(17, 21, -1, 0, 2, TOP)
 
   // ── 10 Rockfall ───────────────────────────────────────────────────────────
@@ -208,6 +223,8 @@ export const generateVexFortress = (seed: number): MapData => {
   rockfall(9, 20, rb, (rb * 2) / 3)
   b.checkpoint(14, 19, YAW_NX, cells(14, 18, 15, 19))
   b.foe('ground', 9, 22, YAW_PZ, [8, 21, 11, 23], undefined, 'mole')
+  b.foe('ground', 12, 23, YAW_PX, [11, 22, 13, 23], undefined, 'mole')
+  b.foe('ground', 9, 18, YAW_PX, [8, 18, 11, 19], undefined, 'stalker')
   b.corridor(10, 24, 0, 1, 2, TOP)
 
   // ── 11 Wind tunnel ────────────────────────────────────────────────────────
@@ -216,6 +233,8 @@ export const generateVexFortress = (seed: number): MapData => {
   b.wind.push({ i0: 8, j0: 27, i1: 12, j1: 34, dx: 0, dz: -1, strength: 3.5 + rng() * 0.5, on: 2.5 + rng() * 0.6, off: 2.4 + rng() * 0.4, phase: rng() * 6, room: room() })
   b.checkpoint(10, 26, YAW_PZ, cells(8, 26, 12, 26))
   b.foe('turret', 12, 34, YAW_NZ, [12, 34, 12, 34])
+  b.foe('turret', 8, 34, YAW_NZ, [8, 34, 8, 34])
+  b.foe('flyer', 10, 31, YAW_NZ, [8, 27, 12, 34], [TOP + 1, TOP + 3], 'hornet')
   b.corridor(13, 33, 1, 0, 2, TOP)
 
   // ── 12 Core shaft ─────────────────────────────────────────────────────────
@@ -232,6 +251,8 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(16, 32, YAW_PX, cells(15, 31, 16, 33))
   b.checkpoint(21, 32, YAW_PX, cells(21, 31, 21, 33))
   b.foe('flyer', 21, 30, YAW_PX, [15, 30, 26, 34], [TOP, TOP + 2], 'hornet')
+  b.foe('turret', 26, 30, YAW_NX, [26, 30, 26, 30])
+  b.foe('flyer', 16, 34, YAW_PX, [15, 30, 26, 34], [TOP, TOP + 2], 'polar')
   b.corridor(27, 32, 1, 0, 2, TOP)
 
   // ── 13 Puzzle vault ───────────────────────────────────────────────────────
@@ -240,8 +261,10 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(30, 31, YAW_PX, cells(29, 30, 30, 33))
   b.foe('ground', 34, 32, YAW_NX, [31, 29, 37, 35], undefined, 'warden')
   b.foe('flyer', 35, 30, YAW_NX, [29, 29, 37, 35], [TOP, TOP + 2], 'polar')
-  b.secret(room(), 'color', [29, 36, 30, 36], { i: 30, j: 36, axis: 'z' },
-    [[29, 34, 'w', 1], [32, 35, 's', 0], [35, 35, 's', 1], [37, 34, 'e', 2]], [], 'tank', 1)
+  b.foe('ground', 35, 33, YAW_NX, [32, 31, 36, 34], undefined, 'stalker')
+  // Simon says, the long one (#143): five steps over four walls.
+  b.secret(room(), 'sequence', [29, 36, 30, 36], { i: 30, j: 36, axis: 'z' },
+    [[29, 34, 'w', 0], [33, 29, 'n', 1], [37, 34, 'e', 2], [35, 35, 's', 3]], [1, 3, 0, 2, 1], 'tank')
   b.corridor(38, 32, 1, 0, 2, TOP)
 
   // ── 14 Twin hall (mini-boss: the Twin Masters) ────────────────────────────
@@ -268,6 +291,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.checkpoint(44, 39, YAW_PZ, cells(42, 39, 46, 40))
   b.checkpoint(44, 43, YAW_PZ, cells(42, 42, 46, 43))
   b.foe('flyer', 47, 40, YAW_NX, [40, 39, 48, 43], [BASE, TOP], 'hornet')
+  b.foe('turret', 40, 43, YAW_PX, [40, 43, 40, 43])
   b.corridor(44, 44, 0, 1, 2, BASE)
 
   // ── 16 Reactor run ────────────────────────────────────────────────────────
@@ -275,8 +299,10 @@ export const generateVexFortress = (seed: number): MapData => {
   // way through is a beat between them.
   b.addRoom(40, 46, 9, 6, 'combat', 'vents', BASE)
   const fp = 4.5
+  // No west vent on row 49: that is the doorway out (the corridor west),
+  // and a burner stood in it (playtest 2026-10-12).
   for (const [j, k] of [[47, 0], [49, 1], [51, 2]] as const) {
-    b.vents.push({ i: 40, j, dx: 1, dz: 0, y: BASE + VENT_MOUTH, period: fp, phase: k * 1.5, on: VENT_ON, room: room(), kind: 'fire' })
+    if (j !== 49) b.vents.push({ i: 40, j, dx: 1, dz: 0, y: BASE + VENT_MOUTH, period: fp, phase: k * 1.5, on: VENT_ON, room: room(), kind: 'fire' })
     b.vents.push({ i: 48, j: j - 1, dx: -1, dz: 0, y: BASE + VENT_MOUTH, period: fp, phase: k * 1.5 + 0.75, on: VENT_ON, room: room(), kind: 'fire' })
   }
   for (const [i, j, set] of [[42, 47, 0], [44, 48, 1], [46, 47, 2], [42, 50, 2], [44, 50, 0], [46, 50, 1]] as const) {
@@ -284,6 +310,7 @@ export const generateVexFortress = (seed: number): MapData => {
   }
   b.checkpoint(44, 46, YAW_PZ, cells(43, 46, 45, 46))
   b.foe('ground', 41, 51, YAW_PX, [40, 50, 43, 51], undefined, 'warden')
+  b.foe('ground', 47, 49, YAW_NX, [45, 49, 48, 49], undefined, 'stalker')
   b.corridor(39, 49, -1, 0, 2, BASE)
 
   // ── 17 Antechamber ────────────────────────────────────────────────────────
@@ -293,6 +320,7 @@ export const generateVexFortress = (seed: number): MapData => {
   b.rewards.push({ x: cellCenter(36), z: cellCenter(46), y: BASE, room: room(), kind: 'hp' })
   b.checkpoint(35, 49, YAW_NX, cells(34, 48, 36, 50))
   b.foe('ground', 31, 47, YAW_PX, [30, 46, 32, 51], undefined, 'stalker')
+  b.foe('ground', 31, 51, YAW_PX, [30, 49, 32, 51], undefined, 'warden')
   b.corridor(29, 49, -1, 0, 2, 0, true)
 
   // ── 18 Arena: the Core Descent (#109) ─────────────────────────────────────
@@ -323,6 +351,16 @@ export const generateVexFortress = (seed: number): MapData => {
 
   // The beam-in room: south of the beach, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
+  // The challenge room (`sim/challenge.ts`): south off the core shaft's far
+  // pier, where the shuttles set Flux down — the door in the pier's end
+  // wall; the way on is east. The Sentinel Prototype's beam sweep stops at
+  // cover (`hasLineOfSight`): two pillars on a diagonal, a cell in from the
+  // side walls, either side of where it waits.
+  if (b.challengeRoom(11, { mouth: { i: 25, j: 34, di: 0, dj: 1 }, sizes: [[6, 7], [6, 6]] }) >= 0) {
+    const cr = b.rooms[b.challenge!.room]!
+    b.coverPillar(cr.x0 + 1, cr.z0 + 2)
+    b.coverPillar(cr.x0 + cr.w - 2, cr.z0 + cr.h - 2)
+  }
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

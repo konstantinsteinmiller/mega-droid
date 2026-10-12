@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Paskutinė kova! Sistemos paleistos iš naujo.',
     'weak': 'SILPNYBĖ!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'PER SILPNA!',
     'dizzy': 'APSVAIGO!',
     'dodge': 'IŠVENGTA!',
     'block': 'Blokuoti',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Prižiūrėtojas',
     'hornet': 'Sraigtinė širšė',
     'stalker': 'Švytintis medžiotojas',
+    'spotter': 'Prožektorinis dronas',
     'puffer': 'Pūslės mina',
     'mole': 'Kurmis gręžikas',
     'polar': 'Poliarinis šuniukas',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Prižiūrėtoją | Prižiūrėtojus | Prižiūrėtojų',
     'hornet': 'Sraigtinę širšę | Sraigtines širšes | Sraigtinių širšių',
     'stalker': 'Švytintį medžiotoją | Švytinčius medžiotojus | Švytinčių medžiotojų',
+    'spotter': 'Prožektorinį droną | Prožektorinius dronus | Prožektorinių dronų',
     'puffer': 'Pūslės miną | Pūslės minas | Pūslės minų',
     'mole': 'Kurmį gręžiką | Kurmius gręžikus | Kurmių gręžikų',
     'polar': 'Poliarinį šuniuką | Poliarinius šuniukus | Poliarinių šuniukų',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Vėtros meistras',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Didysis meistras robotas'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Žarijų skalikas',
+    'icebreakerBrute': 'Ledlaužis grubijonas',
+    'arcSpider': 'Lankinis voras',
+    'stormHornetQueen': 'Audrų širšių karalienė',
+    'lodestoneGolem': 'Magnetito golemas',
+    'burrowWyrm': 'Kasantis kirminas',
+    'pufferMatriarch': 'Pūsliažuvės matriarchė',
+    'glitchStalker': 'Glitch sėlinys',
+    'sawGyro': 'Pjūklinis giroskopas',
+    'sentinelPrototype': 'Sargo prototipas'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Iššūkis',
+    'cleared': 'Iššūkis įveiktas! +{bolts} varžtų'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Lygis {n}! Sistemos visiškai sutaisytos.'
   },
   'tips': {
-    'moveTouch': 'Vilk kairę pusę, kad judėtum, dešinę – kad apsidairytum. Bakstelėk grindis, kad ten nueitum!',
+    'moveTouch': 'Vilk kairę pusę, kad judėtum, dešinę – kad apsidairytum.',
     'moveKeys': '{keys} – judėti.',
     'lookMouse': 'Judink pelę, kad apsidairytum.',
     'capture': 'Spustelėk sceną, kad valdytum kamerą.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Sąveika'
     },
     'touch': {
-      'move': 'Kairė pusė: vilk, kad judėtum. Bakstelėk grindis, kad ten nueitum.',
-      'fire': 'Kovoje: bakstelėk – šūvis, laikyk – įkrova, atleisk – iššauti.',
+      'move': 'Kairė pusė: vilk, kad judėtum. Dešinė pusė: vilk, kad apsidairytum.',
+      'fire': 'Dešinė pusė arba šaudymo mygtukas: bakstelėk – šūvis, laikyk – įkrova, atleisk – iššauti. Laikydamas vilk, kad nusitaikytum.',
       'block': 'Laikyk skydą, kad blokuotum – kai žiedas užsidaro, atremsi.',
       'use': 'Prie skrynios, įstrigusio roboto ar durų: bakstelėk juos arba iššokusį mygtuką.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Pataikyk į šerdį, kai ji atsivers.',
       'hornet': '{enemy}. Sminga tiesiai: šok į šoną!',
       'stalker': '{enemy}. Atremk jo šuolį.',
+      'spotter': '{enemy}. Išeik iš jo šviesos. Šauk į lempą.',
       'puffer': '{enemy}. Susprogdink, kol neišsipūtė.',
       'mole': '{enemy}. Pataikyk, kai išlenda.',
       'elite': 'Auksinis žiedas. Elitinis. Atsargiai.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Nes jie laisvi.',
     },
     'guardDown': 'Sargas nukautas! Kelias laisvas.',
+    'challenge': 'Iššūkio durys! Viduje grobis.',
     'help': {
       'weapon': 'Pasirink naują ginklą ir šauk į dronus!',
       'gap': 'Eik tiesiai prie krašto ir peršoksi!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Nuslysk, kol raudonas žiedas tavęs nepasiekė!',
       'block': 'Laikyk blokavimą, kai jis šauna. Tobula – tiksliai pataikymo akimirką!',
       'blockMiss': 'Skydą aukštyn! Blokuok pataikymo akimirką ir grąžink!',
+      'chargeMiss': 'Pabandyk įkrautą šūvį – laikyk nuspaudęs patrankos mygtuką!',
       'charge': 'Laikyk šūvį, kol patranka sužibs, tada atleisk!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Tas skydelis rodo raštą. Lempos ant sienos – dar ne.',
       'color': 'Tas rėmas turi mėgstamą spalvą. Turi šviesti tik jos lempos.',
       'cycle': 'Kiekvienas pataikymas pakeičia lempos nuomonę. Skydelis žino, ko nori.',
+      'sequence': 'Skydelis mirksi vis tą pačią melodiją. Pakartok ją mygtukais, iš eilės.',
+      'mirror': 'Tas spindulys nori į žiedą. Veidrodžiai pasisuka, kai į juos šauni.',
+      'tiles': 'Uždek visas plokštes vienu ėjimu. Dukart ant vienos ar nulipsi nuo jų, ir vėl tamsu.',
       'solved': 'Še tau. Kažkas mėgsta galvosūkius.'
     },
     'landed': 'Nusileidome! Pirmyn.',

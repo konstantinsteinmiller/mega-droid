@@ -32,12 +32,13 @@ import { PAL } from '@/game/models/palette'
 import { glowVC } from '@/game/models/toon'
 import { pose, nudge, type Rig, type V3 } from '@/game/models/kit'
 import { buildBossRig, poseBoss, type BossAct, type BossId } from '@/game/models/bosses'
-import { buildEnemyRig, poseHardhat, poseTrooper, poseHeli, poseHopper, poseRoller, poseBrute, poseTurret, poseGolem, type EnemyKind } from '@/game/models/enemies'
+import { buildEnemyRig, poseHardhat, poseTrooper, poseHeli, poseHopper, poseRoller, poseBrute, poseTurret, poseGolem, poseSpotter, SPOTTER_LENS, type EnemyKind } from '@/game/models/enemies'
 import { newMotion } from '@/game/models/motion'
-import { golemColors } from '@/game/sim/enemies'
+import { golemColors, SPOT_R } from '@/game/sim/enemies'
+import { makeSearchBeam, aimSearchBeam, type SearchBeam } from '@/game/fx/searchBeam'
 
 const host = ref<HTMLElement | null>(null)
-const ENEMIES: EnemyKind[] = ['hardhat', 'trooper', 'heli', 'hopper', 'roller', 'brute', 'turret', 'golem', 'polar', 'mole', 'puffer', 'stalker', 'hornet', 'warden', 'gatekeeper']
+const ENEMIES: EnemyKind[] = ['hardhat', 'trooper', 'heli', 'hopper', 'roller', 'brute', 'turret', 'golem', 'polar', 'mole', 'puffer', 'stalker', 'spotter', 'hornet', 'warden', 'gatekeeper']
 const BOSSES: BossId[] = ['scrapper', 'blazeMaster', 'frostMaster', 'voltMaster', 'galeMaster', 'magnetMaster', 'drillMaster', 'tideMaster', 'neonMaster', 'rotorMaster', 'vexMk1']
 const models = ['hero', 'hubview', 'turn', 'gear', 'viewmodel', 'fp', 'thumb', 'props', 'enemies', 'bosses', ...ENEMIES, ...BOSSES]
 let bossRigs: Array<{ id: BossId; rig: Rig }> = []
@@ -47,6 +48,14 @@ const current = ref(hashQuery.get('m') ?? 'hero')
 /** Fixed turntable angle in degrees (`#/models?m=hero&angle=0`); spins when absent. */
 const fixedAngle = hashQuery.has('angle') ? Number(hashQuery.get('angle')) * Math.PI / 180 : null
 const zoom = Number(hashQuery.get('zoom') ?? 1)
+/**
+ * `m=spotter` — the Searchlight Drone over its pool of light, 3 m ahead on
+ * the floor; `lock=1` holds the lock's red (0..1, its wind-up), `lamp=0`
+ * shows the lamp shot out.
+ */
+const spotLock = Number(hashQuery.get('lock') ?? 0)
+const spotLamp = Number(hashQuery.get('lamp') ?? 1)
+let spotBeam: SearchBeam | null = null
 /** `pose=victory` holds the results pose; `tint=1` tries a gear recolour. */
 const heroPose = hashQuery.get('pose')
 /** `still=1` freezes the idle animation (repeatable screenshots). */
@@ -678,10 +687,20 @@ const show = (name: string) => {
     const kinds = name === 'enemies' ? ENEMIES : [name as EnemyKind]
     kinds.forEach((kind, i) => {
       const r = buildEnemyRig(kind, kind === 'golem' ? golemColors(THEMES[labTheme]) : undefined)
-      r.root.position.set((i - (kinds.length - 1) / 2) * 2.1, kind === 'heli' ? 1.6 : 0, 0)
+      r.root.position.set((i - (kinds.length - 1) / 2) * 2.1, kind === 'heli' ? 1.6 : kind === 'spotter' ? 2.4 : 0, 0)
       stage.add(r.root)
       enemyRigs.push({ kind, rig: r })
     })
+    spotBeam = null
+    if (name === 'spotter') {
+      // Its beam, from the lamp down to a pool 3 m ahead on the floor
+      spotBeam = makeSearchBeam()
+      enemyRigs[0]!.rig.root.add(spotBeam.root)
+      aimSearchBeam(spotBeam, 0, SPOTTER_LENS.y, SPOTTER_LENS.z, 0, -2.4, 3, SPOT_R, spotLock, spotLamp, 0)
+      camera.position.set(3.4, 2.9, 3.9)
+      camera.lookAt(0, 1.7, 1.1)
+      return
+    }
     if (name === 'golem' && golemCompare) {
       // The real crate beside it, as MissionObjects builds it
       enemyRigs[0]!.rig.root.position.x = -0.85
@@ -787,11 +806,13 @@ const loop = () => {
     else if (kind === 'brute') poseBrute(r, t, 0.2, Math.sin(t) > 0 ? 1 : -1, Math.sin(t * 2), 0)
     else if (kind === 'turret') poseTurret(r, 0.2 + Math.sin(t) * 0.2, 0)
     else if (kind === 'golem') poseGolemLab(r, still ? 0 : t)
+    else if (kind === 'spotter') poseSpotter(r, Math.atan2(SPOTTER_LENS.y + 2.4, 3 - SPOTTER_LENS.z), spotLock, spotLamp, still ? 0 : t)
   }
   for (const { id, rig: r } of bossRigs) poseBoss(r, id, t, 'idle', 0)
   if (bossRigs.length > 1) stage.rotation.y = fixedAngle ?? Math.sin(t * 0.4) * 0.4
   if (enemyRigs.length > 1) stage.rotation.y = fixedAngle ?? Math.sin(t * 0.4) * 0.5
   if (heroRigs.length > 0 || current.value === 'hubview') stage.rotation.y = 0
+  else if (spotBeam) stage.rotation.y = fixedAngle ?? 0
   else if (current.value !== 'props' && enemyRigs.length <= 1 && bossRigs.length <= 1) stage.rotation.y = fixedAngle ?? t * 0.6
   const r = getRenderer()
   r.clear()

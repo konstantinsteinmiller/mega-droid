@@ -59,6 +59,11 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
     kind: 'gatekeeper', hp: 900, dmg: 24, speed: 1.1, radius: 1.4, hitR: 1.5, aimY: 1.4, fly: 0,
     aggro: 22, range: [5, 11], xp: 160, bolts: [60, 90], cooldown: 1.6, tele: 0.9, unblockable: false, armor: 1
   },
+  // A challenge mini-boss's stand-in sheet: each has its own (`sim/miniBosses.ts`).
+  miniboss: {
+    kind: 'miniboss', hp: 700, dmg: 22, speed: 3, radius: 1, hitR: 1.1, aimY: 1, fly: 0,
+    aggro: 30, range: [3, 9], xp: 140, bolts: [20, 30], cooldown: 1.6, tele: 0.9, unblockable: false, armor: 1
+  },
   echo: {
     kind: 'echo', hp: 480, dmg: 22, speed: 2.4, radius: 0.9, hitR: 1.0, aimY: 1.5, fly: 0,
     aggro: 22, range: [5, 9], xp: 120, bolts: [40, 60], cooldown: 1.5, tele: 0.75, unblockable: false, armor: 1
@@ -70,6 +75,15 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   stalker: {
     kind: 'stalker', hp: 70, dmg: 18, speed: 3.6, radius: 0.5, hitR: 0.6, aimY: 0.85, fly: 0,
     aggro: 16, range: [1, 3], xp: 26, bolts: [6, 11], cooldown: 1.8, tele: 0.6, unblockable: false, armor: 1
+  },
+  // The Searchlight Drone (#142): it hovers high over the rooftops and sweeps
+  // a spotlight across the floor after Flux. `tele` is the LOCK (the beam goes
+  // red and follows him, slower than he walks); `dmg` is the strike it calls
+  // down on the locked spot (a red marker first: step out). `fly` clears the
+  // Boulevard's vents and billboards.
+  spotter: {
+    kind: 'spotter', hp: 58, dmg: 22, speed: 2.6, radius: 0.55, hitR: 0.62, aimY: 0, fly: 3.3,
+    aggro: 18, range: [6, 11], xp: 28, bolts: [6, 11], cooldown: 1.6, tele: 0.8, unblockable: true, armor: 1
   },
   puffer: {
     kind: 'puffer', hp: 34, dmg: 16, speed: 1.7, radius: 0.5, hitR: 0.62, aimY: 0, fly: 1.3,

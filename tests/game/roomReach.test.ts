@@ -62,8 +62,16 @@ describe('a machine and its room', () => {
 
   it('a Trooper that sees Flux across its big room wakes and opens fire', () => {
     const { w, e } = rig(26) // past its aggro radius and its 16 m range
-    run(w, e, 3)
-    expect(e.state === 'tele' || e.state === 'act' || e.state === 'recover').toBe(true)
+    // Whether it attacked at all in those seconds, not its state at the last
+    // frame: its attack timing is random, and about one run in nine ended
+    // between two attacks (the test flickered).
+    let fired = false
+    for (let t = 0; t < 3; t += 1 / 60) {
+      w.time += 1 / 60
+      updateEnemy(w, e, 1 / 60)
+      if (e.state === 'tele' || e.state === 'act' || e.state === 'recover') fired = true
+    }
+    expect(fired).toBe(true)
   })
 
   it('the same distance into the next room: it does not notice him', () => {

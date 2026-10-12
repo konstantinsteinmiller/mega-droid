@@ -133,6 +133,43 @@ describe('pause and mute', () => {
     expect(pause.resumeGame).toHaveBeenCalledTimes(1)
   })
 
+  // #139: the Bridge reads window blur as "hidden" and only focus as visible
+  // again; an ad overlay takes the focus and never gives it back, so the game
+  // stood frozen after every ad until the player clicked into the frame.
+  it('an ad that ends with the frame still unfocused resumes the game without a click', async () => {
+    const m = await load()
+    await m.playgamaPlugin()
+    // The ad opens: the Bridge pauses and the frame blurs.
+    bridge.emit('interstitial_state_changed', 'opened')
+    bridge.emit('pause_state_changed', true)
+    bridge.emit('visibility_state_changed', 'hidden')
+    expect(pause.resumeGame).not.toHaveBeenCalled()
+    // It closes; the Bridge keeps "paused" for the blur. The game resumes.
+    bridge.emit('interstitial_state_changed', 'closed')
+    expect(pause.resumeGame).toHaveBeenCalledTimes(1)
+    // Same for a rewarded video.
+    bridge.emit('rewarded_state_changed', 'opened')
+    expect(pause.pauseGame).toHaveBeenCalled()
+    pause.resumeGame.mockClear()
+    bridge.emit('rewarded_state_changed', 'closed')
+    expect(pause.resumeGame).toHaveBeenCalledTimes(1)
+  })
+
+  it('a real pause or tab switch after the ad still pauses', async () => {
+    const m = await load()
+    await m.playgamaPlugin()
+    bridge.emit('pause_state_changed', true)
+    bridge.emit('visibility_state_changed', 'hidden')
+    bridge.emit('interstitial_state_changed', 'closed')
+    pause.pauseGame.mockClear()
+    // The click into the frame: focus → visible, then the pause clears.
+    bridge.emit('visibility_state_changed', 'visible')
+    bridge.emit('pause_state_changed', false)
+    // Later the player switches tabs: paused again.
+    bridge.emit('pause_state_changed', true)
+    expect(pause.pauseGame).toHaveBeenCalled()
+  })
+
   it('treats portal mute as a mute, not a pause', async () => {
     const m = await load()
     await m.playgamaPlugin()
@@ -148,6 +185,8 @@ describe('ads — the state event is the whole lifecycle', () => {
   it('resolves an interstitial on closed, reports the impression, and leaves no listener behind', async () => {
     const m = await load()
     await m.playgamaPlugin()
+    // The plugin's own standing listener (#139) is not a leak.
+    const base = bridge.count('interstitial_state_changed')
     const impression = vi.fn()
     const p = m.showInterstitialPG(impression)
     await Promise.resolve()
@@ -157,12 +196,13 @@ describe('ads — the state event is the whole lifecycle', () => {
     bridge.emit('interstitial_state_changed', 'closed')
     await p
     expect(impression).toHaveBeenCalledTimes(1)
-    expect(bridge.count('interstitial_state_changed'), 'leaked listener resolves the NEXT ad early').toBe(0)
+    expect(bridge.count('interstitial_state_changed'), 'leaked listener resolves the NEXT ad early').toBe(base)
   })
 
   it('grants a rewarded video only on "rewarded", never on "closed" alone', async () => {
     const m = await load()
     await m.playgamaPlugin()
+    const base = bridge.count('rewarded_state_changed')
 
     const skipped = m.showRewardedPG()
     await Promise.resolve(); await Promise.resolve()
@@ -176,7 +216,7 @@ describe('ads — the state event is the whole lifecycle', () => {
     bridge.emit('rewarded_state_changed', 'rewarded')
     bridge.emit('rewarded_state_changed', 'closed')
     expect(await watched).toBe(true)
-    expect(bridge.count('rewarded_state_changed')).toBe(0)
+    expect(bridge.count('rewarded_state_changed')).toBe(base)
   })
 
   it('resolves on "failed" (no fill) and never hangs the caller', async () => {

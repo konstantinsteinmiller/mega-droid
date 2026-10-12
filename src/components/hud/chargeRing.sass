@@ -1,0 +1,44 @@
+// The charge ring's look (`chargeRing.ts`): the crosshair's in play, the
+// intro's Overload preview. Included into the ring's wrapper.
+=look
+  svg
+    width: 100%
+    height: 100%
+    overflow: visible
+  circle
+    fill: none
+  .track
+    stroke: rgba(255, 255, 255, 0.18)
+    stroke-width: 4
+  .l1, .l2
+    transform: rotate(-90deg)
+    transform-origin: 50% 50%
+    stroke-linecap: round
+  .l1
+    stroke: #c8ff7a
+    stroke-width: 6
+  .l2
+    stroke: #7ff4ff
+    stroke-width: 5
+  .dot
+    fill: #fff
+    stroke: #141a33
+    stroke-width: 2.5
+  &[data-state='full'] .l2
+    stroke: #ffffff
+  &[data-state='full2'] .l2
+    stroke: #3cc8ff
+  &[data-state='build'] .l1
+    stroke: #b46cff
+  &[data-state='over']
+    .l1, .l2
+      stroke: #b46cff
+      filter: drop-shadow(0 0 6px #d38bff)
+    .dot
+      fill: #fff6d6
+  &[data-state='perfect']
+    .l1, .l2
+      stroke: #ffd84a
+      filter: drop-shadow(0 0 6px #ffd84a)
+    .dot
+      fill: #ffd84a

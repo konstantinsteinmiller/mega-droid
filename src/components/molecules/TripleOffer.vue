@@ -1,11 +1,11 @@
 <template lang="pug">
-  //- The rewarded offer on the result screen: a big camera badge (reads as
+  //- The rewarded offer on the result screen: the big rewarded badge (reads as
   //- "watch a video" at a glance, in any language), what it
   //- gives in words and in bolts, and a ×3 sticker. Also rendered invisibly
   //- inside the free Continue button on Poki, so that one is never smaller.
   span.triple-offer
     span.film(aria-hidden="true")
-      GameIcon.cam(name="video")
+      RewardAdBadge.cam
     span.words
       span.what {{ t('results.triple') }}
       span.amount
@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import RewardAdBadge from '@/components/atoms/RewardAdBadge.vue'
 
 defineProps<{
   /** The bolts the offer would bring in total (already formatted). */
@@ -34,24 +35,20 @@ const { t } = useI18n()
   gap: 0.55em
   text-align: left
   line-height: 1.05
-// The film badge: the camera glyph big and white on a dark glowing disc, so
-// "watch a video" reads at a glance instead of hiding in a tiny glyph.
+// The film badge: the rewarded mark every video button carries
+// (`RewardAdBadge`), big and glowing here, so "watch a video" reads at a
+// glance instead of hiding in a tiny glyph.
 .film
   position: relative
   flex: none
-  width: 2.3em
-  height: 2.3em
-  border-radius: 50%
   display: grid
   place-items: center
-  background: radial-gradient(circle at 35% 30%, #4a2360, #1c0c2a 70%)
-  border: 0.14em solid #fff3c2
-  box-shadow: 0 0 0.6em rgba(255, 220, 120, 0.75), inset 0 -0.15em 0 rgba(0, 0, 0, 0.35)
+  border-radius: 0.5em
+  border: 0.12em solid #fff3c2
+  box-shadow: 0 0 0.6em rgba(255, 220, 120, 0.75)
   animation: film-pulse 1.4s ease-in-out infinite
 .cam
-  width: 1.45em
-  height: 1.45em
-  color: #fff
+  font-size: 1.3em
 .words
   display: flex
   flex-direction: column
@@ -91,7 +88,7 @@ const { t } = useI18n()
   animation: x3-bob 1.1s ease-in-out infinite
 @keyframes film-pulse
   50%
-    box-shadow: 0 0 1em rgba(255, 220, 120, 1), inset 0 -0.15em 0 rgba(0, 0, 0, 0.35)
+    box-shadow: 0 0 1em rgba(255, 220, 120, 1)
 @keyframes x3-bob
   50%
     transform: rotate(-6deg) scale(1.12)

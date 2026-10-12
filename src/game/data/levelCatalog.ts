@@ -6,6 +6,7 @@ import { generateStage, STAGE_LENGTH, type StageSector } from '../world/stages'
 import { MAX_LEVEL } from './progression'
 import { SECTORS, SECTOR_BY_ID } from './regions'
 import { tutorialQuest, storyQuest, bossQuest, climbJob, rollJob, type Quest, type QuestTemplate } from './quests'
+import { hasChallengeRoom } from './challenge'
 
 /**
  * ─── Level catalog (DEV: the level lab, `/levels`) ───────────────────────────
@@ -162,8 +163,8 @@ export const buildLevel = (p: LevelPick): Quest => LEVEL_TYPES[p.template].build
 /** The map a mission builds for the quest, by the same rule as
  *  `setupFromQuest` (`tests/game/levelCatalog.test.ts` holds them together). */
 const MAPS: Record<MapKind, (q: Quest, type: LevelType) => MapData> = {
-  rooms: (q, type) => generateMap({ seed: q.seed, rooms: q.rooms, boss: type.boss }),
-  climb: (q) => generateClimb(q.seed),
+  rooms: (q, type) => generateMap({ seed: q.seed, rooms: q.rooms, boss: type.boss, challenge: hasChallengeRoom(q.template, q.sector) }),
+  climb: (q) => generateClimb(q.seed, hasChallengeRoom(q.template, q.sector)),
   stage: (q) => generateStage(q.sector, q.seed),
   tutorial: (q) => generateWakeUpCall(q.seed)
 }

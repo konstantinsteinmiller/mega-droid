@@ -329,7 +329,7 @@ export class Coach {
     // (On touch, movement alone: the ∞ finger covers both.)
     want('move', fresh('move'))
     want('look', fresh('look'))
-    want('walk', !c.combat && !fresh('move') && !fresh('look') && fresh('walk'))
+    // No 'walk' glyph: tap-to-walk is gone (the left stick moves).
     const shootTime = !c.lessonsTeach || !!c.fireLesson
     want('fire', (c.combat || c.aimCandidate) && fresh('fire') && shootTime)
     want('charge', c.combat && !fresh('fire') && fresh('charge'))

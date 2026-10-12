@@ -157,7 +157,7 @@ describe('generateGlacier', () => {
       mirrored.add(m.start.x > m.w * CELL / 2)
       cracked.add(m.terrain!.icePillars!.find(p => p.cracked)!.j)
       kinds.add(m.terrain!.secrets![0]!.kind)
-      expect(m.terrain!.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(SECTIONS)
+      expect(m.terrain!.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(SECTIONS)
       expect(m.w).toBeLessThanOrEqual(48)
       expect(m.h).toBeLessThanOrEqual(40)
     }
@@ -249,7 +249,7 @@ describe('generateGlacier', () => {
       const m = generateGlacier(seed)
       const t = m.terrain!
       for (const r of m.rooms) {
-        if (r.role === 'boss') continue
+        if (r.role === 'boss' || r.role === 'challenge') continue
         expect(t.checkpoints.some(c => c.room === r.id), `seed ${seed}: room ${r.id}`).toBe(true)
       }
       // In the order of the rooms: the section's first checkpoint comes first.

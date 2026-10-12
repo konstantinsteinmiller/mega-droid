@@ -1,6 +1,6 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift, type WaterZone } from '../levelGen'
 import { mulberry32 } from '../rng'
-import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { Builder, finish, mirrorX, POOL_DEEP, POOL_FREEBOARD, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
 
 /**
  * ─── Tidewater Locks (the tide sector's story stage) ─────────────────────────
@@ -13,8 +13,9 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  * pushes against him.
  *
  *   1 Quay           the pad; a Puffer Mine (the stage's machine) drifting
- *   2 Shallows       wading taught: knee-deep water, no harm
- *   3 Tide steps     three steps up out of a tide that rises on the clock
+ *   2 Shallows       wading taught: a knee-deep pool, no harm
+ *   3 Tide steps     sealed behind him, flooded by its inlets on the clock:
+ *                    three steps up out of the tide
  *   4 Buoys          two bobbing buoys lift him a storey at a time
  *   5 The lock       a flooded chamber; shoot the valve to drain it
  *   6 Channel        islands over one-cell gaps of open water
@@ -24,8 +25,9 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  *  10 Spillway       terraces down, the water running with him
  *  11 Pump room      a secret alcove behind its south wall
  *  12 Approach       steps down to the boss shutter
- *  13 Arena          the Tide Master, floor at y = 0, a shallow tide that
- *                    rises and falls (it slows only Flux)
+ *  13 Arena          the Tide Master, floor at y = 0; once the shutter is
+ *                    down a shallow tide rises and falls (it slows only
+ *                    Flux), and drains when he is beaten
  *
  * Every leap gap is one cell between equal floors, each with its `link`.
  * Deterministic from the seed: the hand, the tide's rhythm and the buoys'
@@ -37,6 +39,8 @@ const GRID_H = 45
 /** The quay's floor and one storey (m). */
 const QUAY_Y = 4
 const STOREY = 3
+/** The spillway's channels: one step deep (m), walked out of. */
+const CHANNEL_DEEP = 0.5
 
 export const generateTidewaterLocks = (seed: number): MapData => {
   const rng = mulberry32(seed ^ 0x71de5)
@@ -69,9 +73,12 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.corridor(7, 2, 1, 0, 2, QUAY_Y)
 
   // ── 2 Shallows ────────────────────────────────────────────────────────────
+  // A pool let into the floor across the room: down off the quay's edge,
+  // knee-deep through it, up the ledge at the far end to the dry exit.
   b.addRoom(9, 1, 12, 4, 'combat', 'water', QUAY_Y)
-  water({ i0: 11, j0: 1, i1: 20, j1: 4, lo: QUAY_Y + 0.6, hi: QUAY_Y + 0.6 })
-  b.rewards.push({ x: cellCenter(18), z: cellCenter(4), y: QUAY_Y, room: 1, kind: 'bolts' })
+  const shallows = b.pool(11, 1, 19, 4, QUAY_Y, 'e')
+  water({ i0: 11, j0: 1, i1: 19, j1: 4, lo: shallows, hi: shallows })
+  b.rewards.push({ x: cellCenter(17), z: cellCenter(4), y: QUAY_Y - POOL_DEEP, room: 1, kind: 'bolts' })
   b.checkpoint(9, 2, YAW_PX, cells(9, 1, 10, 4))
   b.foe('flyer', 16, 2, YAW_NX, [9, 1, 20, 4], [QUAY_Y, QUAY_Y + 1], 'puffer')
   b.foe('ground', 19, 4, YAW_NX, [17, 1, 20, 4])
@@ -79,14 +86,16 @@ export const generateTidewaterLocks = (seed: number): MapData => {
 
   // ── 3 Tide steps ──────────────────────────────────────────────────────────
   // Three steps east, each two metres over the last; the tide floods the
-  // lowest out of his depth and laps at the middle one, then falls.
+  // lowest out of his depth and laps at the middle one, then falls. A
+  // flood: the door behind him shuts before the inlets open; on the top
+  // step it drains and the door opens again.
   b.addRoom(23, 1, 10, 6, 'combat', 'water', QUAY_Y)
   for (let j = 1; j <= 6; j++) b.stair(26, j, Ramp.PX, QUAY_Y, 2)
   b.level(27, 1, 28, 6, QUAY_Y + 2)
   for (let j = 1; j <= 6; j++) b.stair(29, j, Ramp.PX, QUAY_Y + 2, 2)
   b.level(30, 1, 32, 6, QUAY_Y + 4)
   const tide = 9 + rng() * 2
-  water({ i0: 23, j0: 1, i1: 32, j1: 6, lo: QUAY_Y - 0.3, hi: QUAY_Y + 2.2, period: tide, phase: rng() * tide })
+  water({ i0: 23, j0: 1, i1: 32, j1: 6, lo: QUAY_Y - 0.3, hi: QUAY_Y + 2.2, period: tide, phase: rng() * tide, flood: true })
   b.checkpoint(23, 2, YAW_PX, cells(23, 1, 24, 2))
   b.checkpoint(31, 3, YAW_PZ, cells(30, 3, 32, 6))
   b.foe('flyer', 25, 4, YAW_NX, [23, 1, 32, 6], [QUAY_Y, QUAY_Y + 4], 'puffer')
@@ -121,18 +130,22 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.corridor(28, 15, -1, 0, 2, TOP)
 
   // ── 5 The lock ────────────────────────────────────────────────────────────
-  // A chamber a storey down between two ledges, flooded over his head.
-  // The valve on the north wall by the entrance drains it for good.
-  b.addRoom(17, 13, 10, 6, 'combat', 'water', TOP)
-  for (let j = 13; j <= 18; j++) b.stair(24, j, Ramp.PX, TOP - STOREY, STOREY)
-  b.level(19, 13, 23, 18, TOP - STOREY)
-  for (let j = 13; j <= 18; j++) b.stair(18, j, Ramp.NX, TOP - STOREY, STOREY)
-  water({ i0: 18, j0: 13, i1: 24, j1: 18, lo: TOP - STOREY - 0.2, hi: TOP + 0.3, valve: { i: 25, j: 13, side: 'n' } })
-  b.rewards.push({ x: cellCenter(21), z: cellCenter(18), y: TOP - STOREY, room: 4, kind: 'we' })
-  b.checkpoint(26, 15, YAW_NX, cells(25, 14, 26, 18))
-  b.checkpoint(17, 15, YAW_NX, cells(17, 13, 17, 18))
-  b.foe('flyer', 21, 15, YAW_NX, [17, 13, 26, 18], [TOP - STOREY, TOP + 1], 'puffer')
-  b.foe('ground', 17, 17, YAW_PX, [17, 13, 17, 18])
+  // A chamber a storey down between two ledges, flooded to just under
+  // them (over his head). The valve on the north wall by the entrance
+  // drains it for good. Five rows: a sixth lay open on the jetty's pits.
+  b.addRoom(17, 13, 10, 5, 'combat', 'water', TOP)
+  for (let j = 13; j <= 17; j++) b.stair(24, j, Ramp.PX, TOP - STOREY, STOREY)
+  b.level(19, 13, 23, 17, TOP - STOREY)
+  for (let j = 13; j <= 17; j++) b.stair(18, j, Ramp.NX, TOP - STOREY, STOREY)
+  water({ i0: 18, j0: 13, i1: 24, j1: 17, lo: TOP - STOREY - 0.2, hi: TOP - POOL_FREEBOARD, valve: { i: 25, j: 13, side: 'n' } })
+  b.rewards.push({ x: cellCenter(21), z: cellCenter(17), y: TOP - STOREY, room: 4, kind: 'we' })
+  b.checkpoint(26, 15, YAW_NX, cells(25, 14, 26, 17))
+  b.checkpoint(17, 15, YAW_NX, cells(17, 13, 17, 17))
+  b.foe('flyer', 21, 15, YAW_NX, [17, 13, 26, 17], [TOP - STOREY, TOP + 1], 'puffer')
+  // The ground post (the stage's crate golem, `climbSpawn`) waits on the
+  // wide entry ledge: on the one-cell exit ledge it stood in the only way
+  // out at the top of the stair.
+  b.foe('ground', 26, 17, YAW_NX, [25, 13, 26, 17])
   b.corridor(16, 15, -1, 0, 2, TOP)
 
   // ── 6 Channel ─────────────────────────────────────────────────────────────
@@ -153,17 +166,21 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.corridor(2, 18, 0, 1, 2, TOP)
 
   // ── 7 Canal ───────────────────────────────────────────────────────────────
-  // Waist-deep, and the current runs back west against him.
+  // A sunk canal across the room, waist-deep, and the current runs back
+  // west against him: off the landing, through, up the ledge at the far end.
   b.addRoom(1, 20, 10, 4, 'combat', 'conveyor', TOP)
-  water({ i0: 1, j0: 20, i1: 10, j1: 23, lo: TOP + 0.75, hi: TOP + 0.75, dx: -1, dz: 0, strength: 2.0 })
+  const canal = b.pool(4, 20, 9, 23, TOP, 'e')
+  water({ i0: 4, j0: 20, i1: 9, j1: 23, lo: canal, hi: canal, dx: -1, dz: 0, strength: 2.0 })
   b.checkpoint(2, 21, YAW_PX, cells(1, 20, 3, 21))
   b.foe('turret', 10, 20, YAW_NX, [10, 20, 10, 20])
   b.foe('flyer', 7, 22, YAW_NX, [1, 20, 10, 23], [TOP, TOP + 2], 'puffer')
   b.corridor(11, 22, 1, 0, 2, TOP)
 
   // ── 8 Puffer pool ─────────────────────────────────────────────────────────
+  // The pool is let into the hall's floor, a ledge on its east side.
   b.addRoom(13, 20, 8, 6, 'combat', 'hall', TOP)
-  water({ i0: 15, j0: 21, i1: 18, j1: 24, lo: TOP + 0.8, hi: TOP + 0.8 })
+  const puffers = b.pool(15, 21, 18, 24, TOP, 'e')
+  water({ i0: 15, j0: 21, i1: 18, j1: 24, lo: puffers, hi: puffers })
   b.chest(13, 25, YAW_PZ)
   b.checkpoint(14, 22, YAW_PX, cells(13, 21, 14, 23))
   b.foe('flyer', 16, 22, YAW_NX, [13, 20, 20, 25], [TOP, TOP + 1.5], 'puffer')
@@ -188,16 +205,18 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.corridor(28, 25, 0, 1, 2, TOP)
 
   // ── 10 Spillway ───────────────────────────────────────────────────────────
-  // Terraces a storey apart, south and down; the water runs with him.
+  // Terraces a storey apart, south and down; the water runs with him in a
+  // sunk channel along each one's back (a step deep: he walks out south).
   b.addRoom(24, 27, 8, 8, 'combat', 'descent', TOP)
   b.level(24, 29, 31, 30, TOP - STOREY)
   b.level(24, 31, 31, 32, TOP - 2 * STOREY)
   b.level(24, 33, 31, 34, TOP - 3 * STOREY)
   for (let n = 0; n < 4; n++) {
     const y = TOP - n * STOREY
-    water({ i0: 24, j0: 27 + n * 2, i1: 31, j1: 28 + n * 2, lo: y + 0.35, hi: y + 0.35, dx: 0, dz: 1, strength: 1.2 })
+    const run = b.pool(24, 27 + n * 2, 31, 27 + n * 2, y, null, CHANNEL_DEEP)
+    water({ i0: 24, j0: 27 + n * 2, i1: 31, j1: 27 + n * 2, lo: run, hi: run, dx: 0, dz: 1, strength: 1.2 })
   }
-  b.checkpoint(28, 27, YAW_PZ, cells(26, 27, 30, 27))
+  b.checkpoint(28, 28, YAW_PZ, cells(26, 28, 30, 28))
   b.checkpoint(28, 34, YAW_NX, cells(25, 33, 30, 34))
   b.foe('flyer', 27, 31, YAW_NZ, [24, 27, 31, 34], [TOP - 3 * STOREY, TOP], 'puffer')
   b.foe('ground', 30, 33, YAW_NX, [26, 33, 31, 34])
@@ -210,8 +229,11 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.checkpoint(20, 33, YAW_NX, cells(19, 32, 20, 33))
   b.foe('ground', 16, 31, YAW_PX, [13, 30, 19, 34])
   b.foe('flyer', 14, 33, YAW_PX, [12, 30, 21, 34], [LOW, LOW + 2], 'puffer')
-  b.secret(10, 'color', [12, 35, 13, 35], { i: 13, j: 35, axis: 'z' },
-    [[12, 34, 'w', 1], [15, 34, 's', 0], [18, 34, 's', 1], [21, 33, 'e', 2]], [], 'tank', 1)
+  // Floor plates (#143): light all eight in one walk, never one twice and
+  // never off them. Along the north wall, off the way between the doors
+  // (rows 32-34): only Flux who means to walks them.
+  b.secret(10, 'tiles', [12, 35, 13, 35], { i: 13, j: 35, axis: 'z' }, [], [], 'tank', undefined,
+    { tiles: cells(14, 30, 17, 31) })
   b.corridor(11, 32, -1, 0, 2, LOW)
 
   // ── 12 Approach ───────────────────────────────────────────────────────────
@@ -228,14 +250,26 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   b.corridor(3, 35, 0, 1, 2, 0, true)
 
   // ── 13 Arena ──────────────────────────────────────────────────────────────
-  b.addRoom(1, 37, 7, 7, 'boss', 'arena', 0)
+  const arena = b.addRoom(1, 37, 7, 7, 'boss', 'arena', 0)
   const at = 8 + rng() * 1.5
-  water({ i0: 1, j0: 37, i1: 7, j1: 43, lo: -0.3, hi: 0.75, period: at, phase: rng() * at })
+  const tide0 = { lo: -0.3, hi: 0.75, period: at, phase: rng() * at, flood: true }
+  water({ i0: 1, j0: 37, i1: 7, j1: 43, ...tide0 })
 
   // The beam-in room: south of the quay, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // The weapon lesson room behind the boss, where the grid has room for it.
-  b.exitRoom()
+  // The flood fills the lesson room's corridor too, up to its shut door
+  // (the door stands at the corridor's far end).
+  if (b.exitRoom()) {
+    const ex = b.doors.find(d => d.from === arena.id && !d.boss)!
+    const di = ex.axis === 'x' ? ex.dir : 0
+    const dj = ex.axis === 'z' ? ex.dir : 0
+    b.water.push({ i0: Math.min(ex.i, ex.i - di), j0: Math.min(ex.j, ex.j - dj), i1: Math.max(ex.i, ex.i - di), j1: Math.max(ex.j, ex.j - dj), ...tide0, room: arena.id })
+  }
+  // The challenge room (`sim/challenge.ts`): south off the spillway's foot,
+  // a dry floor (the Matriarch hovers and hoses; she brings her own water)
+  // behind the door at the end of the last terrace; the way on is west.
+  b.challengeRoom(9, { mouth: { i: 28, j: 34, di: 0, dj: 1 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

@@ -1,11 +1,13 @@
 <template lang="pug">
   div.actions(ref="actionsEl" v-show="hud.phase === 'play'" :class="{ touch: !desk }")
-    //- FIRE (touch): press to shoot, hold to charge, let go to fire the
-    //- charge — at anything, with nothing in sight (a crate, a barrel), where
-    //- a press on the view only fires near a machine. Dragging it looks
-    //- around and keeps the charge.
+    //- FIRE (touch): a knob, like a gamepad's right stick. Press to shoot,
+    //- hold to charge (the ring round it fills), let go to fire the charge —
+    //- at anything, with nothing in sight (a crate, a barrel), where a press
+    //- on the view only fires near a machine. Dragging it looks around (one
+    //- fixed sensitivity, inside its housing or out) and keeps the charge.
     button.act.fire(
       v-if="!desk"
+      ref="fireBtn"
       type="button"
       :class="[{ held: fireDown, cue: chargeCue }, demoClass('fire')]"
       :aria-label="t('combat.fire')"
@@ -14,9 +16,16 @@
       @pointerup.prevent.stop="fireEnd"
       @pointercancel.prevent.stop="fireEnd"
     )
-      GameIcon(name="buster")
-      //- Crosshair ticks round the buster: "this one shoots", at a glance.
+      //- Crosshair ticks on the housing: "this one shoots", at a glance.
       span.fire-ticks(aria-hidden="true")
+      //- The charge, round the housing: level 1, then the full charge, gold
+      //- in the PERFECT window (the crosshair's colours).
+      svg.fire-charge(viewBox="0 0 100 100" aria-hidden="true")
+        circle.fc-track(cx="50" cy="50" r="46")
+        circle.fc-l1(ref="fcL1" cx="50" cy="50" r="46")
+        circle.fc-l2(ref="fcL2" cx="50" cy="50" r="46")
+      span.fire-knob(ref="fireKnob")
+        FireGlyph.fire-glyph
       span.demo-finger(v-if="demoOn('fire')" aria-hidden="true")
         InputGlyph(kind="finger" :mode="hud.holoDown || hud.chargeShow === 'hold' ? 'hold' : 'tap'")
       //- The charge show: the game holds this button for the player (`hud.chargeShow`).
@@ -65,21 +74,24 @@
     //- The Repair Gel: always on screen, as the resource it is. The gel in
     //- the flask and a pip per gel carried (hollow pips: room for more);
     //- dimmed while there is nothing to repair, glowing once there is.
-    button.act.tank(
-      ref="gelBtn"
-      type="button"
-      data-lesson="gel"
-      :class="[gelClass, demoClass('tank')]"
-      :aria-label="t('combat.tankCount', { n: hud.tanks, max: gelCap })"
-      @pointerdown.prevent.stop="tank"
-    )
-      span.gel-fill
-      span.gel-ring(v-if="gelLesson")
-      GameIcon(name="flask")
-      span.gel-pips(v-show="!touchHint('tank')" aria-hidden="true")
-        span.gel-pip(v-for="i in gelCap" :key="i" :class="{ on: i <= hud.tanks }")
-      KeyCap.kc(v-if="desk" code="KeyH")
-      CoachRing(:hint="touchHint('tank')")
+    //- On touch it docks under the health bar (`HudBars`' slot): beside the
+    //- fire knob it sat where the thumb drags to look and charge.
+    Teleport(to="#hud-gel-slot" :disabled="!docked" defer)
+      button.act.tank(
+        ref="gelBtn"
+        type="button"
+        data-lesson="gel"
+        :class="[gelClass, demoClass('tank'), { docked }]"
+        :aria-label="t('combat.tankCount', { n: hud.tanks, max: gelCap })"
+        @pointerdown.prevent.stop="tank"
+      )
+        span.gel-fill
+        span.gel-ring(v-if="gelLesson")
+        GameIcon(name="flask")
+        span.gel-pips(v-show="!touchHint('tank')" aria-hidden="true")
+          span.gel-pip(v-for="i in gelCap" :key="i" :class="{ on: i <= hud.tanks }")
+        KeyCap.kc(v-if="desk" code="KeyH")
+        CoachRing(:hint="touchHint('tank')")
     //- A gel found flies from the middle of the view into its button.
     span.gel-fly(ref="gelFly" aria-hidden="true")
       GameIcon(name="flask")
@@ -138,8 +150,10 @@ import { useI18n } from 'vue-i18n'
 import { formatTenths } from '@/utils/localeNumber'
 import { addHudTicker, hud, hudLive } from '@/game/state/hud'
 import { profile } from '@/game/state/profile'
-import { input } from '@/game/boot'
+import { currentMission, input } from '@/game/boot'
+import { chargeInfo } from '@/game/sim/stats'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import FireGlyph from './FireGlyph.vue'
 import CoachRing from './CoachRing.vue'
 import KeyCap from './KeyCap.vue'
 import InputGlyph from './InputGlyph.vue'
@@ -205,19 +219,40 @@ const blockDown = (e: PointerEvent) => {
 const blockUp = () => {
   input.blockHeld = false
 }
-// ── Fire (touch) ──
+// ── Fire (touch): the knob ──
 // Writes the same fire edges as a press on the view does in combat, so the
 // sim cannot tell them apart: a shot on press, the charge while held, the
 // charged shot on release. Free aim goes where the crosshair is.
+//
+// It is a stick as well (mobile playtests, 2026-10-08: a round button that
+// also looked around read as neither): the knob follows the thumb inside its
+// housing, and the view follows every move of the thumb at ONE fixed rate,
+// the touch look's own, on both axes. (A thumb held past the rim used to
+// keep turning the view, faster the further out: two speeds under one thumb,
+// and the playtest called it uncontrollable.)
 const fireDown = ref(false)
+const fireBtn = ref<HTMLElement | null>(null)
+const fireKnob = ref<HTMLElement | null>(null)
+const fcL1 = ref<SVGCircleElement | null>(null)
+const fcL2 = ref<SVGCircleElement | null>(null)
 let fireId: number | null = null
 let fireLastX = 0
 let fireLastY = 0
+/** The housing's centre and radius at the press (viewport px). */
+let fireCX = 0
+let fireCY = 0
+let fireR = 1
+/** How far the knob travels, as a share of the housing's radius. */
+const KNOB_TRAVEL = 0.42
 const fireStart = (e: PointerEvent) => {
   if (fireId !== null) return
   fireId = e.pointerId
   fireLastX = e.clientX
   fireLastY = e.clientY
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  fireCX = r.left + r.width / 2
+  fireCY = r.top + r.height / 2
+  fireR = Math.max(1, r.width / 2)
   input.touched = true
   input.anyPressed = true
   input.fireHeld = true
@@ -236,6 +271,7 @@ const fireEnd = (e: PointerEvent) => {
   if (e.pointerId !== fireId) return
   fireId = null
   fireDown.value = false
+  if (fireKnob.value) fireKnob.value.style.transform = ''
   if (input.fireHeld) {
     input.fireHeld = false
     input.fireReleased = true
@@ -251,8 +287,11 @@ const slideCooling = ref(false)
 const slideFlash = ref(false)
 let slideText = ''
 let offSlideCd: (() => void) | null = null
+const C_RING = 2 * Math.PI * 46
 onMounted(() => {
   offSlideCd = addHudTicker(() => {
+    knobStep()
+    chargeStep()
     const cd = hudLive.slideCd
     const cooling = cd > 0.001
     if (cooling !== slideCooling.value) slideCooling.value = cooling
@@ -266,6 +305,39 @@ onMounted(() => {
   })
 })
 onUnmounted(() => offSlideCd?.())
+/** The knob under the thumb (the view itself only follows the drag). */
+const knobStep = (): void => {
+  const k = fireKnob.value
+  if (!k || fireId === null) return
+  const dx = fireLastX - fireCX
+  const dy = fireLastY - fireCY
+  const d = Math.hypot(dx, dy)
+  const ux = d > 0 ? dx / d : 0
+  const uy = d > 0 ? dy / d : 0
+  const travel = Math.min(d, fireR * KNOB_TRAVEL)
+  k.style.transform = `translate(${(ux * travel).toFixed(1)}px, ${(uy * travel).toFixed(1)}px)`
+}
+
+/** The charge ring round the housing (`Crosshair`'s numbers). */
+let fcState = ''
+const chargeStep = (): void => {
+  const a = fcL1.value
+  const b = fcL2.value
+  const btn = fireBtn.value
+  if (!a || !b || !btn) return
+  const m = currentMission()
+  const c = m?.combat
+  const info = m && c?.charging ? chargeInfo(c.charge, m.stats) : null
+  const on = !!info && info.toL1 > 0.05
+  a.style.strokeDashoffset = `${C_RING * (1 - (on ? info!.toL1 : 0))}`
+  b.style.strokeDashoffset = `${C_RING * (1 - (on ? info!.toL2 : 0))}`
+  const st = !on ? '' : info!.perfect ? 'perfect' : info!.level >= 2 ? 'full' : info!.level === 1 ? 'l1' : 'build'
+  if (st !== fcState) {
+    fcState = st
+    btn.dataset.charge = st
+  }
+}
+
 // Back in hand — off cooldown with the power for it: the button pops.
 watch(() => hud.slideReady, (ready, was) => {
   if (ready && was === false) flash(slideFlash, 450)
@@ -309,6 +381,11 @@ const flash = (flag: { value: boolean }, ms: number): void => {
 }
 
 const actionsEl = ref<HTMLElement | null>(null)
+/** The health bar's gel slot is on the page (`HudBars`, before this in the
+ *  HUD): on touch the gel docks there; without it, it stays in the cluster. */
+const slotHere = ref(false)
+onMounted(() => { slotHere.value = !!document.getElementById('hud-gel-slot') })
+const docked = computed(() => !desk.value && slotHere.value)
 const gelBtn = ref<HTMLElement | null>(null)
 const gelFly = ref<HTMLElement | null>(null)
 /** A gel gained in play flies in from the middle of the view, on an arc. */
@@ -430,7 +507,7 @@ watch(() => hud.borrowed.teach, (on, was) => {
     filter: drop-shadow(0 2px 0 rgba(20, 26, 51, 0.6))
 .fire
   right: 0
-  // Above the Repair Gel and its pips, on the edge the right thumb rests on.
+  // Above the block button, on the edge the right thumb rests on.
   bottom: calc(clamp(76px, 17.5vmin, 110px) + clamp(44px, 10vmin, 60px) + 26px)
   width: clamp(64px, 14vmin, 88px)
   height: clamp(64px, 14vmin, 88px)
@@ -748,50 +825,48 @@ watch(() => hud.borrowed.teach, (on, was) => {
 // ── Touch layout ─────────────────────────────────────────────────────────
 // Phone playtests: the fire button sat on the screen's right edge, and a
 // thumb holding it to charge and dragging right to look slid off the glass.
-// Fire is now bigger (the primary action) and moved in by about one button,
-// with nothing to its right but air above the shield; slide stays under it,
-// the gel and the weapon slots moved out to the left.
+// Fire is now the big knob (the primary action), moved in by about one
+// button, with nothing to its right but air above the shield. The slide is
+// as big as the shield (a small dodge was missed under the thumb, 2026-10-08)
+// and sits beside it on the bottom row; the gel docks under the health bar,
+// and the weapon slots stand left of the knob, clear of its drag.
 .actions.touch
   width: clamp(230px, 60vmin, 360px)
-  height: clamp(150px, 36vmin, 220px)
+  height: clamp(170px, 42vmin, 250px)
   .fire
-    right: clamp(64px, 17vmin, 108px)
-    bottom: clamp(66px, 16vmin, 100px)
-    width: clamp(77px, 17vmin, 106px)
-    height: clamp(77px, 17vmin, 106px)
-    :deep(.game-icon)
-      width: 50%
-      height: 50%
-  .tank
-    right: clamp(140px, 36vmin, 226px)
-    bottom: clamp(72px, 17.5vmin, 110px)
+    right: clamp(58px, 15vmin, 96px)
+    bottom: clamp(72px, 17vmin, 106px)
+    width: clamp(96px, 23vmin, 136px)
+    height: clamp(96px, 23vmin, 136px)
+  .slide
+    right: clamp(76px, 17.5vmin, 110px)
+    bottom: 0
+    width: clamp(66px, 15vmin, 96px)
+    height: clamp(66px, 15vmin, 96px)
   .weapon.w0
-    right: clamp(136px, 35vmin, 220px)
-    bottom: clamp(8px, 2vmin, 14px)
+    right: clamp(150px, 36vmin, 222px)
+    bottom: clamp(4px, 1.5vmin, 12px)
   .weapon.w1
-    right: clamp(186px, 47vmin, 296px)
-    bottom: clamp(40px, 10vmin, 64px)
+    right: clamp(162px, 41vmin, 248px)
+    bottom: clamp(64px, 16vmin, 100px)
   .weapon.w2
-    right: clamp(186px, 47vmin, 296px)
-    bottom: clamp(100px, 24vmin, 150px)
+    right: clamp(162px, 41vmin, 248px)
+    bottom: clamp(118px, 29.5vmin, 170px)
 // Portrait: the screen is narrow, the left 45 % is the stick's, so the
 // weapon slots stack ABOVE the fire button instead of reaching left.
 @media (max-aspect-ratio: 1/1)
   .actions.touch
     width: clamp(200px, 60vmin, 300px)
-    height: clamp(230px, 56vmin, 330px)
-    .tank
-      right: clamp(120px, 37.5vmin, 200px)
-      bottom: clamp(10px, 3vmin, 20px)
+    height: clamp(250px, 62vmin, 360px)
     .weapon.w0
-      right: clamp(74px, 20vmin, 118px)
-      bottom: clamp(154px, 38vmin, 220px)
+      right: clamp(80px, 21vmin, 124px)
+      bottom: clamp(176px, 43vmin, 252px)
     .weapon.w1
-      right: clamp(118px, 37vmin, 196px)
-      bottom: clamp(128px, 33vmin, 190px)
+      right: clamp(158px, 41vmin, 240px)
+      bottom: clamp(140px, 36vmin, 210px)
     .weapon.w2
       right: clamp(14px, 4vmin, 24px)
-      bottom: clamp(160px, 40vmin, 230px)
+      bottom: clamp(176px, 43vmin, 252px)
 .act.demo
   box-shadow: 0 0 0 4px #ffd84a, 0 0 22px rgba(255, 216, 74, 0.9), inset 0 -5px 0 rgba(0, 0, 0, 0.18)
 .act.demo-down
@@ -860,14 +935,83 @@ watch(() => hud.borrowed.teach, (on, was) => {
   width: 70%
   pointer-events: none
   filter: drop-shadow(0 2px 0 rgba(20, 26, 51, 0.6))
+// ── The fire knob ──
+// The housing: dark glass with an orange rim (the fire colour), the sight's
+// ticks on it, the charge ring round it; the knob: the orange cap the thumb
+// rests on, the charged shot drawn on it.
+.actions.touch .fire
+  background: radial-gradient(circle, rgba(20, 26, 51, 0.5) 0%, rgba(20, 26, 51, 0.72) 70%)
+  border: 3px solid #ffb13c
+  box-shadow: 0 0 14px rgba(255, 177, 60, 0.45), inset 0 0 14px rgba(255, 177, 60, 0.25)
+  &.held
+    transform: none
+    background: radial-gradient(circle, rgba(20, 26, 51, 0.55) 0%, rgba(20, 26, 51, 0.8) 70%)
+    box-shadow: 0 0 22px rgba(255, 216, 74, 0.8), inset 0 0 14px rgba(255, 216, 74, 0.35)
+.fire-knob
+  position: absolute
+  left: 50%
+  top: 50%
+  width: 66%
+  height: 66%
+  margin: -33% 0 0 -33%
+  border-radius: 50%
+  border: 3px solid #141a33
+  background: radial-gradient(circle at 40% 30%, #ffe7a8, #ffb13c 45%, #e0621f)
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), inset 0 -4px 0 rgba(0, 0, 0, 0.18), inset 0 3px 0 rgba(255, 255, 255, 0.4)
+  display: grid
+  place-items: center
+  pointer-events: none
+  will-change: transform
+  .held &
+    background: radial-gradient(circle at 40% 30%, #ffffff, #ffe07a 50%, #ffb13c)
+.fire-glyph
+  width: 86%
+  height: 86%
+.fire-charge
+  position: absolute
+  inset: -7%
+  width: 114%
+  height: 114%
+  pointer-events: none
+  overflow: visible
+  circle
+    fill: none
+    transform: rotate(-90deg)
+    transform-origin: 50% 50%
+    stroke-linecap: round
+    stroke-dasharray: 289.03
+    stroke-dashoffset: 289.03
+  .fc-track
+    stroke: transparent
+    stroke-dashoffset: 0
+  .fc-l1
+    stroke: #c8ff7a
+    stroke-width: 5
+  .fc-l2
+    stroke: #7ff4ff
+    stroke-width: 5
+.fire[data-charge='full'] .fc-l2
+  filter: drop-shadow(0 0 4px #7ff4ff)
+.fire[data-charge='perfect'] .fc-l2, .fire[data-charge='perfect'] .fc-l1
+  stroke: #ffd84a
+  filter: drop-shadow(0 0 6px #ffd84a)
+.fire[data-charge='full'] .fire-knob, .fire[data-charge='perfect'] .fire-knob
+  box-shadow: 0 0 16px #7ff4ff, inset 0 -4px 0 rgba(0, 0, 0, 0.18), inset 0 3px 0 rgba(255, 255, 255, 0.4)
+// Docked under the health bar (touch): in the bar column's flow.
+.act.tank.docked
+  position: relative
+  right: auto
+  bottom: auto
+  width: clamp(44px, 10vmin, 58px)
+  height: clamp(44px, 10vmin, 58px)
 .fire-ticks
   position: absolute
-  inset: 9%
+  inset: 3%
   border-radius: 50%
   pointer-events: none
   // Four short ticks at 12, 3, 6 and 9 o'clock: a sight, drawn as gradients.
-  background: linear-gradient(#141a33, #141a33) top center / 3px 16% no-repeat, linear-gradient(#141a33, #141a33) bottom center / 3px 16% no-repeat, linear-gradient(#141a33, #141a33) left center / 16% 3px no-repeat, linear-gradient(#141a33, #141a33) right center / 16% 3px no-repeat
-  opacity: 0.55
+  background: linear-gradient(#ffb13c, #ffb13c) top center / 3px 12% no-repeat, linear-gradient(#ffb13c, #ffb13c) bottom center / 3px 12% no-repeat, linear-gradient(#ffb13c, #ffb13c) left center / 12% 3px no-repeat, linear-gradient(#ffb13c, #ffb13c) right center / 12% 3px no-repeat
+  opacity: 0.9
 // Landscape: the card beside the button, toward the middle — above it, it
 // would meet the coach's look glyph on a short screen (in portrait, beside
 // it, the move glyph's ∞).

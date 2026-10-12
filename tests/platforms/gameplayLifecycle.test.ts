@@ -8,7 +8,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  */
 
 interface Loaded {
-  signalGameplayLoaded: () => void
   syncGameplayLifecycle: (live: boolean) => void
   initCrazyGames: () => Promise<void>
   __resetGameplayLifecycle: () => void
@@ -46,55 +45,28 @@ beforeEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('pre-release build', () => {
-  it('fires exactly one gameplayStart, after loading', async () => {
-    const m = await load(false)
-    expect(m.calls).toEqual([])
-    m.signalGameplayLoaded()
-    expect(m.calls).toEqual(['start'])
-  })
+// #138: one contract in every build. The pre-release build used to send a
+// single start from a `signalGameplayLoaded()` nothing called — no event at
+// all — so QA found the first start missing at the tutorial landing.
+for (const fullRelease of [false, true]) {
+  describe(fullRelease ? 'full release build' : 'pre-release build', () => {
+    it('stops when play is interrupted (the pause menu) and starts when it resumes', async () => {
+      const m = await load(fullRelease)
+      m.syncGameplayLifecycle(true)
+      m.syncGameplayLifecycle(false)
+      m.syncGameplayLifecycle(true)
+      expect(m.calls).toEqual(['start', 'stop', 'start'])
+    })
 
-  it('never fires it twice, however often boot runs', async () => {
-    const m = await load(false)
-    m.signalGameplayLoaded()
-    m.signalGameplayLoaded()
-    m.signalGameplayLoaded()
-    expect(m.calls).toEqual(['start'])
+    it('never sends two starts in a row, nor a stop before any start', async () => {
+      const m = await load(fullRelease)
+      m.syncGameplayLifecycle(false)
+      m.syncGameplayLifecycle(true)
+      m.syncGameplayLifecycle(true)
+      m.syncGameplayLifecycle(false)
+      m.syncGameplayLifecycle(false)
+      m.syncGameplayLifecycle(true)
+      expect(m.calls).toEqual(['start', 'stop', 'start'])
+    })
   })
-
-  it('sends nothing at all for ads, menus or the result screen', async () => {
-    const m = await load(false)
-    m.signalGameplayLoaded()
-    m.syncGameplayLifecycle(false)
-    m.syncGameplayLifecycle(true)
-    m.syncGameplayLifecycle(false)
-    // The one loaded-start, and not a single stop: there is no ad inventory on
-    // this build, so a start/stop stream around ads that never play is noise.
-    expect(m.calls).toEqual(['start'])
-  })
-})
-
-describe('full release build', () => {
-  it('ignores the loaded signal — the lifecycle owns the events', async () => {
-    const m = await load(true)
-    m.signalGameplayLoaded()
-    expect(m.calls).toEqual([])
-  })
-
-  it('stops when play is interrupted and starts when it resumes', async () => {
-    const m = await load(true)
-    m.syncGameplayLifecycle(true)
-    m.syncGameplayLifecycle(false)
-    m.syncGameplayLifecycle(true)
-    expect(m.calls).toEqual(['start', 'stop', 'start'])
-  })
-
-  it('is idempotent — a repeated state does not re-emit', async () => {
-    const m = await load(true)
-    m.syncGameplayLifecycle(true)
-    m.syncGameplayLifecycle(true)
-    m.syncGameplayLifecycle(false)
-    m.syncGameplayLifecycle(false)
-    expect(m.calls).toEqual(['start', 'stop'])
-  })
-})
+}

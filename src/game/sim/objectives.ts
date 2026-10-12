@@ -133,6 +133,17 @@ const TARGET_STICKY = 0.85 * 0.85
 /** A chest answers only to a player standing within this of its floor (m):
  *  on a terrain map the one on the ledge overhead is not in reach. */
 export const CHEST_DY = 1.2
+/** How far a crate turned `a` from its wall reaches toward it (m): its box
+ *  and the corner bumpers (`models/props.ts` buildCrate), and a barrel's. */
+const crateReach = (a: number): number => {
+  const k = Math.abs(Math.cos(a)) + Math.abs(Math.sin(a))
+  return Math.max(0.575 * k, 0.483 * k + 0.2)
+}
+const BARREL_REACH = 0.53
+/** A data core hangs at least this far from a chest or a crate (m). */
+const CORE_CLEAR = 1.6
+/** A crate keeps this much air from the wall behind it (m). */
+const WALL_KEEP = 0.04
 /** A lesson's sleeping drones only count once no real machine is left. */
 const HELD_PENALTY = 1e9
 
@@ -288,7 +299,8 @@ export class MissionObjects {
     const rng = mulberry32(map.seed ^ 0xc4e57)
     const q = this.quest
     const rooms = map.rooms
-    const byDepthDesc = [...rooms].filter(r => r.role !== 'start' && r.role !== 'boss').sort((a, b) => b.depth - a.depth)
+    // Nothing of the job's in a challenge room: it is off the route.
+    const byDepthDesc = [...rooms].filter(r => r.role !== 'start' && r.role !== 'boss' && r.role !== 'challenge').sort((a, b) => b.depth - a.depth)
     const wallCursor = new Map<number, number>()
     const takeWall = (r: Room): [number, number, number] | null => {
       const i = wallCursor.get(r.id) ?? 0
@@ -326,15 +338,24 @@ export class MissionObjects {
     }
     // Crates & barrels along walls in combat rooms.
     for (const r of rooms) {
-      if (r.role === 'start' || r.role === 'boss') continue
+      if (r.role === 'start' || r.role === 'boss' || r.role === 'challenge') continue
       const n = Math.min(3, Math.floor(rng() * 3) + (r.w * r.h > 20 ? 1 : 0))
       for (let k = 0; k < n; k++) {
         const spot = takeWall(r)
         if (!spot) break
         const barrel = rng() < 0.3
-        const x = cellCenter(spot[0]) - Math.sin(spot[2]) * 0.7 + (rng() - 0.5) * 0.8
-        const z = cellCenter(spot[1]) - Math.cos(spot[2]) * 0.7 + (rng() - 0.5) * 0.8
-        this.addCrate(x, z, rng() * Math.PI * 2, barrel ? 'barrel' : 'crate')
+        let x = cellCenter(spot[0]) - Math.sin(spot[2]) * 0.7 + (rng() - 0.5) * 0.8
+        let z = cellCenter(spot[1]) - Math.cos(spot[2]) * 0.7 + (rng() - 0.5) * 0.8
+        const yaw = rng() * Math.PI * 2
+        // Against the wall, never into it: its turned body's reach toward
+        // the wall stays inside the cell (a jitter pushed crates 0.4 m into
+        // the walls, playtest 2026-10-12).
+        const wx = -Math.sin(spot[2])
+        const wz = -Math.cos(spot[2])
+        const reach = barrel ? BARREL_REACH : crateReach(yaw - spot[2])
+        const over = (x - cellCenter(spot[0])) * wx + (z - cellCenter(spot[1])) * wz - (CELL / 2 - WALL_KEEP - reach)
+        if (over > 0) { x -= wx * over; z -= wz * over }
+        this.addCrate(x, z, yaw, barrel ? 'barrel' : 'crate')
       }
     }
     // Collect jobs: data cores, one per room from the deepest outward.
@@ -342,7 +363,10 @@ export class MissionObjects {
       let placed = 0
       for (const r of shuffle(rng, [...byDepthDesc])) {
         if (placed >= q.count) break
-        const sp = takeSpot(r)
+        // A spot clear of the room's chests and crates (a core hung inside a chest).
+        const clear = (c: [number, number]) => ![...this.chests, ...this.crates].some(o => Math.hypot(o.x - cellCenter(c[0]), o.z - cellCenter(c[1])) < CORE_CLEAR)
+        let sp = takeSpot(r)
+        while (sp && !clear(sp)) sp = takeSpot(r)
         if (!sp) continue
         const mesh = buildDataCore()
         const x = cellCenter(sp[0])

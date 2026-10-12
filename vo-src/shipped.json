@@ -67,13 +67,17 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_challenge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "de/atlas_debrief_greatJob": {
     "engine": "elevenlabs",
     "at": "2026-10-04"
   },
   "de/atlas_debrief_toLab": {
     "engine": "elevenlabs",
-    "at": "2026-10-04"
+    "at": "2026-10-08"
   },
   "de/atlas_exit": {
     "engine": "elevenlabs",
@@ -98,6 +102,10 @@
   "de/atlas_help_charge": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "de/atlas_help_chargeMiss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-08"
   },
   "de/atlas_help_gap": {
     "engine": "elevenlabs",
@@ -447,6 +455,10 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_scan_spotter": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "de/atlas_scan_stalker": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -483,9 +495,21 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/atlas_secret_mirror": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
+  "de/atlas_secret_sequence": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "de/atlas_secret_solved": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "de/atlas_secret_tiles": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
   },
   "de/atlas_sector_blaze": {
     "engine": "elevenlabs",
@@ -1267,6 +1291,10 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_challenge": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "en/atlas_debrief_greatJob": {
     "engine": "elevenlabs",
     "at": "2026-10-04"
@@ -1298,6 +1326,10 @@
   "en/atlas_help_charge": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "en/atlas_help_chargeMiss": {
+    "engine": "elevenlabs",
+    "at": "2026-10-08"
   },
   "en/atlas_help_gap": {
     "engine": "elevenlabs",
@@ -1647,6 +1679,10 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_scan_spotter": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "en/atlas_scan_stalker": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
@@ -1683,9 +1719,21 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/atlas_secret_mirror": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
+  "en/atlas_secret_sequence": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
+  },
   "en/atlas_secret_solved": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "en/atlas_secret_tiles": {
+    "engine": "elevenlabs",
+    "at": "2026-10-12"
   },
   "en/atlas_sector_blaze": {
     "engine": "elevenlabs",
@@ -2635,6 +2683,10 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "es/atlas_challenge": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "es/atlas_debrief_greatJob": {
     "engine": "chatterbox",
     "at": "2026-10-06"
@@ -2666,6 +2718,10 @@
   "es/atlas_help_charge": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "es/atlas_help_chargeMiss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
   },
   "es/atlas_help_gap": {
     "engine": "chatterbox",
@@ -3015,6 +3071,10 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "es/atlas_scan_spotter": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "es/atlas_scan_stalker": {
     "engine": "chatterbox",
     "at": "2026-10-06"
@@ -3051,9 +3111,21 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "es/atlas_secret_mirror": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "es/atlas_secret_sequence": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "es/atlas_secret_solved": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "es/atlas_secret_tiles": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
   },
   "es/atlas_sector_blaze": {
     "engine": "chatterbox",
@@ -3767,6 +3839,1230 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "fr/atlas_arc_1": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_10": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_2": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_3": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_4": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_5": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_6": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_7": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_8": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_arc_9": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_boss_signalFirst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_bossAhead": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_bossDown": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_brief_climb": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_brief_job": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_brief_story": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_brief_tutorial": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_challenge": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "fr/atlas_debrief_greatJob": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_debrief_toLab": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_exit": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_fortress_bays": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_guardDown": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_block": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_blockMiss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_charge": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_chargeMiss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_gap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_gel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_slide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_help_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_blaze_barrels": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_blaze_hammers": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_blaze_lava": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_blaze_leap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_blaze_vents": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_cryo_frost": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_cryo_ice": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_cryo_icicles": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_cryo_pillar": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_cryo_spikes": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_done": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_drill_board": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_drill_drop": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_drill_rock": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_blaze": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_cryo": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_drill": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_fortress": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_gale": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_magnet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_neon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_rotor": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_tide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_floor_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gale_leap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gale_wind": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_arms": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_body": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_button": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_feet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_head": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_gm_prism": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_levelUp": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_locator": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_magnet_panel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_magnet_rail": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_neon_blackout": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_neon_blink": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_neon_kick": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_neon_switch": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_rescue": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_rotor_board": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_tide_deep": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_tide_rise": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_tide_valve": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_underLevel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_upgrade": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_vex_core": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_vex_fall": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_vex_roof": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_volt_board": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_hint_volt_panels": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_idle_1": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_idle_2": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_idle_3": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_idle_4": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_landed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_levelUp": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_lowHp": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_lowHpGel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_lowWe": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_fire": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_free": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_ice": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_intro": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_scrap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_mk1_wind": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_noWeak": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_plate": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_brute": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_elite": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_fire": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_golem": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_hardhat": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_heli": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_hopper": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_hornet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_ice": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_mole": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_polar": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_puffer": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_roller": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_spotter": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "fr/atlas_scan_stalker": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_trooper": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_turret": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_warden": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_scan_wind": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_secret_color": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_secret_cycle": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_secret_lights": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_secret_mirror": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "fr/atlas_secret_sequence": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "fr/atlas_secret_solved": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_secret_tiles": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "fr/atlas_sector_blaze": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_cryo": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_drill": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_gale": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_magnet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_neon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_rotor": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_sector_tide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_blaze": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_body": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_breach": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_bubbleLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_drillBomb": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_droneSwarm": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_flameWave": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_galeGuard": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_iceLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_magnetPull": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_neonBlade": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_scrapBurst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_copied_thunderArc": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_cryo": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_dataCore": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_drill": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_drillFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_firstDraft": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_fortress": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_gale": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_galeFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_magnet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_magnetFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_neon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_neonFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_relayOne": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_rotor": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_rotorFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_scrapyard": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_tide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_tideFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_story_voltFreed": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_block": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_charge": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_gap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_gel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_slide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_train_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_trap": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_vexDown": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_volt_hack": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_volt_thanks": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_blade": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_bubbleLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_drillBomb": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_droneSwarm": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_flameWave": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_galeGuard": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_iceLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_magnetPull": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_neonBlade": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_scrapBurst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_borrowedLast_thunderArc": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_critical": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_criticalFirst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_crusher": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_down": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_flame": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_gel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_gelFirst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_ladder": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_noGel": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_pit": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_weEmpty": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_warn_weLow": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_bubbleLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_drillBomb": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_droneSwarm": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_flameWave": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_galeGuard": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_iceLance": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_magnetPull": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_neonBlade": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/atlas_weak_thunderArc": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/ending_atlas": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/ending_gauss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/ending_spark": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_1": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_2": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_3": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_4": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_5": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/flux_fumble_6": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_blaze_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_blaze_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_blaze_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_blaze_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_blaze_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_cryo_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_cryo_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_cryo_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_cryo_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_cryo_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_drill_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_drill_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_drill_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_drill_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_drill_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_gale_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_gale_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_gale_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_gale_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_gale_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_go": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_hello": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_magnet_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_magnet_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_magnet_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_magnet_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_magnet_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_neon_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_neon_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_neon_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_neon_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_neon_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_rotor_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_rotor_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_rotor_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_rotor_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_rotor_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_scrapyard_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_scrapyard_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_scrapyard_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_scrapyard_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_scrapyard_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_tide_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_tide_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_tide_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_tide_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_tide_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_volt_boss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_volt_next": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_volt_tip": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_volt_weapon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/pip_debrief_volt_won": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/story_atlas_goodMorning": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/story_atlas_logStart": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/story_atlas_scrapyardFirst": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/story_vex_diagnosis": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_fortress_welcome": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_blaze": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_blueprint": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_breach": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_drill": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_gale": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_magnet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_neon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_rotor": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_scrapper": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_tide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_hub_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_mk1_defeat": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_mk1_intro": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_mk1_listen": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_mk1_obey": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_blaze": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_drill": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_frost": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_gale": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_magnet": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_neon": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_rotor": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_scrapper": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_tide": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_present_volt": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_sting_doctorIn": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_volt_fail": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
+  "fr/vex_volt_hack": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
+  },
   "zh/atlas_arc_1": {
     "engine": "chatterbox",
     "at": "2026-10-06"
@@ -3835,6 +5131,10 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "zh/atlas_challenge": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "zh/atlas_debrief_greatJob": {
     "engine": "chatterbox",
     "at": "2026-10-06"
@@ -3866,6 +5166,10 @@
   "zh/atlas_help_charge": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "zh/atlas_help_chargeMiss": {
+    "engine": "chatterbox",
+    "at": "2026-10-08"
   },
   "zh/atlas_help_gap": {
     "engine": "chatterbox",
@@ -4215,6 +5519,10 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "zh/atlas_scan_spotter": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "zh/atlas_scan_stalker": {
     "engine": "chatterbox",
     "at": "2026-10-06"
@@ -4251,9 +5559,21 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "zh/atlas_secret_mirror": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
+  "zh/atlas_secret_sequence": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
+  },
   "zh/atlas_secret_solved": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "zh/atlas_secret_tiles": {
+    "engine": "chatterbox",
+    "at": "2026-10-12"
   },
   "zh/atlas_sector_blaze": {
     "engine": "chatterbox",

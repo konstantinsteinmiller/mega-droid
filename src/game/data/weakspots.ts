@@ -54,6 +54,8 @@ export const ENEMY_WEAK: Record<EnemyKind, WeakSpot> = {
   puffer: spot('core', -0.06, 0.34, 0.15),
   // The head, its eyes.
   stalker: spot('head', 1.05, 0.2, 0.18),
+  // Its lamp, slung under its nose: from the front, the side it shines at.
+  spotter: spot('core', -0.12, 0.42, 0.19),
   // Its stinger end.
   hornet: spot('tail', -0.02, -0.5, 0.17),
   // Its core, bare when the shutters open.
@@ -61,7 +63,10 @@ export const ENEMY_WEAK: Record<EnemyKind, WeakSpot> = {
   // The reactor on its back.
   gatekeeper: spot('back', 1.4, -1.1, 0.35),
   // A Master's head.
-  echo: spot('head', 1.7, 0.08, 0.3)
+  echo: spot('head', 1.7, 0.08, 0.3),
+  // A challenge mini-boss carries its own (`WeakBody.def.weak`); this is the
+  // fallback: its back.
+  miniboss: spot('back', 1.4, -0.4, 0.3)
 }
 
 export const BOSS_WEAK: Record<BossId, WeakSpot> = {
@@ -90,11 +95,12 @@ export interface WeakBody {
   elite: boolean
   boss: boolean
   kind: EnemyKind
-  def: { aimY: number; id?: string }
+  /** `weak`: a challenge mini-boss's own spot (its registry entry's). */
+  def: { aimY: number; id?: string; weak?: WeakSpot }
 }
 
 export const weakSpotOf = (e: WeakBody): WeakSpot =>
-  e.boss && e.def.id && e.def.id in BOSS_WEAK ? BOSS_WEAK[e.def.id as BossId] : ENEMY_WEAK[e.kind]
+  e.boss && e.def.id && e.def.id in BOSS_WEAK ? BOSS_WEAK[e.def.id as BossId] : e.def.weak ?? ENEMY_WEAK[e.kind]
 
 /** The weak spot's centre in the world, and its radius. */
 export const weakSpotAt = (e: WeakBody, out: { x: number; y: number; z: number; r: number }): typeof out => {

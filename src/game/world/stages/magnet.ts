@@ -206,8 +206,10 @@ export const generatePolarityWorks = (seed: number): MapData => {
   b.checkpoint(8, 30, YAW_PX, cells(6, 29, 8, 31))
   b.foe('turret', 10, 29, YAW_NX, [10, 29, 10, 29])
   b.foe('ground', 8, 31, YAW_NX, [6, 29, 10, 32])
-  b.secret(8, 'color', [1, 33, 2, 33], { i: 2, j: 33, axis: 'z' },
-    [[1, 32, 'w', 1], [4, 32, 's', 0], [7, 32, 's', 1], [10, 31, 'e', 2]], [], 'tank', 1)
+  // Simon says (#143): the panel runs an order of four buttons, two on
+  // each floor, so the answer takes the steps twice.
+  b.secret(8, 'sequence', [1, 33, 2, 33], { i: 2, j: 33, axis: 'z' },
+    [[1, 32, 'w', 0], [4, 32, 's', 1], [7, 32, 's', 2], [10, 31, 'e', 3]], [2, 0, 3, 1], 'tank')
   b.corridor(11, 30, 1, 0, 2, L(0) - 2)
 
   // ── 10 Approach hall ───────────────────────────────────────────────────────
@@ -235,6 +237,10 @@ export const generatePolarityWorks = (seed: number): MapData => {
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): north off the polarity trench,
+  // past the trench — the door in the north wall faces Flux across the gap
+  // as he leaps it; the way on is west.
+  b.challengeRoom(6, { mouth: { i: 11, j: 20, di: 0, dj: -1 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

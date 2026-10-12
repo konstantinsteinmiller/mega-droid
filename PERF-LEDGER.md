@@ -57,6 +57,17 @@ deep, still capped by fog.
   7 m) and beam-out (to 9 m) see over every wall, so they show every room.
   The first cut missed this: crates and doors floated in the sky on beam-out,
   seen in the WebKit run of the cross-browser matrix.
+- Terrain maps (stages, the Tower Run) are not the labyrinth: walls stand 5 m
+  over each room's own highest floor, islands over open sky have no outer
+  wall, and a door is a 4.2 m panel in a gap that runs up to the wall tops.
+  Sky Docks' wind tunnel was missing from the room beside it (playtest
+  2026-10-11). `world/roomSight.ts` now works out, once per map, what each
+  room sees whatever its doors do (its route neighbours plus every room a
+  sight line reaches over the real wall tops), and those rooms are always
+  drawn with it. The labyrinth's lists are empty: its portal win is
+  unchanged. Door frames on a terrain map are one group a door, drawn with
+  the door; a rail's track and cart and the wind streaks follow their rooms.
+  Not re-measured on a throttled device: a stage now draws more rooms.
 
 Code: `Mission.updateRoomCulling`, `Mission.propParent`, `levelMesh.ts`.
 Baseline arm: `?perf=noportal`.

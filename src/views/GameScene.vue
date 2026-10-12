@@ -82,9 +82,8 @@ import { chargeHum } from '@/game/audio/synth'
 import { CHARGE_L2 } from '@/game/sim/stats'
 import { isGamePaused, isAdShowing, isVisibilityHidden, isPlatformPaused, acquireAppPause } from '@/use/useGamePause'
 import { isAnyModalOpen } from '@/use/useModalState'
-import { isGameplayLive, syncGameplayLifecycle } from '@/use/useGameplayLifecycle'
+import { isCrazyGameplayLive, isGameplayLive, syncGameplayLifecycle, type GameplayLiveInputs } from '@/use/useGameplayLifecycle'
 import { startGameMusic } from '@/use/useSound'
-import { toggleGameMute } from '@/use/useGameMute'
 import { armNavigationGuard, disarmNavigationGuard } from '@/use/useBrowserGuard'
 import { registerGameCheats } from '@/game/cheats'
 import Joystick from '@/components/hud/Joystick.vue'
@@ -180,15 +179,9 @@ const onKey = (e: KeyboardEvent) => {
     if (!e.repeat) toggleHelp()
     return
   }
-  // F2 is the HUD's speaker button, on every screen (the lab and the menus
-  // too): muting is never a thing to hunt for a cursor to do. Not under an
-  // ad — the ad's audio gate owns the sound then, and a toggle underneath it
-  // would come back as a surprise when the ad ends.
-  if (e.code === 'F2') {
-    e.preventDefault()
-    if (!e.repeat && !typing(e) && !isAdShowing.value) toggleGameMute()
-    return
-  }
+  // F2 is the mute key, toggled app-wide (`installMuteKey`); here it is just
+  // not a game key (and never "any key" to the intro's start gate).
+  if (e.code === 'F2' || e.key === 'F2') return
   // F4 during a kill-cam: kill-cams off (Options → Gameplay turns them back
   // on). Only then: F4 is nothing else of the game's.
   if (e.code === 'F4' && hud.freezeKind === 'kill') {
@@ -367,7 +360,9 @@ watch(isGamePaused, (p) => {
 // The portals' gameplay bracket (CrazyGames / Poki / Playgama). The rule is in
 // `isGameplayLive`; the Poki arm defers a start inside its 50 ms bad-event
 // window, so a modal closing in the same breath as an ad opening is safe.
-const live = computed(() => isGameplayLive({
+// CrazyGames reads the same inputs its own way (`isCrazyGameplayLive`: the
+// intro is not play there, the first start is the tutorial landing).
+const liveInputs = computed<GameplayLiveInputs>(() => ({
   introPlay: flow.introPlay,
   screen: flow.screen,
   phase: hud.phase,
@@ -377,7 +372,9 @@ const live = computed(() => isGameplayLive({
   visibilityHidden: isVisibilityHidden.value,
   platformPaused: isPlatformPaused.value
 }))
-watch(live, (v) => syncGameplayLifecycle(v), { immediate: true })
+const live = computed(() => isGameplayLive(liveInputs.value))
+const crazyLive = computed(() => isCrazyGameplayLive(liveInputs.value))
+watch([live, crazyLive], ([v, c]) => syncGameplayLifecycle(v, c), { immediate: true })
 
 onUnmounted(() => {
   syncGameplayLifecycle(false)

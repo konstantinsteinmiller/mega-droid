@@ -38,6 +38,18 @@ describe('voice text normalisation', () => {
     expect(normalize('25%的伤害，3级', 'zh').text).toBe('百分之二十五的伤害，三级')
   })
 
+  it('spells French numbers the French way (et un, soixante-dix, quatre-vingts)', () => {
+    expect(numberWords(21, 'fr')).toBe('vingt et un')
+    expect(numberWords(71, 'fr')).toBe('soixante et onze')
+    expect(numberWords(77, 'fr')).toBe('soixante-dix-sept')
+    expect(numberWords(80, 'fr')).toBe('quatre-vingts')
+    expect(numberWords(81, 'fr')).toBe('quatre-vingt-un')
+    expect(numberWords(99, 'fr')).toBe('quatre-vingt-dix-neuf')
+    expect(numberWords(200, 'fr')).toBe('deux cents')
+    expect(numberWords(205, 'fr')).toBe('deux cent cinq')
+    expect(normalize('25 % de dégâts, niveau 3', 'fr').text).toBe('vingt-cinq pour cent de dégâts, niveau trois')
+  })
+
   it('writes every ellipsis the same way', () => {
     expect(normalize('The cure… is ME!', 'en').text).toBe('The cure... is Me!')
   })

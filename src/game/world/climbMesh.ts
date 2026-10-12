@@ -7,12 +7,12 @@ import { rcyl, rcone, cap, rbox, xform, paint, paintBy, merge, sph, torus } from
 import { mulberry32 } from './rng'
 import { noSlice, type Slice } from '../engine/slicer'
 import {
-  QuadBatch, cellOwners, doorFramePos, buildSky, FLOOR_UV, WALL_UV, PLAIN_UV, type LevelMeshes, type UV8
+  QuadBatch, cellOwners, doorFramePos, buildSky, outerWall, outerEnd, FLOOR_UV, WALL_UV, PLAIN_UV, type LevelMeshes, type UV8
 } from './levelMesh'
 import { BALL_R } from './climbGen'
 import { lavaCell, lavaMaterial } from '../models/lava'
 import { secretDoorFace } from './stages/builder'
-import { planDecor } from './decor'
+import { planDecor, wallThingFaces } from './decor'
 import { decorParts } from '../models/decorProps'
 
 /**
@@ -51,25 +51,9 @@ const BAND = WALL_H
 
 type V3 = [number, number, number]
 
-/**
- * The wall faces a secret's buttons and hint panel are mounted on, as
- * `"<cell index>:<di>,<dj>"` (the room cell in front and the edge's outward
- * step): the mesh keeps them clear of decor, and the puzzle audit checks
- * against the same rule (`tests/game/puzzleAudit.test.ts`).
- */
-export const secretWallFaces = (t: Terrain, W: number): Set<string> => {
-  const out = new Set<string>()
-  const add = (x: number, z: number, nx: number, nz: number): void => {
-    const i = Math.floor((x + nx * 0.5) / CELL)
-    const j = Math.floor((z + nz * 0.5) / CELL)
-    out.add(`${j * W + i}:${-nx},${-nz}`)
-  }
-  for (const s of t.secrets ?? []) {
-    for (const b of s.buttons) add(b.x, b.z, b.nx, b.nz)
-    add(s.panel.x, s.panel.z, s.panel.nx, s.panel.nz)
-  }
-  return out
-}
+// The faces kept clear of the dressing live with the dressing plan; the
+// puzzle audit reads them from here.
+export { secretWallFaces } from './decor'
 
 export const buildClimbLevel = async (
   map: MapData, theme: Theme, slice: Slice = noSlice, onProgress: (f01: number) => void = () => {}
@@ -111,9 +95,11 @@ export const buildClimbLevel = async (
 
   const walkable = (i: number, j: number) => i >= 0 && j >= 0 && i < W && j < map.h && map.cell[j * W + i] !== Cell.Void
   const K = (i: number, j: number) => j * W + i
-  // Wall faces a secret's button or hint panel sits on: no pipe or light
-  // strip is drawn over them (a Sky Docks pipe hid a blue button).
-  const busy = secretWallFaces(t, W)
+  // Wall faces a thing to see or shoot hangs on (a secret's button or hint
+  // panel, a switch, a valve, a polarity panel): no pipe or light strip is
+  // drawn over them (a Sky Docks pipe hid a blue button, a Polarity Works
+  // pipe ran across a polarity panel).
+  const busy = wallThingFaces(t, W)
   // The level's set dressing (#114): its wall props' faces get no pipe or
   // light strip of their own; the props join each room's decor below.
   const dressing = planDecor(map, theme.id)
@@ -130,6 +116,13 @@ export const buildClimbLevel = async (
     if (r >= 0 && !t.pit[k]) roomLow[r] = Math.min(roomLow[r]!, t.floor[k]!)
   }
   const lowOf = (k: number) => (roomOf(k) >= 0 ? roomLow[roomOf(k)]! : t.floor[k]!)
+  // A wall's outside (`outerWall`) stands down to the lowest floor of the
+  // map, a building's face, not a panel hung in the air; over open sky to
+  // the island's slab under its foot.
+  let ground = Infinity
+  for (let k = 0; k < map.cell.length; k++) if (map.cell[k] !== Cell.Void && !t.pit[k]) ground = Math.min(ground, t.floor[k]!)
+  /** A cell whose edges toward the void are walls (over open sky a gap's are not). */
+  const walled = (i: number, j: number) => walkable(i, j) && !(t.clouds && t.pit[K(i, j)])
 
   /** Drawn floor height of cell k at local (u, v) ∈ [0,1]² — the ramp as a
    *  line (the stepped look is drawn separately); a pit at its bottom. */
@@ -332,17 +325,13 @@ export const buildClimbLevel = async (
         }
       }
 
-      // An island's underside over open sky, seen from across a gap.
+      // An island's underside over open sky, seen from across a gap or from
+      // a roof below (under every standing cell: a sight line that passes
+      // under a wall's outer face goes on under the floor).
       if (t.clouds && !t.pit[k]) {
-        let open = false
-        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-          if (walkable(i + di, j + dj) && t.pit[K(i + di, j + dj)]) open = true
-        }
-        if (open) {
-          const y = t.floor[k]! - ISLAND_SLAB
-          const cu = shade(cWallLow, y, k).clone()
-          b.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], [0, -1, 0], PLAIN_UV, cu, cu, cu, cu)
-        }
+        const y = t.floor[k]! - ISLAND_SLAB
+        const cu = shade(cWallLow, y, k).clone()
+        b.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], [0, -1, 0], PLAIN_UV, cu, cu, cu, cu)
       }
 
       // ── Edges ──
@@ -384,6 +373,13 @@ export const buildClimbLevel = async (
           const topY = wallTopOf(k)
           const look = lookOf(k)
           face(b, k, ax, az, bx, bz, e.n, low, () => topY, 1, look?.low ?? cWallLow, look?.high ?? cWall)
+          // Its outside: seen from a lower room over its own walls, from
+          // across a gap, from a lift (playtest 2026-10-12).
+          if (!rim) {
+            outerWall(b, ax, az, bx, bz, [-e.n[0], 0, -e.n[2]], t.clouds ? low - ISLAND_SLAB : Math.min(low, ground), topY,
+              outerEnd(walled, walkable, i, j, e.di, e.dj, ax, az), outerEnd(walled, walkable, i, j, e.di, e.dj, bx, bz),
+              look?.low ?? cWallLow, look?.high ?? cWall, !!t.clouds)
+          }
           addCorner(ax, az, o, low, topY, alongX, c !== Cell.Corridor)
           addCorner(bx, bz, o, low, topY, alongX, c !== Cell.Corridor)
           decor[o]!.push(xform(piece('capTop', () => paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim)), [mx, topY, mz], rotAlong))
@@ -499,6 +495,19 @@ export const buildClimbLevel = async (
     for (const g of parts.glow) glows[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
   }
   await slice()
+
+  // ── Cover pillars (`Builder.coverPillar`): a post on its cell's floor, a
+  // trim band, a footing sunk a hair into the floor (never flush with it) ──
+  for (const p of map.pillars) {
+    const k = K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))
+    const o = owner[k]!
+    if (o < 0) continue
+    const y = t.floor[k]!
+    decor[o]!.push(xform(paint(rcyl(p.r, 3.2, 0.18, 14), theme.pilaster), [p.x, y + 1.6, p.z]))
+    decor[o]!.push(xform(paint(torus(p.r * 0.97, 0.1, 6, 14), theme.trim), [p.x, y + 2.7, p.z], [Math.PI / 2, 0, 0]))
+    decor[o]!.push(xform(paint(rbox(p.r * 2.3, 0.3, p.r * 2.3, 0.1, 4, 2), theme.trim), [p.x, y + 0.12, p.z]))
+    glows[o]!.push(xform(paint(sph(p.r * 0.45, 14, 8), theme.accent), [p.x, y + 3.25, p.z]))
+  }
 
   // ── Ladders: two lit rails and rungs on the cliff face ──
   for (const L of t.ladders) {
@@ -695,10 +704,17 @@ export const buildClimbLevel = async (
     secretOwner.push(owner[k]!)
   })
 
-  // ── Door frames at their corridor's height (one always-visible group) ──
-  const doorDecor: BufferGeometry[] = []
-  const doorBatch = new QuadBatch()
-  for (const d of map.doors) doorFrame(d, t.floor[K(d.i, d.j)]!, theme, doorDecor, doorBatch, cHaz)
+  // ── Door frames at their corridor's height ──
+  // One group a door, drawn while the door is (`Mission.updateRoomCulling`):
+  // over open sky nothing hides a frame, and one shared always-visible group
+  // left lone arches standing where both rooms were culled (playtest
+  // 2026-10-11).
+  const frameParts = map.doors.map(d => {
+    const decor: BufferGeometry[] = []
+    const batch = new QuadBatch()
+    doorFrame(d, t.floor[K(d.i, d.j)]!, theme, decor, batch, cHaz)
+    return { decor, batch }
+  })
 
   // ── Assemble ─────────────────────────────────────────────────────────────
   const root = new Group()
@@ -734,18 +750,22 @@ export const buildClimbLevel = async (
     onProgress(0.65 + ((r + 1) / nRooms) * 0.35)
     await slice()
   }
-  if (doorDecor.length) {
-    const doorsGroup = new Group()
-    const dgeo = doorBatch.build()
-    if (dgeo) doorsGroup.add(new Mesh(dgeo, floorMat))
-    const dd = merge(doorDecor)
-    doorsGroup.add(new Mesh(dd, toonVC()))
-    const dol = new Mesh(dd, outlineMat(0.035))
+  const frameMat = toonVC()
+  const frameOutline = outlineMat(0.035)
+  const doorFrames = frameParts.map(({ decor: parts, batch }, n) => {
+    const g = new Group()
+    g.name = `doorFrame${n}`
+    const dgeo = batch.build()
+    if (dgeo) g.add(new Mesh(dgeo, floorMat))
+    const dd = merge(parts)
+    g.add(new Mesh(dd, frameMat))
+    const dol = new Mesh(dd, frameOutline)
     dol.renderOrder = -1
-    doorsGroup.add(dol)
-    root.add(doorsGroup)
-  }
-  const out: LevelMeshes = { root, rooms, sky: buildSky(theme), bounds, owner }
+    g.add(dol)
+    root.add(g)
+    return g
+  })
+  const out: LevelMeshes = { root, rooms, sky: buildSky(theme), bounds, owner, doorFrames }
   if (secretWalls.length) out.secretWalls = secretWalls
   return out
 }

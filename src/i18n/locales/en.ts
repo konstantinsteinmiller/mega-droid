@@ -47,6 +47,8 @@ export default {
     // A shot on a weak spot (a head, a back, a tail): a sound word, not
     // translated.
     'kranck': 'KRANCK!',
+    // The training drone turning a quick shot away (same amber wobble).
+    'tooWeak': 'TOO WEAK!',
     'dizzy': 'DIZZY!',
     'dodge': 'DODGE!',
     'block': 'Block',
@@ -85,6 +87,7 @@ export default {
     'warden': 'Warden',
     'hornet': 'Hornet Rotor',
     'stalker': 'Glow Stalker',
+    'spotter': 'Searchlight Drone',
     'puffer': 'Puffer Mine',
     'mole': 'Mole Driller',
     'polar': 'Polar Pup',
@@ -107,6 +110,7 @@ export default {
     'warden': 'Warden | Wardens',
     'hornet': 'Hornet Rotor | Hornet Rotors',
     'stalker': 'Glow Stalker | Glow Stalkers',
+    'spotter': 'Searchlight Drone | Searchlight Drones',
     'puffer': 'Puffer Mine | Puffer Mines',
     'mole': 'Mole Driller | Mole Drillers',
     'polar': 'Polar Pup | Polar Pups',
@@ -148,6 +152,26 @@ export default {
     'vexMk1': 'Dr. Vex Mk-I',
     // The ten Masters in one body (#101).
     'grandMaster': 'Grand Master Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Cinder Hound',
+    'icebreakerBrute': 'Icebreaker Brute',
+    'arcSpider': 'Arc Spider',
+    'stormHornetQueen': 'Storm Hornet Queen',
+    'lodestoneGolem': 'Lodestone Golem',
+    'burrowWyrm': 'Burrow Wyrm',
+    'pufferMatriarch': 'Puffer Matriarch',
+    'glitchStalker': 'Glitch Stalker',
+    'sawGyro': 'Saw Gyro',
+    'sentinelPrototype': 'Sentinel Prototype'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Challenge',
+    'cleared': 'Challenge beaten! +{bolts} bolts'
   },
 
   'sector': {
@@ -237,7 +261,7 @@ export default {
   // Screen-reader sentences behind the control coach's wordless glyphs
   // (ControlHints, ControlsPanel). Never drawn on screen.
   'tips': {
-    'moveTouch': 'Drag the left side to move, the right side to look. Tap the floor to walk there!',
+    'moveTouch': 'Drag the left side to move, the right side to look.',
     'moveKeys': '{keys} to move around.',
     'lookMouse': 'Move the mouse to look around.',
     'capture': 'Click the scene to take control of the camera.',
@@ -383,8 +407,8 @@ export default {
       'interact': 'Interact'
     },
     'touch': {
-      'move': 'Left side: drag to move. Tap the floor to walk there.',
-      'fire': 'In combat: tap to shoot, hold to charge, release to fire.',
+      'move': 'Left side: drag to move. Right side: drag to look.',
+      'fire': 'Right side or the fire button: tap to shoot, hold to charge, release to fire. Drag while holding to aim.',
       'block': 'Hold the shield to block — just as a ring closes to parry.',
       'use': 'Near a chest, a stranded bot or a door: tap it, or the button that pops up.'
     },
@@ -808,6 +832,7 @@ export default {
       'warden': '{enemy}. Hit the core when it opens.',
       'hornet': '{enemy}. It dives straight: sidestep!',
       'stalker': '{enemy}. Parry the lunge.',
+      'spotter': '{enemy}. Leave its light. Shoot the lamp.',
       'puffer': '{enemy}. Pop it before it swells.',
       'mole': '{enemy}. Hit it when it pops up.',
       'elite': 'Gold ring. Elite. Careful.',
@@ -830,6 +855,7 @@ export default {
       'free': "Because they're free.",
     },
     'guardDown': "Guard down! The way's open.",
+    'challenge': 'A challenge door! Good loot inside.',
     'help': {
       'weapon': 'Pick your new weapon and fire at the drones!',
       'gap': "Walk straight at the edge and you'll leap across!",
@@ -837,6 +863,7 @@ export default {
       'slide': 'Slide away just before the red ring reaches you!',
       'block': 'Hold block when it fires. Just as it hits is perfect!',
       'blockMiss': 'Shield up! Block just as it hits to send it back!',
+      'chargeMiss': 'Try a charged shot by holding the cannon button!',
       'charge': 'Hold fire until the cannon glows, then let go!',
     },
     'train': {
@@ -938,6 +965,9 @@ export default {
       'lights': "That panel shows a pattern. The lamps on the wall don't. Yet.",
       'color': 'That frame has a favourite colour. Only its lamps should shine.',
       'cycle': "Every hit changes a lamp's mind. The panel knows what it wants.",
+      'sequence': 'The panel blinks the same little tune. Play it back on the buttons, in order.',
+      'mirror': 'That beam wants the ring. Mirrors turn when you shoot them.',
+      'tiles': 'One walk, every plate lit. Step on one twice, or off them: dark again.',
       'solved': 'Well, well. Someone likes puzzles.'
     },
     'landed': "Touchdown! Let's go.",

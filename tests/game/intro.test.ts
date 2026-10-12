@@ -18,8 +18,14 @@ import {
   SHOTS, INTRO_END, SKIP_AFTER, ATLAS_HOLD, EVENTS, eventsBetween, overlayAt, streetTime, streetAt, streetRate, shotIndexAt,
   STREET_FROM, STREET_RELEASE, STREET_AT, STREET_DONE, LAB_FROM, LEVER_AT, LOGO_AT, WAKE_FROM, VEX_ON, CUTIN_FROM, CUTIN_TO, DISC_FROM, DISC_TO,
   HP_FILL_TO, LV_POP, FLASH_FULL, STREET_END, SHOW_HIT, SHOW_PARRY, SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_SLIDE_FROM,
-  SHOW_SLIDE_TO, SHOW_FINISH_HIT, SHOW_GEL_BURST
+  SHOW_SLIDE_TO, SHOW_FINISH_HIT, SHOW_GEL_BURST, SHOW_GEL, SHOW_BIG_DROP, SHOW_BIG_LAND, SHOW_FLEE_FROM, SHOW_FLEE_TO,
+  SHOW_OVER_CHARGE, SHOW_OVER_L1, SHOW_OVER_L2, SHOW_OVER_L3, SHOW_OVER_FIRE, SHOW_OVER_HIT, OVER_SHOT, OVER_STATS,
+  overCharge, overLevel, bigOn
 } from '@/game/story/introScript'
+import { Color } from 'three'
+import { chargeInfo } from '@/game/sim/stats'
+import { chargeGlowAt, newChargeGlow } from '@/game/fx/chargeGlow'
+import { ringState } from '@/components/hud/chargeRing'
 
 const h = vi.hoisted(() => ({ modes: [] as unknown[] }))
 
@@ -102,7 +108,7 @@ describe('the intro script', () => {
     expect(streetTime(INTRO_END)).toBe(STREET_END)
     // The showcase runs 1:1 after the release, and every beat sits inside it.
     expect(streetRate(streetAt(STREET_RELEASE + 1))).toBeCloseTo(1, 6)
-    for (const b of [SHOW_HIT, SHOW_PARRY, ...SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_FINISH_HIT, SHOW_GEL_BURST]) {
+    for (const b of [SHOW_HIT, SHOW_PARRY, ...SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_FINISH_HIT, SHOW_OVER_HIT, SHOW_GEL_BURST]) {
       expect(b).toBeGreaterThan(STREET_RELEASE)
       expect(b).toBeLessThan(STREET_END - 1)
     }
@@ -124,6 +130,77 @@ describe('the intro script', () => {
     expect(streetRate(STREET_DONE)).toBe(0)
     // `streetAt` places the street's sounds on the action.
     for (const st of [-2, 0.3, 1.15, 1.55, 2.35, 2.65]) expect(streetTime(streetAt(st))).toBeCloseTo(st, 6)
+  })
+
+  it('the Overload preview (#137): a big Guardroid, the charge past full to the Overload, the violet shot, KRANCK!, it blows apart', () => {
+    // Right after the Trooper falls apart, and before the Repair Gel.
+    expect(SHOW_BIG_DROP).toBeGreaterThan(SHOW_FINISH_HIT)
+    expect(SHOW_BIG_LAND).toBeGreaterThan(SHOW_BIG_DROP)
+    expect(SHOW_GEL).toBeGreaterThan(SHOW_OVER_HIT + 1)
+    // Short: from the drop to the blast in a few seconds.
+    expect(SHOW_OVER_HIT - SHOW_BIG_DROP).toBeLessThanOrEqual(3.5)
+    // The Guardroid is in the street from the drop to the shot, never after it.
+    expect(bigOn(SHOW_BIG_DROP - 0.01)).toBe(false)
+    expect(bigOn(SHOW_BIG_LAND)).toBe(true)
+    expect(bigOn(SHOW_OVER_HIT - 0.01)).toBe(true)
+    expect(bigOn(SHOW_OVER_HIT)).toBe(false)
+    expect(bigOn(SHOW_GEL)).toBe(false)
+    // The charge climbs level by level on the game's own clock (`chargeInfo`),
+    // never back, and is at the Overload before the release.
+    expect(SHOW_OVER_CHARGE).toBeLessThan(SHOW_OVER_L1)
+    expect(SHOW_OVER_L1).toBeLessThan(SHOW_OVER_L2)
+    expect(SHOW_OVER_L2).toBeLessThan(SHOW_OVER_L3)
+    expect(SHOW_OVER_L3).toBeLessThan(SHOW_OVER_FIRE - 0.3)
+    expect(overLevel(SHOW_OVER_CHARGE - 0.01)).toBe(0)
+    expect(overLevel(SHOW_OVER_L1 + 0.01)).toBe(1)
+    expect(overLevel(SHOW_OVER_L2 + 0.01)).toBe(2)
+    expect(overLevel(SHOW_OVER_L3 + 0.01)).toBe(3)
+    expect(overLevel(SHOW_OVER_FIRE - 1e-3)).toBe(3)
+    let lv = 0
+    for (let st = SHOW_OVER_CHARGE; st < SHOW_OVER_FIRE; st += 0.01) {
+      expect(overLevel(st)).toBeGreaterThanOrEqual(lv)
+      lv = overLevel(st)
+    }
+    // Released at the shot: no charge held from then on.
+    expect(overCharge(SHOW_OVER_FIRE)).toBe(-1)
+    // He dashes away from it while the charge builds.
+    expect(SHOW_FLEE_FROM).toBeGreaterThan(SHOW_OVER_CHARGE)
+    expect(SHOW_FLEE_TO).toBeLessThan(SHOW_OVER_L3)
+    // The shot is the Overload's: a level-3 release fires a `charge3` (as `Mission.fireCharged`).
+    expect(OVER_SHOT).toBe('charge3')
+    // The game's colours, through the game's own painters: the buster green,
+    // the full charge's cyan bleeding to violet, then the Overload's violet
+    // halo; the crosshair ring l1, both rings full, the inner refilling
+    // violet (with the Overload fitted, from the full charge on), then over.
+    const at = (st: number) => chargeInfo(overCharge(st), OVER_STATS)
+    const glow = (st: number) => chargeGlowAt(at(st), 0, new Color('#ffffff'), newChargeGlow())
+    expect(glow(SHOW_OVER_L1 + 0.05).core.getHexString()).toBe('c8ff7a')
+    const full = glow(SHOW_OVER_L2 + 0.01).core
+    expect(full.r).toBeCloseTo(new Color('#7ff4ff').r, 2)
+    expect(full.g).toBeCloseTo(new Color('#7ff4ff').g, 2)
+    const mid = glow((SHOW_OVER_L2 + SHOW_OVER_L3) / 2)
+    expect(mid.core.r).toBeGreaterThan(new Color('#7ff4ff').r)
+    expect(mid.over).toBe(false)
+    const over = glow(SHOW_OVER_L3 + 0.1)
+    expect(over.over).toBe(true)
+    expect(['b46cff', 'd38bff']).toContain(over.halo.getHexString())
+    expect(ringState(at(SHOW_OVER_L1 + 0.05), 0)).toBe('l1')
+    expect(at(SHOW_OVER_L2 + 0.01).toL2).toBe(1)
+    expect(ringState(at(SHOW_OVER_L2 + 0.01), 0)).toBe('build')
+    expect(ringState(at(SHOW_OVER_L2 + 0.3), 0)).toBe('build')
+    expect(at(SHOW_OVER_L2 + 0.3).toL3).toBeGreaterThan(at(SHOW_OVER_L2 + 0.01).toL3)
+    expect(ringState(at(SHOW_OVER_L3 + 0.1), 0)).toBe('over')
+    // The sounds and the call-out in that order: the levels ring, the
+    // Overload, the release, then KRANCK! as the shot lands, and the blast.
+    const sfxAt = (name: string) => EVENTS.find(e => e.at >= streetAt(SHOW_BIG_DROP) && e.kind === 'sfx' && e.name === name)!.at
+    expect(sfxAt('charge1')).toBeLessThan(sfxAt('charge2'))
+    expect(sfxAt('charge2')).toBeLessThan(sfxAt('charge3'))
+    expect(sfxAt('charge3')).toBeLessThan(sfxAt('chargeShotBig'))
+    expect(sfxAt('chargeShotBig')).toBeCloseTo(streetAt(SHOW_OVER_FIRE), 6)
+    const kranck = EVENTS.filter(e => e.kind === 'kranck')
+    expect(kranck).toHaveLength(1)
+    expect(kranck[0]!.at).toBeCloseTo(streetAt(SHOW_OVER_HIT), 6)
+    expect(sfxAt('explode')).toBeGreaterThanOrEqual(kranck[0]!.at)
   })
 
   it('overlays: in from black, the eyelids, the HUD boot, the white flash and the logo', () => {
@@ -303,6 +380,8 @@ describe('the intro score ("Wake-Up Call")', () => {
     expect(hitAt(streetAt(STREET_RELEASE) - 0.1)).toBe(true) // the charge shot's release
     // The showcase: a hit on the parry, the slide and the finish.
     for (const b of [SHOW_PARRY, SHOW_SLIDE_FROM + 0.1, SHOW_FINISH_HIT]) expect(hitAt(streetAt(b), 0.25)).toBe(true)
+    // The Overload (#137): the Guardroid lands on a hit, and so does the KRANCK.
+    for (const b of [SHOW_BIG_LAND, SHOW_OVER_HIT]) expect(hitAt(streetAt(b), 0.25)).toBe(true)
     expect(hitAt(SPIRE_FLASH)).toBe(true)
     expect(hitAt(CUTIN_FROM)).toBe(true)
     expect(hitAt(LEVER_AT)).toBe(true)

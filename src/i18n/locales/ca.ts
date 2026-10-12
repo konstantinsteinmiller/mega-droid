@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Últim alè! Sistemes reiniciats.',
     'weak': 'PUNT FEBLE!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'MASSA FEBLE!',
     'dizzy': 'MAREJAT!',
     'dodge': 'ESQUIVA!',
     'block': 'Bloqueja',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Sentinella',
     'hornet': 'Rotor vespa',
     'stalker': 'Assetjador Lluminós',
+    'spotter': 'Dron Reflector',
     'puffer': 'Mina Globus',
     'mole': 'Talp Trepant',
     'polar': 'Cadell Polar',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Sentinella | Sentinelles',
     'hornet': 'Rotor vespa | Rotors vespa',
     'stalker': 'Assetjador Lluminós | Assetjadors Lluminosos',
+    'spotter': 'Dron Reflector | Drons Reflectors',
     'puffer': 'Mina Globus | Mines Globus',
     'mole': 'Talp Trepant | Talps Trepant',
     'polar': 'Cadell Polar | Cadells Polars',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Mestre Ventada',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Gran Mestre'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Gos de Brasa',
+    'icebreakerBrute': 'Brut Trencaglaç',
+    'arcSpider': 'Aranya d’Arc',
+    'stormHornetQueen': 'Reina Vespa de Tempesta',
+    'lodestoneGolem': 'Gòlem Magnetita',
+    'burrowWyrm': 'Cuc Excavador',
+    'pufferMatriarch': 'Matriarca Peix Globus',
+    'glitchStalker': 'Aguaitador Glitch',
+    'sawGyro': 'Giro Serra',
+    'sentinelPrototype': 'Prototip Sentinella'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Repte',
+    'cleared': 'Repte superat! +{bolts} cargols'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nivell {n}! Sistemes totalment reparats.'
   },
   'tips': {
-    'moveTouch': 'Arrossega a l\'esquerra per moure\'t i a la dreta per mirar. Toca el terra per anar-hi!',
+    'moveTouch': 'Arrossega a l\'esquerra per moure\'t i a la dreta per mirar.',
     'moveKeys': '{keys} per moure\'t.',
     'lookMouse': 'Mou el ratolí per mirar al teu voltant.',
     'capture': 'Fes clic a l\'escena per controlar la càmera.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Interactuar'
     },
     'touch': {
-      'move': 'Costat esquerre: arrossega per moure\'t. Toca el terra per anar-hi.',
-      'fire': 'En combat: toca per disparar, mantén per carregar i deixa anar per obrir foc.',
+      'move': 'Costat esquerre: arrossega per moure\'t. Costat dret: arrossega per mirar.',
+      'fire': 'Costat dret o el botó de disparar: toca per disparar, mantén per carregar i deixa anar per obrir foc. Arrossega mentre mantens per apuntar.',
       'block': 'Mantén l\'escut per bloquejar; prem-lo just quan un anell es tanqui per fer una parada.',
       'use': 'Al costat d\'un cofre, un robot atrapat o una porta: toca\'l, o toca el botó que apareix.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': "{enemy}. Dispara al nucli quan s'obri.",
       'hornet': "{enemy}. Es llança recte: aparta't!",
       'stalker': '{enemy}. Para la seva escomesa.',
+      'spotter': '{enemy}. Surt de la seva llum. Dispara al focus.',
       'puffer': "{enemy}. Rebenta-la abans que s'infli.",
       'mole': '{enemy}. Dispara-li quan surti de terra.',
       'elite': 'Anell daurat. Elit. Compte.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Perquè són lliures.',
     },
     'guardDown': 'Guàrdia abatut! El camí és lliure.',
+    'challenge': 'Porta de repte! Bon botí a dins.',
     'help': {
       'weapon': 'Tria la teva arma nova i dispara als drons!',
       'gap': 'Camina recte cap a la vora i saltaràs a l\'altre costat!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Llisca just abans que l\'anell vermell t\'arribi!',
       'block': 'Mantén el bloqueig quan dispari. Just a l\'impacte és perfecte!',
       'blockMiss': 'Escut amunt! Bloqueja just a l\'impacte i torna\'l!',
+      'chargeMiss': 'Prova un tret carregat mantenint premut el botó del canó!',
       'charge': 'Mantén el tret fins que el canó brilli, i deixa anar!',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Aquell panell mostra un patró. Els llums de la paret, encara no.',
       'color': 'Aquell marc té un color preferit. Només els seus llums haurien de brillar.',
       'cycle': 'Cada tret fa que un llum canviï d\'idea. El panell sap el que vol.',
+      'sequence': 'El panell parpelleja la mateixa melodia. Repeteix-la amb els botons, per ordre.',
+      'mirror': "Aquest raig vol arribar a l'anella. Els miralls giren quan els dispares.",
+      'tiles': 'Encén totes les plaques en un sol passeig. Dues vegades en una, o fora, i tot torna a ser fosc.',
       'solved': 'Vaja, vaja. A algú li agraden els trencaclosques.'
     },
     'landed': 'Aterratge! Som-hi.',

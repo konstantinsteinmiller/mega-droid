@@ -238,12 +238,12 @@ describe('the camera on touch: no glyph of its own', () => {
     expect(shownAfterHelp('mouse')).toEqual(['look', 'move'])
   })
 
-  it('lets walk in for a player who never looked', () => {
+  it('shows no walk glyph once the stick is learned: tap-to-walk is gone', () => {
     const c = new Coach()
     run(c, 0, 1, touch)
     for (let i = 0; i < 3; i++) c.use('move')
     expect(c.mastered('look')).toBe(false)
-    expect(ids(run(c, 1, 5, touch))).toEqual(['walk'])
+    expect(ids(run(c, 1, 5, touch))).toEqual([])
   })
 
   it('still counts looking, but gates nothing on it (the drone lesson reads `learned`)', () => {
@@ -265,7 +265,7 @@ describe('the camera on touch: no glyph of its own', () => {
     expect(v[0]!.family).toBe('touch')
   })
 
-  it('on the mouse, the camera glyph is as before, and walk still waits for it', () => {
+  it('on the mouse, the camera glyph is as before, and no walk glyph follows it', () => {
     const c = new Coach()
     run(c, 0, 1)
     for (let i = 0; i < 3; i++) c.use('move')
@@ -273,7 +273,7 @@ describe('the camera on touch: no glyph of its own', () => {
     const v = run(c, 1, 5)
     expect(ids(v)).toEqual(['look'])
     for (let i = 0; i < 3; i++) c.use('look')
-    expect(ids(run(c, 5, 10))).toEqual(['walk'])
+    expect(ids(run(c, 5, 10))).toEqual([])
   })
 })
 

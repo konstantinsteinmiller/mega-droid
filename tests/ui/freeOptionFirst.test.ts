@@ -82,7 +82,11 @@ const mountDefeat = async (freeOptionFirst: boolean, tanks = 0) => {
 // The result screen's offer is drawn by its own badge (`TripleOffer`), not by
 // FButton's glyph: it reads as 'video' here all the same.
 const order = (w: Awaited<ReturnType<typeof mountResults>>) =>
-  w.findAll('button.fb').map((b) => (b.classes().includes('offer') ? 'video' : b.attributes('data-icon')))
+  // A rewarded button reads as 'video': the ×3 offer, or any button signed
+  // with the rewarded badge (the Reboot) — its sizer copy aside.
+  w.findAll('button.fb').map((b) => (
+    b.classes().includes('offer') || b.find(':scope > .ad-label .reward-ad-badge').exists() ? 'video' : b.attributes('data-icon')
+  ))
 
 describe('result screen', () => {
   it('Poki: Continue first, sized by an invisible copy of the rewarded label', async () => {

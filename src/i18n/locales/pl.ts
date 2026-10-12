@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Ostatni bastion! Systemy zrestartowane.',
     'weak': 'SŁABOŚĆ!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'ZA SŁABE!',
     'dizzy': 'OSZOŁOMIONY!',
     'dodge': 'UNIK!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Strażnik',
     'hornet': 'Szerszeń wirnikowy',
     'stalker': 'Świetlny Łowca',
+    'spotter': 'Dron Reflektor',
     'puffer': 'Mina Rozdymka',
     'mole': 'Kret Wiertacz',
     'polar': 'Polarny Szczeniak',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Strażnik | Strażników',
     'hornet': 'Szerszeń wirnikowy | Szerszenie wirnikowe',
     'stalker': 'Świetlny Łowca | Świetlni Łowcy',
+    'spotter': 'Dron Reflektor | Drony Reflektory',
     'puffer': 'Mina Rozdymka | Miny Rozdymki',
     'mole': 'Kret Wiertacz | Krety Wiertacze',
     'polar': 'Polarny Szczeniak | Polarne Szczeniaki',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Mistrz Wichru',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Wielki Mistrz'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Żarowy Ogar',
+    'icebreakerBrute': 'Lodołamacz Osiłek',
+    'arcSpider': 'Łukowy Pająk',
+    'stormHornetQueen': 'Królowa Burzowych Szerszeni',
+    'lodestoneGolem': 'Golem Magnetytowy',
+    'burrowWyrm': 'Ryjący Czerw',
+    'pufferMatriarch': 'Matrona Rozdymka',
+    'glitchStalker': 'Usterkowy Łowca',
+    'sawGyro': 'Piłożyro',
+    'sentinelPrototype': 'Prototyp Strażnika'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Wyzwanie',
+    'cleared': 'Wyzwanie pokonane! +{bolts} śrub'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Poziom {n}! Systemy w pełni naprawione.'
   },
   'tips': {
-    'moveTouch': 'Przeciągaj po lewej, by chodzić, a po prawej, by się rozglądać. Dotknij podłogi, by tam pójść!',
+    'moveTouch': 'Przeciągaj po lewej, by chodzić, a po prawej, by się rozglądać.',
     'moveKeys': 'Poruszaj się klawiszami {keys}.',
     'lookMouse': 'Poruszaj myszą, by się rozglądać.',
     'capture': 'Kliknij scenę, by przejąć kontrolę nad kamerą.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interakcja'
     },
     'touch': {
-      'move': 'Lewa strona: przeciągaj, by chodzić. Dotknij podłogi, by tam pójść.',
-      'fire': 'W walce: dotknij, by strzelić, przytrzymaj, by ładować, puść, by wystrzelić.',
+      'move': 'Lewa strona: przeciągaj, by chodzić. Prawa strona: przeciągaj, by się rozglądać.',
+      'fire': 'Prawa strona lub przycisk strzału: dotknij, by strzelić, przytrzymaj, by ładować, puść, by wystrzelić. Przeciągaj, trzymając, by celować.',
       'block': 'Przytrzymaj tarczę, by blokować — wciśnij, gdy pierścień się zamyka, by sparować.',
       'use': 'Przy skrzyni, uwięzionym robocie lub drzwiach: dotknij ich albo przycisku, który się pojawi.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Traf w rdzeń, gdy się otworzy.',
       'hornet': '{enemy}. Nurkuje prosto: unik w bok!',
       'stalker': '{enemy}. Sparuj wypad.',
+      'spotter': '{enemy}. Wyjdź z jego światła. Strzel w lampę.',
       'puffer': '{enemy}. Zestrzel ją, zanim spuchnie.',
       'mole': '{enemy}. Traf go, gdy się wynurzy.',
       'elite': 'Złoty pierścień. Elita. Ostrożnie.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Bo są wolni.',
     },
     'guardDown': 'Strażnik padł! Droga wolna.',
+    'challenge': 'Drzwi wyzwania! W środku łupy.',
     'help': {
       'weapon': 'Wybierz nową broń i strzelaj do dronów!',
       'gap': 'Idź prosto w stronę krawędzi, a automatycznie przeskoczysz!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Wślizgnij się, tuż zanim czerwony pierścień cię dosięgnie!',
       'block': 'Przytrzymaj blok, gdy strzela. Trafienie w idealnym momencie!',
       'blockMiss': 'Tarcza w górę! Zablokuj w chwili trafienia i odeślij go!',
+      'chargeMiss': 'Spróbuj naładowanego strzału – przytrzymaj przycisk działa!',
       'charge': 'Przytrzymaj ogień, aż działo się rozjarzy, potem puść!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Ten panel pokazuje wzór. Lampy na ścianie jeszcze nie.',
       'color': 'Ta rama ma ulubiony kolor. Świecić mają tylko jej lampy.',
       'cycle': 'Każdy strzał zmienia zdanie lampy. Panel wie, czego chce.',
+      'sequence': 'Panel mruga ciągle tę samą melodię. Zagraj ją na przyciskach, po kolei.',
+      'mirror': 'Ten promień chce trafić w pierścień. Lustra obracają się, gdy w nie strzelisz.',
+      'tiles': 'Zapal wszystkie płyty w jednym przejściu. Dwa razy na jedną albo zejdziesz z nich, i znowu ciemno.',
       'solved': 'No, no. Ktoś tu lubi zagadki.'
     },
     'landed': 'Lądowanie! Ruszamy.',

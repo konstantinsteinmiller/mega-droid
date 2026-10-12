@@ -1,6 +1,6 @@
 <template lang="pug">
-  div.bars(ref="barsEl" aria-hidden="true")
-    div.bar-col
+  div.bars(ref="barsEl")
+    div.bar-col(aria-hidden="true")
       div.bar.hp(ref="hpEl" :title="t('hud.hp')" :class="{ low: hpLow && holdPct === null, beat: lowHealthLive && holdPct === null, refilling: holdPct !== null }")
         span.cap(ref="capEl")
           GameIcon(name="heart")
@@ -13,12 +13,15 @@
           GameIcon(name="bolt")
         div.track
           div.fill(:style="{ height: wePct + '%' }")
-    div.power
+    div.power(aria-hidden="true")
       div.power-fill(:style="{ width: powerPct + '%' }" :class="{ cracked: powerPct < 20 }")
+    //- On touch the Repair Gel button docks here, under the health it
+    //- repairs (`ActionButtons` teleports it in): clear of the fire knob.
+    div#hud-gel-slot.gel-slot
     //- A used gel flows from its button into the heart.
-    span.gel-orb(ref="orbEl")
+    span.gel-orb(ref="orbEl" aria-hidden="true")
     //- The profile's first hit: a glow flies from its marker into the heart.
-    span.hit-orb(ref="hitOrbEl")
+    span.hit-orb(ref="hitOrbEl" aria-hidden="true")
 </template>
 
 <script setup lang="ts">
@@ -260,6 +263,19 @@ onUnmounted(() => offTicker?.())
   display: flex
   flex-direction: column
   gap: 6px
+.gel-slot
+  // Room above for the gel's pips.
+  margin-top: clamp(16px, 3.6vmin, 22px)
+  &:empty
+    display: none
+// Portrait: the objective card sits under the bars, so the gel stands
+// beside them, at the top, its pips above it.
+@media (max-aspect-ratio: 1/1)
+  .gel-slot
+    position: absolute
+    left: calc(100% + clamp(8px, 2vmin, 14px))
+    top: clamp(16px, 3.6vmin, 22px)
+    margin-top: 0
 .bar-col
   display: flex
   gap: var(--gap)

@@ -34,6 +34,10 @@ export interface LevelMeshes {
   /** A terrain map's secret false walls, by `Terrain.secrets` index (in
    *  their room's group): `ClimbRun.openSecret` hides one. */
   secretWalls?: Object3D[]
+  /** A terrain map's door frames, by `MapData.doors` index: each is drawn
+   *  while its door is. (The labyrinth's walls hide a frame whose rooms are
+   *  both culled, so its frames share one always-visible group.) */
+  doorFrames?: Object3D[]
 }
 
 export class QuadBatch {
@@ -90,6 +94,25 @@ export const cellOwners = (map: MapData): Int16Array => {
       j += dj
     }
   }
+  // A walkable cell no walk reached (a corridor whose door cell the next
+  // room was built over: Rotor Run's) belongs to the earlier room beside it,
+  // or nothing would draw its floor and its walls at all.
+  for (let changed = true; changed;) {
+    changed = false
+    for (let k = 0; k < owner.length; k++) {
+      if (owner[k]! >= 0 || map.cell[k] === Cell.Void) continue
+      const i = k % map.w
+      let best = -1
+      for (const n of [i > 0 ? k - 1 : -1, i < map.w - 1 ? k + 1 : -1, k - map.w, k + map.w]) {
+        const o = n >= 0 && n < owner.length ? owner[n]! : -1
+        if (o >= 0 && (best < 0 || o < best)) best = o
+      }
+      if (best >= 0) {
+        owner[k] = best
+        changed = true
+      }
+    }
+  }
   return owner
 }
 
@@ -101,6 +124,81 @@ export const FLOOR_UV: UV8 = [0, 0, 0, 1, 0.5, 1, 0.5, 0]
 export const WALL_UV: UV8 = [0.5, 0, 0.5, 1, 1, 1, 1, 0]
 /** A flat patch of the floor plate — for decals that should read as solid colour. */
 export const PLAIN_UV: UV8 = [0.25, 0.5, 0.25, 0.5, 0.25, 0.5, 0.25, 0.5]
+
+/**
+ * ─── A wall's outside ────────────────────────────────────────────────────────
+ *
+ * A wall's face points into its own cell and is culled from behind. On a
+ * terrain map the next room's walls rise over a lower room's, and from there
+ * a one-sided wall was not there at all: its posts and its top rail stood
+ * over a hole into the room behind it (playtest 2026-10-12, Blackout
+ * Boulevard). So every wall toward the void is a slab WALL_T thick: its outer
+ * face stands that far out, facing the void, with a strip over its top.
+ * Same batch, same draw call; from inside the room it is a back face, culled.
+ */
+export const WALL_T = 0.2
+
+/**
+ * How far a wall's outer face runs past (+) or stops short of (−) one end of
+ * its edge: `walled(i, j)` is a cell whose edges toward the void are walls;
+ * (i, j) the wall's cell, (di, dj) toward the void, (px, pz) the end. Around
+ * an outside corner it runs on WALL_T to meet the next outer face; in an
+ * inside one (the void's next cell is walled too) it stops WALL_T short of it.
+ */
+export const outerEnd = (
+  walled: (i: number, j: number) => boolean, walk: (i: number, j: number) => boolean,
+  i: number, j: number, di: number, dj: number, px: number, pz: number
+): number => {
+  const si = di ? 0 : Math.sign(px - (i + 0.5) * CELL)
+  const sj = dj ? 0 : Math.sign(pz - (j + 0.5) * CELL)
+  if (walled(i + di + si, j + dj + sj)) return -WALL_T
+  return walk(i + si, j + sj) ? 0 : WALL_T
+}
+
+/**
+ * The outer face of the wall on the line a–b (either order), facing `m` (into
+ * the void), from y0 to y1, in bands of about WALL_H; `ea`/`eb` how far it
+ * runs past a/b (`outerEnd`). Over its top a strip from the wall line out:
+ * an along-x wall's runs past its ends like the face, an along-z wall's
+ * stops at them, so two strips meeting in a corner never overlap. `under`:
+ * a strip under its foot too (an island over open sky, seen from below).
+ */
+export const outerWall = (
+  b: QuadBatch, ax: number, az: number, bx: number, bz: number, m: [number, number, number],
+  y0: number, y1: number, ea: number, eb: number, lo: Color, hi: Color, under = false
+): void => {
+  if (y1 - y0 < 0.02) return
+  const len = Math.hypot(bx - ax, bz - az)
+  const ux = (bx - ax) / len
+  const uz = (bz - az) / len
+  const ox = m[0] * WALL_T
+  const oz = m[2] * WALL_T
+  let p0: [number, number] = [ax - ux * ea + ox, az - uz * ea + oz]
+  let p1: [number, number] = [bx + ux * eb + ox, bz + uz * eb + oz]
+  // Wound toward m: up × (p1 − p0) ∥ m.
+  if ((p1[1] - p0[1]) * m[0] - (p1[0] - p0[0]) * m[2] < 0) [p0, p1] = [p1, p0]
+  const bands = Math.max(1, Math.ceil((y1 - y0) / WALL_H - 0.05))
+  for (let n = 0; n < bands; n++) {
+    const ya = y0 + (y1 - y0) * n / bands
+    const yb = y0 + (y1 - y0) * (n + 1) / bands
+    b.quad([p0[0], ya, p0[1]], [p0[0], yb, p0[1]], [p1[0], yb, p1[1]], [p1[0], ya, p1[1]], m, WALL_UV, lo, hi, hi, lo)
+  }
+  const alongX = Math.abs(ux) > 0.5
+  const sa = alongX ? ea : 0
+  const sb = alongX ? eb : 0
+  const strip = (y: number, ny: 1 | -1, c: Color) => {
+    const q0: [number, number, number] = [ax - ux * sa, y, az - uz * sa]
+    const q1: [number, number, number] = [bx + ux * sb, y, bz + uz * sb]
+    const q2: [number, number, number] = [q1[0] + ox, y, q1[2] + oz]
+    const q3: [number, number, number] = [q0[0] + ox, y, q0[2] + oz]
+    // (q1 − q0) × (q3 − q0) points along ±Y by the winding.
+    const cy = (q1[2] - q0[2]) * (q3[0] - q0[0]) - (q1[0] - q0[0]) * (q3[2] - q0[2])
+    if (cy * ny > 0) b.quad(q0, q1, q2, q3, [0, ny, 0], PLAIN_UV, c, c, c, c)
+    else b.quad(q0, q3, q2, q1, [0, ny, 0], PLAIN_UV, c, c, c, c)
+  }
+  strip(y1, 1, hi)
+  if (under) strip(y0, -1, lo)
+}
 
 /**
  * Build a sector's static geometry. Async and time-sliced (`slice`, see
@@ -181,6 +279,11 @@ export const buildLevel = async (
           [bx, 0, bz], [bx, WALL_H, bz], [ax, WALL_H, az], [ax, 0, az], e.n,
           WALL_UV, cWallLow, cWall, cWall, cWallLow
         )
+        // Its outside, seen from over the walls (a cinematic, the beam-in).
+        const vi = e.ni - i
+        const vj = e.nj - j
+        outerWall(b, ax, az, bx, bz, [-e.n[0], 0, -e.n[2]], 0, WALL_H,
+          outerEnd(walk, walk, i, j, vi, vj, ax, az), outerEnd(walk, walk, i, j, vi, vj, bx, bz), cWallLow, cWall)
         addCorner(ax, az, o)
         addCorner(bx, bz, o)
         const mx = (ax + bx) / 2
@@ -336,6 +439,9 @@ export const buildWallPlug = (theme: Theme, axis: 'x' | 'z', n: 1 | -1, h = WALL
       b.quad([half * n, y0, 0], [half * n, y1, 0], [-half * n, y1, 0], [-half * n, y0, 0], [0, 0, n], WALL_UV, lo, hi, hi, lo)
     }
   }
+  // Its back, toward the corridor it shuts (seen from over the walls).
+  if (axis === 'x') outerWall(b, 0, -half, 0, half, [-n, 0, 0], 0, h, 0, 0, lo, hi)
+  else outerWall(b, -half, 0, half, 0, [0, 0, -n], 0, h, 0, 0, lo, hi)
   const alongX = axis === 'z'
   const rot: [number, number, number] = alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]
   const out = (d: number, y: number): [number, number, number] => [axis === 'x' ? d * n : 0, y, axis === 'z' ? d * n : 0]

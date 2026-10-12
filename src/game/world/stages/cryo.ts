@@ -213,6 +213,10 @@ export const generateGlacier = (seed: number): MapData => {
   // wall: the puzzle's legendary chassis (#115: it was the Blaze level's
   // first chest). Last of the chests, so the others keep their ids.
   b.chest(4, 1, YAW_NX, { rarity: 'legendary', slot: 'chest', key: 'cryo.secret' })
+  // The challenge room (`sim/challenge.ts`): west off the head of the
+  // slippery stairs, its door at the end of the landing Flux steps onto
+  // from the icicle hall — in view before he turns down the ice.
+  b.challengeRoom(5, { mouth: { i: 9, j: 15, di: -1, dj: 0 } })
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

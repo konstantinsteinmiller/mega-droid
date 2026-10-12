@@ -530,7 +530,8 @@ while bars and damage numbers get direct DOM writes.
     Descent's roof-then-fall staging is not built (one arena; noted).
   - [x] **P9 Final balance**: the sim plays all ten Masters and the
     Fortress stage with its final bands. Reference player: Masters 26–34 s,
-    the Gatekeeper ~21 s, each Twin Master ~11 s, Vex ~43 s; machines
+    the Gatekeeper ~43 s, each Twin Master ~22 s (2× health on the
+    story stage), Vex ~64 s (1.5× health; the Grand Master ~2:40); machines
     1.9–3.1 s throughout; never "behind"; the every-round ad player at most
     3% faster on a boss (35–40% on machines at the Magnet step, bounded by
     the upgrade cap). Pinned in `tests/game/balance.test.ts`. No constant

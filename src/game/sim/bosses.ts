@@ -323,12 +323,12 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
 // ─── Patterns ────────────────────────────────────────────────────────────────
 
 /** Fire a fan of `n` shots over `spread` radians toward the player. */
-const volley = (w: World, e: Enemy, n: number, spread: number, speed: number, dmgMul: number, blockable: boolean, y = 1.2): void => {
+const volley = (w: World, e: Enemy, n: number, spread: number, speed: number, dmgMul: number, y = 1.2): void => {
   const base = Math.atan2(w.player.x - e.x, w.player.z - e.z)
   const s = bdef(e).scale
   for (let k = 0; k < n; k++) {
     const a = base + (n === 1 ? 0 : (k / (n - 1) - 0.5) * spread)
-    w.fireEnemyShot(e, e.x + Math.sin(a) * 0.8 * s, y * s, e.z + Math.cos(a) * 0.8 * s, Math.sin(a), (EYE_H - 0.45 - y * s) / 14, Math.cos(a), speed, Math.round(e.dmg * dmgMul), blockable)
+    w.fireEnemyShot(e, e.x + Math.sin(a) * 0.8 * s, y * s, e.z + Math.cos(a) * 0.8 * s, Math.sin(a), (EYE_H - 0.45 - y * s) / 14, Math.cos(a), speed, Math.round(e.dmg * dmgMul))
   }
   w.sfx('enemyShot', e.x, e.z)
 }
@@ -496,7 +496,7 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
         const l = Math.hypot(dx, dz) || 1
         e.tx = e.x + (dx / l) * (l + 4)
         e.tz = e.z + (dz / l) * (l + 4)
-        w.fireEnemyShot(e, e.x + (dx / l) * s, 1.2 * s, e.z + (dz / l) * s, dx / l, 0, dz / l, 15, Math.round(e.dmg * 0.85), true)
+        w.fireEnemyShot(e, e.x + (dx / l) * s, 1.2 * s, e.z + (dz / l) * s, dx / l, 0, dz / l, 15, Math.round(e.dmg * 0.85))
         w.sfx('dash', e.x, e.z)
       }
       if (e.step === 1 && e.st >= 0.75) {
@@ -504,13 +504,13 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
         const dx = e.x - e.tx
         const dz = e.z - e.tz
         const l = Math.hypot(dx, dz) || 1
-        w.fireEnemyShot(e, e.tx, 1.2 * s, e.tz, dx / l, 0, dz / l, 15, Math.round(e.dmg * 0.85), true)
+        w.fireEnemyShot(e, e.tx, 1.2 * s, e.tz, dx / l, 0, dz / l, 15, Math.round(e.dmg * 0.85))
       }
       return e.st > 1.3
     }
     case 'neonVolley':
       if (e.step < 2 && e.st >= e.step * 0.35) {
-        volley(w, e, 5, 1.1, 13, 0.7, true)
+        volley(w, e, 5, 1.1, 13, 0.7)
         e.step++
       }
       return e.st > 0.9
@@ -581,7 +581,7 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
       return e.st > n * 0.5 + 0.2
     }
     case 'flameBurst':
-      if (e.step === 0) { volley(w, e, 5, 1.0, 11, 0.8, true); e.step = 1 }
+      if (e.step === 0) { volley(w, e, 5, 1.0, 11, 0.8); e.step = 1 }
       return e.st > 0.4
     case 'flameRing': {
       const due = e.step * 0.55
@@ -595,7 +595,7 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
     case 'iceVolleyBig': {
       const n = e.attack === 'iceVolley' ? 3 : 5
       if (e.step < n && e.st >= e.step * 0.12) {
-        volley(w, e, 1, 0, 17, 0.75, true)
+        volley(w, e, 1, 0, 17, 0.75)
         e.step++
       }
       return e.st > n * 0.12 + 0.2
@@ -679,11 +679,11 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
       return e.st > 1.4
     }
     case 'featherFan':
-      if (e.step === 0) { volley(w, e, 7, 1.4, 12, 0.7, true); e.step = 1 }
+      if (e.step === 0) { volley(w, e, 7, 1.4, 12, 0.7); e.step = 1 }
       return e.st > 0.4
     case 'featherStorm': {
       if (e.step < 3 && e.st >= e.step * 0.3) {
-        volley(w, e, 5, 1.2, 12, 0.65, true)
+        volley(w, e, 5, 1.2, 12, 0.65)
         e.step++
       }
       return e.st > 1.0
@@ -839,10 +839,11 @@ export const syncBossVisual = (e: Enemy, alpha: number): void => {
         : e.walk > 0.2 ? 'walk' : 'idle'
   const k = e.state === 'tele' ? Math.min(1, e.st / e.teleDur) : e.state === 'act' ? Math.min(1, e.st / 0.25) : 0
   // The motion layer: the gait phase interpolated to this frame like the
-  // position; the humanoid bosses blend it with their act poses (Vex: hover)
+  // position; the humanoid bosses blend it with their act poses (Vex: hover,
+  // and the boss as his cue: the coming pattern's weapon, phase-2 damage)
   const m = e.mo
   m.phase = m.pstride + (m.stride - m.pstride) * alpha
-  poseBoss(e.rig, id, e.anim, act, k, m)
+  poseBoss(e.rig, id, e.anim, act, k, m, e)
   if (e.ring.visible) e.ring.position.set(x, y + e.rig.height * bdef(e).scale + 0.6, z)
 }
 

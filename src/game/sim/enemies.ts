@@ -3,16 +3,18 @@ import { Group } from 'three'
 import type { Enemy, Shot, World } from './world'
 import { ENEMIES, scaleDmg, scaleHp, type Element } from '../data/enemies'
 import {
-  buildEnemyRig, poseHardhat, poseTrooper, poseHeli, posePolar, poseMole, posePuffer, poseStalker, poseHornet, poseWarden, poseGatekeeper, poseHopper, poseRoller, poseBrute, poseTurret, poseGolem,
-  BASE_COLORS, type EnemyKind, type EnemyColors
+  buildEnemyRig, poseHardhat, poseTrooper, poseHeli, posePolar, poseMole, posePuffer, poseStalker, poseSpotter, poseHornet, poseWarden, poseGatekeeper, poseHopper, poseRoller, poseBrute, poseTurret, poseGolem,
+  BASE_COLORS, SPOTTER_LENS, type EnemyKind, type EnemyColors
 } from '../models/enemies'
 import { makeTeleRing, setTeleRing, makeBlobShadow } from '../fx/markers'
-import { hasLineOfSight, findPath, moveCircle, resolveCircle, smoothPath } from '../world/nav'
-import { CELL } from '../world/levelGen'
+import { makeSearchBeam, aimSearchBeam, type SearchBeam } from '../fx/searchBeam'
+import { hasLineOfSight, findPath, moveCircle, resolveCircle, smoothPath, floorAt, groundAt, STEP_UP } from '../world/nav'
+import { CELL, type MapData } from '../world/levelGen'
 import { PLAYER_R, EYE_H, FREEZE_SLOW, FREEZE_SLOW_BOSS } from './constants'
 import { CHARGE_L2 } from './stats'
 import { pushHud } from '../state/hud'
 import type { Theme } from '../world/themes'
+import type { Input } from '../engine/input'
 import {
   newMotion, rand, swingA, cycleLen, hopSquash, GAIT, BOSS_GAIT, FIDGET_LEN, BOSS_FIDGET_LEN, TAU, HOP_H, ROLLER_R,
   type GaitSpec
@@ -31,7 +33,23 @@ import {
  * `tele` always shows the ring, so every attack is readable a beat ahead.
  */
 
-export const PARRY_WINDOW = 0.28
+/**
+ * The perfect block's window (s): a block pressed at most this long before
+ * the hit lands parries it. It was 0.28 s — about a human's own reaction
+ * time, so a press made on the shot's white flash (it glints as the window
+ * opens) came in late more often than not, and a slow orb could not be
+ * parried at all (playtest 2026-10-08). +50%: a press on the flash now has
+ * ~0.15 s to spare after a typical 0.25 s reaction.
+ */
+export const PARRY_WINDOW = 0.42
+/** A touch screen's block button is a reach for the thumb, off the stick or
+ *  the look pad, with no key travel to feel: +30% on top. */
+export const PARRY_TOUCH_MUL = 1.3
+
+/** The perfect block's window now (s) — the ONE home of it: the device's
+ *  (touch: ×PARRY_TOUCH_MUL) over the base and the Parry skill's bonus. */
+export const parryWindow = (device: Input['device'], bonus = 0): number =>
+  (PARRY_WINDOW + bonus) * (device === 'touch' ? PARRY_TOUCH_MUL : 1)
 
 let nextId = 1
 
@@ -87,6 +105,198 @@ export const HORNET_DIVE = 13
 /** The Glow Stalker lunges from this close (m). */
 export const STALKER_LUNGE_R = 6.5
 
+// ─── Searchlight Drone ────────────────────────────────────────────────────────
+//
+// It hovers high (over the vents and billboards) at 6–11 m and sweeps a pool
+// of light over the floor after Flux — slower than he walks, faster in the
+// dark. Where the pool catches him it LOCKS: the beam goes red and a red ring
+// closes over it (SPOT_LOCK), the pool following him slower still; out of the
+// light (SPOT_SLIP from its middle) or out of its sight, the lock is lost. A
+// lock held calls a strike down on the pool: a red floor marker for
+// SPOT_FUSE, then a blast there (unblockable: step out). The strike is called
+// in: it lands even if the drone is stunned or shot down meanwhile. While
+// it has him in its light, the machines of its room attack sooner
+// (SPOT_RUSH). Its lamp is its weak spot: a shot on it puts the light out
+// (SPOT_BLIND) and dazes it — no light, no lock.
+
+/** The pool of light's radius (m). */
+export const SPOT_R = 1.5
+/** The pool's sweep after Flux (m/s): under his walk (4.7). In the dark ×SPOT_DARK. */
+export const SPOT_SWEEP = 2.8
+export const SPOT_DARK = 1.5
+/** The lock (s, red), and how fast the pool follows him through it (m/s). */
+export const SPOT_LOCK = 0.8
+export const SPOT_TRACK = 1.2
+/** Farther than this (m) from the pool's middle in the lock: lost — out of
+ *  the light. With the pool creeping at SPOT_TRACK, a Flux caught dead in its
+ *  middle walks out in ≈ 0.45 s, inside the lock. */
+export const SPOT_SLIP = SPOT_R
+/** The called strike: its marker's time (s) and its reach (m). */
+export const SPOT_FUSE = 0.9
+export const SPOT_STRIKE_R = 2
+/** A shot on the lamp: the light is out this long (s), the drone dazed this long. */
+export const SPOT_BLIND = 3.5
+export const SPOT_DAZE = 1.4
+/** Its room-mates' attack clock runs this much faster while Flux is lit. */
+export const SPOT_RUSH = 1.6
+/** The pool never strays farther than this (m, in plan) from the drone. */
+const SPOT_REACH = 13
+
+export interface SpotState {
+  /** The pool of light's middle (world), and where it was last tick (drawing). */
+  x: number
+  z: number
+  y: number
+  px: number
+  pz: number
+  /** Not yet set in front of it (the first tick does). */
+  placed: boolean
+  /** Flux stands in the light. */
+  lit: boolean
+  /** The lamp's brightness, 1 lit … 0 out; seconds it stays out (shot). */
+  lamp: number
+  blind: number
+  /** Where Flux was last seen (the search goes on there). */
+  seenX: number
+  seenZ: number
+  /** The strike called in, if any: where, and seconds until it lands. */
+  strike: { x: number; z: number; y: number; t: number } | null
+  /** The stage's darkness last tick (the beam's glare). */
+  glare: number
+  beam: SearchBeam
+}
+
+/** Flux in the pool of light (within `r` of its middle, on its floor). */
+const inPool = (w: World, s: SpotState, r: number): boolean =>
+  Math.hypot(w.player.x - s.x, w.player.z - s.z) < r && Math.abs((w.player.y ?? 0) - s.y) < 1.2
+
+/** Is Flux in the light of a Searchlight Drone of `e`'s room? */
+export const spotlit = (w: World, e: Enemy): boolean => {
+  for (const o of w.enemies) if (o.spot?.lit && o !== e && o.room === e.room && o.state !== 'dead') return true
+  return false
+}
+
+/** Move the pool toward (tx, tz) at `speed`, never farther than SPOT_REACH from the drone. */
+const sweepPool = (e: Enemy, s: SpotState, tx: number, tz: number, speed: number, dt: number): void => {
+  const dx = tx - s.x
+  const dz = tz - s.z
+  const d = Math.hypot(dx, dz)
+  if (d > 1e-4) {
+    const k = Math.min(d, speed * dt) / d
+    s.x += dx * k
+    s.z += dz * k
+  }
+  const ox = s.x - e.x
+  const oz = s.z - e.z
+  const o = Math.hypot(ox, oz)
+  if (o > SPOT_REACH) {
+    s.x = e.x + (ox / o) * SPOT_REACH
+    s.z = e.z + (oz / o) * SPOT_REACH
+  }
+}
+
+/** The called strike comes down: a blast of light on its spot. */
+const landStrike = (w: World, e: Enemy, k: { x: number; z: number; y: number }): void => {
+  w.shocks.spawn(k.x, k.y + 0.05, k.z, SPOT_STRIKE_R, '#ff3f9e', 0.4)
+  w.fx.sparks(k.x, k.y + 0.3, k.z, '#ffd0f0', 22, 8, 0.24)
+  // A column of light, straight down out of the sky
+  for (let n = 0; n < 10; n++) {
+    w.fx.emit({
+      x: k.x + (Math.random() - 0.5) * 0.5, y: k.y + 0.3 + n * 0.55, z: k.z + (Math.random() - 0.5) * 0.5,
+      vx: 0, vy: -3, vz: 0, color: n % 2 ? '#ff8fd0' : '#fff1b0', size: 0.7, sizeEnd: 0.15, life: 0.35
+    })
+  }
+  w.sfx('explode', k.x, k.z)
+  const near = Math.hypot(w.player.x - k.x, w.player.z - k.z)
+  if (near < 8) w.shake(0.25)
+  if (near < SPOT_STRIKE_R + PLAYER_R && Math.abs((w.player.y ?? 0) - k.y) < 1.5) {
+    w.hitPlayer(e, e.dmg, { blockable: false, fromX: k.x, fromZ: k.z, kind: 'aoe' })
+  }
+}
+
+/**
+ * Every tick, in any state (dead too: a strike called in still lands): the
+ * lamp, the called strike, the pool's sweep for the state it is in, and
+ * whether Flux stands in the light. An unaware drone whose light finds him
+ * wakes.
+ */
+const spotTick = (w: World, e: Enemy, dt: number): void => {
+  const s = e.spot!
+  s.px = s.x
+  s.pz = s.z
+  if (!s.placed) {
+    s.placed = true
+    s.x = s.px = e.x + Math.sin(e.yaw) * 4
+    s.z = s.pz = e.z + Math.cos(e.yaw) * 4
+    s.y = e.floor ?? 0
+  }
+  s.blind = Math.max(0, s.blind - dt)
+  const want = s.blind > 0 ? 0 : 1
+  s.lamp += (want - s.lamp) * Math.min(1, dt * (want ? 2.5 : 14))
+  s.glare = w.gloom ?? 0
+  if (s.strike) {
+    s.strike.t -= dt
+    if (s.strike.t <= 0) {
+      landStrike(w, e, s.strike)
+      s.strike = null
+    }
+  }
+  if (e.state === 'dead') {
+    s.lit = false
+    return
+  }
+  const px = w.player.x
+  const pz = w.player.z
+  const sweep = SPOT_SWEEP * (1 + (SPOT_DARK - 1) * s.glare)
+  if (e.state === 'idle') {
+    // Unaware: it searches in front of itself, side to side
+    const sy = Math.sin(e.yaw)
+    const cy = Math.cos(e.yaw)
+    const sway = Math.sin(e.anim * 0.55 + e.id) * 2.6
+    sweepPool(e, s, e.x + sy * 4.5 + cy * sway, e.z + cy * 4.5 - sy * sway, sweep * 0.5, dt)
+  } else if (e.state === 'engage' || e.state === 'alert') {
+    if (seesPlayer(w, e)) {
+      s.seenX = px
+      s.seenZ = pz
+      sweepPool(e, s, px, pz, sweep, dt)
+    } else {
+      // Lost him: it combs where he was last seen
+      const sway = Math.sin(e.anim * 1.3) * 2
+      sweepPool(e, s, s.seenX + sway, s.seenZ + Math.cos(e.anim * 0.9) * 2, sweep * 0.7, dt)
+    }
+  } else if (e.state === 'tele') {
+    sweepPool(e, s, px, pz, SPOT_TRACK, dt)
+  }
+  // 'act' (the strike called), 'recover', 'stun': the pool stays put
+  // It lies on whatever floor is under it (a lower roof, a lit bridge); over
+  // the open air it keeps the last one
+  const fy = floorAt(w.nav, s.x, s.z, (e.floor ?? 0) + e.y)
+  if (fy > (e.floor ?? 0) - 7) s.y = fy
+  s.lit = s.lamp > 0.5 && inPool(w, s, SPOT_R)
+  if (e.state === 'idle' && s.lit && !e.hold) wake(w, e)
+}
+
+/**
+ * A shot on its lamp (its weak spot): the light goes out for SPOT_BLIND and
+ * it is dazed — a lock in progress is lost. Not again while the light is out.
+ */
+export const smashLamp = (w: World, e: Enemy): boolean => {
+  const s = e.spot
+  if (!s || s.blind > 0 || e.state === 'dead') return false
+  s.blind = SPOT_BLIND
+  s.lit = false
+  const sc = e.rig.root.scale.x
+  const lx = e.x + Math.sin(e.yaw) * SPOTTER_LENS.z * sc
+  const lz = e.z + Math.cos(e.yaw) * SPOTTER_LENS.z * sc
+  const ly = (e.floor ?? 0) + e.y + SPOTTER_LENS.y * sc
+  w.fx.sparks(lx, ly, lz, '#fff1b0', 18, 6, 0.2)
+  w.sfx('guardBreak', e.x, e.z)
+  e.ring.visible = false
+  e.stunT = SPOT_DAZE
+  enterState(e, 'stun')
+  return true
+}
+
 /** The Puffer Mine: it swells this close (m), and its burst's reach (m). */
 export const PUFFER_SWELL_R = 4.2
 export const PUFFER_RING = 4
@@ -136,6 +346,12 @@ export const createEnemy = (
   }
   // A Mole Driller waits half dug in until it wakes and digs under.
   if (kind === 'mole') e.a = 0.75
+  // A Searchlight Drone's beam hangs under its root (drawn and culled with it).
+  if (kind === 'spotter') {
+    const beam = makeSearchBeam()
+    root.add(beam.root)
+    e.spot = { x, z, y: 0, px: x, pz: z, placed: false, lit: false, lamp: 1, blind: 0, seenX: x, seenZ: z, strike: null, glare: 0, beam }
+  }
   // The Fortress's armour starts shut.
   if (kind === 'warden' || kind === 'gatekeeper') e.guard = 1
   if (echo) {
@@ -203,6 +419,39 @@ const step = (w: World, e: Enemy, dx: number, dz: number): number => {
   e.x = _out[0]
   e.z = _out[1]
   return got / want
+}
+
+/** Ground under (x, z) taller than the machine's body can step onto: a
+ *  raised block of a climb's terrain (the 2-D wall test only knows walls). */
+export const tooTallFor = (map: MapData, e: Enemy, x: number, z: number): boolean => {
+  const g = groundAt(map, x, z)
+  const body = (e.floor ?? 0) + Math.max(0, e.y) - 0.25
+  return g > body + STEP_UP && g > (e.floor ?? 0) + STEP_UP
+}
+
+/**
+ * A push from outside the machine's own walk (a hit's knockback): through the
+ * wall test like a step, and dropped when it would end on a block taller than
+ * the machine. A shot lands before the machines update, so an unchecked push
+ * became the spot the climb's undo returned to — inside the block (playtest
+ * 2026-10-12, a machine in a Magnet stage locker). Dead or alive.
+ */
+export const shove = (w: World, e: Enemy, dx: number, dz: number): void => {
+  if (e.rooted || e.def.speed <= 0 || Math.hypot(dx, dz) < 1e-5) return
+  moveCircle(w.nav, e.x, e.z, dx, dz, e.def.radius, _out)
+  if (tooTallFor(w.map, e, _out[0], _out[1])) return
+  e.x = _out[0]
+  e.z = _out[1]
+}
+
+/** Out of any wall it overlaps, whatever moved it there: a mini-boss's
+ *  blink, dive, bounce or burst-up lands on a spot of its room, which may be
+ *  a cover pillar's cell. Not while buried or offstage. */
+export const settle = (w: World, e: Enemy): void => {
+  if (e.offstage || e.buried) return
+  const [x, z] = resolveCircle(w.nav, e.x, e.z, e.def.radius)
+  e.x = x
+  e.z = z
 }
 
 /** Steer toward (tx, tz) at `speed`: straight when visible, A* otherwise. */
@@ -574,7 +823,7 @@ const golemThrow = (w: World, e: Enemy): void => {
   const vx = (tx - ox) / T
   const vz = (tz - oz) / T
   const vy = ((w.player.y ?? 0) + EYE_H - 0.45 - oy) / T + 0.5 * ROCK_G * T
-  w.fireEnemyShot(e, ox, oy, oz, vx, vy, vz, Math.hypot(vx, vy, vz), e.dmg, true, true)
+  w.fireEnemyShot(e, ox, oy, oz, vx, vy, vz, Math.hypot(vx, vy, vz), e.dmg, true)
   w.sfx('lob', e.x, e.z)
 }
 
@@ -649,7 +898,7 @@ const golemTick = (w: World, e: Enemy, dt: number, d: number): void => {
  */
 export const frozenDt = (e: Enemy, dt: number): number => {
   if (e.frozenT <= 0 || e.state === 'dead') return dt
-  if (e.kind !== 'heli' && e.kind !== 'polar' && e.kind !== 'puffer' && e.kind !== 'hornet' && e.y > (e.floor ?? 0) + 0.2) return dt
+  if (e.kind !== 'heli' && e.kind !== 'polar' && e.kind !== 'puffer' && e.kind !== 'hornet' && e.kind !== 'spotter' && e.y > (e.floor ?? 0) + 0.2) return dt
   return dt * (1 - (e.boss ? FREEZE_SLOW_BOSS : FREEZE_SLOW))
 }
 
@@ -701,6 +950,8 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
   e.stunAge += dt
   e.stunImmune = Math.max(0, e.stunImmune - dt)
   if (e.hazardCd) e.hazardCd = Math.max(0, e.hazardCd - dt)
+  // Its light (and a strike it called, which lands even after it falls)
+  if (e.spot) spotTick(w, e, dt)
 
   if (e.state === 'dead') {
     e.deathT += dt
@@ -732,6 +983,8 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
     case 'stun': {
       e.stunT -= dt
       if (e.kind === 'heli' || e.kind === 'polar' || e.kind === 'puffer' || e.kind === 'hornet') e.y = Math.max(0.45, e.y - dt * 6)
+      // A dazed Searchlight Drone sags, but stays over the cover
+      else if (e.kind === 'spotter') e.y = Math.max(e.def.fly - 0.9, e.y - dt * 3)
       if (e.stunT <= 0) {
         e.cd = Math.max(e.cd, 0.6)
         enterState(e, 'engage')
@@ -1008,8 +1261,9 @@ const stepGolemMotion = (e: Enemy, dt: number): void => {
  * leashed to its platform, a gap is between them — used to pace at the edge
  * while he shot it at leisure. Now, after FAR_AFTER seconds engaged, in
  * sight and farther than FAR_MIN without getting closer, it lobs a scrap
- * shell at where he stands: telegraphed (its ring, then the red landing
- * marker), blockable, weaker than its melee, and a charged shot can still
+ * shell at where he stands: telegraphed (its red ring, then the red landing
+ * marker), not blockable (a lobbed shell never is, `shotBlockable`: step
+ * out of the marker), weaker than its melee, and a charged shot can still
  * interrupt the wind-up — within the stun chain's limits (`tryStun`).
  */
 const FALLBACK_KINDS: ReadonlySet<string> = new Set(['hopper', 'roller', 'brute'])
@@ -1064,7 +1318,7 @@ const fallbackTick = (w: World, e: Enemy, dt: number, d: number): boolean => {
   else e.farT = 0
   if ((e.farT ?? 0) >= FAR_AFTER && e.cd <= 0) {
     e.farT = 0
-    startTele(e, 'lobFallback', FALLBACK_TELE, false)
+    startTele(e, 'lobFallback', FALLBACK_TELE, true)
     return true
   }
   return false
@@ -1075,7 +1329,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
   const def = e.def
   const px = w.player.x
   const pz = w.player.z
-  if (e.state === 'engage') e.cd -= dt
+  // Flux in a Searchlight Drone's light: the rest of its room comes sooner
+  if (e.state === 'engage') e.cd -= e.kind !== 'spotter' && spotlit(w, e) ? dt * SPOT_RUSH : dt
   const canAttack = e.state === 'engage' && e.cd <= 0 && seesPlayer(w, e)
   const cooldown = () => def.cooldown * (0.7 + Math.random() * 0.6)
 
@@ -1097,7 +1352,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             const ang = Math.atan2(px - e.x, pz - e.z)
             for (const off of [-0.26, 0, 0.26]) {
               const a = ang + off
-              w.fireEnemyShot(e, e.x + Math.sin(a) * 0.35, 0.42, e.z + Math.cos(a) * 0.35, Math.sin(a), 0.03, Math.cos(a), 10, e.dmg, true)
+              w.fireEnemyShot(e, e.x + Math.sin(a) * 0.35, 0.42, e.z + Math.cos(a) * 0.35, Math.sin(a), 0.03, Math.cos(a), 10, e.dmg)
             }
             w.sfx('enemyShot', e.x, e.z)
           }
@@ -1136,7 +1391,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           const ox = e.x + Math.sin(e.yaw) * 0.3 + Math.cos(e.yaw) * 0.32
           const oz = e.z + Math.cos(e.yaw) * 0.3 - Math.sin(e.yaw) * 0.32
           const dy = (1.1 - 1.08) / Math.max(1, d)
-          w.fireEnemyShot(e, ox, 1.08, oz, Math.sin(a), dy, Math.cos(a), 12.5, e.dmg, true)
+          w.fireEnemyShot(e, ox, 1.08, oz, Math.sin(a), dy, Math.cos(a), 12.5, e.dmg)
           w.sfx('enemyShot', e.x, e.z)
           e.step++
         }
@@ -1386,7 +1641,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           const a0 = Math.atan2(px - ox, pz - oz)
           const dy = (1.0 - 1.35) / Math.max(1, d)
           for (const off of [-0.2, 0, 0.2]) {
-            w.fireEnemyShot(e, ox, 1.35, oz, Math.sin(a0 + off), dy, Math.cos(a0 + off), 11, Math.round(e.dmg * 0.55), true)
+            w.fireEnemyShot(e, ox, 1.35, oz, Math.sin(a0 + off), dy, Math.cos(a0 + off), 11, Math.round(e.dmg * 0.55))
           }
           w.sfx('enemyShot', e.x, e.z)
           e.step++
@@ -1515,7 +1770,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           const ang = Math.atan2(px - e.x, pz - e.z)
           for (const off of [-0.18, 0, 0.18]) {
             const a = ang + off
-            w.fireEnemyShot(e, e.x + Math.sin(a) * 0.7, 1.25, e.z + Math.cos(a) * 0.7, Math.sin(a), 0, Math.cos(a), 12, Math.round(e.dmg * 0.7), true)
+            w.fireEnemyShot(e, e.x + Math.sin(a) * 0.7, 1.25, e.z + Math.cos(a) * 0.7, Math.sin(a), 0, Math.cos(a), 12, Math.round(e.dmg * 0.7))
           }
           w.sfx('enemyShot', e.x, e.z)
           enterState(e, 'act')
@@ -1563,7 +1818,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             const ang = Math.atan2(px - e.x, pz - e.z)
             for (const off of [-0.3, -0.15, 0, 0.15, 0.3]) {
               const a = ang + off
-              w.fireEnemyShot(e, e.x + Math.sin(a) * 1.4, 1.9, e.z + Math.cos(a) * 1.4, Math.sin(a), 0, Math.cos(a), 13, Math.round(e.dmg * 0.6), true)
+              w.fireEnemyShot(e, e.x + Math.sin(a) * 1.4, 1.9, e.z + Math.cos(a) * 1.4, Math.sin(a), 0, Math.cos(a), 13, Math.round(e.dmg * 0.6))
             }
             w.sfx('enemyShot', e.x, e.z)
           } else {
@@ -1609,7 +1864,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             const n = fire ? 5 : 3
             for (let k = 0; k < n; k++) {
               const a = ang + (k / (n - 1) - 0.5) * (fire ? 0.9 : 0.25)
-              w.fireEnemyShot(e, e.x + Math.sin(a) * 0.8, 1.5, e.z + Math.cos(a) * 0.8, Math.sin(a), 0, Math.cos(a), fire ? 11 : 16, Math.round(e.dmg * (fire ? 0.6 : 0.75)), true)
+              w.fireEnemyShot(e, e.x + Math.sin(a) * 0.8, 1.5, e.z + Math.cos(a) * 0.8, Math.sin(a), 0, Math.cos(a), fire ? 11 : 16, Math.round(e.dmg * (fire ? 0.6 : 0.75)))
             }
             w.sfx('enemyShot', e.x, e.z)
           } else {
@@ -1725,6 +1980,49 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.b = Math.max(0, e.b - dt * 3)
         if (e.st > 0.7) {
           e.cd = cooldown()
+          enterState(e, 'engage')
+        }
+      }
+      break
+    }
+
+    // ── Searchlight Drone: hovers at range, sweeps its light after Flux;
+    //    caught, it locks (red), then calls a strike on the spot ──
+    case 'spotter': {
+      const s = e.spot!
+      const baseY = def.fly + Math.sin(e.anim * 2.1) * 0.12
+      e.y += (baseY - e.y) * Math.min(1, dt * 3)
+      // It faces its light: the lamp under its nose shines where it looks
+      faceTo(e, s.x, s.z, e.state === 'tele' ? 7 : 4, dt)
+      if (e.state === 'engage') {
+        // A slow drift round Flux at range
+        e.a += dt * 0.4 * (e.id % 2 ? 1 : -1)
+        const r = (def.range[0] + def.range[1]) / 2
+        seek(w, e, px + Math.cos(e.a) * r, pz + Math.sin(e.a) * r, def.speed * 0.7, dt)
+        if (canAttack && s.blind <= 0 && !s.strike && inPool(w, s, SPOT_R * 0.8)) {
+          startTele(e, 'lock', SPOT_LOCK, true)
+          w.sfx('locate', e.x, e.z)
+        }
+      } else if (e.state === 'tele') {
+        if (!inPool(w, s, SPOT_SLIP) || !seesPlayer(w, e)) {
+          // Out of the light (or out of sight): the lock is lost
+          pushHud({ t: 'text', x: px, y: (w.player.y ?? 0) + 2, z: pz, key: 'combat.dodge', color: '#fff1b0' })
+          w.sfx('trapClick', e.x, e.z)
+          e.attack = 'lost'
+          enterState(e, 'recover')
+        } else if (e.st >= e.teleDur) {
+          // The lock holds: a strike is called down on the light
+          s.strike = { x: s.x, z: s.z, y: s.y, t: SPOT_FUSE }
+          w.markers.spawn(s.x, s.z, SPOT_STRIKE_R, SPOT_FUSE)
+          w.sfx('lob', s.x, s.z)
+          enterState(e, 'act')
+        }
+      } else if (e.state === 'act') {
+        // Holding its light on the spot until the strike lands
+        if (!s.strike) enterState(e, 'recover')
+      } else if (e.state === 'recover') {
+        if (e.st > (e.attack === 'lost' ? 0.5 : 0.7)) {
+          e.cd = e.attack === 'lost' ? 0.9 : cooldown()
           enterState(e, 'engage')
         }
       }
@@ -1945,6 +2243,25 @@ export const syncEnemyVisual = (e: Enemy, alpha: number, time: number): void => 
     case 'stalker':
       poseStalker(r, e.b, e.state === 'act' ? 1 : 0, t, m)
       break
+    case 'spotter': {
+      // The pool in the root's frame (the root stands at the body, turned to
+      // its yaw; the mission lifts it by its floor after this)
+      const s = e.spot!
+      const sc = r.root.scale.x
+      const sx = s.px + (s.x - s.px) * alpha - x
+      const sz = s.pz + (s.z - s.pz) * alpha - z
+      const cy = Math.cos(e.yaw)
+      const sy = Math.sin(e.yaw)
+      const lx = sx * cy - sz * sy
+      const lz = sx * sy + sz * cy
+      const ly = s.y - (y + (e.floor ?? 0))
+      const lampY = SPOTTER_LENS.y * sc
+      const lampZ = SPOTTER_LENS.z * sc
+      const lock = e.state === 'tele' ? Math.min(1, e.st / e.teleDur) : s.strike ? 1 : 0
+      poseSpotter(r, Math.atan2(lampY - ly, Math.max(0.2, lz - lampZ)), lock, s.lamp, t, m)
+      aimSearchBeam(s.beam, 0, lampY, lampZ, lx, ly, lz, SPOT_R, lock, s.lamp, s.glare)
+      break
+    }
     case 'mole':
       poseMole(r, e.buried ? 0 : e.state === 'idle' || e.state === 'alert' ? 0.75 : e.a, t * (e.state === 'act' ? 28 : 8), t, m)
       break

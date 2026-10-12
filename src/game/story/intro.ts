@@ -8,7 +8,7 @@ import { getRenderer } from '../engine/renderer'
 import { buildHero, animateHeroIdle, animateHeroWalk, type HeroColors } from '../models/hero'
 import { buildPip, animatePip } from '../models/npc'
 import { buildTeleporter, type PadMesh } from '../models/props'
-import { buildTrooper, poseTrooper, buildHeli, poseHeli } from '../models/enemies'
+import { buildTrooper, poseTrooper, buildHeli, poseHeli, buildBrute, poseBrute } from '../models/enemies'
 import { buildBlazeMaster, poseBoss } from '../models/bosses'
 import { buildGauss, poseGauss, newGaussPose, setGaussGlow, type GaussRig } from '../models/gauss'
 import { buildStasisCapsule, type StasisCapsule } from '../models/stasis'
@@ -19,6 +19,9 @@ import { pose, nudge, torus, cap, sph, rcyl, paint, type Rig } from '../models/k
 import { PAL } from '../models/palette'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
 import { buildChargedShot, type ChargedShotFx } from '../fx/chargedShot'
+import { chargeGlowAt, newChargeGlow } from '../fx/chargeGlow'
+import { ENEMY_WEAK } from '../data/weakspots'
+import { baseStats, chargeInfo, type ChargeInfo } from '../sim/stats'
 import { glowTexture } from '../world/textures'
 import { THEMES } from '../world/themes'
 import { buildLabSet } from '../sim/hub'
@@ -33,7 +36,8 @@ import {
   SHOW_HIT, SHOW_DIVE, SHOW_GUARD_UP, SHOW_PARRY, SHOW_GUARD_DOWN, SHOW_SHIELD_UP, SHOW_VOLLEY, SHOW_ORB_FLIGHT, SHOW_SHIELD_DOWN,
   SHOW_TROOP_SHOTS, SHOW_TROOP_FLIGHT, SHOW_TROOP_BACK,
   SHOW_ANSWER, SHOW_ANSWER_HIT, SHOW_SLAM, SHOW_SLIDE_FROM, SHOW_RING_OVER, SHOW_SLIDE_TO, SHOW_FINISH, SHOW_FINISH_HIT,
-  SHOW_GEL, SHOW_GEL_BURST, SPIRE_FLASH, VEX_ON, CUTIN_FROM, CUTIN_TO, LAB_FROM, ALARM_TO, GAUSS_TURN,
+  SHOW_GEL, SHOW_GEL_BURST, SHOW_BIG_DROP, SHOW_BIG_LAND, SHOW_BIG_STEPS, SHOW_FLEE_FROM, SHOW_FLEE_TO, SHOW_OVER_FIRE,
+  SHOW_OVER_HIT, OVER_SHOT, OVER_STATS, overCharge, bigOn, SPIRE_FLASH, VEX_ON, CUTIN_FROM, CUTIN_TO, LAB_FROM, ALARM_TO, GAUSS_TURN,
   DISC_FROM, DISC_TO, STAGGER_AT, LEVER_AT, SAFE_FROM, SEAL_AT, FROST_FROM, FROST_TO, HEART_FROM, WAKE_FROM,
   PIP_POP, GLYPH_ON, LV_POP, HOLO_FROM, SCRAP_BLINK, TURN_FROM, HOLO_FOLD_FROM, HOLO_FOLD_TO, STEP_FROM, STEP_TO, BEAM_RISE,
   FLASH_FROM, FLASH_FULL
@@ -97,10 +101,21 @@ const STEP = 1 / 60
 
 /** Where the sets stand (the lab is at the origin). */
 const STREET_AT = new Vector3(-300, 0, 0)
-/** The showcase's three shots: fired, landed (action clock), size. */
+/** The showcase's four shots: fired, landed (action clock), size. */
 const SHOTS_FIRED: ReadonlyArray<readonly [number, number, number]> = [
-  [STREET_RELEASE, SHOW_HIT, 1.4], [SHOW_ANSWER, SHOW_ANSWER_HIT, 1], [SHOW_FINISH, SHOW_FINISH_HIT, 1.4]
+  [STREET_RELEASE, SHOW_HIT, 1.4], [SHOW_ANSWER, SHOW_ANSWER_HIT, 1], [SHOW_FINISH, SHOW_FINISH_HIT, 1.4],
+  [SHOW_OVER_FIRE, SHOW_OVER_HIT, 2]
 ]
+/** The first charge's stats: as a new player's, no perfect window's gold. */
+const FIRST_STATS = { ...baseStats(), perfectMul: 0 }
+/** The big Guardroid (#137): the game's own, this much bigger, where it
+ *  lands and how far it stomps after Flux (street space). */
+const BIG = 1.6
+const BIG_X = 0.4
+const BIG_Z = -12
+const BIG_STOMP = 1.6
+/** How far Flux's dash away from it carries him (m, toward the camera). */
+const FLEE = 2.8
 /** The muzzle flash's life, and the tracer's fade after the hit (s). */
 const FLASH_FOR = 0.14
 const TRACER_FADE = 0.22
@@ -199,10 +214,21 @@ const STREET_CAM: readonly CamKey[] = [
   // Raised, so the ring reads as a ring and not as a wall.
   { t: 10.7, pos: [5.0, 2.6, -4.4], look: [0.2, 0.5, -5.6], hfov: 80 },
   { t: 12.9, pos: [4.7, 2.2, -5.2], look: [0.2, 0.7, -6.0], hfov: 78 },
-  // Front on for the Repair Gel, easing in to the hero pose the freeze holds.
-  { t: 13.6, pos: [1.0, 2.0, -7.5], look: [0.1, 1.05, -5.0], hfov: 64 },
-  { t: 14.9, pos: [1.3, 1.4, -7.7], look: [0.1, 1.15, -5.0], hfov: 60 },
-  { t: 17.1, pos: [1.7, 1.05, -7.8], look: [0.1, 1.2, -5.0], hfov: 58 }
+  // The Overload (#137). Up and back as the big Guardroid drops in behind
+  // the wreck; wide from the side as Flux dashes away from it, both in frame.
+  { t: 13.3, pos: [5.2, 1.6, -3.0], look: [0.2, 2.4, -9.0], hfov: 80 },
+  { t: 14.3, pos: [5.6, 1.4, 0.2], look: [0.2, 1.8, -7.0], hfov: 82 },
+  // Over his left shoulder (the cannon and Atlas on his right): the violet
+  // charge at the muzzle, the weak spot beyond; the shot, the blast.
+  { t: 15.2, pos: [-1.2, 1.75, 0.8], look: [0.3, 2.4, -10.0], hfov: 64 },
+  { t: 16.1, pos: [-1.3, 1.8, 1.0], look: [0.3, 2.5, -10.2], hfov: 64 },
+  { t: 16.7, pos: [-1.6, 2.0, 1.4], look: [0.3, 2.2, -9.5], hfov: 70 },
+  // Round his left, wide of him, to the front…
+  { t: 17.2, pos: [-3.2, 1.8, -2.6], look: [0.0, 1.2, -2.2], hfov: 66 },
+  // …front on for the Repair Gel, easing in to the hero pose the freeze holds.
+  { t: 17.6, pos: [1.0, 2.0, -4.7], look: [0.1, 1.05, -2.2], hfov: 64 },
+  { t: 18.9, pos: [1.3, 1.4, -4.9], look: [0.1, 1.15, -2.2], hfov: 60 },
+  { t: 21.1, pos: [1.7, 1.05, -5.0], look: [0.1, 1.2, -2.2], hfov: 58 }
 ]
 
 const VALLEY_CAM: readonly CamKey[] = [
@@ -330,7 +356,21 @@ export class IntroMode implements GameMode {
   private charge = new Group()
   private chargeGlow!: SpriteMaterial
   private chargeCore!: MeshBasicMaterial
+  private chargeHalo!: Sprite
+  private chargeBall!: Mesh
+  /** The muzzle's look this frame, the game's (`fx/chargeGlow.ts`). */
+  private readonly glow = newChargeGlow()
+  private readonly glowBase = new Color(PAL.heroPlasma)
   private shot!: ChargedShotFx
+  /** The Overload preview (#137): the big Guardroid, its weak spot lit
+   *  amber, and the game's violet Overload shot. */
+  private big!: Rig
+  private bigRoot = new Group()
+  private readonly bigMotion = newMotion(5, 'brute')
+  private weakGlow!: Sprite
+  private weakMat!: SpriteMaterial
+  private readonly weakAt = new Vector3()
+  private overShot!: ChargedShotFx
   /** Each shot visibly leaves the cannon (#106: the flights are a tenth of a
    *  second, and started inside his forearm): a flash at the muzzle ring and
    *  a plasma tracer from the muzzle to the shot, fading after the hit. */
@@ -452,10 +492,24 @@ export class IntroMode implements GameMode {
     }
     this.chargeGlow = new SpriteMaterial({ map: glowTexture(), color: new Color('#c8ff7a'), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
     this.chargeCore = new MeshBasicMaterial({ color: new Color('#ffffff'), toneMapped: false })
-    const halo = new Sprite(this.chargeGlow)
-    halo.renderOrder = 6
-    this.charge.add(halo, new Mesh(sph(0.09, 12, 8), this.chargeCore))
+    this.chargeHalo = new Sprite(this.chargeGlow)
+    this.chargeHalo.renderOrder = 6
+    this.chargeBall = new Mesh(sph(0.09, 12, 8), this.chargeCore)
+    this.charge.add(this.chargeHalo, this.chargeBall)
     this.shot = buildChargedShot('charge2')
+    // The Overload preview: the Guardroid, its weak spot (where the game
+    // has it, `data/weakspots.ts`) lit, and the violet shot.
+    this.big = buildBrute()
+    this.bigRoot.add(this.big.root)
+    this.bigRoot.scale.setScalar(BIG)
+    this.bigRoot.visible = false
+    this.weakMat = new SpriteMaterial({ map: glowTexture(), color: new Color('#ffb03a'), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
+    // Over its head, never under it: the glow sits at the spot's centre.
+    this.weakMat.depthTest = false
+    this.weakGlow = new Sprite(this.weakMat)
+    this.weakGlow.renderOrder = 6
+    this.overShot = buildChargedShot(OVER_SHOT)
+    this.streetSet.add(this.bigRoot, this.weakGlow, this.overShot.root)
     this.flashMat = new SpriteMaterial({ map: this.chargeGlow.map, color: new Color('#e6fbff'), transparent: true, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
     this.flash = new Sprite(this.flashMat)
     this.flash.renderOrder = 7
@@ -687,6 +741,7 @@ export class IntroMode implements GameMode {
           cine.vex = e.key
           if (e.key) playVoiceSoon(`story.vex.${e.key}`)
           break
+        case 'kranck': cineLive.kranckAt = e.at; break
         case 'music': if (!this.opts.replay) setMusicTrack(e.track); break
       }
     }
@@ -733,6 +788,19 @@ export class IntroMode implements GameMode {
         this.fx.emit({ x: S.x + m.x + Math.cos(a) * 0.6, y: S.y + m.y + Math.sin(a) * 0.6, z: S.z + m.z, vx: -Math.cos(a) * 2 * rate, vy: -Math.sin(a) * 2 * rate, color: PAL.heroPlasma, size: 0.08, sizeEnd: 0.02, life: 0.3 / rate })
       }
     }
+    // The Overload's charge: energy drawn in to the muzzle in the charge's
+    // own colour; overloaded, it spits violet sparks, as in play.
+    if (t >= STREET_TIME_AT && t < STREET_DONE && overCharge(st) >= 0 && this.charge.visible) {
+      const m = this.charge.position
+      if (Math.random() < dt * 40) {
+        const a = Math.random() * Math.PI * 2
+        this.fx.emit({ x: S.x + m.x + Math.cos(a) * 0.6, y: S.y + m.y + Math.sin(a) * 0.6, z: S.z + m.z, vx: -Math.cos(a) * 2, vy: -Math.sin(a) * 2, color: this.glow.halo, size: 0.08, sizeEnd: 0.02, life: 0.3 })
+      }
+      if (this.glow.over && Math.random() < 0.3) {
+        const a = Math.random() * Math.PI * 2
+        this.fx.emit({ x: S.x + m.x, y: S.y + m.y, z: S.z + m.z, vx: Math.cos(a) * 3, vy: 1 + Math.random() * 2, vz: Math.sin(a) * 3, color: '#d38bff', size: 0.08, sizeEnd: 0.01, life: 0.25, drag: 2 })
+      }
+    }
     this.showcaseBursts(st)
     // The dash: a cyan afterimage streaming off him, dust where it starts and stops.
     if (this.dashOn > 0.3 && t < STREET_DONE) {
@@ -742,7 +810,7 @@ export class IntroMode implements GameMode {
         this.fx.emit({ x: S.x + F.x + (Math.random() - 0.5) * 0.3, y: S.y + 0.35 + Math.random() * 0.8, z: S.z + F.z + (Math.random() - 0.5) * 0.3, color: k ? PAL.glowCyan : '#e6fbff', size: 0.32, sizeEnd: 0.05, life: 0.22 / rate })
       }
     }
-    for (const [a, b] of [DASH_RUN, [SHOW_SLIDE_FROM, SHOW_SLIDE_TO]] as const) {
+    for (const [a, b] of [DASH_RUN, [SHOW_SLIDE_FROM, SHOW_SLIDE_TO], [SHOW_FLEE_FROM, SHOW_FLEE_TO]] as const) {
       for (const at of [a, b]) {
         if (!(this.lastDust < at && st >= at)) continue
         const F = this.runnerRoot.position
@@ -894,17 +962,9 @@ export class IntroMode implements GameMode {
     // The charge ring at the muzzle, then the shot a hand's width off the shield.
     this.streetSet.updateMatrixWorld(true)
     const muzzle = _muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
-    const charge = st > 1.9 && st < 2.62 ? ramp(1.9, 2.55, st) : 0
     // As the arm cannon charges in play: green through the first level, then
-    // the full charge's cyan, flickering.
-    this.charge.visible = charge > 0
-    this.charge.position.copy(muzzle)
-    const full = charge >= 0.55
-    const flick = full && Math.floor(t * 30) % 2 ? 0.55 : 1
-    this.chargeGlow.color.set(full ? '#7ff4ff' : '#c8ff7a')
-    this.chargeGlow.opacity = (0.45 + 0.5 * charge) * flick
-    this.chargeCore.color.set(full ? '#e6fbff' : '#eaffb0')
-    this.charge.scale.setScalar(0.5 + 1.5 * charge)
+    // the full charge's cyan, flickering (the game's clock: full at 2.25).
+    this.paintCharge(st > 1.9 && st < 2.62 ? chargeInfo(2.2 * clamp01((st - 1.9) / 0.65), FIRST_STATS) : null, t, muzzle)
     const shield = _b.set(0.55, 0.75, -6.0)
     // From the release to the shield at one speed (its last metre used to crawl).
     const fly = st >= STREET_RELEASE && st < SHOW_HIT ? (st - STREET_RELEASE) / (SHOW_HIT - STREET_RELEASE) : -1
@@ -917,11 +977,6 @@ export class IntroMode implements GameMode {
     this.eyeStreak.visible = st < 1.6
     this.eyeStreak.position.copy(R.bones.head!.getWorldPosition(_a)).sub(this.streetSet.position).add(_d.set(0, 0.02, -0.75))
     this.eyeStreak.rotation.set(Math.PI / 2, 0, 0)
-    // Atlas keeps pace above his shoulder.
-    const A = this.atlasStreet
-    A.root.position.set(this.runnerRoot.position.x + 0.75, 1.75 + Math.sin(st * 3) * 0.08, this.runnerRoot.position.z - 0.7 * Math.cos(ry))
-    A.root.rotation.set(0, ry, 0)
-    animateAtlas(A, st, this.atlasTalk(t))
     // The Shield Trooper: steps out of the alley, swings, turns to face him.
     const step = ramp(0.85, 1.2, st)
     this.trooperRoot.position.set(3.9 - 3.2 * step, 0, -6.4)
@@ -943,6 +998,12 @@ export class IntroMode implements GameMode {
       poseHeli(d, st, 0.35 * (1 - k), st * 40)
     })
     this.renderShowcase(st, t, muzzle)
+    // Atlas keeps pace above his shoulder (where the showcase has put him).
+    const F = this.runnerRoot
+    const A = this.atlasStreet
+    A.root.position.set(F.position.x + 0.75, 1.75 + Math.sin(st * 3) * 0.08, F.position.z - 0.7 * Math.cos(F.rotation.y))
+    A.root.rotation.set(0, F.rotation.y, 0)
+    animateAtlas(A, st, this.atlasTalk(t))
     const hfov = camAt(STREET_CAM, st, pos, look)
     pos.add(STREET_AT)
     look.add(STREET_AT)
@@ -952,20 +1013,26 @@ export class IntroMode implements GameMode {
   /**
    * The showcase, after the release (ACTION s): the shot lands, a perfect
    * block swats drone 1, the shield takes drone 2's volley, the Trooper's
-   * shock ring rolls out and Flux slides under it, then a Repair Gel. Every
-   * pose is a function of the action clock.
+   * shock ring rolls out and Flux slides under it; a big Guardroid drops in,
+   * he dashes away charging to the Overload and puts it in its weak spot;
+   * then a Repair Gel. Every pose is a function of the action clock.
    */
   private renderShowcase(st: number, t: number, muzzle: Vector3): void {
     const R = this.runner
     const F = this.runnerRoot
     // Flux: the dash under the ring carries him forward; he settles after.
-    const fz = -3.6 - 1.4 * ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_TO, st)
+    // Then the Overload (#137): he turns his back on the big Guardroid, dashes
+    // away from it, and turns back to it, charging all the while.
+    const fz = -3.6 - 1.4 * ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_TO, st) + FLEE * ramp(SHOW_FLEE_FROM, SHOW_FLEE_TO, st)
     if (st > STREET_RELEASE) {
-      const dash = dashPose(R, st, SHOW_SLIDE_FROM, SHOW_SLIDE_TO)
+      const flee = st > (SHOW_SLIDE_TO + SHOW_FLEE_FROM) / 2
+      const dash = flee ? dashPose(R, st, SHOW_FLEE_FROM, SHOW_FLEE_TO) : dashPose(R, st, SHOW_SLIDE_FROM, SHOW_SLIDE_TO)
       F.position.set(0, -dash.drop, fz)
       F.rotation.x = dash.lean
       F.scale.set(1, 1 - dash.stretch * 0.5, 1 + dash.stretch)
       this.dashOn = Math.max(this.dashOn, dash.on)
+      const away = ramp(SHOW_FLEE_FROM - 0.25, SHOW_FLEE_FROM, st) * (1 - ramp(SHOW_FLEE_TO + 0.1, SHOW_FLEE_TO + 0.45, st))
+      F.rotation.y += Math.PI * away
     }
     // The shield: up for the parry and for the volley; a flash on each hit.
     const guard = Math.max(
@@ -1007,10 +1074,28 @@ export class IntroMode implements GameMode {
       pose(R, 'chest', 0.05, 0.2 - 0.3 * hero, 0)
     }
 
+    // The Overload: the cannon up at the Guardroid's head, a kick on the release.
+    const up = ramp(SHOW_FLEE_TO + 0.3, SHOW_FLEE_TO + 0.6, st) * (1 - ramp(SHOW_OVER_HIT + 0.4, SHOW_OVER_HIT + 0.9, st))
+    if (up > 0) {
+      const kick = ramp(SHOW_OVER_FIRE, SHOW_OVER_FIRE + 0.05, st) * (1 - ramp(SHOW_OVER_FIRE + 0.1, SHOW_OVER_FIRE + 0.4, st))
+      pose(R, 'shoulderR', -1.5 - 0.3 * up - 0.35 * kick, 0, 0.12)
+      pose(R, 'chest', 0.05 - 0.15 * kick, 0.2, 0)
+    }
+    this.renderBig(st, t)
+
     // The muzzle where he stands now: the slide carried him forward and the
     // poses above moved the arm (it was a step behind him at the finish).
     this.streetSet.updateMatrixWorld(true)
     muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
+    // The Overload's charge at the muzzle, the game's green, cyan, violet;
+    // then the violet shot into the weak spot.
+    const over = overCharge(st)
+    if (over >= 0) this.paintCharge(chargeInfo(over, OVER_STATS), t, muzzle)
+    if (st >= SHOW_OVER_FIRE && st < SHOW_OVER_HIT) {
+      const at = _a.copy(muzzle).lerp(this.weakAt, (st - SHOW_OVER_FIRE) / (SHOW_OVER_HIT - SHOW_OVER_FIRE))
+      _b.copy(this.weakAt).sub(muzzle).normalize()
+      this.overShot.fly(at.x, at.y, at.z, _b.x, _b.y, _b.z, t)
+    } else this.overShot.hide()
 
     // The Trooper: staggered by the charged shot, the slam, then finished.
     const T = this.trooperRoot
@@ -1104,7 +1189,12 @@ export class IntroMode implements GameMode {
     for (const [from, to, size] of SHOTS_FIRED) {
       if (st < from || st >= to + TRACER_FADE) continue
       const target = from === STREET_RELEASE ? _c.set(0.55, 0.75, -6.0)
-        : from === SHOW_ANSWER ? _c.copy(D1_AT) : _c.set(T.position.x, 1.1, T.position.z + 0.3)
+        : from === SHOW_ANSWER ? _c.copy(D1_AT)
+          : from === SHOW_OVER_FIRE ? _c.copy(this.weakAt) : _c.set(T.position.x, 1.1, T.position.z + 0.3)
+      // The Overload's flash and tracer in its violet.
+      const violet = from === SHOW_OVER_FIRE
+      this.flashMat.color.set(violet ? '#d38bff' : '#e6fbff')
+      this.tracerMat.color.set(violet ? '#b46cff' : '#7ff4ff')
       const k = st - from
       this.flash.visible = k < FLASH_FOR
       if (this.flash.visible) {
@@ -1123,6 +1213,57 @@ export class IntroMode implements GameMode {
       this.tracerMat.opacity = 0.85 * (st < to ? 1 : 1 - (st - to) / TRACER_FADE)
       break
     }
+  }
+
+  /** The charge at the muzzle (none: `info` null), as the arm cannon's in
+   *  play: the game's own colours, sizes and flicker (`fx/chargeGlow.ts`). */
+  private paintCharge(info: ChargeInfo | null, t: number, muzzle: Vector3): void {
+    this.charge.visible = !!info && (info.level > 0 || info.toL1 > 0.25)
+    if (!info || !this.charge.visible) return
+    const g = chargeGlowAt(info, t, this.glowBase, this.glow)
+    this.charge.position.copy(muzzle)
+    this.chargeGlow.color.copy(g.halo)
+    this.chargeGlow.opacity = g.haloOpacity
+    // Overloaded, the halo turns.
+    this.chargeGlow.rotation = g.over ? t * 5 : 0
+    this.chargeCore.color.copy(g.core)
+    this.chargeHalo.scale.setScalar(g.haloScale)
+    this.chargeBall.scale.setScalar(0.8 * g.coreScale)
+  }
+
+  /**
+   * The big Guardroid (#137): it drops into the street behind the wreck,
+   * lands in a crouch and stomps after Flux until the Overload takes it
+   * apart. Its weak spot is the game's (`data/weakspots.ts`: its head), lit
+   * amber so the eye finds it before the shot does. Placed even once it is
+   * gone: "KRANCK!" stays anchored there.
+   */
+  private renderBig(st: number, t: number): void {
+    const B = this.bigRoot
+    B.visible = bigOn(st)
+    this.weakGlow.visible = B.visible
+    const fall = clamp01((st - SHOW_BIG_DROP) / (SHOW_BIG_LAND - SHOW_BIG_DROP))
+    const slam = 0.5 * ramp(SHOW_BIG_LAND - 0.05, SHOW_BIG_LAND + 0.05, st) * (1 - ramp(SHOW_BIG_LAND + 0.2, SHOW_BIG_LAND + 0.6, st))
+    const z = BIG_Z + BIG_STOMP * ramp(SHOW_BIG_STEPS[0]! - 0.5, SHOW_BIG_STEPS[1]! + 0.4, st)
+    const yaw = Math.atan2(this.runnerRoot.position.x - BIG_X, this.runnerRoot.position.z - z)
+    B.position.set(BIG_X, 7 * (1 - fall * fall), z)
+    B.rotation.y = yaw
+    const m = this.bigMotion
+    m.walk = st > SHOW_BIG_STEPS[0]! - 0.5 && st < SHOW_BIG_STEPS[1]! + 0.4 ? 1 : 0
+    m.phase = st * 5.2
+    poseBrute(this.big, st, m.walk, 0, 0, slam, m)
+    const w = ENEMY_WEAK.brute
+    const s = Math.sin(yaw)
+    const c = Math.cos(yaw)
+    this.weakAt.set(
+      B.position.x + (s * w.fwd + c * w.side) * BIG,
+      B.position.y + (w.up - 0.25 * slam) * BIG,
+      B.position.z + (c * w.fwd - s * w.side) * BIG
+    )
+    const pulse = 0.5 + 0.5 * Math.sin(t * 9)
+    this.weakGlow.position.copy(this.weakAt)
+    this.weakGlow.scale.setScalar(w.r * BIG * (4 + 0.8 * pulse))
+    this.weakMat.opacity = 0.55 + 0.4 * pulse
   }
 
   /** The showcase's particle bursts, each once as the action clock passes
@@ -1178,6 +1319,18 @@ export class IntroMode implements GameMode {
       const F = this.runnerRoot.position
       this.shatter.burst(this.trooperRoot, [PAL.trooper, PAL.trooperDeep, '#6a6a78'], 8, { x: S.x + F.x, z: S.z + F.z }, 1.2)
     }
+    // The Overload (#137): the Guardroid lands in a ring of dust; the violet
+    // shot in its weak spot; it blows apart into its own plating.
+    const G = this.bigRoot.position
+    if (passed(SHOW_BIG_LAND)) burst(G.x, 0.2, G.z, ['#b8ad98', '#8f9bb3', '#6a6a78'], 34 * n, 5, 0.45, 0.8)
+    if (passed(SHOW_OVER_HIT)) {
+      const W = this.weakAt
+      burst(W.x, W.y, W.z, ['#b46cff', '#d38bff', '#fff6d6', '#ffb03a'], 44 * n, 9, 0.22, 0.7)
+      if (!this.shatter) this.shatter = new Shatter(this.scene, { floorAt: () => S.y })
+      const F = this.runnerRoot.position
+      this.shatter.burst(this.bigRoot, [PAL.brute, PAL.bruteDeep, '#ff8a2a'], 12, { x: S.x + F.x, z: S.z + F.z }, 1.6)
+    }
+    if (passed(SHOW_OVER_HIT + 0.3)) burst(G.x, 1.8, G.z, ['#ffb040', '#ff5a20', '#ffffff', '#b46cff'], 40 * n, 7, 0.32, 0.9)
     if (passed(SHOW_GEL_BURST)) {
       const F = this.runnerRoot.position
       burst(F.x, 0.9, F.z, ['#5dff8a', '#c8ffd8', '#ffffff'], 36 * n, 3.5, 0.12, 1.0)
@@ -1422,6 +1575,20 @@ export class IntroMode implements GameMode {
       _a.set(2.6, 2.0, 0).applyMatrix4(this.vexHolo.matrixWorld).project(cam)
       cineLive.bubbleX = clamp01((_a.x + 1) / 2)
       cineLive.bubbleY = clamp01((1 - _a.y) / 2)
+    }
+    // The Overload preview (#137): its charge ring on the weak spot he aims
+    // at while he charges, and "KRANCK!" over it.
+    cineLive.charge = shot === 'coldOpen' ? overCharge(streetTime(cineLive.t)) : -1
+    if (shot === 'coldOpen' && this.street) {
+      _a.copy(this.weakAt).add(STREET_AT).project(cam)
+      // Behind the camera: off the screen.
+      cineLive.ringX = _a.z > 1 ? -1 : (_a.x + 1) / 2
+      cineLive.ringY = (1 - _a.y) / 2
+      _a.copy(this.weakAt).add(STREET_AT)
+      _a.y += 0.35
+      _a.project(cam)
+      cineLive.kranckX = (_a.x + 1) / 2
+      cineLive.kranckY = (1 - _a.y) / 2
     }
     if (shot === 'wakeUp') {
       this.holo.root.updateMatrixWorld(true)

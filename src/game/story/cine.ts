@@ -47,9 +47,22 @@ export interface CineLive extends IntroOverlay {
   scrapY: number
   /** The hold-to-skip ring's fill, 0..1 (`holdSkip.ts`). */
   hold: number
+  /** The Overload preview (#137): the charge held (s on the game's charge
+   *  clock, `introScript.overCharge`; < 0: none), and where its ring sits
+   *  (viewport fractions: on the weak spot he aims at). */
+  charge: number
+  ringX: number
+  ringY: number
+  /** When "KRANCK!" went up (s), and where (viewport fractions). */
+  kranckAt: number
+  kranckX: number
+  kranckY: number
 }
 
-export const cineLive: CineLive = { ...newOverlay(), t: 0, atlasAt: -10, bubbleX: 0.5, bubbleY: 0.2, fortX: 0, fortY: 0, scrapX: 0, scrapY: 0, hold: 0 }
+export const cineLive: CineLive = {
+  ...newOverlay(), t: 0, atlasAt: -10, bubbleX: 0.5, bubbleY: 0.2, fortX: 0, fortY: 0, scrapX: 0, scrapY: 0, hold: 0,
+  charge: -1, ringX: 0.5, ringY: 0.5, kranckAt: -10, kranckX: 0.5, kranckY: 0.4
+}
 
 /** Space held to skip: the key handlers press and release it, the live
  *  cutscene steps it on its clock. */
@@ -69,7 +82,7 @@ export const resetCine = (): void => {
   cine.atlas = ''
   cine.vex = ''
   releaseHold(skipHold)
-  Object.assign(cineLive, newOverlay(), { t: 0, atlasAt: -10, hold: 0 })
+  Object.assign(cineLive, newOverlay(), { t: 0, atlasAt: -10, hold: 0, charge: -1, kranckAt: -10 })
 }
 
 // ─── Skip ────────────────────────────────────────────────────────────────────

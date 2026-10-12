@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Sista striden! System omstartade.',
     'weak': 'SVAG PUNKT!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'FÖR SVAG!',
     'dizzy': 'YR!',
     'dodge': 'UNDVEK!',
     'block': 'Blockera',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Väktare',
     'hornet': 'Bålgetingrotor',
     'stalker': 'Glödsmygare',
+    'spotter': 'Strålkastardrönare',
     'puffer': 'Blåsfiskmina',
     'mole': 'Mullvadsborr',
     'polar': 'Polarvalp',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Väktare | Väktare',
     'hornet': 'Bålgetingrotor | Bålgetingrotorer',
     'stalker': 'Glödsmygare | Glödsmygare',
+    'spotter': 'Strålkastardrönare | Strålkastardrönare',
     'puffer': 'Blåsfiskmina | Blåsfiskminor',
     'mole': 'Mullvadsborr | Mullvadsborrar',
     'polar': 'Polarvalp | Polarvalpar',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Stormmästare',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Stormästar-Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Glödhund',
+    'icebreakerBrute': 'Isbrytar-Brute',
+    'arcSpider': 'Bågspindel',
+    'stormHornetQueen': 'Stormgetings-Drottning',
+    'lodestoneGolem': 'Magnetsten-Golem',
+    'burrowWyrm': 'Grävmask',
+    'pufferMatriarch': 'Blåsfisk-Matriark',
+    'glitchStalker': 'Glitch-Smygare',
+    'sawGyro': 'Sågsnurra',
+    'sentinelPrototype': 'Väktar-Prototyp'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Utmaning',
+    'cleared': 'Utmaning klarad! +{bolts} bultar'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nivå {n}! Systemen helt reparerade.'
   },
   'tips': {
-    'moveTouch': 'Dra på vänster sida för att gå, på höger för att titta. Tryck på golvet för att gå dit!',
+    'moveTouch': 'Dra på vänster sida för att gå, på höger för att titta.',
     'moveKeys': '{keys} för att röra dig.',
     'lookMouse': 'Rör musen för att titta runt.',
     'capture': 'Klicka på scenen för att ta kontroll över kameran.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Använd'
     },
     'touch': {
-      'move': 'Vänster sida: dra för att gå. Tryck på golvet för att gå dit.',
-      'fire': 'I strid: tryck för att skjuta, håll för att ladda, släpp för att avfyra.',
+      'move': 'Vänster sida: dra för att gå. Höger sida: dra för att titta.',
+      'fire': 'Höger sida eller skjutknappen: tryck för att skjuta, håll för att ladda, släpp för att avfyra. Dra medan du håller för att sikta.',
       'block': 'Håll in skölden för att blockera — precis när en ring sluts för att parera.',
       'use': 'Vid en kista, en strandsatt bot eller en dörr: tryck på den, eller på knappen som dyker upp.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Träffa kärnan när den öppnas.',
       'hornet': '{enemy}. Den dyker rakt fram: åt sidan!',
       'stalker': '{enemy}. Parera utfallet.',
+      'spotter': '{enemy}. Ut ur ljuset. Skjut på lampan.',
       'puffer': '{enemy}. Spräck den innan den sväller.',
       'mole': '{enemy}. Träffa den när den dyker upp.',
       'elite': 'Guldring. Elit. Försiktigt.',
@@ -754,6 +778,7 @@ export default {
       'free': 'För att de är fria.',
     },
     'guardDown': 'Vakten nere! Vägen är fri.',
+    'challenge': 'En utmaningsdörr! Bra byte där inne.',
     'help': {
       'weapon': 'Välj ditt nya vapen och skjut på drönarna!',
       'gap': 'Gå rakt mot kanten så hoppar du över!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Glid undan precis innan den röda ringen når dig!',
       'block': 'Håll in block när den skjuter. Precis när det träffar är perfekt!',
       'blockMiss': 'Sköld upp! Blockera precis när det träffar, så flyger det tillbaka!',
+      'chargeMiss': 'Testa ett laddat skott genom att hålla in kanonknappen!',
       'charge': 'Håll in skjut tills kanonen lyser, släpp sedan!',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Den panelen visar ett mönster. Lamporna på väggen gör det inte. Än.',
       'color': 'Den ramen har en favoritfärg. Bara dess lampor ska lysa.',
       'cycle': 'Varje träff får en lampa att ändra sig. Panelen vet vad den vill.',
+      'sequence': 'Panelen blinkar samma lilla melodi. Spela den på knapparna, i ordning.',
+      'mirror': 'Den strålen vill in i ringen. Speglarna vrids när du skjuter på dem.',
+      'tiles': 'Tänd alla plattor på en enda promenad. Två gånger på en, eller av dem, och allt är mörkt igen.',
       'solved': 'Minsann. Någon gillar gåtor.'
     },
     'landed': 'Landat! Nu kör vi.',

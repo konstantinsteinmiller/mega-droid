@@ -1,8 +1,8 @@
-import { RigBuilder, sph, ell, cap, torus, rcyl, rcone, rbox, dome, paintBy, xform, type Rig, pose, nudge, scaleBone } from './kit'
+import { RigBuilder, sph, ell, cap, torus, rcyl, rcone, rbox, dome, paintBy, type Rig, pose, nudge } from './kit'
 import { PAL } from './palette'
-import type { BufferGeometry } from 'three'
 import { BOSS_GAIT, BOSS_FIDGET_LEN, TAU, bump, frac, fidgetEnv, fidgetPIn, gaitAmp, type EnemyMotion } from './motion'
 import { legL, legR, gaitDir, gaitLegs, stanceDrop } from './gait'
+import { buildVex, poseVex, type VexCue } from './vexMk1'
 
 /**
  * ─── Core Masters ────────────────────────────────────────────────────────────
@@ -11,7 +11,7 @@ import { legL, legR, gaitDir, gaitLegs, stanceDrop } from './gait'
  * scaled up, each with a signature helmet crest and weapon arms (the sector's
  * element made visible). The Scrapper (tutorial) is a hulking junk crane and
  * Dr. Vex's machine is a hovering skull-faced capsule — the finale's classic
- * silhouette.
+ * silhouette (models/vexMk1.ts).
  */
 
 export type BossId = 'scrapper' | 'blazeMaster' | 'frostMaster' | 'voltMaster' | 'galeMaster' | 'magnetMaster' | 'drillMaster' | 'tideMaster' | 'neonMaster' | 'rotorMaster' | 'vexMk1'
@@ -302,32 +302,8 @@ export const buildScrapper = (): Rig => {
   return b.build({ outline: 0.026, height: 2.6 })
 }
 
-/** Dr. Vex's machine: a hovering capsule with a skull faceplate and claws. */
-export const buildVex = (): Rig => {
-  const b = new RigBuilder()
-  b.bone('body', null, [0, 0, 0])
-    .bone('dome', 'body', [0, 0.7, 0])
-    .bone('clawL', 'body', [-0.9, -0.1, 0.2])
-    .bone('clawR', 'body', [0.9, -0.1, 0.2])
-  b.part('body', ell(1.0, 0.7, 0.85, 24, 16), '#5a5f70')
-  b.part('body', torus(0.98, 0.09, 8, 32), '#ff3f5f', { r: [Math.PI / 2, 0, 0] })
-  // Skull faceplate
-  const skull: BufferGeometry = paintBy(ell(0.5, 0.45, 0.2, 20, 14), (_x, y) => (y < -0.05 ? '#dfe5ee' : '#f4f7ff'))
-  b.painted('body', skull, { p: [0, 0.05, 0.72] })
-  b.mirror((sd) => {
-    b.part('body', ell(0.13, 0.1, 0.05), '#1a1c22', { p: [sd * 0.17, 0.1, 0.9] })
-    b.part('body', sph(0.05, 8, 6), '#ff3f5f', { p: [sd * 0.17, 0.1, 0.93], glow: true, outline: false })
-  })
-  for (let k = -2; k <= 2; k++) b.part('body', ell(0.04, 0.07, 0.03), '#1a1c22', { p: [k * 0.08, -0.22, 0.88] })
-  b.part('dome', dome(0.45, Math.PI / 2, 20, 10), '#9fe6ff', { glow: true })
-  b.part('dome', torus(0.45, 0.05, 6, 24), '#3a3d49', { r: [Math.PI / 2, 0, 0] })
-  b.mirror((_sd, t) => {
-    b.part(`claw${t}`, sph(0.25, 14, 10), '#3a3d49')
-    b.part(`claw${t}`, rcone(0.12, 0.02, 0.5, 0.02, 10), '#dfe5ee', { p: [0.08, -0.35, 0.1], r: [0.3, 0, 0.3] })
-    b.part(`claw${t}`, rcone(0.12, 0.02, 0.5, 0.02, 10), '#dfe5ee', { p: [-0.08, -0.35, 0.1], r: [0.3, 0, -0.3] })
-  })
-  return b.build({ outline: 0.03, height: 2.2 })
-}
+/** Dr. Vex's machine, the Mk-I hover pod: its own module (models/vexMk1.ts). */
+export { buildVex }
 
 export const buildBossRig = (id: BossId): Rig => {
   switch (id) {
@@ -594,19 +570,16 @@ const animateHumanoidBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: n
 }
 
 /** Generic boss animation driven by the AI's current action. With `m`, the
- *  motion layer (humanoid bosses; Dr. Vex keeps his own hover). */
-export const poseBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number, m?: EnemyMotion): void => {
+ *  motion layer (humanoid bosses; Dr. Vex keeps his own hover, tilted by his
+ *  travel). `cue` (the boss itself will do): Dr. Vex winds up the coming
+ *  pattern's own weapon and shows his phase-2 damage. */
+export const poseBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number, m?: EnemyMotion, cue?: VexCue): void => {
   if (m && id !== 'vexMk1') {
     animateHumanoidBoss(rig, id, t, act, k, m)
     return
   }
   if (id === 'vexMk1') {
-    nudge(rig, 'body', 0, Math.sin(t * 1.4) * 0.12, 0)
-    pose(rig, 'body', Math.sin(t * 0.9) * 0.05, 0, Math.sin(t * 1.1) * 0.05)
-    const open = act === 'tele' ? k : act === 'attack' ? 1 - k : 0
-    pose(rig, 'clawL', -open * 0.9, 0, -0.3 - open * 0.4)
-    pose(rig, 'clawR', -open * 0.9, 0, 0.3 + open * 0.4)
-    scaleBone(rig, 'dome', 1 + (act === 'tele' ? 0.06 * Math.sin(t * 20) : 0))
+    poseVex(rig, t, act, k, m, cue)
     return
   }
   const walk = act === 'walk' ? 1 : 0

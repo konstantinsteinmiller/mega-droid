@@ -10,15 +10,17 @@ vi.mock('@/use/useAdGate', () => ({ canShowInterstitial: () => false, markInters
 vi.mock('@/use/useCrazyGames', () => ({ triggerHappytime: () => {} }))
 vi.mock('@/game/engine/app', () => ({ app: { setMode: () => {}, setWanted: () => {} } }))
 
-import { Group, Scene } from 'three'
+import { Box3, Group, Scene, Vector3 } from 'three'
 import { CELL, Cell, type MapData } from '@/game/world/levelGen'
 import { createNav, edgeHeight, STEP_UP, type Nav } from '@/game/world/nav'
 import { generateRotorRun } from '@/game/world/stages/rotor'
 import { STAGE_LENGTH } from '@/game/world/stages'
 import { THEMES } from '@/game/world/themes'
 import { SECTOR_BY_ID } from '@/game/data/regions'
-import type { ClimbHost } from '@/game/sim/climb'
-import { RailFeature } from '@/game/sim/stages/rail'
+import { ClimbRun, type ClimbBody, type ClimbHost } from '@/game/sim/climb'
+import { RailFeature, REST_LIFT, BOARD_BEAT } from '@/game/sim/stages/rail'
+import { QUAD_ROTOR_Y, quadcopterParts } from '@/game/models/stageProps/rail'
+import { coplanarOverlaps } from './coplanar'
 import type { AtlasLine } from '@/game/sim/atlas'
 
 const SEEDS = Array.from({ length: 32 }, (_, i) => (i * 2654435761 + 1013904223) >>> 0)
@@ -102,9 +104,9 @@ describe('generateRotorRun', () => {
     for (const seed of SEEDS) {
       const m = generateRotorRun(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(
         ['dock', 'islands', 'shuttle', 'hall', 'lift', 'cart', 'rail', 'wind', 'hall', 'islands', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.rotor)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0))).toBe(STAGE_LENGTH.rotor)
       expect(t.clouds).toBe(true)
       expect(t.waves!.every(w => w.kind === 'hornet')).toBe(true)
       mirrored.add(m.start.x > m.w * CELL / 2)
@@ -156,5 +158,50 @@ describe('the quadcopter', () => {
     const cart = (f as unknown as { cart: { rotors?: Group[] } }).cart
     expect(rail.root.visible).toBe(false)
     expect(cart.rotors?.length).toBe(4)
+  })
+
+  it('rests on its skids in its slot: soles on the floor, rotors over it, the deck a step up to board', () => {
+    for (const seed of [0, 1, 2]) {
+      const map = generateRotorRun(seed)
+      const def = map.terrain!.rails![0]!
+      const host = hostFor(map)
+      const run = new ClimbRun(host, 1)
+      const f = run.features.find(x => x instanceof RailFeature) as RailFeature
+      const cart = (f as unknown as { cart: { root: Group; rotors: Group[] } }).cart
+      const ground = map.terrain!.floor[def.boardAt.j * map.w + def.boardAt.i]!
+      expect(REST_LIFT).toBeLessThan(STEP_UP)
+      // Soles on the floor (not under it), the rotors well over it.
+      cart.root.updateMatrixWorld(true)
+      const box = new Box3().setFromObject(cart.root)
+      expect(box.min.y, `seed ${seed}`).toBeCloseTo(ground, 2)
+      for (const r of cart.rotors) expect(r.getWorldPosition(new Vector3()).y, `seed ${seed}`).toBeCloseTo(ground + REST_LIFT + QUAD_ROTOR_Y + 0.02, 3)
+      expect(f.y).toBeCloseTo(ground + REST_LIFT, 5)
+      // Walked on from the island behind it: up the step onto the deck, and it sets off.
+      const p: ClimbBody = {
+        x: f.x, z: f.z - CELL, y: ground, vx: 0, vz: 0, vy: 0, yaw: 0, ground: true, ladder: -1, plat: -1, air: 0, safeY: ground, mantle: 0, mx: 0, mz: 0, path: null
+      }
+      const out: [number, number] = [0, 0]
+      const dt = 1 / 60
+      for (let n = 0; n < 60 && f.state === 'wait'; n++) {
+        run.update(dt, n * dt, p, true)
+        p.vx = 0
+        p.vz = 3
+        run.stepBody(p, out, 0, 1, dt, false)
+        p.x = out[0]
+        p.z = out[1]
+      }
+      expect(p.y, `seed ${seed}: on the deck`).toBeCloseTo(f.y, 5)
+      for (let n = 0; n < Math.ceil(BOARD_BEAT / dt) + 2 && f.state !== 'ride'; n++) {
+        run.update(dt, 1 + n * dt, p, true)
+        p.vz = 0
+        run.stepBody(p, out, 0, 0, dt, false)
+      }
+      expect(f.state, `seed ${seed}`).toBe('ride')
+    }
+  })
+
+  it('its frame has no coplanar faces between its parts (skids, posts, pod, deck)', () => {
+    const { toon, glow } = quadcopterParts(THEMES.rotor)
+    expect(coplanarOverlaps([...toon, ...glow])).toBe(0)
   })
 })

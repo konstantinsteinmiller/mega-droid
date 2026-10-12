@@ -80,6 +80,21 @@ describe('Atlas: what it says, and when', () => {
     }
   })
 
+  it('a quick shot off the training drone gets "try a charged shot" again and again, never stacked (#135)', () => {
+    const a = new AtlasDirector(info({ tutorial: true }))
+    a.event('play')
+    run(a, 20)
+    // A quick shot every half second for half a minute.
+    const said: string[] = []
+    for (let k = 0; k < 60; k++) {
+      a.say('help.chargeMiss')
+      run(a, 0.5, tick(), said)
+    }
+    const n = said.filter(l => l === 'help.chargeMiss').length
+    expect(n).toBeGreaterThanOrEqual(2)
+    expect(n).toBeLessThanOrEqual(4)
+  })
+
   it('urgent lines go first', () => {
     const a = new AtlasDirector(info())
     a.say('idle.1')
@@ -299,15 +314,17 @@ describe('voice-overs: in the player language or English, and never an error', (
     __resetVoices()
   })
 
-  it('German, Spanish and Chinese players hear their language; every other language hears English', () => {
+  it('German, Spanish, French and Chinese players hear their language; every other language hears English', () => {
     expect(voiceLangFor('de')).toBe('de')
     expect(voiceLangFor('de-AT')).toBe('de')
     expect(voiceLangFor('es')).toBe('es')
     expect(voiceLangFor('es-MX')).toBe('es')
     expect(voiceLangFor('zh')).toBe('zh')
+    expect(voiceLangFor('fr')).toBe('fr')
+    expect(voiceLangFor('fr-CA')).toBe('fr')
     // Traditional-script players hear the same Mandarin; their subtitles stay theirs.
     expect(voiceLangFor('zh-TW')).toBe('zh')
-    for (const l of ['en', 'fr', 'ja', 'pt', 'ar', '', null]) expect(voiceLangFor(l)).toBe('en')
+    for (const l of ['en', 'ja', 'pt', 'ar', '', null]) expect(voiceLangFor(l)).toBe('en')
   })
 
   it('files are found by convention (<lang>/<line id>.ogg); English stands in for a missing German one', () => {
@@ -320,18 +337,18 @@ describe('voice-overs: in the player language or English, and never an error', (
   })
 
   it('a language with no voice-over hears English only when the player said yes', () => {
-    for (const l of ['en', 'de', 'es', 'zh', 'zh-TW', 'es-MX', '']) expect(hasOwnVoice(l), l).toBe(true)
-    for (const l of ['fr', 'ja', 'pt', 'pt-PT', 'eo']) expect(hasOwnVoice(l), l).toBe(false)
-    expect(englishVoiceAllowed('fr', null)).toBe(false) // not asked yet: no English
-    expect(englishVoiceAllowed('fr', false)).toBe(false)
-    expect(englishVoiceAllowed('fr', true)).toBe(true)
+    for (const l of ['en', 'de', 'es', 'zh', 'fr', 'zh-TW', 'es-MX', '']) expect(hasOwnVoice(l), l).toBe(true)
+    for (const l of ['ja', 'pt', 'pt-PT', 'eo']) expect(hasOwnVoice(l), l).toBe(false)
+    expect(englishVoiceAllowed('ja', null)).toBe(false) // not asked yet: no English
+    expect(englishVoiceAllowed('ja', false)).toBe(false)
+    expect(englishVoiceAllowed('ja', true)).toBe(true)
     expect(englishVoiceAllowed('de', null)).toBe(true) // its own voice-over (and the English fallback)
 
     const files = voiceFiles(['en/atlas.lowHp.ogg'])
     const w = globalThis as unknown as { window?: unknown }
     const had = 'window' in w
     const before = w.window
-    w.window = { __i18n: { global: { locale: 'fr' } } }
+    w.window = { __i18n: { global: { locale: 'ja' } } }
     try {
       englishVoice.value = null
       expect(voiceUrl('atlas.lowHp', 'en', files)).toBeNull()

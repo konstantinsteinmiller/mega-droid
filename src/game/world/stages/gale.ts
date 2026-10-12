@@ -264,6 +264,11 @@ export const generateSkyDocks = (seed: number): MapData => {
   // Start: in the beam-in room, facing its door.
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): north off the turbine column's
+  // deck, a walled hangar at the deck's height reached along a walkway —
+  // the door is in front of Flux as he comes up the ladder; the way on is
+  // west.
+  b.challengeRoom(5, { mouth: { i: 15, j: 19, di: 0, dj: -1 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   map.terrain!.clouds = true
   return rng() < 0.5 ? mirrorX(map) : map

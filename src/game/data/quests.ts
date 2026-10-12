@@ -1,6 +1,6 @@
 import type { SectorId } from '../world/themes'
 import type { EnemyKind } from '../models/enemies'
-import { SECTOR_BY_ID, enemyLevelFor, type Sector } from './regions'
+import { SECTOR_BY_ID, enemyLevelFor, runLevelFor, type Sector } from './regions'
 import { mulberry32, randInt, pick, weighted } from '../world/rng'
 import { STAGE_LENGTH, isStageSector } from '../world/stages/meta'
 import type { Rarity } from './items'
@@ -122,7 +122,8 @@ export const climbJob = (seed: number, sectors: SectorId[], playerLevel: number,
   const rng = mulberry32(seed ^ 0x7c1b)
   const sid = pick(rng, sectors)
   const sector = SECTOR_BY_ID[sid]
-  const level = enemyLevelFor(sector, playerLevel, randInt(rng, 0, 1), ng)
+  // No band top: a run follows Flux's level (and his kit, `runScaling`).
+  const level = runLevelFor(sector, playerLevel, randInt(rng, 0, 1))
   return {
     id: `job_${seed.toString(36)}`,
     kind: 'job',
@@ -136,6 +137,11 @@ export const climbJob = (seed: number, sectors: SectorId[], playerLevel: number,
     reward: rewardFor('climb', level, false)
   }
 }
+
+/** A board run whose machines follow Flux past the band and his kit too
+ *  (`sim/adaptive.ts` `runScaling`): a Tower Run, a supply run. */
+export const isBoardRun = (q: Pick<Quest, 'kind' | 'template'> | null | undefined): boolean =>
+  !!q && q.kind === 'job' && (q.template === 'climb' || q.template === 'supply')
 
 /** Sectors a climb may be offered in: unlocked, and their boss beaten. */
 export const climbSectors = (unlocked: readonly SectorId[], bosses: readonly string[]): SectorId[] =>
@@ -153,7 +159,9 @@ export const rollJob = (seed: number, sectors: SectorId[], playerLevel: number, 
   const climb: [QuestTemplate, number] = ['climb', CLIMB_WEIGHT]
   const template = weighted(rng, climbs.length ? [...JOB_TEMPLATES, climb] : JOB_TEMPLATES)
   if (template === 'climb') return climbJob(seed, [...climbs], playerLevel, ng)
-  const level = enemyLevelFor(sector, playerLevel, randInt(rng, -1, 1), ng)
+  const delta = randInt(rng, -1, 1)
+  // A supply run follows Flux past the band, like a Tower Run.
+  const level = template === 'supply' ? runLevelFor(sector, playerLevel, delta) : enemyLevelFor(sector, playerLevel, delta, ng)
   const kinds = sector.encounters.kinds.filter(([k]) => k !== 'turret').map(([k, w]) => [k, w] as const)
   let target: EnemyKind | null = null
   let count = 1

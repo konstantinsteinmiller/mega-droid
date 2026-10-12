@@ -55,7 +55,6 @@ export const startLoading = (): void => {}
 export const stopLoading = (): void => {}
 export const startGameplay = (): void => {}
 export const stopGameplay = (): void => {}
-export const signalGameplayLoaded = (): void => {}
 export const syncGameplayLifecycle = (_live: boolean): void => { void _live }
 export const __resetGameplayLifecycle = (): void => {}
 
@@ -83,7 +82,6 @@ const useCrazyGames = () => ({
   stopLoading,
   startGameplay,
   stopGameplay,
-  signalGameplayLoaded,
   syncGameplayLifecycle,
   onCrazyMuteChange,
   addCrazyMuteListener,

@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Lasta Rezisto! Sistemoj restartigitaj.',
     'weak': 'MALFORTA!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TRO MALFORTA!',
     'dizzy': 'KAPTURNITA!',
     'dodge': 'EVITITE!',
     'block': 'Bloki',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Gardisto',
     'hornet': 'Rotora Krabro',
     'stalker': 'Brila Ĉasanto',
+    'spotter': 'Serĉlum-Drono',
     'puffer': 'Pufmino',
     'mole': 'Talpo-Borilo',
     'polar': 'Polusa Hundido',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Gardiston | Gardistojn',
     'hornet': 'Rotoran Krabron | Rotorajn Krabrojn',
     'stalker': 'Brilan Ĉasanton | Brilajn Ĉasantojn',
+    'spotter': 'Serĉlum-Dronon | Serĉlum-Dronojn',
     'puffer': 'Pufminon | Pufminojn',
     'mole': 'Talpo-Borilon | Talpo-Borilojn',
     'polar': 'Polusan Hundidon | Polusajn Hundidojn',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Ventega Majstro',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Grandmajstra Roboto'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Karba Ĉashundo',
+    'icebreakerBrute': 'Glacirompa Bruto',
+    'arcSpider': 'Arka Araneo',
+    'stormHornetQueen': 'Reĝino de Ŝtormaj Vespegoj',
+    'lodestoneGolem': 'Magnetita Golemo',
+    'burrowWyrm': 'Fosa Vermo',
+    'pufferMatriarch': 'Matriarko Pufofiŝo',
+    'glitchStalker': 'Glitĉa Embuskanto',
+    'sawGyro': 'Segila Giro',
+    'sentinelPrototype': 'Gardista Prototipo'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Defio',
+    'cleared': 'Defio venkita! +{bolts} boltoj'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nivelo {n}! Sistemoj plene riparitaj.'
   },
   'tips': {
-    'moveTouch': 'Trenu la maldekstran flankon por moviĝi, la dekstran por ĉirkaŭrigardi. Tuŝetu la plankon por iri tien!',
+    'moveTouch': 'Trenu la maldekstran flankon por moviĝi, la dekstran por ĉirkaŭrigardi.',
     'moveKeys': '{keys} por moviĝi.',
     'lookMouse': 'Movu la muson por ĉirkaŭrigardi.',
     'capture': 'Klaku la scenon por regi la kameraon.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Interagi'
     },
     'touch': {
-      'move': 'Maldekstra flanko: trenu por moviĝi. Tuŝetu la plankon por iri tien.',
-      'fire': 'En batalo: tuŝetu por pafi, tenu por ŝarĝi, lasu por pafi.',
+      'move': 'Maldekstra flanko: trenu por moviĝi. Dekstra flanko: trenu por ĉirkaŭrigardi.',
+      'fire': 'Dekstra flanko aŭ la pafbutono: tuŝetu por pafi, tenu por ŝarĝi, lasu por pafi. Trenu dum vi tenas por celi.',
       'block': 'Tenu la ŝildon por bloki — ĝuste kiam ringo fermiĝas por pari.',
       'use': 'Apud kesto, blokita roboto aŭ pordo: tuŝetu ĝin aŭ la aperantan butonon.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Trafu la kernon, kiam ĝi malfermiĝas.',
       'hornet': '{enemy}. Ĝi plonĝas rekte: flanken!',
       'stalker': '{enemy}. Paru la alsalton.',
+      'spotter': '{enemy}. Eliru el ĝia lumo. Pafu la lampon.',
       'puffer': '{enemy}. Krevigu ĝin, antaŭ ol ĝi ŝvelas.',
       'mole': '{enemy}. Trafu ĝin, kiam ĝi elsaltas.',
       'elite': 'Ora ringo. Elito. Singarde.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Ĉar ili estas liberaj.',
     },
     'guardDown': 'Gardo falis! La vojo estas libera.',
+    'challenge': 'Defia pordo! Interne estas predo.',
     'help': {
       'weapon': 'Elektu vian novan armilon kaj pafu al la dronoj!',
       'gap': 'Iru rekte al la rando, kaj vi transsaltos!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Glitu for ĝuste antaŭ ol la ruĝa ringo atingas vin!',
       'block': 'Tenu blokon, kiam ĝi pafas. Ĝuste kiam ĝi trafas estas perfekte!',
       'blockMiss': 'Ŝildon supren! Bloku ĝuste ĉe la trafo por resendi ĝin!',
+      'chargeMiss': 'Provu ŝargitan pafon: tenu la kanonan butonon!',
       'charge': 'Tenu pafon, ĝis la kanono brilas, poste lasu!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Tiu panelo montras ŝablonon. La lampoj sur la muro ankoraŭ ne.',
       'color': 'Tiu kadro havas plej ŝatatan koloron. Nur ĝiaj lampoj lumu.',
       'cycle': 'Ĉiu trafo ŝanĝas la opinion de lampo. La panelo scias, kion ĝi volas.',
+      'sequence': 'La panelo palpebrumas la saman melodion. Ludu ĝin per la butonoj, laŭorde.',
+      'mirror': 'Tiu radio volas la ringon. Speguloj turniĝas, kiam vi pafas ilin.',
+      'tiles': 'Lumigu ĉiun platon per unu promeno. Dufoje sur unu, aŭ for de ili, kaj ĉio denove mallumas.',
       'solved': 'Nu, nu. Iu ŝatas enigmojn.'
     },
     'landed': 'Surteriĝo! Ek!',

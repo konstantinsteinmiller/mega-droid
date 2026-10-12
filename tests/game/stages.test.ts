@@ -161,7 +161,7 @@ describe('the story routes four sectors to their platform stage', () => {
       expect(generateStage('cryo', seed)).toEqual(generateGlacier(seed))
       expect(generateStage('volt', seed)).toEqual(generateRailRush(seed))
       expect(generateStage('gale', seed)).toEqual(generateSkyDocks(seed))
-      expect(generateStage('scrapyard', seed)).toEqual(generateClimb(seed))
+      expect(generateStage('scrapyard', seed)).toEqual(generateClimb(seed, false)) // the Scrapyard's tower: no challenge room
       for (const s of ['blaze', 'cryo', 'volt', 'gale'] as const) {
         const m = generateStage(s, seed)
         expect(m.terrain).toBeDefined()

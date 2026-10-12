@@ -87,6 +87,16 @@ export const DEFAULT_SOUND_VOLUME = 0.7
  *  Only a fresh install sees this — a saved slider value wins. */
 export const DEFAULT_MUSIC_VOLUME = 0.4
 
+/**
+ * The player's own mute (F2, the speaker buttons), held this session as a hard
+ * silence ON TOP of the zeroed volumes. The volumes alone were not enough: a
+ * cloud re-hydrate re-reads them from a save that may predate the mute, and the
+ * music came back while the button still promised silence. The audio graph
+ * keeps every bus at 0 while this is set, whatever the volumes say; only the
+ * player lifts it — the mute toggle again, or raising a volume slider.
+ */
+export const playerMuted = ref(false)
+
 const userSoundVolume: Ref<number> = ref(readNumber(SOUND_KEY, DEFAULT_SOUND_VOLUME))
 const userMusicVolume: Ref<number> = ref(readNumber(MUSIC_KEY, DEFAULT_MUSIC_VOLUME))
 const userLanguage: Ref<string> = ref(readString(LANGUAGE_KEY, 'en'))
@@ -225,10 +235,12 @@ const useUser = () => {
   const setSettingValue = (name: string, value: unknown) => {
     switch (name) {
       case 'sound':
+        if (+(value as number) > 0) playerMuted.value = false
         userSoundVolume.value = +(value as number)
         setState(SOUND_KEY, userSoundVolume.value)
         break
       case 'music':
+        if (+(value as number) > 0) playerMuted.value = false
         userMusicVolume.value = +(value as number)
         setState(MUSIC_KEY, userMusicVolume.value)
         break

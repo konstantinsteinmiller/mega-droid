@@ -20,15 +20,24 @@ import { THEMES } from '../world/themes'
 /** Walkers that read on a flat platform: no turret, no flyer, nothing that
  *  poses as scenery (a crate that wakes up would sit on a ledge unseen). */
 const GROUND: readonly EnemyKind[] = ['hardhat', 'trooper', 'hopper', 'roller', 'brute']
+/** Drones a Tower Run's flyer posts roll from the sector's table besides the
+ *  Rotor Drone (the neon sector's Searchlight Drone). A story stage names its
+ *  own flyers: its unnamed posts stay Rotor Drones. */
+const FLYERS: readonly EnemyKind[] = ['spotter']
 
 export const spawnClimb = async (
   map: MapData, table: EncounterTable, level: number,
-  opts: { slice?: Slice; onProgress?: (f01: number) => void } = {}
+  opts: { slice?: Slice; onProgress?: (f01: number) => void; tower?: boolean } = {}
 ): Promise<Enemy[]> => {
   const t = map.terrain!
   const rng = mulberry32(map.seed ^ 0xc1e1)
   const walkers = table.kinds.filter(([k]) => GROUND.includes(k))
   const pool: ReadonlyArray<readonly [EnemyKind, number]> = walkers.length ? walkers : [['hardhat', 1]]
+  // Only a table with such a drone rolls for its flyers (no other draw changes)
+  const drones = opts.tower ? table.kinds.filter(([k]) => FLYERS.includes(k)) : []
+  const flyPool: ReadonlyArray<readonly [EnemyKind, number]> | null = drones.length
+    ? [['heli', table.kinds.find(([k]) => k === 'heli')?.[1] ?? 1], ...drones]
+    : null
   const out: Enemy[] = []
   // The first ground posts along the route bring back the first mission's
   // machines (players met them once and never again): a Gear Roller, a
@@ -38,7 +47,7 @@ export const spawnClimb = async (
   let ground = 0
   for (let n = 0; n < t.foes.length; n++) {
     const f = t.foes[n]!
-    let kind: EnemyKind = f.kind ?? (f.role === 'turret' ? 'turret' : f.role === 'flyer' ? 'heli' : weighted(rng, pool))
+    let kind: EnemyKind = f.kind ?? (f.role === 'turret' ? 'turret' : f.role === 'flyer' ? (flyPool ? weighted(rng, flyPool) : 'heli') : weighted(rng, pool))
     let golem = false
     if (!f.kind && f.role !== 'turret' && f.role !== 'flyer') {
       const first = FIRST[ground++]

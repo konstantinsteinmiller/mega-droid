@@ -1,4 +1,6 @@
 import type { SfxName } from '../audio/sfx'
+import type { ChargeKind } from '../fx/chargedShot'
+import { baseStats, chargeInfo, CHARGE_L1, CHARGE_L2, OVERLOAD_EXTRA, type PlayerStats } from '../sim/stats'
 
 /**
  * ─── The intro, "Wake-Up Call": the script ──────────────────────────────────
@@ -18,11 +20,11 @@ import type { SfxName } from '../audio/sfx'
  *   4  25–38     wake-up, first person: blinks, Pip, the HUD boots, Atlas,
  *                the hologram
  *   5  38–46     the beam, the flash, the logo
- *   0  46–69.5   the street, Flux sent out: "Log start." — he runs in, the
+ *   0  46–73.5   the street, Flux sent out: "Log start." — he runs in, the
  *                slide in slow motion, the charge, then the showcase at full
  *                speed (the shot lands, a perfect block, the shield against a
- *                volley, a slide under a shock ring, the Repair Gel); the
- *                tutorial follows
+ *                volley, a slide under a shock ring, the Overload into a big
+ *                Guardroid's weak spot, the Repair Gel); the tutorial follows
  *
  * (#271/#272: the story first — Gauss reviving Flux, Pip, Atlas — then the
  * action. It used to open on the street as a flash-forward and rewind to the
@@ -46,9 +48,9 @@ export interface Shot {
 
 /** The showcase inside the street (s): after the first charged shot the
  *  action runs on — a perfect block, the shield against a volley, a slide
- *  through a red ring, a Repair Gel — so a player has SEEN every move before
- *  playing. */
-export const SHOW = 14.4
+ *  through a red ring, the Overload, a Repair Gel — so a player has SEEN
+ *  every move before playing. */
+export const SHOW = 18.4
 /** The valley-to-beam times are written as their first cut's (where the
  *  valley began at 11 s) plus this: the valley opens the intro now. */
 export const AFTER = -11
@@ -159,9 +161,51 @@ export const SHOW_SLIDE_TO = 12.3
 /** Point blank: a shot, the Trooper falls apart. */
 export const SHOW_FINISH = 12.7
 export const SHOW_FINISH_HIT = 12.85
+/**
+ * The Overload, previewed (#137): as the Trooper falls apart a big Guardroid
+ * drops into the street behind it. Flux dashes away from it, his charge
+ * climbing past full to the Overload — the buster and the charge ring going
+ * green, cyan, then violet, exactly as in play — turns, and puts the violet
+ * shot into its weak spot (its head): KRANCK!, and it blows apart.
+ */
+export const SHOW_BIG_DROP = 13.05
+export const SHOW_BIG_LAND = 13.4
+/** It stomps after him (a step on each). */
+export const SHOW_BIG_STEPS: readonly number[] = [14.45, 15.05]
+/** Flux dashes away, back toward the camera; then he turns back to it. */
+export const SHOW_FLEE_FROM = 13.65
+export const SHOW_FLEE_TO = 14.25
+/** The charge starts here, on a charge clock running OVER_RATE × real time
+ *  (the Overload's 4.2 s told in 2). */
+export const SHOW_OVER_CHARGE = 13.3
+export const OVER_RATE = 2.1
+/** The release, and the shot in the weak spot. */
+export const SHOW_OVER_FIRE = 15.85
+export const SHOW_OVER_HIT = 16.05
+/** The Overload's shot: the game's own violet one (`fx/chargedShot.ts`). */
+export const OVER_SHOT: ChargeKind = 'charge3'
+/** Flux's stats in the preview: the Overload (`giga`) fitted, and no perfect
+ *  window (its gold blink would break the green → cyan → violet it shows). */
+export const OVER_STATS: PlayerStats = { ...baseStats(), giga: true, perfectMul: 0 }
+/** The charge held at action time `st` (s on the game's charge clock, fed to
+ *  `chargeInfo`), or −1 while he is not charging. */
+export const overCharge = (st: number): number =>
+  st < SHOW_OVER_CHARGE || st >= SHOW_OVER_FIRE ? -1 : (st - SHOW_OVER_CHARGE) * OVER_RATE
+/** Where the charge reaches each level (action s): `chargeInfo`'s own thresholds. */
+const overLevelAt = (charge: number): number => SHOW_OVER_CHARGE + charge / OVER_RATE
+export const SHOW_OVER_L1 = overLevelAt(CHARGE_L1 * OVER_STATS.chargeTimeMul)
+export const SHOW_OVER_L2 = overLevelAt(CHARGE_L2 * OVER_STATS.chargeTimeMul)
+export const SHOW_OVER_L3 = overLevelAt(CHARGE_L2 * OVER_STATS.chargeTimeMul + OVERLOAD_EXTRA)
+/** The charge's level at action time `st` (0 while not charging). */
+export const overLevel = (st: number): number => {
+  const c = overCharge(st)
+  return c < 0 ? 0 : chargeInfo(c, OVER_STATS).level
+}
+/** The big Guardroid is in the street: dropped in, not yet blown apart. */
+export const bigOn = (st: number): boolean => st >= SHOW_BIG_DROP && st < SHOW_OVER_HIT
 /** The Repair Gel: the flask up, the green burst, the pose held to the freeze. */
-export const SHOW_GEL = 13.5
-export const SHOW_GEL_BURST = 14.2
+export const SHOW_GEL = 17.5
+export const SHOW_GEL_BURST = 18.2
 
 // ─── Beats inside the shots (s, absolute) ────────────────────────────────────
 
@@ -227,6 +271,8 @@ export type IntroEvent =
   | { at: number; kind: 'sfx'; name: SfxName; gain?: number }
   /** The screen-reader line for a shot (`story.intro.<id>`). */
   | { at: number; kind: 'line'; shot: ShotId }
+  /** "KRANCK!" over the big Guardroid's weak spot (the Overload preview). */
+  | { at: number; kind: 'kranck' }
   /** An Atlas line (`story.atlas.<key>`), shown as a caption. */
   | { at: number; kind: 'atlas'; key: 'logStart' | 'goodMorning' | 'scrapyardFirst' }
   /** Dr. Vex's speech bubble on (`story.vex.<key>`) or off (''). */
@@ -273,6 +319,21 @@ export const EVENTS: readonly IntroEvent[] = ([
   { at: streetAt(SHOW_FINISH), kind: 'sfx', name: 'shoot' },
   { at: streetAt(SHOW_FINISH_HIT), kind: 'sfx', name: 'explode' },
   { at: STREET_AT + 16.5, kind: 'sfx', name: 'synthPulse', gain: 0.5 },
+  // The Overload (#137): the Guardroid lands, Flux dashes off charging, the
+  // levels ring as in play, the violet shot, KRANCK!, it blows apart.
+  { at: streetAt(SHOW_BIG_LAND), kind: 'sfx', name: 'stomp' },
+  { at: streetAt(SHOW_BIG_LAND), kind: 'sfx', name: 'deckLand', gain: 0.8 },
+  ...SHOW_BIG_STEPS.map((v): IntroEvent => ({ at: streetAt(v), kind: 'sfx', name: 'stomp', gain: 0.55 })),
+  { at: streetAt(SHOW_FLEE_FROM), kind: 'sfx', name: 'dash' },
+  { at: streetAt(SHOW_OVER_L1), kind: 'sfx', name: 'charge1' },
+  { at: streetAt(SHOW_OVER_L2), kind: 'sfx', name: 'charge2' },
+  { at: streetAt(SHOW_OVER_L3), kind: 'sfx', name: 'charge3' },
+  { at: streetAt(SHOW_OVER_FIRE), kind: 'sfx', name: 'chargeShotBig' },
+  { at: streetAt(SHOW_OVER_HIT), kind: 'sfx', name: 'crit' },
+  { at: streetAt(SHOW_OVER_HIT), kind: 'kranck' },
+  { at: streetAt(SHOW_OVER_HIT) + 0.02, kind: 'sfx', name: 'explode' },
+  { at: streetAt(SHOW_OVER_HIT + 0.3), kind: 'sfx', name: 'explode', gain: 0.7 },
+  { at: STREET_AT + 19.25, kind: 'sfx', name: 'synthPulse', gain: 0.45 },
   { at: streetAt(SHOW_GEL_BURST), kind: 'sfx', name: 'heal' },
   // 1 · The valley and the Red Signal
   { at: VALLEY_FROM, kind: 'line', shot: 'valley' },

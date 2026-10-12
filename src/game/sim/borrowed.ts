@@ -63,9 +63,11 @@ export const TEACH_TIP = 'lesson:borrowed'
 /** How close Flux must come to take a capsule (plan view / height, m). */
 export const PICK_R = 1.05
 export const PICK_DY = 1.3
-/** A climb capsule stands this far off its ledge's own prize, toward the
- *  wall behind it, so the two never overlap. */
-const LEDGE_OFFSET = 0.8
+/** A climb capsule stands this far off its ledge's own prize along each
+ *  axis, inside the ledge's cell: its plate (0.5 m) clear of the prize's pad
+ *  (0.7 m) — at 0.8 m straight back the two plates lay in one another — and
+ *  of the cell's walls. */
+const LEDGE_OFFSET = 0.92
 
 export interface CapsuleSpot {
   x: number
@@ -144,7 +146,8 @@ const capsuleCell = (r: Room): [number, number] => {
 }
 
 /** Off a ledge's centre toward the wall(s) behind it — the sides with no
- *  cell at all — staying inside the ledge's own cell. */
+ *  cell at all — and to one side along a wall, staying inside the ledge's
+ *  own cell: a corner of it. */
 const backOfLedge = (map: MapData, x: number, z: number): [number, number] => {
   const i = Math.floor(x / CELL)
   const j = Math.floor(z / CELL)
@@ -159,9 +162,11 @@ const backOfLedge = (map: MapData, x: number, z: number): [number, number] => {
       dz += dj
     }
   }
-  const len = Math.hypot(dx, dz)
-  if (len < 1e-6) return [LEDGE_OFFSET, 0]
-  return [(dx / len) * LEDGE_OFFSET, (dz / len) * LEDGE_OFFSET]
+  // Along a single wall: the corner on its +x / +z side.
+  if (dx && !dz) dz = 1
+  else if (dz && !dx) dx = 1
+  else if (!dx && !dz) { dx = 1; dz = 1 }
+  return [Math.sign(dx) * LEDGE_OFFSET, Math.sign(dz) * LEDGE_OFFSET]
 }
 
 /**

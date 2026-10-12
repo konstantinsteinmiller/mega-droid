@@ -26,7 +26,7 @@ export interface VoiceTodoInput {
 const at = (o: unknown, key: string): unknown => key.split('.').reduce<unknown>((x, k) => (x as Record<string, unknown> | undefined)?.[k], o)
 const cell = (s: unknown): string => String(s ?? '—').replace(/\|/g, '\\|').replace(/\n/g, ' ')
 const NAMES: Record<string, string> = { atlas: 'Atlas', vex: 'Vex', flux: 'Flux', gauss: 'Gauss', pip: 'Pip' }
-const LANG_NAMES: Record<string, string> = { en: 'English', de: 'German', es: 'Spanish', zh: 'Chinese' }
+const LANG_NAMES: Record<string, string> = { en: 'English', de: 'German', es: 'Spanish', zh: 'Chinese', fr: 'French' }
 
 export const renderVoiceTodo = ({ lines, langs, locales, shipped, files, fileName }: VoiceTodoInput): string => {
   const live = lines.filter(l => l.status === 'live')

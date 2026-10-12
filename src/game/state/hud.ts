@@ -47,6 +47,9 @@ export const hud = shallowReactive({
   /** Boss bar. */
   bossName: '',
   bossHp01: 0,
+  /** The bar's look: '' a Core Master's (violet, the skull), 'challenge' a
+   *  challenge room's mini-boss (amber, the trophy; `sim/challenge.ts`). */
+  bossStyle: '' as '' | 'challenge',
   /** Marks across the boss bar (0..1 of it): where a multi-part boss's
    *  phases end (the Grand Master's arms, feet, head). Empty for one body. */
   bossMarks: [] as number[],
@@ -143,7 +146,10 @@ export const hud = shallowReactive({
   /** Sector / mission title card. */
   titleKey: '',
   titleSub: '',
-  titleShownAt: 0
+  titleShownAt: 0,
+  /** The card's look: '' a Core Master's, 'challenge' the CHALLENGE label
+   *  over a mini-boss's name in gold. */
+  titleStyle: '' as '' | 'challenge'
 })
 
 export type HudTicker = (dt: number) => void
@@ -186,8 +192,9 @@ export type HudEvent =
   | { t: 'toast'; key: string; params?: Record<string, string | number>; color?: string; icon?: string }
   | { t: 'flash'; color: string; strength: number }
   | { t: 'hurt'; strength: number }
-  /** A shot on a weak spot: the amber "KRANCK!" that wobbles up and pops. */
-  | { t: 'kranck'; x: number; y: number; z: number }
+  /** A shot on a weak spot: the amber "KRANCK!" that wobbles up and pops.
+   *  `key` swaps the word, same look (the training drone's "TOO WEAK!"). */
+  | { t: 'kranck'; x: number; y: number; z: number; key?: string }
   /** An item found in the mission: its card (`LootCard.vue`). */
   | { t: 'loot'; item: Item }
 

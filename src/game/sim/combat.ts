@@ -2,12 +2,12 @@ import { sceneQuality } from '../engine/quality'
 import {
   Sprite, SpriteMaterial, AdditiveBlending, Color, Mesh, MeshBasicMaterial, SphereGeometry, Group, type Scene
 } from 'three'
-import type { Enemy, Shot, World, Pickup, PickupKind } from './world'
+import type { Enemy, Shot, ShotKind, World, Pickup, PickupKind } from './world'
 import type { PlayerStats } from './stats'
 import { glowTexture } from '../world/textures'
 import { SHOT_LOOK, CHARGE_AURA, buildAura, tintAura, poseAura, type ChargeKind } from '../fx/chargedShot'
 import { hasLineOfSight, floorAt } from '../world/nav'
-import { PARRY_WINDOW, wake, golemShielded, wakeGolem, ROCK_G, tryStun } from './enemies'
+import { parryWindow, wake, golemShielded, wakeGolem, ROCK_G, tryStun, smashLamp, shove } from './enemies'
 import { Rubble } from '../fx/rubble'
 import { pushHud } from '../state/hud'
 import { incomingShot } from '../state/damageFeed'
@@ -48,6 +48,9 @@ export interface CombatHost extends World {
    *  may have left after this hit (the block lesson's volley takes it apart
    *  in even thirds), or undefined for a plain hit. */
   reflectShare?(s: Shot, e: Enemy): number | undefined
+  /** The perfect block's window now (s): `parryWindow` of the input device
+   *  and the Parry skill (absent: the desktop's, with the skill's bonus). */
+  parryWindow?(): number
   scene: Scene
   stats: PlayerStats
   hitStop: number
@@ -71,6 +74,38 @@ export interface CombatHost extends World {
 /** Height of the player's feet: the climb's floors (`nav.floorAt`, and an
  *  enemy's `floor`) lift everything aimed at him; 0 on a flat map. */
 const feetOf = (h: World): number => h.player.y ?? 0
+
+/**
+ * Which machine shots the shield takes — the rule, by how the shot flies, so
+ * no machine can opt out of it. Every one that flies AT Flux (a bullet, a
+ * homing orb, a thrown rock on its short arc) is blockable and a perfect
+ * block sends it back: the block lesson promises exactly that. Only a lobbed
+ * shell (a mortar round, a golem's boulder) comes down from above on a spot,
+ * with a ring on the floor: no shield takes it, Flux steps out of the ring.
+ */
+export const shotBlockable = (kind: ShotKind): boolean => kind !== 'shell'
+
+/** A held block takes this share off a machine's bullet or blow (#136). */
+export const BLOCK_CUT = 0.8
+/**
+ * …but only this share off a blast (#136): a stomp's shockwave, a ring, a
+ * fire wave, a shell's landing, a red-ringed rush — the red ring means "get
+ * out of the way"; the shield, raised toward the machine, still softens it.
+ * Its own named exception, so no machine's attack slips past the shield by
+ * accident (the Polarity Works' drones' second orb did, #136).
+ */
+export const AOE_BLOCK_CUT = 0.3
+
+/**
+ * The share a held, facing block takes off a hit — the ONE rule, for every
+ * attack: a blockable one (every machine bullet, `shotBlockable`, and every
+ * blow) BLOCK_CUT; any other machine attack AOE_BLOCK_CUT; a level's own
+ * hazard (a trap, a crusher, the cold: no machine behind it) nothing. No
+ * attack pierces the shield: one that should must be named here, and stay
+ * blockable (a perfect block still reflects it).
+ */
+export const blockCut = (o: { blockable: boolean }, fromMachine: boolean): number =>
+  o.blockable ? BLOCK_CUT : fromMachine ? AOE_BLOCK_CUT : 0
 
 const sphereGeo = new SphereGeometry(1, 12, 8)
 
@@ -233,7 +268,7 @@ export class CombatSystem {
     return s
   }
 
-  spawnEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number, blockable: boolean): Shot {
+  spawnEnemyShot(e: Enemy, x: number, y: number, z: number, dx: number, dy: number, dz: number, speed: number, dmg: number): Shot {
     const s = this.acquire()
     s.owner = 'enemy'
     s.kind = 'enemy'
@@ -247,15 +282,16 @@ export class CombatSystem {
     s.dmg = dmg
     s.life = 3
     s.source = e
-    s.blockable = blockable
     if (e.kind === 'golem') {
       // A crate golem throws a real stone, on an arc (ROCK_G in update)
       s.kind = 'rock'
+      s.blockable = shotBlockable(s.kind)
       this.look(s, 'rock')
       s.core!.visible = false
       s.rock = this.rubble.stone(false)
       return s
     }
+    s.blockable = shotBlockable(s.kind)
     const glow = e.element === 'fire' ? '#ff7a2a' : e.element === 'ice' ? '#7fe8ff' : e.element === 'volt' ? '#fff04a' : '#ff5a3a'
     this.look(s, 'enemy', glow)
     return s
@@ -284,7 +320,7 @@ export class CombatSystem {
   /** A slow homing energy orb — can be blocked, parried or shot down. */
   fireOrb(e: Enemy, x: number, y: number, z: number, speed: number, dmg: number): void {
     const h = this.host
-    const s = this.spawnEnemyShot(e, x, y, z, h.player.x - x, feetOf(h) + EYE_H - 0.45 - y, h.player.z - z, speed, dmg, true)
+    const s = this.spawnEnemyShot(e, x, y, z, h.player.x - x, feetOf(h) + EYE_H - 0.45 - y, h.player.z - z, speed, dmg)
     s.homePlayer = true
     s.destructible = true
     s.life = 5
@@ -350,7 +386,7 @@ export class CombatSystem {
     s.dmg = dmg
     s.life = dur + 0.5
     s.source = e
-    s.blockable = false
+    s.blockable = shotBlockable(s.kind)
     this.look(s, 'shell')
     if (e.kind === 'golem') {
       // The golem's boulder, from over its head, in a faint dust halo
@@ -398,9 +434,9 @@ export class CombatSystem {
           h.shake(0.3)
           h.sfx(s.rock ? 'stomp' : 'explode', s.x, s.z)
           if (Math.hypot(h.player.x - s.x, h.player.z - s.z) < 1.9 + PLAYER_R) {
-            // The shield takes a shell too, raised toward the gun that lobbed
-            // it (the landing point is often Flux's own feet, no direction).
-            h.hitPlayer(s.source, s.dmg, { blockable: true, fromX: s.sx, fromZ: s.sz, kind: 'aoe' })
+            // From the gun that lobbed it (the landing point is often Flux's
+            // own feet, no direction). Not the shield's (`shotBlockable`).
+            h.hitPlayer(s.source, s.dmg, { blockable: s.blockable, fromX: s.sx, fromZ: s.sz, kind: 'aoe' })
           }
           this.kill(s)
         }
@@ -524,6 +560,11 @@ export class CombatSystem {
         }
         for (const e of h.enemies) {
           if (e.state === 'dead' || e.offstage || e.buried || s.hitIds.includes(e.id)) continue
+          // A challenge mini-boss's own parts first: a shield drone or a decoy
+          // takes the shot, or a blinked-out body lets it by.
+          const own = e.challenge?.spec.behaviour.shot?.(h, e, e.challenge.mem, s)
+          if (own === 'pass') continue
+          if (own === 'catch') { this.kill(s); break }
           // A shot aimed at this machine's weak spot: on the spot, it lands
           // there; still closing on it, the body does not catch it first;
           // once it has passed it by, it is an ordinary shot.
@@ -564,11 +605,15 @@ export class CombatSystem {
         const dy = feetOf(h) + EYE_H - 0.45 - s.y
         const dz = h.player.z - s.z
         const rr = 0.5 + s.radius
-        // Late-window flash: the shot glints white when a block now would parry.
+        // Late-window flash: the shot glints white when a block now would parry
+        // — timed to the moment it TOUCHES him (rr out), not to his middle. Timed
+        // to the middle, a slow orb (4 m/s) glinted 0.1 s before it landed: a
+        // press on the glint always came in after the hit.
         const toPlayer = Math.hypot(dx, dz)
         const sp = Math.hypot(s.vx, s.vz) || 1
+        const eta = Math.max(0, Math.hypot(dx, dy, dz) - rr) / (Math.hypot(s.vx, s.vy, s.vz) || 1)
         incomingShot(h.player, s.x, s.z, s.px, s.pz, s.vx, s.vz) // an off-screen shot whizzes from its side
-        if (s.blockable && toPlayer / sp < PARRY_WINDOW + h.stats.parryBonus) {
+        if (s.blockable && eta < (h.parryWindow?.() ?? parryWindow('mouse', h.stats.parryBonus))) {
           ;(s.sprite.material as SpriteMaterial).color.set('#ffffff')
           if (h.cueBlock?.(s, toPlayer / sp)) continue
         }
@@ -830,8 +875,10 @@ export class CombatSystem {
     const h = this.host
     // A boss not yet in the arena takes nothing and shows nothing.
     if (e.state === 'dead' || e.offstage || e.buried) return
-    // Bosses are untouchable during their entrance and their phase-2 roar.
-    if ((e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar'))) || h.lessonShield?.(e)) {
+    // Bosses are untouchable during their entrance and their phase-2 roar,
+    // a challenge's mini-boss during its entrance.
+    if ((e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar'))) ||
+      (e.challenge && (e.state === 'idle' || e.state === 'alert')) || h.lessonShield?.(e)) {
       h.fx.sparks(o.x, o.y, o.z, '#ffffff', 6, 4, 0.14)
       pushHud({ t: 'text', x: o.x, y: o.y + 0.3, z: o.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', e.x, e.z)
@@ -878,6 +925,9 @@ export class CombatSystem {
         while (d < -Math.PI) d += Math.PI * 2
         if (Math.abs(d) < 1.3) guarded = true
       }
+      // A challenge mini-boss's own guard (an Icebreaker's ice shield).
+      const ch = e.challenge
+      if (ch?.spec.behaviour.guarded?.(e, ch.mem, o.fromX, o.fromZ)) guarded = true
       if (e.kind === 'trooper' && e.guard > 0.55) {
         const toShot = Math.atan2(o.fromX - e.x, o.fromZ - e.z)
         let d = toShot - e.yaw
@@ -923,16 +973,16 @@ export class CombatSystem {
     e.flash = 1
     // Magnet Pull yanks a flyer out of its hover: a short stun (it sags).
     if (o.weapon === 'magnetPull' && e.def.fly > 0 && !e.boss && e.hp > 0) this.stun(e, 0.8)
+    // A Searchlight Drone's lamp is its weak spot: a shot on it puts the light out.
+    if (o.weakSpot && e.spot && e.hp > 0) smashLamp(h, e)
     e.hurtAt = h.time
     // Knockback + stagger
     const kb = o.charge >= 2 ? 0.35 : 0.08
     const kx = e.x - o.fromX
     const kz = e.z - o.fromZ
     const kl = Math.hypot(kx, kz) || 1
-    if (e.def.speed > 0 && !e.rooted) {
-      e.x += (kx / kl) * kb
-      e.z += (kz / kl) * kb
-    }
+    // Never into a wall or up onto a block (`shove`), dead or alive.
+    shove(h, e, (kx / kl) * kb, (kz / kl) * kb)
     if (o.charge >= 2 && !e.boss && e.hp > 0 && (e.state === 'tele' || e.state === 'engage' || e.state === 'act')) {
       // A full charge interrupts: telegraphs can be cancelled by timing it —
       // with diminishing returns (`tryStun`), never forever.

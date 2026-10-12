@@ -173,9 +173,10 @@ describe('generateRailRush', () => {
     for (const seed of SEEDS) {
       const m = generateRailRush(seed)
       expect(m.w).toBeLessThanOrEqual(48)
-      expect(m.h).toBeLessThanOrEqual(40)
-      expect(m.terrain!.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(['hall', 'vents', 'ladder', 'lift', 'rail', 'rail', 'cart', 'descent', 'arena'])
-      expect(m.rooms.length - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.volt + 1)
+      // (42: the rows under the exit station hold the challenge room.)
+      expect(m.h).toBeLessThanOrEqual(42)
+      expect(m.terrain!.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(['hall', 'vents', 'ladder', 'lift', 'rail', 'rail', 'cart', 'descent', 'arena'])
+      expect(m.rooms.length - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0))).toBe(STAGE_LENGTH.volt + 1)
       mirrored.add(m.start.x > m.w * CELL / 2)
     }
     expect(mirrored.size).toBe(2)

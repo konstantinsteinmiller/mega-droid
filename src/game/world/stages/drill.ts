@@ -213,14 +213,15 @@ export const generateDeepMine = (seed: number): MapData => {
   b.corridor(11, 23, 1, 0, 2, L(5))
 
   // ── 10 Lamp gallery ───────────────────────────────────────────────────────
-  // Behind the south wall, a secret alcove (shoot the buttons).
+  // Behind the south wall, a secret alcove: a beam from the north wall, two
+  // mirrors to turn into the target beside the false wall (#143).
   b.addRoom(13, 22, 8, 5, 'combat', 'hall', L(5))
   b.chest(20, 22, YAW_PX)
   b.checkpoint(14, 24, YAW_PX, cells(13, 23, 14, 25))
   b.foe('ground', 17, 24, YAW_NX, [15, 22, 20, 26], undefined, 'mole')
   b.foe('flyer', 15, 23, YAW_NX, [13, 22, 20, 26], [L(5), L(4)])
-  b.secret(9, 'color', [13, 27, 14, 27], { i: 14, j: 27, axis: 'z' },
-    [[13, 26, 'w', 1], [16, 26, 's', 0], [18, 26, 's', 1], [20, 25, 'e', 2]], [], 'tank', 1)
+  b.secret(9, 'mirror', [13, 27, 14, 27], { i: 14, j: 27, axis: 'z' }, [], [], 'tank', undefined,
+    { emitter: [18, 22, 'n'], mirrors: [[18, 25, 0], [15, 25, 0]] })
   b.corridor(21, 24, 1, 0, 2, L(5))
 
   // ── 11 Approach ───────────────────────────────────────────────────────────
@@ -244,6 +245,11 @@ export const generateDeepMine = (seed: number): MapData => {
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): south off the foot of the stair
+  // descent, a gallery dug at the landing's level (a plain rock floor for
+  // the wyrm to dive through) — its door in the wall ahead of Flux as he
+  // comes down the flight; the way on is east.
+  b.challengeRoom(8, { mouth: { i: 5, j: 24, di: 0, dj: 1 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

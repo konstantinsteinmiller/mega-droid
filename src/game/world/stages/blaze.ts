@@ -237,6 +237,12 @@ export const generateMeltdown = (seed: number): MapData => {
   const start = { x: cellCenter(3), z: cellCenter(8) + CELL / 2, yaw: YAW_PX }
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): off the big drop's bottom
+  // ledge, which now runs on to the shaft's south wall; the challenge door
+  // in that wall faces Flux as he lands, the way on (west, to the lift)
+  // never passes it. Level with the ledge, over the void like the stack.
+  floor(19, 15, 21, 15, L(1))
+  b.challengeRoom(5, { mouth: { i: 20, j: 15, di: 0, dj: 1 } })
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

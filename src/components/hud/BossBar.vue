@@ -1,10 +1,11 @@
 <template lang="pug">
   Transition(name="bb")
-    div.bb(v-if="hud.bossName" aria-hidden="true")
-      //- The name over the bar's left end, marked with the skull.
+    div.bb(v-if="hud.bossName" aria-hidden="true" :class="{ challenge: hud.bossStyle === 'challenge' }")
+      //- The name over the bar's left end, marked with the skull (a
+      //- challenge's mini-boss: the trophy, the bar in amber).
       div.bb-name
         span.skull
-          GameIcon(name="skull")
+          GameIcon(:name="hud.bossStyle === 'challenge' ? 'trophy' : 'skull'")
         span.label {{ t(hud.bossName) }}
       div.bb-bar
         div.track
@@ -102,6 +103,14 @@ const segPct = computed(() => (Math.ceil(Math.min(1, Math.max(0, hud.bossHp01)) 
   margin-left: -1px
   background: #ffd84a
   z-index: 1
+// A challenge room's mini-boss (`sim/challenge.ts`): amber, the trophy.
+.challenge
+  .bb-name
+    text-shadow: 0 2px 0 #141a33, 0 0 6px rgba(255, 176, 58, 0.7)
+  .skull
+    color: #ffc23a
+  .fill
+    background: linear-gradient(180deg, #fff3cf 0%, #fff3cf 30%, #ffb43a 31%, #e07a12 100%)
 .bb-enter-active, .bb-leave-active
   transition: opacity 0.3s, transform 0.3s
 .bb-enter-from, .bb-leave-to

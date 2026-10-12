@@ -21,7 +21,9 @@ export const WALL_H = 4.2
 
 export const enum Cell { Void = 0, Room = 1, Corridor = 2 }
 
-export type RoomRole = 'start' | 'combat' | 'treasure' | 'objective' | 'boss'
+/** `challenge`: an optional mini-boss room off the route (`MapData.challenge`):
+ *  no regular cast, no chest, never on the way to the objective. */
+export type RoomRole = 'start' | 'combat' | 'treasure' | 'objective' | 'boss' | 'challenge'
 
 /** The four grid neighbours, in a fixed order (+X, −X, +Z, −Z). */
 export const DIRS4: ReadonlyArray<readonly [number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]]
@@ -55,6 +57,9 @@ export interface Door {
   from: number
   to: number
   boss: boolean
+  /** The door of a challenge room (`MapData.challenge`): its own look
+   *  (`buildDoor`'s challenge door), shut behind Flux until the mini-boss falls. */
+  challenge?: boolean
 }
 
 export interface Pillar {
@@ -108,6 +113,11 @@ export interface MapData {
    *  its door from the arena (held until the boss is down) and the cell of
    *  its beam pedestal. */
   exit?: { room: number; door: number; pad: [number, number] }
+  /** An optional mini-boss room off the route (`sim/challenge.ts`): the
+   *  room, its door (from the room it hangs off) and the cell its mini-boss
+   *  waits on. Carved by `addChallengeRoom` (a labyrinth) or
+   *  `Builder.challengeRoom` (a hand-built map). */
+  challenge?: { room: number; door: number; at: [number, number] }
 }
 
 // ─── Terrain (the climb) ─────────────────────────────────────────────────────
@@ -326,7 +336,14 @@ export interface MagnetRail {
  *  with a `valve` (a wheel on a wall) it stands at `hi` until the valve is
  *  shot, then drains to `lo` for good; otherwise it holds at `lo`. In it
  *  Flux wades slower the deeper it is; over his chest it hurts. A current
- *  (dx, dz, `strength` m/s) pushes whoever wades in it. */
+ *  (dx, dz, `strength` m/s) pushes whoever wades in it.
+ *
+ *  Water never stands on a floor in the open: a still or running zone fills
+ *  a pool sunk into the floor (`Builder.pool`), its surface under the rim;
+ *  a lock's `hi` is under the ledges round it. A tide (`period`) is a
+ *  `flood`: its room seals first — every doorway under the waterline shut
+ *  and held — then inlets in its walls fill it; it drains, and the doors
+ *  open again, once the room is done (`sim/stages/water.ts`). */
 export interface WaterZone {
   i0: number
   j0: number
@@ -340,6 +357,9 @@ export interface WaterZone {
   dx?: number
   dz?: number
   strength?: number
+  /** A sealed flood: idle (at `lo`, under every floor) until Flux is in its
+   *  room and every low doorway of it is shut. */
+  flood?: boolean
   room: number
 }
 
@@ -464,14 +484,26 @@ export interface NavLink {
  *    the `key` colour ON (the wall's frame wears that colour).
  *  - `cycle`: each hit steps red → green → blue → yellow; the panel shows
  *    the target colour per button, left to right.
+ *  - `sequence`: each button its own colour and icon; the panel plays an
+ *    order (`target`: button indices) to shoot them in.
+ *  - `mirror`: a beam from the `emitter` turned by the floor `mirrors` (a
+ *    shot flips one) must reach the panel, the target beside the false wall.
+ *  - `tiles`: floor plates; walk onto every one, never one twice, without
+ *    stepping off them (no buttons).
  */
 export interface SecretSpec {
   room: number
-  kind: 'lights' | 'color' | 'cycle'
-  /** Wall buttons: position of the button face centre and the wall's normal into the room (unit, axis aligned). */
+  kind: 'lights' | 'color' | 'cycle' | 'sequence' | 'mirror' | 'tiles'
+  /** Wall buttons: position of the button face centre and the wall's normal into the room (unit, axis aligned). Empty for 'mirror' and 'tiles'. */
   buttons: Array<{ x: number; y: number; z: number; nx: number; nz: number; color: number /* 0 red,1 green,2 blue,3 yellow; 'lights': ignored */ }>
-  /** Target: per button ON (lights/color) or color index (cycle). 'color': target = buttons[i].color === key. */
+  /** Target: per button ON (lights/color) or color index (cycle); 'sequence': the button indices in the order to shoot them. 'color': target = buttons[i].color === key. Empty for 'mirror' and 'tiles'. */
   target: number[]
+  /** 'mirror' only: the beam's lamp on a wall (its face centre and normal into the room, at the panel's height). */
+  emitter?: { x: number; y: number; z: number; nx: number; nz: number }
+  /** 'mirror' only: the turning mirrors, each on a cell centre (y: the plate's middle). `o` how it starts: 0 turns a beam along +x to +z, 1 turns +x to −z. */
+  mirrors?: Array<{ x: number; y: number; z: number; o: number }>
+  /** 'tiles' only: the floor plates, each a cell centre on its floor. */
+  tiles?: Array<{ x: number; y: number; z: number }>
   /** 'color' only: the key color index. */
   key?: number
   /** The hint panel (on the wall next to the hidden door). */
@@ -550,6 +582,8 @@ export interface MapSpec {
   seed: number
   rooms: number
   boss: boolean
+  /** Hang an optional challenge room off the route (`addChallengeRoom`). */
+  challenge?: boolean
 }
 
 export const cellCenter = (i: number): number => (i + 0.5) * CELL
@@ -566,6 +600,14 @@ const DIRS: Array<[number, number]> = [[1, 0], [-1, 0], [0, 1], [0, -1]]
  * the very same map from its quest seed.
  */
 export const generateMap = (spec: MapSpec): MapData => {
+  const m = generateBase(spec)
+  // On its own random stream, after everything else: the rest of the map is
+  // the one it always was for this seed.
+  if (spec.challenge) addChallengeRoom(m, mulberry32((spec.seed ^ 0xc4a11) >>> 0))
+  return m
+}
+
+const generateBase = (spec: MapSpec): MapData => {
   let seed = spec.seed
   for (let attempt = 0; attempt < 8; attempt++) {
     const m = generateOnce({ ...spec, seed })
@@ -732,6 +774,9 @@ const generateOnce = (spec: MapSpec): MapData => {
         [r.x0 + inset, r.z0 + r.h - 1 - inset], [r.x0 + r.w - 1 - inset, r.z0 + r.h - 1 - inset]
       ]
       for (const [i, j] of pts) {
+        // A narrow room's two insets meet in one cell: one pillar there, not
+        // two inside each other.
+        if (navBlock[idx(i, j)]) continue
         pillars.push({ x: cellCenter(i), z: cellCenter(j), r: 0.62 })
         navBlock[idx(i, j)] = 1
       }
@@ -816,3 +861,99 @@ export const corridorMouth = (map: MapData, d: Door): { x: number; z: number; ax
     n: (d.axis === 'x' ? di : dj) as 1 | -1
   }
 }
+
+// ─── The challenge room (an optional mini-boss, `sim/challenge.ts`) ─────────
+
+/** A challenge room's sizes, biggest first (cells): room to dodge a lunge. */
+const CHALLENGE_SIZES: ReadonlyArray<readonly [number, number]> = [[6, 6], [6, 5], [5, 6], [5, 5], [5, 4], [4, 5]]
+
+/**
+ * Hang an optional challenge room off a labyrinth (a supply run): a side room
+ * at the end of its own corridor off a combat or treasure room — never the
+ * start, the objective or the boss room, so the map stays a tree and no way
+ * to the objective ever passes through it. Its door is the challenge door
+ * (`Door.challenge`). Draws only from `rng`; returns false (and changes
+ * nothing) when no room has the space.
+ */
+export const addChallengeRoom = (map: MapData, rng: Rng): boolean => {
+  const W = map.w
+  const H = map.h
+  const idx = (i: number, j: number) => j * W + i
+  const voidAt = (i: number, j: number) => i >= 1 && j >= 1 && i < W - 1 && j < H - 1 && map.cell[idx(i, j)] === Cell.Void
+  // Combat rooms first (a fight's room leads to a fight), then the dead ends.
+  const hosts = [
+    ...shuffle(rng, map.rooms.filter(r => r.role === 'combat')),
+    ...shuffle(rng, map.rooms.filter(r => r.role === 'treasure'))
+  ]
+  for (const [w, h] of CHALLENGE_SIZES) {
+    for (const host of hosts) {
+      for (const [di, dj] of shuffle(rng, [...DIRS4])) {
+        const along = di !== 0 ? host.h : host.w
+        if (along < 3) continue
+        // Off the wall's middle first, never at a corner.
+        const order = Array.from({ length: along - 2 }, (_, k) => k + 1)
+          .sort((a, b) => Math.abs(a - (along - 1) / 2) - Math.abs(b - (along - 1) / 2))
+        for (const o of order) {
+          for (const len of [2, 3]) {
+            const ci = di > 0 ? host.x0 + host.w : di < 0 ? host.x0 - 1 : host.x0 + o
+            const cj = dj > 0 ? host.z0 + host.h : dj < 0 ? host.z0 - 1 : host.z0 + o
+            const ex = ci + di * (len - 1)
+            const ez = cj + dj * (len - 1)
+            const x0 = di > 0 ? ex + 1 : di < 0 ? ex - w : ex - Math.floor(w / 2)
+            const z0 = dj > 0 ? ez + 1 : dj < 0 ? ez - h : ez - Math.floor(h / 2)
+            let free = true
+            for (let j = z0 - 1; j <= z0 + h && free; j++) for (let i = x0 - 1; i <= x0 + w && free; i++) free = voidAt(i, j)
+            for (let s = 0; s < len && free; s++) {
+              const i = ci + di * s
+              const j = cj + dj * s
+              free = voidAt(i, j) && voidAt(i + dj, j + di) && voidAt(i - dj, j - di)
+            }
+            if (!free) continue
+            carveChallenge(map, host, x0, z0, w, h, ci, cj, di, dj, len)
+            return true
+          }
+        }
+      }
+    }
+  }
+  return false
+}
+
+const carveChallenge = (map: MapData, host: Room, x0: number, z0: number, w: number, h: number, ci: number, cj: number, di: number, dj: number, len: number): void => {
+  const W = map.w
+  const idx = (i: number, j: number) => j * W + i
+  const id = map.rooms.length
+  const doorId = map.doors.length
+  for (let j = z0; j < z0 + h; j++) {
+    for (let i = x0; i < x0 + w; i++) {
+      map.cell[idx(i, j)] = Cell.Room
+      map.room[idx(i, j)] = id
+    }
+  }
+  for (let s = 0; s < len; s++) map.cell[idx(ci + di * s, cj + dj * s)] = Cell.Corridor
+  const ex = ci + di * (len - 1)
+  const ez = cj + dj * (len - 1)
+  // Nothing of the host's stands in the corridor's mouth (a chest there
+  // would wall the challenge in).
+  const mi = ci - di
+  const mj = cj - dj
+  const nearMouth = (i: number, j: number) => Math.abs(i - mi) + Math.abs(j - mj) <= 1
+  host.spots = host.spots.filter(([i, j]) => !nearMouth(i, j))
+  host.wallSpots = host.wallSpots.filter(([i, j]) => !nearMouth(i, j))
+  host.children.push(id)
+  // Its cells, minus the doorway: the mini-boss's room keeps no props.
+  const spots: Array<[number, number]> = []
+  for (let j = z0; j < z0 + h; j++) {
+    for (let i = x0; i < x0 + w; i++) if (Math.abs(i - ex) + Math.abs(j - ez) > 2) spots.push([i, j])
+  }
+  map.rooms.push({ id, x0, z0, w, h, depth: host.depth + 1, parent: host.id, children: [], role: 'challenge', door: doorId, spots, wallSpots: [] })
+  map.doors.push({ id: doorId, i: ex, j: ez, axis: di !== 0 ? 'x' : 'z', dir: (di !== 0 ? di : dj) as 1 | -1, from: host.id, to: id, boss: false, challenge: true })
+  map.challenge = { room: id, door: doorId, at: challengeSpot(x0, z0, w, h, di, dj) }
+}
+
+/** Where a challenge room's mini-boss waits: the middle of the room, a cell
+ *  past it from the door when the room is even across the way in. */
+export const challengeSpot = (x0: number, z0: number, w: number, h: number, di: number, dj: number): [number, number] => [
+  x0 + (di < 0 ? Math.floor((w - 1) / 2) : Math.floor(w / 2)),
+  z0 + (dj < 0 ? Math.floor((h - 1) / 2) : Math.floor(h / 2))
+]

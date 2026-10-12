@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Posljednji otpor! Sustavi ponovno pokrenuti.',
     'weak': 'SLABOST!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'PRESLABO!',
     'dizzy': 'OMAMLJEN!',
     'dodge': 'IZMICANJE!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Čuvar',
     'hornet': 'Rotorski stršljen',
     'stalker': 'Svjetleći lovac',
+    'spotter': 'Reflektorski dron',
     'puffer': 'Mina napuhača',
     'mole': 'Krtica bušilica',
     'polar': 'Polarni štenac',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Čuvara | Čuvara | Čuvara',
     'hornet': 'Rotorskog stršljena | Rotorska stršljena | Rotorskih stršljena',
     'stalker': 'Svjetlećeg lovca | Svjetleća lovca | Svjetlećih lovaca',
+    'spotter': 'Reflektorski dron | Reflektorska drona | Reflektorskih dronova',
     'puffer': 'Minu napuhaču | Mine napuhače | Mina napuhača',
     'mole': 'Krticu bušilicu | Krtice bušilice | Krtica bušilica',
     'polar': 'Polarnog štenca | Polarna štenca | Polarnih štenaca',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Majstor Vihora',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robot Veliki Majstor'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Žarni pas',
+    'icebreakerBrute': 'Ledolomac grubijan',
+    'arcSpider': 'Lučni pauk',
+    'stormHornetQueen': 'Kraljica olujnih stršljena',
+    'lodestoneGolem': 'Magnetitni golem',
+    'burrowWyrm': 'Ukopani crv',
+    'pufferMatriarch': 'Matrijarh napuhača',
+    'glitchStalker': 'Glitch vrebač',
+    'sawGyro': 'Pilni žiro',
+    'sentinelPrototype': 'Prototip čuvara'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Izazov',
+    'cleared': 'Izazov svladan! +{bolts} vijaka'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Razina {n}! Sustavi potpuno popravljeni.'
   },
   'tips': {
-    'moveTouch': 'Povuci lijevu stranu za kretanje, desnu za razgledavanje. Dodirni pod i otići ćeš tamo!',
+    'moveTouch': 'Povuci lijevu stranu za kretanje, desnu za razgledavanje.',
     'moveKeys': 'Kreći se tipkama {keys}.',
     'lookMouse': 'Pomiči miš za razgledavanje.',
     'capture': 'Klikni scenu i preuzmi kontrolu nad kamerom.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Radnja'
     },
     'touch': {
-      'move': 'Lijeva strana: povuci za kretanje. Dodirni pod i otići ćeš tamo.',
-      'fire': 'U borbi: dodirni za pucanj, drži za punjenje, pusti za paljbu.',
+      'move': 'Lijeva strana: povuci za kretanje. Desna strana: povuci za razgledavanje.',
+      'fire': 'Desna strana ili gumb za paljbu: dodirni za pucanj, drži za punjenje, pusti za paljbu. Povlači dok držiš za ciljanje.',
       'block': 'Drži štit za blokiranje — baš kad se prsten zatvara, pariraš.',
       'use': 'Kraj sanduka, zaglavljenog robota ili vrata: dodirni ih ili gumb koji iskoči.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Pogodi jezgru kad se otvori.',
       'hornet': '{enemy}. Obrušava se ravno: u stranu!',
       'stalker': '{enemy}. Pariraj nasrtaj.',
+      'spotter': '{enemy}. Izađi iz njegova svjetla. Pucaj u lampu.',
       'puffer': '{enemy}. Raznesi je prije nego nabubri.',
       'mole': '{enemy}. Pogodi je kad izroni.',
       'elite': 'Zlatni prsten. Elita. Oprezno.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Zato što su slobodni.',
     },
     'guardDown': 'Čuvar je pao! Put je slobodan.',
+    'challenge': 'Vrata izazova! Unutra je plijen.',
     'help': {
       'weapon': 'Odaberi novo oružje i pucaj na dronove!',
       'gap': 'Hodaj ravno prema rubu i preskočit ćeš!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Klizni tik prije nego te crveni prsten dosegne!',
       'block': 'Drži blok kad puca. Točno u trenutku pogotka je savršeno!',
       'blockMiss': 'Štit gore! Blokiraj točno pri pogotku i vrati ga!',
+      'chargeMiss': 'Probaj nabijeni hitac držeći tipku topa!',
       'charge': 'Drži paljbu dok top ne zasja, pa pusti!'
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Ta ploča pokazuje uzorak. Svjetiljke na zidu još ne.',
       'color': 'Taj okvir ima omiljenu boju. Smiju svijetliti samo njegove svjetiljke.',
       'cycle': 'Svaki pogodak predomisli svjetiljku. Ploča zna što želi.',
+      'sequence': 'Ploča trepće uvijek istu melodiju. Odsviraj je na gumbima, redom.',
+      'mirror': 'Ta zraka želi u prsten. Zrcala se okreću kad pucaš u njih.',
+      'tiles': 'Upali sve ploče u jednoj šetnji. Dvaput na jednu ili mimo njih, i opet je mrak.',
       'solved': 'Gle, gle. Netko voli zagonetke.'
     },
     'landed': 'Slijetanje! Idemo.',

@@ -38,6 +38,7 @@ export default {
     'lastStand': '不屈！系统已重启。',
     'weak': '弱点！',
     'kranck': 'KRANCK!',
+    'tooWeak': '太弱了！',
     'dizzy': '眩晕！',
     'dodge': '闪避！',
     'block': '格挡',
@@ -70,6 +71,7 @@ export default {
     'warden': '守卫者',
     'hornet': '黄蜂旋翼',
     'stalker': '辉光潜行者',
+    'spotter': '探照灯无人机',
     'puffer': '河豚水雷',
     'mole': '钻地鼹鼠',
     'polar': '磁极小狗',
@@ -91,6 +93,7 @@ export default {
     'warden': '守卫者 | 守卫者',
     'hornet': '黄蜂旋翼 | 黄蜂旋翼',
     'stalker': '辉光潜行者 | 辉光潜行者',
+    'spotter': '探照灯无人机 | 探照灯无人机',
     'puffer': '河豚水雷 | 河豚水雷',
     'mole': '钻地鼹鼠 | 钻地鼹鼠',
     'polar': '磁极小狗 | 磁极小狗',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': '疾风大师',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': '至尊大师机器人'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': '余烬猎犬',
+    'icebreakerBrute': '破冰蛮兵',
+    'arcSpider': '电弧蜘蛛',
+    'stormHornetQueen': '风暴黄蜂女王',
+    'lodestoneGolem': '磁石魔像',
+    'burrowWyrm': '掘地巨虫',
+    'pufferMatriarch': '河豚母巢',
+    'glitchStalker': '故障潜行者',
+    'sawGyro': '锯刃陀螺',
+    'sentinelPrototype': '哨兵原型机'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': '挑战',
+    'cleared': '挑战成功！+{bolts} 螺丝'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': '升到{n}级！系统已完全修复。'
   },
   'tips': {
-    'moveTouch': '拖动左侧移动，拖动右侧转视角。点击地面即可走过去！',
+    'moveTouch': '拖动左侧移动，拖动右侧转视角。',
     'moveKeys': '用{keys}四处移动。',
     'lookMouse': '移动鼠标环顾四周。',
     'capture': '点击画面即可控制镜头。',
@@ -315,8 +338,8 @@ export default {
       'interact': '互动'
     },
     'touch': {
-      'move': '左侧：拖动移动。点击地面即可走过去。',
-      'fire': '战斗中：点击射击，按住蓄力，松开发射。',
+      'move': '左侧：拖动移动。右侧：拖动转视角。',
+      'fire': '右侧或射击键：点击射击，按住蓄力，松开发射。按住时拖动可瞄准。',
       'block': '按住护盾格挡——在光圈收拢瞬间按下即可弹反。',
       'use': '靠近箱子、被困的机器人或门时：点击它，或点击弹出的按钮。'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}。核心一露出来就打。',
       'hornet': '{enemy}。它直线俯冲：往旁边闪！',
       'stalker': '{enemy}。它扑过来就弹反。',
+      'spotter': '{enemy}。快离开光圈，射它的灯。',
       'puffer': '{enemy}。趁它没胀大先打爆。',
       'mole': '{enemy}。它一冒头就打。',
       'elite': '金色光圈。精英。小心。',
@@ -730,6 +754,7 @@ export default {
       'free': '因为它们是自由的。',
     },
     'guardDown': '守卫倒下！路通了。',
+    'challenge': '挑战之门！里面有好宝贝。',
     'help': {
       'weapon': '选好新武器，朝无人机开火！',
       'gap': '朝边缘直走就能自动跳过去！',
@@ -737,6 +762,7 @@ export default {
       'slide': '在红色光圈到达前滑铲躲开！',
       'block': '它开火时按住格挡。命中瞬间就是完美时机！',
       'blockMiss': '举起护盾！命中瞬间格挡，把它弹回去！',
+      'chargeMiss': '按住臂炮按钮，试试蓄力射击！',
       'charge': '按住射击直到臂炮发光，然后松开！',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': '那块面板上有个图案。墙上的灯还没对上。',
       'color': '那个边框有最喜欢的颜色。只有那种颜色的灯该亮。',
       'cycle': '每打一枪，灯就改一次主意。面板知道它想要什么。',
+      'sequence': '面板一直闪着同一段旋律。照顺序在按钮上弹回去。',
+      'mirror': '那道光想射进圆环。射一下镜子，它就会转。',
+      'tiles': '一口气走遍所有地板，把它们全点亮。踩两次或踏出去，就全暗了。',
       'solved': '哎哟，有人喜欢解谜嘛。'
     },
     'landed': '着陆！出发吧。',

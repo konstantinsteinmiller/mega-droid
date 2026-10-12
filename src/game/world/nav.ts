@@ -219,9 +219,22 @@ const resolveBody = (nav: Nav, x: number, z: number, r: number, feet: number): v
   const i1 = Math.floor((px + r) / CELL)
   const j0 = Math.floor((pz - r) / CELL)
   const j1 = Math.floor((pz + r) / CELL)
+  // On a ramp the step into a neighbour is measured from the ramp's own
+  // height at their shared edge, not from the feet a body's radius back
+  // down the slope: a steep ramp (a storey in one cell) meets its landing
+  // flush, and a body that cannot reach the edge must still walk onto it.
+  const oi = Math.floor(px / CELL)
+  const oj = Math.floor(pz / CELL)
+  const onRamp = !!map.terrain && oi >= 0 && oj >= 0 && oi < map.w && oj < map.h && !!map.terrain.ramp[oj * map.w + oi]
   for (let j = j0; j <= j1; j++) {
     for (let i = i0; i <= i1; i++) {
-      if (!isSolidCell(nav, i, j) && !(cellTopNear(map, i, j, px, pz) > lim)) continue
+      let top = lim
+      if (onRamp && (i !== oi || j !== oj)) {
+        const ex = Math.max(oi * CELL + 1e-4, Math.min(Math.max(i * CELL, Math.min(px, (i + 1) * CELL)), (oi + 1) * CELL - 1e-4))
+        const ez = Math.max(oj * CELL + 1e-4, Math.min(Math.max(j * CELL, Math.min(pz, (j + 1) * CELL)), (oj + 1) * CELL - 1e-4))
+        top = Math.max(lim, groundAt(map, ex, ez) + STEP_UP)
+      }
+      if (!isSolidCell(nav, i, j) && !(cellTopNear(map, i, j, px, pz) > top)) continue
       const minX = i * CELL
       const minZ = j * CELL
       ;[px, pz] = pushOutOfBox(px, pz, r, minX, minZ, minX + CELL, minZ + CELL)

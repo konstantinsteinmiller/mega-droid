@@ -350,12 +350,13 @@ export class LessonDirector {
     if ((s.x - t.x) ** 2 + (s.y - t.y) ** 2 + (s.z - t.z) ** 2 > r * r) return null
     const h = this.host
     if (s.kind === 'pellet') {
-      // TINK: the bubble holds. The glyph comes in (if it was still waiting
+      // TINK: the bubble holds, and says why in the weak spot's big amber
+      // wobble — "TOO WEAK!". The glyph comes in (if it was still waiting
       // for the coach's) and shakes — hold the button instead.
       t.hitT = 1
       this.shotAtDrone = true
       h.fx.sparks(s.x, s.y, s.z, PAL.glowCyan, 8, 5, 0.16)
-      pushHud({ t: 'text', x: s.x, y: s.y + 0.3, z: s.z, key: 'combat.tink', color: '#dfe7ff' })
+      pushHud({ t: 'kranck', x: s.x, y: s.y + 0.35, z: s.z, key: 'combat.tooWeak' })
       h.sfx('tink', t.x, t.z)
       this.revealCharge()
       this.nudge++
@@ -541,14 +542,9 @@ export class LessonDirector {
       const slot = this.slotOf(tw.id)
       if (room && slot) this.startWeapon(room, slot)
     }
-    const slot = this.weaponSlot()
-    if (slot && !this.taught && !lessonDone('weapon') && !h.setup.tutorial && this.live === null && here >= 0) {
-      const room = h.map.rooms[here]
-      if (room && room.role !== 'start' && room.role !== 'boss' && !this.weaponRooms.has(here) && this.settled(here)) {
-        this.weaponRooms.add(here)
-        this.startWeapon(room, slot)
-      }
-    }
+    // No weapon lesson in just any quiet room: a weapon is taught only in
+    // the room behind the boss it came from (`teachWeapon`, playtest
+    // 2026-10-11 — it also ran in the next stage's landing room).
   }
 
   /** Teach `id` here and now (a stage's beam-in room): its drones beam in

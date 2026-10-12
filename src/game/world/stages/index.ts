@@ -55,4 +55,4 @@ const GENERATORS: Record<StageSector, (seed: number) => MapData> = {
 /** The stage map of `sector` for `seed` (deterministic: a resume rebuilds
  *  it). A sector without a stage gets the Tower Run. */
 export const generateStage = (sector: SectorId, seed: number): MapData =>
-  isStageSector(sector) ? GENERATORS[sector](seed) : generateClimb(seed)
+  isStageSector(sector) ? GENERATORS[sector](seed) : generateClimb(seed, sector !== 'scrapyard')

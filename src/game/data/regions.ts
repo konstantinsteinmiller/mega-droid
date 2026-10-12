@@ -65,7 +65,7 @@ export const SECTORS: Sector[] = [
   },
   {
     id: 'neon', levels: [25, 31], boss: 'neonMaster', after: 'tide', mapPos: [0.64, 0.38], rooms: [10, 12],
-    encounters: { kinds: [['stalker', 2.5], ['heli', 2], ['trooper', 1.5], ['puffer', 1], ['brute', 1.2], ['turret', 1.2], ['polar', 1], ['mole', 0.6]], element: 'none', density: 1.16, eliteChance: 0.12, golems: 0.25, theme: 'neon' }
+    encounters: { kinds: [['stalker', 2.5], ['spotter', 1.6], ['heli', 1.5], ['trooper', 1.5], ['puffer', 1], ['brute', 1.2], ['turret', 1.2], ['polar', 1], ['mole', 0.6]], element: 'none', density: 1.16, eliteChance: 0.12, golems: 0.25, theme: 'neon' }
   },
   {
     id: 'rotor', levels: [28, 34], boss: 'rotorMaster', after: 'neon', mapPos: [0.36, 0.64], rooms: [10, 12],
@@ -84,3 +84,9 @@ export const SECTOR_BY_ID = Object.fromEntries(SECTORS.map(s => [s.id, s])) as R
  *  cap, so the machines keep tracking a Flux already past the band. */
 export const enemyLevelFor = (sector: Sector, playerLevel: number, delta = 0, ng = 0): number =>
   Math.max(sector.levels[0], Math.min(ng > 0 ? MAX_LEVEL : sector.levels[1], playerLevel + delta))
+
+/** A board run's level (a Tower Run, a supply run): the band's floor, but no
+ *  top — the machines follow Flux all the way (`sim/adaptive.ts` `runScaling`
+ *  follows his kit on top). */
+export const runLevelFor = (sector: Sector, playerLevel: number, delta = 0): number =>
+  Math.max(sector.levels[0], Math.min(MAX_LEVEL, playerLevel + delta))

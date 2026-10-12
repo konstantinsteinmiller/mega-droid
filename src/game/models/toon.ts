@@ -108,6 +108,7 @@ const OUTLINE_VERT = /* glsl */`
 #include <skinning_pars_vertex>
 #include <fog_pars_vertex>
 uniform float uThickness;
+attribute float outlinePull;
 void main() {
   #include <skinbase_vertex>
   #include <beginnormal_vertex>
@@ -117,6 +118,18 @@ void main() {
   #include <skinning_vertex>
   transformed += normalize(objectNormal) * uThickness;
   #include <project_vertex>
+  // The pull (see outlinePull): slide the hull toward the eye ALONG the view
+  // ray, so it lands on the same pixel but nearer. Object units, scaled with
+  // the object. Only the rim slides: a vertex seen side-on draws the line; one
+  // facing away lies behind its part, and sliding it would only push it
+  // through thin shells in front as hairlines.
+  float pull = outlinePull * length(modelViewMatrix[0].xyz);
+  if (pull > 0.0) {
+    vec3 toEye = isOrthographic ? vec3(0.0, 0.0, 1.0) : normalize(-mvPosition.xyz);
+    float facing = abs(dot(normalize(normalMatrix * objectNormal), toEye));
+    mvPosition.xyz += toEye * pull * (1.0 - smoothstep(0.25, 0.6, facing));
+    gl_Position = projectionMatrix * mvPosition;
+  }
   #include <fog_vertex>
 }
 `
@@ -152,6 +165,8 @@ export const outlineMat = (thickness = 0.03, color: Color = OUTLINE_COLOR): Shad
     side: BackSide,
     fog: true
   })
+  // Hulls built without the attribute (most props) read 0: no pull.
+  ;(m.defaultAttributeValues as Record<string, number[]>).outlinePull = [0]
   outlineCache.set(key, m)
   return m
 }

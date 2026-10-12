@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Última Resistência! Sistemas reiniciados.',
     'weak': 'FRACO!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'DEMASIADO FRACO!',
     'dizzy': 'TONTO!',
     'dodge': 'ESQUIVA!',
     'block': 'Bloquear',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Sentinela',
     'hornet': 'Hélice Vespa',
     'stalker': 'Caçador Brilhante',
+    'spotter': 'Drone Holofote',
     'puffer': 'Mina Balão',
     'mole': 'Toupeira Broca',
     'polar': 'Cachorrinho Polar',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Sentinela | Sentinelas',
     'hornet': 'Hélice Vespa | Hélices Vespa',
     'stalker': 'Caçador Brilhante | Caçadores Brilhantes',
+    'spotter': 'Drone Holofote | Drones Holofote',
     'puffer': 'Mina Balão | Minas Balão',
     'mole': 'Toupeira Broca | Toupeiras Broca',
     'polar': 'Cachorrinho Polar | Cachorrinhos Polares',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Mestre Vento',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Robô Grão-Mestre'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Cão de Brasa',
+    'icebreakerBrute': 'Bruto Quebra-Gelo',
+    'arcSpider': 'Aranha de Arco',
+    'stormHornetQueen': 'Rainha Vespa da Tempestade',
+    'lodestoneGolem': 'Golem Magnetite',
+    'burrowWyrm': 'Verme Escavador',
+    'pufferMatriarch': 'Matriarca Baiacu',
+    'glitchStalker': 'Espreitador Glitch',
+    'sawGyro': 'Giro Serra',
+    'sentinelPrototype': 'Protótipo Sentinela'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Desafio',
+    'cleared': 'Desafio vencido! +{bolts} parafusos'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Nível {n}! Sistemas totalmente reparados.'
   },
   'tips': {
-    'moveTouch': 'Arrasta o lado esquerdo para te moveres e o direito para olhar. Toca no chão para ires até lá!',
+    'moveTouch': 'Arrasta o lado esquerdo para te moveres e o direito para olhar.',
     'moveKeys': '{keys} para te moveres.',
     'lookMouse': 'Move o rato para olhar à tua volta.',
     'capture': 'Clica na cena para controlares a câmara.',
@@ -340,8 +363,8 @@ export default {
       'interact': 'Interagir'
     },
     'touch': {
-      'move': 'Lado esquerdo: arrasta para te moveres. Toca no chão para ires até lá.',
-      'fire': 'Em combate: toca para disparar, mantém premido para carregar, larga para soltar o tiro.',
+      'move': 'Lado esquerdo: arrasta para te moveres. Lado direito: arrasta para olhar.',
+      'fire': 'Lado direito ou botão de disparo: toca para disparar, mantém premido para carregar, larga para soltar o tiro. Arrasta enquanto manténs premido para apontar.',
       'block': 'Mantém o escudo para bloquear — mesmo quando um anel fecha, para aparar.',
       'use': 'Perto de um baú, de um robô perdido ou de uma porta: toca nele, ou no botão que aparece.'
     },
@@ -732,6 +755,7 @@ export default {
       'warden': '{enemy}. Acerta no núcleo quando abrir.',
       'hornet': '{enemy}. Mergulha a direito: desvia-te!',
       'stalker': '{enemy}. Apara a investida.',
+      'spotter': '{enemy}. Sai da luz dele. Dispara à lâmpada.',
       'puffer': '{enemy}. Rebenta-a antes que inche.',
       'mole': '{enemy}. Acerta-lhe quando sair do chão.',
       'elite': 'Anel dourado. Elite. Cuidado.',
@@ -754,6 +778,7 @@ export default {
       'free': 'Porque são livres.',
     },
     'guardDown': 'Guarda em baixo! O caminho está livre.',
+    'challenge': 'Porta de desafio! Bom saque lá dentro.',
     'help': {
       'weapon': 'Escolhe a tua nova arma e dispara contra os drones!',
       'gap': 'Anda a direito até à borda e saltas sozinho!',
@@ -761,6 +786,7 @@ export default {
       'slide': 'Desliza para fugir mesmo antes de o anel vermelho te apanhar!',
       'block': 'Mantém o bloqueio quando ele disparar. Mesmo no impacto é perfeito!',
       'blockMiss': 'Escudo em cima! Bloqueia mesmo no impacto para o devolver!',
+      'chargeMiss': 'Experimenta um tiro carregado mantendo premido o botão do canhão!',
       'charge': 'Mantém o disparo até o canhão brilhar e depois larga!',
     },
     'train': {
@@ -853,6 +879,9 @@ export default {
       'lights': 'Aquele painel mostra um padrão. As lâmpadas da parede ainda não.',
       'color': 'Aquela moldura tem uma cor favorita. Só as lâmpadas dessa cor devem brilhar.',
       'cycle': 'Cada tiro faz uma lâmpada mudar de ideias. O painel sabe o que quer.',
+      'sequence': 'O painel pisca sempre a mesma melodia. Repete-a nos botões, por ordem.',
+      'mirror': 'Aquele raio quer chegar ao anel. Os espelhos rodam quando disparas sobre eles.',
+      'tiles': 'Acende todas as placas num só passeio. Duas vezes na mesma, ou fora delas, e fica tudo escuro.',
       'solved': 'Ora, ora. Alguém gosta de enigmas.'
     },
     'landed': 'Aterrámos! Vamos lá.',

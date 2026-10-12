@@ -75,6 +75,7 @@ describe('portal culling takes the doors along', () => {
       theme: { fogFar: 200 },
       level: { rooms, owner, bounds: rooms.map((_, i) => ({ x: (i * 4 + 2) * CELL, z: 0, r: 2 * CELL })) },
       roomVis: new Uint8Array(3),
+      sight: [[], [], []],
       cullAdded: [] as number[],
       camera,
       map: { w: W },

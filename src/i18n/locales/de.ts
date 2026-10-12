@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Letztes Gefecht! Systeme neu gestartet.',
     'weak': 'SCHWÄCHE!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'ZU SCHWACH!',
     'dizzy': 'BENOMMEN!',
     'dodge': 'AUSGEWICHEN!',
     'block': 'Blocken',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Wächter',
     'hornet': 'Hornissenrotor',
     'stalker': 'Leuchtpirscher',
+    'spotter': 'Suchscheinwerfer-Drohne',
     'puffer': 'Kugelfischmine',
     'mole': 'Maulwurfbohrer',
     'polar': 'Polwelpe',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Wächter | Wächter',
     'hornet': 'Hornissenrotor | Hornissenrotoren',
     'stalker': 'Leuchtpirscher | Leuchtpirscher',
+    'spotter': 'Suchscheinwerfer-Drohne | Suchscheinwerfer-Drohnen',
     'puffer': 'Kugelfischmine | Kugelfischminen',
     'mole': 'Maulwurfbohrer | Maulwurfbohrer',
     'polar': 'Polwelpe | Polwelpen',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Sturmmeister',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Großmeister-Bot'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Gluthund',
+    'icebreakerBrute': 'Eisbrecher-Brocken',
+    'arcSpider': 'Lichtbogenspinne',
+    'stormHornetQueen': 'Sturmhornissen-Königin',
+    'lodestoneGolem': 'Magnetstein-Golem',
+    'burrowWyrm': 'Wühlwurm',
+    'pufferMatriarch': 'Kugelfisch-Matriarchin',
+    'glitchStalker': 'Glitch-Pirscher',
+    'sawGyro': 'Sägekreisel',
+    'sentinelPrototype': 'Wächter-Prototyp'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Herausforderung',
+    'cleared': 'Herausforderung geschafft! +{bolts} Bolzen'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Level {n}! Systeme vollständig repariert.'
   },
   'tips': {
-    'moveTouch': 'Links ziehen zum Laufen, rechts zum Umsehen. Tippe auf den Boden, um hinzulaufen!',
+    'moveTouch': 'Links ziehen zum Laufen, rechts zum Umsehen.',
     'moveKeys': '{keys} zum Herumlaufen.',
     'lookMouse': 'Beweg die Maus, um dich umzusehen.',
     'capture': 'Klicke in die Szene, um die Kamera zu steuern.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interagieren'
     },
     'touch': {
-      'move': 'Linke Seite: ziehen zum Laufen. Tippe auf den Boden, um hinzulaufen.',
-      'fire': 'Im Kampf: tippen zum Schießen, halten zum Aufladen, loslassen zum Feuern.',
+      'move': 'Linke Seite: ziehen zum Laufen. Rechte Seite: ziehen zum Umsehen.',
+      'fire': 'Rechte Seite oder Feuerknopf: tippen zum Schießen, halten zum Aufladen, loslassen zum Feuern. Beim Halten ziehen zum Zielen.',
       'block': 'Schild halten zum Blocken – zum Parieren genau dann, wenn sich ein Ring schließt.',
       'use': 'An einer Kiste, einem gestrandeten Bot oder einer Tür: tippe darauf oder auf den Knopf, der erscheint.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Triff den Kern, wenn er aufgeht.',
       'hornet': '{enemy}. Er stürzt geradeaus: zur Seite!',
       'stalker': '{enemy}. Pariere den Sprung.',
+      'spotter': '{enemy}. Raus aus dem Licht. Schieß auf die Lampe.',
       'puffer': '{enemy}. Platz ihn, bevor er anschwillt.',
       'mole': '{enemy}. Triff ihn beim Auftauchen.',
       'elite': 'Goldring. Elite. Vorsicht.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Weil sie frei sind.',
     },
     'guardDown': 'Wache erledigt! Der Weg ist frei.',
+    'challenge': 'Eine Herausforderungstür! Drin gibt es Beute.',
     'help': {
       'weapon': 'Wähl deine neue Waffe und feure auf die Drohnen!',
       'gap': 'Lauf geradeaus auf die Kante zu, dann springst du automatisch rüber!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Rutsch weg, kurz bevor der rote Ring dich erreicht!',
       'block': 'Halte Blocken gedrückt, wenn er feuert. Genau beim Einschlag ist perfekt!',
       'blockMiss': 'Schild hoch! Blocke genau beim Treffer, dann fliegt er zurück!',
+      'chargeMiss': 'Versuch einen Ladeschuss: Halte die Kanonen-Taste gedrückt!',
       'charge': 'Halte Feuer gedrückt, bis die Kanone glüht, dann lass los!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Das Schild zeigt ein Muster. Die Lampen an der Wand noch nicht.',
       'color': 'Der Rahmen hat eine Lieblingsfarbe. Nur ihre Lampen sollen leuchten.',
       'cycle': 'Jeder Treffer ändert die Meinung einer Lampe. Das Schild weiß, was es will.',
+      'sequence': 'Das Schild blinkt immer dieselbe Melodie. Spiel sie auf den Knöpfen nach, der Reihe nach.',
+      'mirror': 'Der Strahl will in den Ring. Spiegel drehen sich, wenn du draufschießt.',
+      'tiles': 'Bring jede Platte zum Leuchten, in einem Gang. Zweimal drauf oder runter, und alles ist wieder dunkel.',
       'solved': 'Sieh an. Da mag jemand Rätsel.'
     },
     'landed': "Gelandet! Los geht's.",

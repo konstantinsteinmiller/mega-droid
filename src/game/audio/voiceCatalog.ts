@@ -253,6 +253,10 @@ const ATLAS_LIVE: VoiceLine[] = [
     when: ['A Fortress guard hall is cleared (its door opens)', 'Eine Wachhalle der Festung ist frei (ihre Tür öffnet sich)'],
     direction: ['A quick breath, then onward.', 'Kurz durchatmen, dann weiter.']
   }),
+  live('atlas.challenge', 'atlas', 'missionWarn', {
+    when: ['Flux nears a challenge door (an optional mini-boss room)', 'Flux nähert sich einer Herausforderungstür (ein freiwilliger Mini-Boss-Raum)'],
+    direction: ['Playful dare, a grin in it.', 'Verspielte Herausforderung, mit einem Grinsen.']
+  }),
   live('atlas.lowHp', 'atlas', 'missionWarn', {
     when: ['Health under 30 %, no Repair Gel left', 'Gesundheit unter 30 %, kein Reparaturgel mehr'],
     direction: ['Worried, quick, not loud.', 'Besorgt, schnell, nicht laut.']
@@ -489,6 +493,7 @@ const ATLAS_PLAN: VoiceLine[] = [
     ['warden', '{enemy}. Hit the core when it opens.', '{enemy}. Triff den Kern, wenn er aufgeht.', 1.8],
     ['hornet', '{enemy}. It dives straight: sidestep!', '{enemy}. Er stürzt geradeaus: zur Seite!', 1.6],
     ['stalker', '{enemy}. Parry the lunge.', '{enemy}. Pariere den Sprung.', 1.8],
+    ['spotter', '{enemy}. Leave its light. Shoot the lamp.', '{enemy}. Raus aus dem Licht. Schieß auf die Lampe.', 2.4],
     ['puffer', '{enemy}. Pop it before it swells.', '{enemy}. Platz ihn, bevor er anschwillt.', 1.6],
     ['mole', '{enemy}. Hit it when it pops up.', '{enemy}. Triff ihn beim Auftauchen.', 1.8],
     ['elite', 'Gold ring. Elite. Careful.', 'Goldring. Elite. Vorsicht.', 1.6]
@@ -590,6 +595,21 @@ const ATLAS_SECRET: VoiceLine[] = [
     when: ['First time near a colour-cycle puzzle (each hit steps the colour)', 'Zum ersten Mal an einem Farbwechselrätsel (jeder Treffer wechselt die Farbe)'],
     draft: ['Every hit changes a lamp\'s mind. The panel knows what it wants.', 'Jeder Treffer ändert die Meinung einer Lampe. Das Schild weiß, was es will.'],
     direction: ['Amused, like describing a fussy pet.', 'Amüsiert, als beschriebe man ein wählerisches Haustier.']
+  }),
+  ship('atlas.secret.sequence', 'atlas', 'fieldWarn', 3.4, {
+    when: ['First time near a Simon-says puzzle (shoot the buttons in the panel\'s order)', 'Zum ersten Mal an einem Merk-Rätsel (die Knöpfe in der Reihenfolge des Schilds treffen)'],
+    draft: ['The panel blinks the same little tune. Play it back on the buttons, in order.', 'Das Schild blinkt immer dieselbe Melodie. Spiel sie auf den Knöpfen nach, der Reihe nach.'],
+    direction: ['Humming along a little, teasing.', 'Summt ein bisschen mit, neckend.']
+  }),
+  ship('atlas.secret.mirror', 'atlas', 'fieldWarn', 3, {
+    when: ['First time near a mirror puzzle (steer the beam into the ring)', 'Zum ersten Mal an einem Spiegelrätsel (den Strahl in den Ring lenken)'],
+    draft: ['That beam wants the ring. Mirrors turn when you shoot them.', 'Der Strahl will in den Ring. Spiegel drehen sich, wenn du draufschießt.'],
+    direction: ['Intrigued, a sly hint dropped casually.', 'Neugierig, ein schlauer Tipp, ganz nebenbei.']
+  }),
+  ship('atlas.secret.tiles', 'atlas', 'fieldWarn', 3.5, {
+    when: ['First time near a floor-plate puzzle (light every plate in one walk)', 'Zum ersten Mal an einem Bodenplatten-Rätsel (jede Platte in einem Gang erleuchten)'],
+    draft: ['One walk, every plate lit. Step on one twice, or off them: dark again.', 'Bring jede Platte zum Leuchten, in einem Gang. Zweimal drauf oder runter, und alles ist wieder dunkel.'],
+    direction: ['Like explaining the rules of hopscotch: light, a little strict on the last part.', 'Als erkläre man Himmel und Hölle: leicht, beim letzten Teil ein bisschen streng.']
   }),
   ship('atlas.secret.solved', 'atlas', 'fieldWarn', 2, {
     when: ['A secret wall opens (puzzle solved)', 'Eine geheime Wand öffnet sich (Rätsel gelöst)'],
@@ -1242,6 +1262,11 @@ const ATLAS_LESSONS: VoiceLine[] = [
     when: ['The block lesson: a shot just hit the player, who did not raise the shield (again after each miss)', 'Die Blocken-Übung: ein Schuss hat den Spieler getroffen, der den Schild nicht gehoben hat (nach jedem Fehlversuch wieder)'],
     direction: ['Urgent but encouraging, a coach calling it out mid-drill.', 'Eindringlich, aber ermutigend, ein Trainer, der mitten in der Übung ruft.'],
     max: 3.4
+  }),
+  live('atlas.help.chargeMiss', 'atlas', 'fieldWarn', {
+    when: ['The first room: a quick shot just bounced off the training drone (again after each one)', 'Der erste Raum: ein schneller Schuss ist gerade von der Trainingsdrohne abgeprallt (nach jedem wieder)'],
+    direction: ['Encouraging, a coach calling it out mid-drill.', 'Ermutigend, ein Trainer, der mitten in der Übung ruft.'],
+    max: 3.2
   }),
   live('atlas.help.slide', 'atlas', 'fieldWarn', {
     when: ['A lesson: the player keeps getting caught by the ring', 'Eine Übung: der Ring erwischt den Spieler immer wieder'],

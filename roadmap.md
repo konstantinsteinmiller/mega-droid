@@ -401,3 +401,27 @@ Wait for my "go" to start implementation, ask to review the decisions first.
   came close enough to jump on Flux and force the dash, if that happens, show a
   big fat yellow arrow on the dash button (on mobile and tablet) and on Space   
   key pressing on screen on desktop with mouse controls. same for the guard droid in the shield lesson room.
+- [x] #133 when the player shoots a non-charged bullet at the second blue rotor drone in the first tutorial landing room, a text should appear like "Kranck" but should say "Too weak"
+- [x] #134 Almost all playtesters shoot at the crates hold by the scrapeyard cranes, but wonder why it didnt break on a charged shot, so lets allow this, I mean they just drop their bolts or other loot down, especially the crane in the first room and all of the tutorials level
+- [x] #135 atlas also says "Try a charged shot by holding the blaster button" if the     
+  player attacks the blue rotor drone in the first room with a normal shot
+- [x] #136 blocking any attack or bullet should always reduce the damage by 80%, it seems the violet flying drones in the magnet themed mission are bypassing shield block, check all enemies and attacks. There can be specific attack that are more effective against the shield, but that must have a reason e.g. an aoe attack (shield only blocks 30% here) or a shield penetrating bullet (but should be very rare and can still be perfectly blocked to reflect back).
+- [x] #137 lets preview the overcharged shot too in the Intro to peak the players interest with the same visual color change as in-game, build a new scenario after the guard droid was destroyed and show off the charging from charged to overcharged mode during while the player dashes away from a big robot with a weak spot, Flux then finally fires an overcharged shot with the iconic violet color onto the weakpoint (showing the "Kranck") and blowing the big robot to pieces.
+- [x] #138 The first CrazyGames gameplayStart() event is missing when the player lands in the tutorial level after the intro. The pause menu during the game should also call gameplayStop and call gameplayStart after its close, avoid double calling of gameplayStart, never call gameplayStart twice in a row, only call gameplayStart after closing the PauseMenu after gameplayStop was called before.
+- [x] #139 the game does not auto-continue after the interstitial ad, the player has to click into the game window to continue the quadrocopter fly out cutscene that was interrupted by the interstitial ad.
+- [x] #140 fix the broken toon outline. The game now renders the inverted hull shape for a black border outline for the toon look, but when another object penetrates the black bigger hull, the black border is not visible anymore, this needs to be fixed somehow that keeps this working. A good example are FLuxs feet and legs. Pips eyes also have this break in the black border outline
+- [x] #141 the tower run and the supply runs dont scale with Flux's equipment, chip and   
+  upgrade levels, making these levels very boring to play at higher levels, fix
+  it and make it equally scaling according to Flux's progress, not only Flux's    
+  level, but also equipment quality and level and chips. Please also add an     
+  optional mini-boss with a "Challenge" label introduction similar to how       
+  bosses are introduced when entering the boss room, the mini-boss rooms are    
+  always optional from Blaze Master level and have a less scary mini-boss door,
+  but distinctive enough to see, there is a challenge waiting. The mini-boss    
+  rewards the player with a repair gel and ~200 extra bolts(scaling with story  
+  progress). thee mini-boss should be a new enemy model not just reskinned boss models and  
+  should have their own attack patterns and unique fight styles.
+- [x] #142 The neon master level is quite boring with one new enemy introduced, but not much action or evolution in gameplay, add another new machine that has an interesting fighting style and offers a bigger threat to the player in the neon level.
+- [x] #143 The puzzles are quite repetitive after a while and need a bit variation especially after the gale Masters level, think up some new types of puzzles to solve.
+- [x] #144 Vex fortress enemies are too weak, they should have 3x their current HP and 1.5x to 2x of the amount of enemies spawned, its fine if this level is extra hard, as this is the final challenge and replaying this level is something a player is willing to do after so much time investment. 
+- [x] #145 During Vex's second phase the granmaster bot floats/flies in the air, which makes no sense after he lost his feet, give him some wings so the body can keep flying after he lost his feet and legs.  

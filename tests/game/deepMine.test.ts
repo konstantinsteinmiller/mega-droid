@@ -25,6 +25,7 @@ import { SECTOR_BY_ID } from '@/game/data/regions'
 import type { ClimbHost } from '@/game/sim/climb'
 import { IcePillars } from '@/game/sim/stages/icePillars'
 import { Icicles } from '@/game/sim/stages/icicles'
+import { generateStage } from '@/game/world/stages'
 import type { AtlasLine } from '@/game/sim/atlas'
 
 const SEEDS = Array.from({ length: 32 }, (_, i) => (i * 2654435761 + 1013904223) >>> 0)
@@ -117,9 +118,9 @@ describe('generateDeepMine', () => {
     for (const seed of SEEDS) {
       const m = generateDeepMine(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(
         ['dock', 'hall', 'descent', 'lift', 'icicles', 'islands', 'hall', 'hall', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0))).toBe(STAGE_LENGTH.drill)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0))).toBe(STAGE_LENGTH.drill)
       mirrored.add(m.start.x > m.w * CELL / 2)
       beats.add(Math.round(t.icicles![0]!.period * 100))
       const start = t.floor[idx(m, m.start.x, m.start.z)]!
@@ -208,6 +209,38 @@ describe('the mine\'s rock', () => {
     for (const charge of [0, 1, 2, 3]) f.shotHits(...at(plain), 0.2, charge)
     expect(plain.broken).toBe(false)
     expect(sfx).toContain('guardBreak')
+  })
+
+  // Playtest 2026-10-11: on the terraces the lower stalactites hung a fixed
+  // 4.6 m over their own floor, metres under the roof; the second descent
+  // got no roof at all. Each hangs from its room's roof now, under the walls.
+  // Every stage with the mechanic: the Glacier's icicles, the Mine's
+  // stalactites, the Fortress's rockfall (one shared feature).
+  it('every stalactite and icicle hangs from a roof over its room, the roof under the walls and over every floor', () => {
+    for (const [stage, seed] of (['drill', 'cryo', 'fortress'] as const).flatMap(st => SEEDS.slice(0, 12).map(sd => [st, sd] as const))) {
+      const m = generateStage(stage, seed)
+      const tt = m.terrain!
+      const f = new Icicles(hostFor(m), tt)
+      const rooms = new Set(f.icicles.map(c => m.room[c.def.j * m.w + c.def.i]!))
+      expect(f.roofs.map(r => r.room).sort(), `${stage} ${seed}`).toEqual([...rooms].sort())
+      for (const r of f.roofs) {
+        expect(r.y, `${stage} ${seed} room ${r.room}`).toBeLessThan(tt.wallTop[r.room]!)
+        const room = m.rooms[r.room]!
+        for (let j = room.z0; j < room.z0 + room.h; j++) {
+          for (let i = room.x0; i < room.x0 + room.w; i++) {
+            const k = j * m.w + i
+            if (!tt.pit[k]) expect(r.y - tt.floor[k]! - tt.rise[k]!, `${stage} ${seed} headroom`).toBeGreaterThanOrEqual(2.6)
+          }
+        }
+      }
+      for (const c of f.icicles) {
+        const roof = f.roofs.find(r => r.room === m.room[c.def.j * m.w + c.def.i])!
+        // Its root in the roof, its tip well over the floor it hangs above.
+        expect(roof.y - c.mesh.position.y, `${stage} ${seed}`).toBeCloseTo(0.12, 5)
+        const tip = c.mesh.position.y - 1.6 * c.mesh.scale.y
+        expect(tip - c.def.y, `${stage} ${seed}`).toBeGreaterThanOrEqual(2.4)
+      }
+    }
   })
 
   it('stalactites fall on the drill theme, with the mine\'s own hint', () => {

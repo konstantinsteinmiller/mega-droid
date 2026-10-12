@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted, computed, ref, watch } from 'vue'
-import useUser, { DEFAULT_SOUND_VOLUME, DEFAULT_MUSIC_VOLUME } from '@/use/useUser'
+import useUser, { DEFAULT_SOUND_VOLUME, DEFAULT_MUSIC_VOLUME, playerMuted } from '@/use/useUser'
 import {
   isSdkActive,
   onCrazyMuteChange,
@@ -9,7 +9,8 @@ import { isDbInitialized } from '@/use/useMatch'
 
 const { userSoundVolume, userMusicVolume, setSettingValue } = useUser()
 
-const isMuted = computed(() => userMusicVolume.value === 0 && userSoundVolume.value === 0)
+// Muted: the player's own mute is on, or both volumes are at zero.
+const isMuted = computed(() => playerMuted.value || (userMusicVolume.value === 0 && userSoundVolume.value === 0))
 
 // Snapshot of the volumes at the moment WE muted in response to a
 // platform-mute event. `null` means "no platform-mute in this session"
@@ -49,14 +50,26 @@ export const applyMute = (muted: boolean) => {
  *  since the SDK exposes no setter to push the in-game button back to CG).
  *  Thin wrapper over `applyMute` so the sync hook and tests share one path. */
 export const applyPlatformMute = (muted: boolean) => {
+  // The toolbar's unmute is the player's own click too: it lifts their mute.
+  if (!muted) playerMuted.value = false
   applyMute(muted)
 }
 
 export const toggleMute = () => {
   const next = !isMuted.value
   if (next) {
-    // Muting: snapshot the current (audible) volumes, then zero them.
+    // Muting: snapshot the current (audible) volumes, zero them, and hold the
+    // hard silence (`playerMuted`) that nothing but the player lifts.
     applyMute(true)
+    playerMuted.value = true
+    setCrazyMuted(next)
+    return
+  }
+  playerMuted.value = false
+  if (!isMuted.value) {
+    // The volumes came back underneath the mute (a cloud re-hydrate): lifting
+    // the latch was all it took, and the snapshot is stale now.
+    muteSnapshot = null
   } else if (muteSnapshot) {
     // Unmuting with a snapshot from an earlier mute → restore it.
     applyMute(false)

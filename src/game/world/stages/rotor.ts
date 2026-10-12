@@ -126,7 +126,9 @@ export const generateRotorRun = (seed: number): MapData => {
   b.checkpoint(25, 11, YAW_NX, cells(24, 9, 26, 12))
   b.checkpoint(21, 10, YAW_NX, cells(20, 9, 22, 12))
   b.foe('flyer', 21, 12, YAW_NX, [17, 9, 26, 12], [L(0), L(2)], 'hornet')
-  b.corridor(16, 10, -1, 0, 2, L(2))
+  // One cell: the flight deck's east wall is x = 16 (two cells put the door
+  // inside the deck, its first cell owned by no room).
+  b.corridor(16, 10, -1, 0, 1, L(2))
 
   // ── 6 Flight deck ─────────────────────────────────────────────────────────
   b.addRoom(11, 9, 5, 4, 'combat', 'cart', L(2))
@@ -216,8 +218,11 @@ export const generateRotorRun = (seed: number): MapData => {
   b.checkpoint(38, 36, YAW_NZ, cells(37, 35, 39, 37))
   b.foe('ground', 35, 33, YAW_PZ, [32, 30, 39, 37])
   b.foe('flyer', 34, 35, YAW_NZ, [32, 30, 39, 37], [LOW, LOW + 3], 'hornet')
-  b.secret(11, 'color', [32, 29, 33, 29], { i: 33, j: 29, axis: 'z' },
-    [[32, 31, 'w', 1], [35, 30, 'n', 0], [37, 30, 'n', 1], [39, 33, 'e', 2]], [], 'tank', 1)
+  // Floor plates (#143): ten, two gaps in the grid; one walk lights them
+  // all only from two corners. In the room's north-west, off the way
+  // between its doors (the east side): only Flux who means to walks them.
+  b.secret(11, 'tiles', [32, 29, 33, 29], { i: 33, j: 29, axis: 'z' }, [], [], 'tank', undefined,
+    { tiles: cells(33, 31, 36, 33).filter(([i, j]) => !(i === 34 && j === 31) && !(i === 35 && j === 33)) })
   b.corridor(40, 34, 1, 0, 2, LOW)
 
   // ── 13 Approach ───────────────────────────────────────────────────────────
@@ -239,6 +244,10 @@ export const generateRotorRun = (seed: number): MapData => {
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
   // The weapon lesson room behind the boss, where the grid has room for it.
   b.exitRoom()
+  // The challenge room (`sim/challenge.ts`): east off the hangar drop's
+  // floor, a hangar bay at its level — its door ahead of Flux at the foot
+  // of the drop; the way on is north.
+  b.challengeRoom(10, { mouth: { i: 39, j: 42, di: 1, dj: 0 } })
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open sky under the airfield: a fall is the rescue's.
   map.terrain!.clouds = true

@@ -177,7 +177,7 @@ export class WaveFeature implements StageFeature {
       const hd = Math.hypot(dx, dz)
       if (e.state !== 'engage' || hd < ZAP_NEAR || hd > ZAP_FAR) { this.zap[n] = 0.3; continue }
       this.zap[n] = ZAP_EVERY
-      host.fireEnemyShot(e, e.x, e.y, e.z, dx / hd, (ZAP_AT - e.y) / hd, dz / hd, ZAP_SPEED, Math.max(1, Math.round(e.dmg * ZAP_DMG)), true)
+      host.fireEnemyShot(e, e.x, e.y, e.z, dx / hd, (ZAP_AT - e.y) / hd, dz / hd, ZAP_SPEED, Math.max(1, Math.round(e.dmg * ZAP_DMG)))
       host.sfx('enemyShot', e.x, e.z)
     }
   }

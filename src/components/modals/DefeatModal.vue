@@ -47,15 +47,20 @@
         FButton(v-if="freeFirst" type="danger" icon="back" @click="retreat")
           span.free-label
             span {{ t('defeat.retreat') }}
-            span.sizer(v-if="offerReboot" aria-hidden="true") {{ t('defeat.rebootAd') }}
+            span.sizer.ad-label(v-if="offerReboot" aria-hidden="true")
+              RewardAdBadge
+              span {{ t('defeat.rebootAd') }}
+        //- The rewarded mark every video button carries (`RewardAdBadge`).
         FButton(
           v-if="offerReboot"
           type="primary"
-          icon="video"
           :is-disabled="adInFlight"
           :label="t('defeat.rebootAd')"
           @click="rebootAd"
         )
+          span.ad-label
+            RewardAdBadge
+            span {{ t('defeat.rebootAd') }}
         FButton(v-if="!freeFirst" type="danger" icon="back" :label="t('defeat.retreat')" @click="retreat")
 </template>
 
@@ -65,6 +70,7 @@ import { useI18n } from 'vue-i18n'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import RewardAdBadge from '@/components/atoms/RewardAdBadge.vue'
 import { flow } from '@/game/flow'
 import { hud } from '@/game/state/hud'
 import { currentMission } from '@/game/boot'
@@ -225,6 +231,10 @@ onUnmounted(stopTimer)
   justify-items: center
   > *
     grid-area: 1 / 1
+.ad-label
+  display: inline-flex
+  align-items: center
+  gap: 0.4em
 .sizer
   visibility: hidden
 </style>

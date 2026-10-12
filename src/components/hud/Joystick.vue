@@ -1,12 +1,14 @@
 <template lang="pug">
   div.joy(ref="root" aria-hidden="true")
-    //- The resting stick: always there on touch, faint, low on the left — so
-    //- the movement control can be SEEN before it is found. A press on it
-    //- grabs it by its centre (`engine/input.ts`); in use, it steps aside
-    //- for the live stick below.
-    div.joy-home(ref="home" v-show="resting" :class="{ hidden: busy, demo: demoMove }")
-      div.joy-home-knob
-    div.joy-base(ref="base")
+    //- The stick's home, low on the left: an invisible anchor the input record
+    //- measures (`engine/input.ts` grabs the stick by its centre there).
+    div.joy-home(ref="home" v-show="resting")
+    //- ONE stick, always on screen on touch, half transparent at rest — so
+    //- the movement control is SEEN before it is found (mobile playtests: the
+    //- old faint ring went unnoticed and players tapped the world to walk).
+    //- A press anywhere on the left brings it under the thumb; let go, it
+    //- glides home.
+    div.joy-base(ref="base" v-show="resting" :class="{ demo: demoMove }")
       div.joy-knob(ref="knob")
 </template>
 
@@ -29,10 +31,8 @@ const base = ref<HTMLElement | null>(null)
 const knob = ref<HTMLElement | null>(null)
 /** The resting stick is part of the touch HUD, in play. */
 const resting = computed(() => hud.device === 'touch' && hud.phase === 'play')
-/** The live stick is out: the resting one fades away under it. */
-const busy = ref(false)
 let off: (() => void) | null = null
-let shown = false
+let shown: boolean | null = null
 
 /** A touch this much wider than the drawn ring still grabs it. */
 const GRAB = 1.35
@@ -68,10 +68,14 @@ onMounted(() => {
     if (!b || !k) return
     if (input.joyActive !== shown) {
       shown = input.joyActive
-      busy.value = shown
-      b.style.opacity = shown ? '1' : '0'
+      b.classList.toggle('live', shown)
     }
-    if (!shown) return
+    if (!shown) {
+      // At rest: home, the knob centred.
+      b.style.transform = `translate(${input.joyHomeX}px, ${input.joyHomeY}px)`
+      k.style.transform = ''
+      return
+    }
     b.style.transform = `translate(${input.joyOriginX}px, ${input.joyOriginY}px)`
     const m = Math.min(1, Math.hypot(input.joyX, input.joyY))
     const a = Math.atan2(input.joyY, input.joyX)
@@ -91,7 +95,7 @@ const demoMove = computed(() => hud.holoAct === 'move' && hud.holoDown)
 </script>
 
 <style scoped lang="sass">
-.joy-home.demo
+.joy-base.demo
   box-shadow: 0 0 0 4px #ffd84a, 0 0 20px rgba(255, 216, 74, 0.9)
   opacity: 1 !important
 .joy
@@ -100,7 +104,7 @@ const demoMove = computed(() => hud.holoAct === 'move' && hud.holoDown)
   pointer-events: none
 // Centred on --joy-home-x / --joy-home-y (set on the HUD layer, shared with
 // the coach's move glyph): far enough from both edges that a full push of the
-// stick, finger and all, stays on the glass.
+// stick, finger and all, stays on the glass. Only measured, never drawn.
 .joy-home
   position: absolute
   left: calc(env(safe-area-inset-left, 0px) + var(--joy-home-x))
@@ -108,23 +112,7 @@ const demoMove = computed(() => hud.holoAct === 'move' && hud.holoDown)
   width: 112px
   height: 112px
   margin: 0 0 -56px -56px
-  border-radius: 50%
-  background: radial-gradient(circle, rgba(20, 40, 90, 0.12) 0%, rgba(20, 40, 90, 0.22) 70%)
-  border: 3px solid rgba(160, 225, 255, 0.4)
-  opacity: 0.55
-  transition: opacity 0.15s
-  &.hidden
-    opacity: 0
-.joy-home-knob
-  position: absolute
-  left: 50%
-  top: 50%
-  width: 50px
-  height: 50px
-  margin: -25px 0 0 -25px
-  border-radius: 50%
-  background: radial-gradient(circle at 38% 32%, rgba(191, 243, 255, 0.7) 0%, rgba(60, 200, 255, 0.55) 45%, rgba(31, 95, 232, 0.5) 100%)
-  border: 3px solid rgba(20, 26, 51, 0.5)
+  visibility: hidden
 .joy-base
   position: absolute
   left: 0
@@ -134,11 +122,15 @@ const demoMove = computed(() => hud.holoAct === 'move' && hud.holoDown)
   margin: -56px 0 0 -56px
   border-radius: 50%
   background: radial-gradient(circle, rgba(20, 40, 90, 0.18) 0%, rgba(20, 40, 90, 0.34) 70%)
-  border: 3px solid rgba(160, 225, 255, 0.55)
+  border: 3px solid rgba(160, 225, 255, 0.7)
   box-shadow: 0 0 18px rgba(80, 200, 255, 0.25), inset 0 0 12px rgba(80, 200, 255, 0.25)
-  opacity: 0
-  transition: opacity 0.12s
+  // Half transparent at rest; solid under the thumb. Home again with a glide.
+  opacity: 0.5
+  transition: opacity 0.12s, transform 0.18s ease-out
   will-change: transform
+  &.live
+    opacity: 0.95
+    transition: opacity 0.12s
 .joy-knob
   position: absolute
   left: 50%

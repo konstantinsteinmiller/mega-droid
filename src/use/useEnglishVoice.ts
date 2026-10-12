@@ -18,10 +18,10 @@ const readPersisted = (): boolean | null => {
 
 export const englishVoice = ref<boolean | null>(readPersisted())
 
-/** The UI locale has a voice-over of its own: English, German, Spanish,
+/** The UI locale has a voice-over of its own: English, German, Spanish, French,
  *  Chinese (zh-TW hears the Mandarin one). Keep in step with `VoiceLang`. */
 export const hasOwnVoice = (locale: string | null | undefined): boolean =>
-  /^(|en|de|es|zh)([-_].*)?$/i.test(locale ?? '')
+  /^(|en|de|es|zh|fr)([-_].*)?$/i.test(locale ?? '')
 
 // A cloud save that lands after boot carries the player's answer too.
 watch(saveDataVersion, () => {

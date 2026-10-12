@@ -153,7 +153,7 @@ describe('generateMeltdown', () => {
       const m = generateMeltdown(seed)
       const t = m.terrain!
       // (The beam-in room, off the chain, comes last.)
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) || undefined)).toEqual(['hall', 'lava', 'vents', 'rolling', 'hammer', 'drop', 'lift', 'arena'])
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(['hall', 'lava', 'vents', 'rolling', 'hammer', 'drop', 'lift', 'arena'])
       expect(m.w).toBeLessThanOrEqual(48)
       expect(m.h).toBeLessThanOrEqual(40)
       mirrored.add(m.start.x > m.w * CELL / 2)
@@ -248,7 +248,8 @@ describe('generateMeltdown', () => {
       const m = generateMeltdown(seed)
       const t = m.terrain!
       for (const r of m.rooms) {
-        if (t.sections[r.id] === 'arena') continue
+        // (The challenge room is off the route: a fall there has nowhere to go.)
+        if (t.sections[r.id] === 'arena' || r.role === 'challenge') continue
         expect(t.checkpoints.some(c => c.room === r.id), `room ${r.id}`).toBe(true)
       }
       // (The beam-in room's checkpoint leads the list; it is off the chain.)

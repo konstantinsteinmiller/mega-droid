@@ -38,6 +38,7 @@ export default {
     'lastStand': 'Perlawanan Terakhir! Sistem dinyalakan ulang.',
     'weak': 'LEMAH!',
     'kranck': 'KRANCK!',
+    'tooWeak': 'TERLALU LEMAH!',
     'dizzy': 'PUSING!',
     'dodge': 'MENGELAK!',
     'block': 'Blok',
@@ -70,6 +71,7 @@ export default {
     'warden': 'Penjaga',
     'hornet': 'Rotor Tawon',
     'stalker': 'Pengintai Pendar',
+    'spotter': 'Drone Sorot',
     'puffer': 'Ranjau Buntal',
     'mole': 'Tikus Tanah Bor',
     'polar': 'Anjing Kutub',
@@ -91,6 +93,7 @@ export default {
     'warden': 'Penjaga | Penjaga',
     'hornet': 'Rotor Tawon | Rotor Tawon',
     'stalker': 'Pengintai Pendar | Pengintai Pendar',
+    'spotter': 'Drone Sorot | Drone Sorot',
     'puffer': 'Ranjau Buntal | Ranjau Buntal',
     'mole': 'Tikus Tanah Bor | Tikus Tanah Bor',
     'polar': 'Anjing Kutub | Anjing Kutub',
@@ -131,6 +134,26 @@ export default {
     'galeMaster': 'Master Badai',
     'vexMk1': 'Dr. Vex Mk-I',
     'grandMaster': 'Bot Master Agung'
+  },
+
+  // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
+  'miniboss': {
+    'cinderHound': 'Anjing Bara',
+    'icebreakerBrute': 'Brute Pemecah Es',
+    'arcSpider': 'Laba-laba Busur',
+    'stormHornetQueen': 'Ratu Tawon Badai',
+    'lodestoneGolem': 'Golem Batu Magnet',
+    'burrowWyrm': 'Cacing Penggali',
+    'pufferMatriarch': 'Induk Ikan Buntal',
+    'glitchStalker': 'Pengintai Glitch',
+    'sawGyro': 'Giro Gergaji',
+    'sentinelPrototype': 'Prototipe Penjaga'
+  },
+
+  // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
+  'challenge': {
+    'label': 'Tantangan',
+    'cleared': 'Tantangan dikalahkan! +{bolts} baut'
   },
 
   'sector': {
@@ -216,7 +239,7 @@ export default {
     'levelUp': 'Level {n}! Sistem pulih total.'
   },
   'tips': {
-    'moveTouch': 'Geser sisi kiri untuk bergerak, sisi kanan untuk melihat. Ketuk lantai untuk berjalan ke sana!',
+    'moveTouch': 'Geser sisi kiri untuk bergerak, sisi kanan untuk melihat.',
     'moveKeys': '{keys} untuk bergerak.',
     'lookMouse': 'Gerakkan mouse untuk melihat sekeliling.',
     'capture': 'Klik layar permainan untuk mengendalikan kamera.',
@@ -315,8 +338,8 @@ export default {
       'interact': 'Interaksi'
     },
     'touch': {
-      'move': 'Sisi kiri: geser untuk bergerak. Ketuk lantai untuk berjalan ke sana.',
-      'fire': 'Saat bertarung: ketuk untuk menembak, tahan untuk mengisi muatan, lepas untuk menembak.',
+      'move': 'Sisi kiri: geser untuk bergerak. Sisi kanan: geser untuk melihat.',
+      'fire': 'Sisi kanan atau tombol tembak: ketuk untuk menembak, tahan untuk mengisi muatan, lepas untuk menembak. Geser sambil menahan untuk membidik.',
       'block': 'Tahan perisai untuk memblok — tepat saat lingkaran menutup untuk menangkis.',
       'use': 'Di dekat peti, robot yang terjebak, atau pintu: ketuk benda itu, atau tombol yang muncul.'
     },
@@ -708,6 +731,7 @@ export default {
       'warden': '{enemy}. Hantam intinya saat terbuka.',
       'hornet': '{enemy}. Dia menukik lurus: ke samping!',
       'stalker': '{enemy}. Tangkis terjangannya.',
+      'spotter': '{enemy}. Keluar dari cahayanya. Tembak lampunya.',
       'puffer': '{enemy}. Letuskan sebelum mengembang.',
       'mole': '{enemy}. Hantam saat dia muncul.',
       'elite': 'Lingkaran emas. Elit. Hati-hati.',
@@ -730,6 +754,7 @@ export default {
       'free': 'Karena mereka bebas.',
     },
     'guardDown': 'Penjaga tumbang! Jalan terbuka.',
+    'challenge': 'Pintu tantangan! Ada jarahan di dalam.',
     'help': {
       'weapon': 'Pilih senjata barumu dan tembak drone-drone itu!',
       'gap': 'Jalan lurus ke tepi dan kamu akan melompat otomatis!',
@@ -737,6 +762,7 @@ export default {
       'slide': 'Meluncurlah tepat sebelum cincin merah mengenaimu!',
       'block': 'Tahan blok saat dia menembak. Tepat saat kena itu sempurna!',
       'blockMiss': 'Perisai naik! Blok tepat saat kena untuk memantulkannya!',
+      'chargeMiss': 'Coba tembakan bermuatan dengan menahan tombol meriam!',
       'charge': 'Tahan tembak sampai meriam bercahaya, lalu lepas!',
     },
     'train': {
@@ -834,6 +860,9 @@ export default {
       'lights': 'Panel itu menunjukkan pola. Lampu di dinding belum.',
       'color': 'Bingkai itu punya warna favorit. Hanya lampu warna itu yang boleh menyala.',
       'cycle': 'Setiap tembakan bikin lampu berubah pikiran. Panelnya tahu maunya apa.',
+      'sequence': 'Panel itu terus mengedipkan nada yang sama. Mainkan lagi di tombol-tombolnya, berurutan.',
+      'mirror': 'Sinar itu ingin masuk ke cincin. Cermin berputar kalau kamu tembak.',
+      'tiles': 'Nyalakan semua pelat dalam sekali jalan. Dua kali di satu pelat, atau keluar, dan semuanya gelap lagi.',
       'solved': 'Wah, wah. Ada yang suka teka-teki.'
     },
     'landed': 'Mendarat! Ayo.',

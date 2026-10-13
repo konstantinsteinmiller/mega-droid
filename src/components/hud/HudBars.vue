@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.bars(ref="barsEl")
+  div.bars(ref="barsEl" data-zone="vitals")
     div.bar-col(aria-hidden="true")
       div.bar.hp(ref="hpEl" :title="t('hud.hp')" :class="{ low: hpLow && holdPct === null, beat: lowHealthLive && holdPct === null, refilling: holdPct !== null }")
         span.cap(ref="capEl")

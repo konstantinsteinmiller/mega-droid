@@ -17,7 +17,7 @@ vi.mock('@/game/world/textures', async (orig) => {
 import { CELL, Cell, type MapData } from '@/game/world/levelGen'
 import { groundAt } from '@/game/world/nav'
 import { generateVexFortress } from '@/game/world/stages/fortress'
-import { stageFoeHpMul, STAGE_FOE_HP, STAGE_GATE_HP } from '@/game/sim/adaptive'
+import { stageFoeHpMul, STAGE_FOE_HP, STAGE_GATE_HP, STAGE_GATEKEEPER_HP } from '@/game/sim/adaptive'
 import { spawnClimb } from '@/game/sim/climbSpawn'
 import { createEnemy } from '@/game/sim/enemies'
 import { SECTOR_BY_ID } from '@/game/data/regions'
@@ -30,15 +30,16 @@ const MINI = new Set(['gatekeeper', 'echo'])
 const cellOf = (m: MapData, x: number, z: number): [number, number] => [Math.floor(x / CELL), Math.floor(z / CELL)]
 
 describe('the Vex Fortress cast (#144)', () => {
-  it('three times the health for its regular machines, twice for its gates, on its story stage only', () => {
+  it('three times the health for its regular machines, twice for the Twin Masters and one and a half for the Gatekeeper, on its story stage only', () => {
     expect(STAGE_FOE_HP.fortress).toBe(3)
     expect(STAGE_GATE_HP.fortress).toBe(2)
+    expect(STAGE_GATEKEEPER_HP.fortress).toBe(1.5)
     const reg = { boss: false, kind: 'warden' }
     expect(stageFoeHpMul('fortress', reg)).toBe(3)
     expect(stageFoeHpMul('fortress', { boss: false, kind: 'hornet' })).toBe(3)
     expect(stageFoeHpMul('fortress', { boss: false, kind: 'turret' })).toBe(3)
-    // The gates' mini-bosses: twice.
-    expect(stageFoeHpMul('fortress', { boss: false, kind: 'gatekeeper' })).toBe(2)
+    // The gates' mini-bosses: the Gatekeeper one and a half, the Twins twice.
+    expect(stageFoeHpMul('fortress', { boss: false, kind: 'gatekeeper' })).toBe(1.5)
     expect(stageFoeHpMul('fortress', { boss: false, kind: 'echo' })).toBe(2)
     // Vex, a challenge room's mini-boss and its brood.
     expect(stageFoeHpMul('fortress', { boss: true, kind: 'boss' })).toBe(1)
@@ -61,7 +62,7 @@ describe('the Vex Fortress cast (#144)', () => {
     for (const e of cast) {
       const base = createEnemy(e.kind, 35, e.x, e.z, e.room, { element: table.element, echo: e.echoOf ?? undefined }).maxHp
       const mul = stageFoeHpMul('fortress', e, m.rooms[e.room]?.role === 'challenge')
-      if (MINI.has(e.kind)) expect(mul).toBe(2)
+      if (MINI.has(e.kind)) expect(mul).toBe(e.kind === 'gatekeeper' ? 1.5 : 2)
       else { expect(mul).toBe(3); regular++ }
       expect(Math.round(base * mul)).toBe(base * mul)
     }

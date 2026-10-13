@@ -49,6 +49,8 @@ export default {
     'noGel': 'Nu mai ai Gel Reparator',
     'beamNotYet': 'Teleportează-te după ce termini obiectivul',
     'beamFight': 'Câștigă întâi lupta, apoi teleportează-te',
+    'beamGrandMaster': 'Învinge întâi: {boss}, apoi teleportează-te',
+    'beamLesson': 'Încearcă întâi noua armă ({weapon}), apoi teleportează-te',
     'tankCount': 'Gel Reparator: {n} din {max}',
     'borrowed': '{weapon} împrumutat: {n} din {max} focuri',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarha Pește-Balon',
     'glitchStalker': 'Pânditorul Glitch',
     'sawGyro': 'Giro-Fierăstrău',
-    'sentinelPrototype': 'Prototipul Santinelă'
+    'sentinelPrototype': 'Prototipul Santinelă',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Scut de gheață! Trage în miezul înghețat de pe spatele lui sau sparge scutul cu o încărcare completă.',
+      'sawGyro': 'Rotirea lui deviază loviturile! Sparge-o cu o încărcare completă sau lovește-l când e amețit.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Obiectiv îndeplinit',
     'beamOutHint': 'Teleportează-te când ești gata.',
     'learnWeapon': 'Învață noua armă: {weapon}',
+    'grandMaster': 'Învinge: {boss}',
     'tutorial': 'Învinge-l pe {boss}',
     'walk': {
       'charge': 'Lovește drona cu o lovitură încărcată',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Echipat!',
     'found': 'Ai găsit: {item} ({rarity})!',
     'tank': 'Ai găsit un Gel Reparator!',
-    'giftTank': 'Cadou: +1 Gel Reparator!'
+    'giftTank': 'Cadou: +1 Gel Reparator!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'față de echipat',
+    // The last chip when more stats change than the card shows.
+    'more': 'încă +{n}'
   },
 
   'results': {

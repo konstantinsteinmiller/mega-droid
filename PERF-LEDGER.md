@@ -252,6 +252,40 @@ phone before acting on it.
 - Sharpness: a 3× phone draws at 2× and reads BLURRY on the live probe, as it
   did at the old 1.6× (0.111 old, 0.113 new). #121 allows 1× and 2× only.
 
+### 11. Machines left far behind go back to sleep (#161) — KEPT (2026-10-13)
+
+- Found: a playtest woke Magnet's rooms 2, 4, 6, 9 and 13 one after another
+  and idle frame time crept from 17 to 21-36 ms, with hitches; a fresh load
+  ran the same rooms at 60 fps. Nothing leaked: draw calls, geometries (296 →
+  309 over the whole tour), textures (56) and shader programs (89) stayed
+  flat, and particles, shards and shots are fixed or reused pools. What grew
+  was the AWAKE cast: every machine woken stayed awake for good and chased
+  Flux across the map (awake 2 → 10 after five rooms, at 48-67 m). Out of
+  sight it runs A* every 0.7 s, and from a few rooms away the search runs out
+  of its 700-node budget and fails, to start over 0.7 s later, on top of
+  sight rays the length of the map. A CPU profile of the late room had
+  `findPath` + `walkStep` as the top simulation entries.
+- Change: `enemies.drowse`, called by the mission before `updateEnemy`. A
+  plain machine 45 m or more from Flux (`DROWSE_R`, past the 32 m nothing
+  fires beyond) and out of his sight for 4 s (`DROWSE_AFTER`) goes back to
+  sleep where it stands, between moves only (never out of a telegraph, a
+  strike or a stun). It wakes as ever when he comes back into its aggro or its
+  room in sight. Bosses, mini-bosses, crate golems and Searchlight Drones are
+  left alone.
+- Measured: dev server, headless Chrome on the software GL, unthrottled, the
+  same tour (rooms 2 → 4 → 6 → 9 → 13 → back to 2), 6 s idle per room. A
+  load-independent row: awake machines at the end **10 → 4**. Simulation step
+  per frame in the late rooms **4.3 / 5.6 ms → 2.3 / 2.7 ms** (rooms 9 / 13);
+  back in room 2, work p95 **11.1 → 6.2 ms**. (A dev-server number on a busy
+  machine, so read the direction, not the digits.) The playtest's 300 ms
+  hitches did not reproduce here; its harness stacked several rAF probes, so
+  part of them may have been the harness.
+- Guard: `tests/game/enemyDrowse.test.ts` tours two 18-room missions waking
+  every room: without `drowse` 35+ machines end awake, most of them far
+  behind, and the A* searches grow with every room; with it, at most two are
+  awake far behind over the whole tour, never 20 at once, and the second
+  half's searches are under half the control's.
+
 ## Open hypotheses (not applied, not measured)
 
 - The inverted-hull outline doubles every decor and character triangle.

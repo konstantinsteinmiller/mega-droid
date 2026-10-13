@@ -274,3 +274,23 @@ describe('the label', () => {
     }
   })
 })
+
+describe('the label fits its box', () => {
+  // #157: German "Erst abschließen: Lauf über die Kante, spring über die
+  // Lücke" wrapped to a third line in a two-line box and was cut. The box now
+  // grows to three lines (DoorPrompt.vue). On the narrowest screen, a phone
+  // held upright (360 px), a line holds about 28 characters; 72 leaves room
+  // for the words that do not break where the line ends.
+  const MAX_CHARS = 72
+
+  it('the longest label in every shipped locale stays within three lines', async () => {
+    for (const code of LANGUAGES) {
+      const L = (await import(`../../src/i18n/locales/${code}.ts`)).default
+      const w = L.walk
+      const labels: string[] = [w.finishTutorial, w.finishLesson]
+      for (const n of Object.values(L.objective.walk) as string[]) labels.push(w.finishLessonNamed.replace('{lesson}', n))
+      for (const k of Object.keys(L.weapon)) if (L.weapon[k]?.name) labels.push(w.finishLessonOn.replace('{weapon}', L.weapon[k].name))
+      for (const s of labels) expect(s.length, `${code}: ${s}`).toBeLessThanOrEqual(MAX_CHARS)
+    }
+  })
+})

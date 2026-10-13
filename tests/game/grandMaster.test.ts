@@ -6,7 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Box3, Group, Matrix4, MeshBasicMaterial, Vector3, type BufferGeometry, type Mesh, type Object3D } from 'three'
-import { GrandMaster, GM_PHASES, GM_HP_MUL, WEAK_SPOT_MUL, WEAKNESS_MUL, WING_BEAT_AMP, gmPartPieces, type GmHost } from '@/game/sim/grandMaster'
+import { GrandMaster, GM_PHASES, GM_HP_MUL, WEAK_SPOT_MUL, WEAKNESS_MUL, WING_BEAT_AMP, GM_FOOT_X, GM_FOOT_Z0, GM_FOOT_Z1, gmPartPieces, type GmHost } from '@/game/sim/grandMaster'
 import { generateVexFortress } from '@/game/world/stages/fortress'
 import { hud } from '@/game/state/hud'
 import { banner } from '@/game/state/banner'
@@ -83,6 +83,25 @@ describe('the Grand Master', () => {
     r.setPress(true)
     r.step(0.1)
     expect(r.gm.state).toBe('fight')
+  })
+
+  it('Flux never stands inside it: walked into its legs from any side, he is held at its footprint (#148)', () => {
+    const r = rig()
+    r.gm.start(10, 10)
+    r.step(4)
+    r.setPress(true)
+    r.step(0.1)
+    r.setPress(false)
+    const at = r.gm.root.position
+    const p = r.host.player
+    for (const [ox, oz] of [[0, 0], [1.6, 0.4], [-1.6, 1.5], [0, -1], [2.3, 2]] as const) {
+      p.x = at.x + ox
+      p.z = at.z + oz
+      r.step(1 / 30)
+      const inX = Math.abs(p.x - at.x) < GM_FOOT_X + 0.6
+      const inZ = p.z - at.z > GM_FOOT_Z0 - 0.6 && p.z - at.z < GM_FOOT_Z1 + 0.6
+      expect(inX && inZ, `${ox},${oz}`).toBe(false)
+    }
   })
 
   it('holds the giant\'s health against Vex\'s, shared by its parts', () => {

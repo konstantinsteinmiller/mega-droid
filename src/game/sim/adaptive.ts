@@ -149,6 +149,9 @@ export const STAGE_FOE_HP: Partial<Record<SectorId, number>> = { fortress: 3 }
  *  Masters' echoes): tougher too, but less than the regulars, since each is a
  *  one-on-one fight with a checkpoint at the door. */
 export const STAGE_GATE_HP: Partial<Record<SectorId, number>> = { fortress: 2 }
+/** The Gatekeeper alone: its shield only opens in its barrage, so twice was a
+ *  4.5-minute fight at the level's gear (#163); one and a half. */
+export const STAGE_GATEKEEPER_HP: Partial<Record<SectorId, number>> = { fortress: 1.5 }
 
 /** A machine's health multiplier on the story stage `stage` (1 elsewhere). */
 export const stageFoeHpMul = (
@@ -157,6 +160,7 @@ export const stageFoeHpMul = (
   inChallengeRoom = false
 ): number => {
   if (!stage || e.boss || e.mini || inChallengeRoom) return 1
-  if (e.kind === 'gatekeeper' || e.kind === 'echo') return STAGE_GATE_HP[stage] ?? 1
+  if (e.kind === 'gatekeeper') return STAGE_GATEKEEPER_HP[stage] ?? 1
+  if (e.kind === 'echo') return STAGE_GATE_HP[stage] ?? 1
   return STAGE_FOE_HP[stage] ?? 1
 }

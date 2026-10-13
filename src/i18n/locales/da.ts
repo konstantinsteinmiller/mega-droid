@@ -49,6 +49,8 @@ export default {
     'noGel': 'Ingen reparationsgel tilbage',
     'beamNotYet': 'Teleportér ud, når opgaven er løst',
     'beamFight': 'Vind kampen først, teleportér så ud',
+    'beamGrandMaster': 'Besejr {boss} først, teleportér så ud',
+    'beamLesson': 'Prøv dit nye våben ({weapon}) først, teleportér så ud',
     'tankCount': 'Reparationsgel: {n} af {max}',
     'borrowed': 'Lånt våben {weapon}: {n} af {max} skud',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Kuglefisk-Matriark',
     'glitchStalker': 'Glitch-Lurer',
     'sawGyro': 'Savgyro',
-    'sentinelPrototype': 'Vogter-Prototype'
+    'sentinelPrototype': 'Vogter-Prototype',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Isskjold! Skyd på frostkernen på dens ryg, eller bryd skjoldet med en fuld ladning.',
+      'sawGyro': 'Dens snurren afbøjer skud! Bryd den med en fuld ladning, eller ram den, mens den er svimmel.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Mål klaret',
     'beamOutHint': 'Teleportér ud, når du er klar.',
     'learnWeapon': 'Lær dit nye våben: {weapon}',
+    'grandMaster': 'Besejr {boss}',
     'tutorial': 'Besejr {boss}',
     'walk': {
       'charge': 'Skyd dronen med et ladeskud',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Udstyret!',
     'found': '{item} ({rarity}) fundet!',
     'tank': 'Reparationsgel fundet!',
-    'giftTank': 'Gave: +1 Reparationsgel!'
+    'giftTank': 'Gave: +1 Reparationsgel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. udstyret',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} mere'
   },
 
   'results': {

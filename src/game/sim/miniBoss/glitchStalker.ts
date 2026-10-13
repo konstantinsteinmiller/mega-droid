@@ -6,7 +6,7 @@ import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildGlitchStalker, poseGlitchStalker, newStalkerPose, holoStalker, STALKER_COLORS, type StalkerPose
 } from '../../models/miniBoss/glitchStalker'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, TAU } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, TAU, eyeAt } from './kit'
 import { fxLayer, alignFx, FloorStrip } from './worldFx'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
@@ -50,6 +50,8 @@ export const DECOY_LIFE = 8
 export const DECOY_AIM = 0.7
 const DECOY_EVERY = 2.3
 const DECOY_R = 0.65
+/** A hologram's drawn height, its raised blade's tip (m). */
+const DECOY_TOP = 2.6
 const DECOY_SHOT_SPEED = 11
 /** The grid: wind-up (s), the lines' spacing (m), half width (m), the time
  *  between lines firing (s) and how long each burns (s). */
@@ -71,6 +73,8 @@ export interface Decoy {
   fire: number
   side: number
   alive: boolean
+  /** Flux's eye is inside it (he walked into the hologram): not drawn. */
+  close: boolean
   /** Popped: the time it has been breaking up (s). */
   popT: number
   rig: Rig
@@ -115,7 +119,7 @@ const ensureFx = (e: Enemy, m: StalkerMem): void => {
     holoStalker(rig)
     rig.root.visible = false
     m.layer.add(rig.root)
-    m.decoys.push({ x: 0, z: 0, yaw: 0, t: 0, fire: 0, side: k === 0 ? -1 : 1, alive: false, popT: 9, rig, pose: newStalkerPose(1.7 + k * 2.9) })
+    m.decoys.push({ x: 0, z: 0, yaw: 0, t: 0, fire: 0, side: k === 0 ? -1 : 1, alive: false, close: false, popT: 9, rig, pose: newStalkerPose(1.7 + k * 2.9) })
   }
   for (let k = 0; k < GRID_LINES; k++) m.strips.push(new FloorStrip(m.layer, '#ff2d6a'))
 }
@@ -210,6 +214,7 @@ const splitOff = (w: World, e: Enemy, m: StalkerMem, room: Room): void => {
     d.yaw = to
     d.t = 0
     d.alive = true
+    d.close = false
     d.popT = 9
     // The two fire a beat apart, never together, never at once.
     d.fire = DECOY_AIM + 0.9 + k * 1.1
@@ -251,6 +256,7 @@ const tickDecoys = (w: World, e: Enemy, m: StalkerMem, room: Room, dt: number): 
     const [nx, nz] = inRoom(room, d.x + mx, d.z + mz, 1)
     d.x = nx
     d.z = nz
+    d.close = eyeAt(w, d.x, d.z, DECOY_R, y0, y0 + DECOY_TOP)
     d.fire -= dt
     d.pose.aim = ease(d.pose.aim, d.fire < DECOY_AIM ? 1 : 0, 10, dt)
     if (d.fire < DECOY_AIM && Math.random() < 0.6) {
@@ -496,7 +502,7 @@ export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
     for (const d of m.decoys) {
       // A popped hologram breaks up in a quick flicker, then goes.
       const fading = !d.alive && d.popT < 0.25
-      d.rig.root.visible = d.alive || fading
+      d.rig.root.visible = (d.alive && !d.close) || fading
       if (!d.rig.root.visible) continue
       d.rig.root.position.set(d.x, 0, d.z)
       d.rig.root.rotation.y = d.yaw

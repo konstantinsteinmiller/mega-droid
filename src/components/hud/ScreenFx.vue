@@ -4,7 +4,9 @@
     div.hurt(ref="hurt")
     div.flash(ref="flash")
     div.beam(ref="beam")
-  div.toasts
+    div.spot(ref="spot")
+    div.spot.lock(ref="spotLock")
+  div.toasts(data-zone="toasts")
     TransitionGroup(name="toast")
       div.toast(v-for="tt in toasts" :key="tt.id" :style="{ color: tt.color }") {{ t(tt.key, resolveParams(t, tt.params)) }}
 </template>
@@ -12,8 +14,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { addHudTicker, hud } from '@/game/state/hud'
-import { lowHealthLive, screenFx, toasts } from '@/game/state/screenFx'
+import { addHudTicker, hud, hudLive } from '@/game/state/hud'
+import { darkFlash, lowHealthLive, screenFx, toasts } from '@/game/state/screenFx'
 import { resolveParams } from '@/game/state/i18nParams'
 
 /** Red hurt vignette, the low-health edge pulse, colour flashes (parry,
@@ -26,6 +28,10 @@ const { t } = useI18n()
 const hurt = ref<HTMLElement | null>(null)
 const flash = ref<HTMLElement | null>(null)
 const beam = ref<HTMLElement | null>(null)
+const spot = ref<HTMLElement | null>(null)
+const spotLock = ref<HTMLElement | null>(null)
+/** The searchlight's edge glow, eased toward `hudLive.spotLit`. */
+let spotK = 0
 let off: (() => void) | null = null
 
 onMounted(() => {
@@ -36,10 +42,18 @@ onMounted(() => {
     if (flash.value) {
       flash.value.style.opacity = String(screenFx.flash)
       flash.value.style.background = screenFx.flashColor
+      // A dark flash (a fall's black-out, a pit's gloom) covers; screen
+      // blending would add nothing and the cut showed bare (playtest #155).
+      flash.value.style.mixBlendMode = darkFlash(screenFx.flashColor) ? 'normal' : 'screen'
     }
     // The white-out rides the camera's dive into Flux's head, not the shot of
     // him arriving (`sim/beamIn.ts`): it is his view materialising.
     if (beam.value) beam.value.style.opacity = hud.phase === 'beamIn' && !hud.introCine ? '0.35' : '0'
+    // In a Searchlight Drone's light: a warm rim, red while it locks on (the
+    // beam's own cone fades out round the eye, `fx/searchBeam.ts`).
+    spotK += (hudLive.spotLit - spotK) * Math.min(1, dt * 8)
+    if (spot.value) spot.value.style.opacity = String(Math.min(1, spotK * 2))
+    if (spotLock.value) spotLock.value.style.opacity = String(Math.max(0, spotK * 2 - 1))
   })
 })
 onUnmounted(() => off?.())
@@ -85,6 +99,13 @@ onUnmounted(() => off?.())
   opacity: 0
   background: radial-gradient(ellipse at center, rgba(180, 250, 255, 0.9) 0%, rgba(120, 220, 255, 0.4) 40%, transparent 75%)
   transition: opacity 0.4s
+.spot
+  position: absolute
+  inset: 0
+  opacity: 0
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(255, 241, 176, 0.14) 80%, rgba(255, 220, 140, 0.32) 100%)
+  &.lock
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(255, 45, 63, 0.2) 78%, rgba(255, 45, 63, 0.45) 100%)
 .toasts
   position: absolute
   left: 50%

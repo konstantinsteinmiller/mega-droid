@@ -49,6 +49,8 @@ export default {
     'noGel': 'Taʼmir geli qolmadi',
     'beamNotYet': 'Vazifa bajarilgach teleport qiling',
     'beamFight': 'Avval jangda yuting, keyin teleport qiling',
+    'beamGrandMaster': 'Avval {boss}ni yeng, keyin teleport qiling',
+    'beamLesson': 'Avval yangi qurolingni ({weapon}) sinab ko‘r, keyin teleport qiling',
     'tankCount': 'Taʼmir geli: {max} tadan {n} ta',
     'borrowed': 'Qarzga olingan qurol {weapon}: {max} tadan {n} ta oʻq',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Puffer matriarxi',
     'glitchStalker': 'Glitch ovchisi',
     'sawGyro': 'Arra girosi',
-    'sentinelPrototype': 'Qo‘riqchi prototipi'
+    'sentinelPrototype': 'Qo‘riqchi prototipi',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Muz qalqoni! Orqasidagi ayoz yadrosiga oʻq uz yoki qalqonni toʻliq zaryad bilan sindir.',
+      'sawGyro': 'Aylanishi oʻqlarni qaytaradi! Uni toʻliq zaryad bilan sindir yoki boshi aylanganda ur.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Maqsad bajarildi',
     'beamOutHint': 'Tayyor boʻlganingizda teleport qiling.',
     'learnWeapon': "Yangi qurolingni o'rgan: {weapon}",
+    'grandMaster': '{boss}ni yeng',
     'tutorial': 'Asosiy dushmanni yenging: {boss}',
     'walk': {
       'charge': 'Dronga zaryadli oʻq uzing',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Kiyildi!',
     'found': '{rarity} {item} topildi!',
     'tank': 'Taʼmir geli topildi!',
-    'giftTank': 'Sovg‘a: +1 taʼmir geli!'
+    'giftTank': 'Sovg‘a: +1 taʼmir geli!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'kiyilgani bilan solishtirish',
+    // The last chip when more stats change than the card shows.
+    'more': 'yana +{n}'
   },
 
   'results': {

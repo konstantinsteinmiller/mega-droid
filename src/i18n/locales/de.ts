@@ -49,6 +49,8 @@ export default {
     'noGel': 'Kein Reparaturgel mehr',
     'beamNotYet': 'Rausbeamen, sobald der Auftrag erfüllt ist',
     'beamFight': 'Erst den Kampf gewinnen, dann rausbeamen',
+    'beamGrandMaster': 'Erst den {boss} besiegen, dann rausbeamen',
+    'beamLesson': 'Erst die neue Waffe ({weapon}) ausprobieren, dann rausbeamen',
     'tankCount': 'Reparaturgel: {n} von {max}',
     'borrowed': 'Geliehene Waffe {weapon}: {n} von {max} Schüssen',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Kugelfisch-Matriarchin',
     'glitchStalker': 'Glitch-Pirscher',
     'sawGyro': 'Sägekreisel',
-    'sentinelPrototype': 'Wächter-Prototyp'
+    'sentinelPrototype': 'Wächter-Prototyp',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Eisschild! Schieß auf den Frostkern auf seinem Rücken oder brich den Schild mit voller Ladung.',
+      'sawGyro': 'Sein Wirbel lenkt Schüsse ab! Brich ihn mit voller Ladung oder triff ihn, wenn er benommen ist.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Ziel erfüllt',
     'beamOutHint': 'Beam dich raus, wenn du bereit bist.',
     'learnWeapon': 'Lerne deine neue Waffe: {weapon}',
+    'grandMaster': 'Besiege den {boss}',
     'tutorial': 'Besiege {boss}',
     'walk': {
       'charge': 'Triff die Drohne mit einem Ladeschuss',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Ausgerüstet!',
     'found': '{item} ({rarity}) gefunden!',
     'tank': 'Reparaturgel gefunden!',
-    'giftTank': 'Geschenk: +1 Reparaturgel!'
+    'giftTank': 'Geschenk: +1 Reparaturgel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. ausgerüstet',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} weitere'
   },
 
   'results': {
@@ -484,7 +496,7 @@ export default {
     'arm_nova': 'Nova-Kanone',
     'helm_scout': 'Späherhelm',
     'helm_guard': 'Wächterhelm',
-    'helm_ace': 'Ass-Helm',
+    'helm_ace': 'Elite-Helm',
     'helm_royal': 'Königshelm',
     'body_light': 'Leichtes Chassis',
     'body_plated': 'Panzerchassis',

@@ -13,6 +13,7 @@ import { BALL_R } from './climbGen'
 import { lavaCell, lavaMaterial } from '../models/lava'
 import { secretDoorFace } from './stages/builder'
 import { planDecor, wallThingFaces } from './decor'
+import { wallPipe, wallPipeY } from './wallPipe'
 import { decorParts } from '../models/decorProps'
 
 /**
@@ -399,8 +400,12 @@ export const buildClimbLevel = async (
               const accent = look?.accent ?? theme.accent
               glows[o]!.push(xform(piece(`strip${accent}`, () => paint(cap(0.07, 1.1, 8, 2), accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
             } else if (rng() < 0.25) {
-              const py = fy + 1.1 + rng() * 1.4 + (ramp ? 1.2 : 0)
-              decor[o]!.push(xform(piece('pipe', () => paint(cap(0.16, CELL, 10, 2), theme.pipe)), [mx + e.n[0] * 0.2, py, mz + e.n[2] * 0.2], rotAlong))
+              // Over head height, both ends back in the wall (`wallPipe.ts`);
+              // never through a band's trim line.
+              const py = wallPipeY(fy, topY, rng(), ramp ? t.rise[k]! : 0)
+              let clear = py !== null
+              for (let m = 1; clear && m < bands; m++) if (Math.abs(low + (topY - low) * m / bands - py!) < 0.3) clear = false
+              if (clear) decor[o]!.push(...wallPipe(mx, mz, e.n, py!, alongX, theme.pipe, theme.pilaster))
             }
           }
           continue

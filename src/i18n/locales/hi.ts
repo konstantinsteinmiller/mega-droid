@@ -49,6 +49,8 @@ export default {
     'noGel': 'रिपेयर जेल खत्म',
     'beamNotYet': 'लक्ष्य पूरा होने पर बीम से लौटें',
     'beamFight': 'पहले लड़ाई जीतें, फिर बीम से लौटें',
+    'beamGrandMaster': 'पहले {boss} को हराएँ, फिर बीम से लौटें',
+    'beamLesson': 'पहले अपना नया हथियार ({weapon}) आज़माएँ, फिर बीम से लौटें',
     'tankCount': 'रिपेयर जेल: {max} में से {n}',
     'borrowed': 'उधार का हथियार {weapon}: {max} में से {n} शॉट',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'पफ़र माता',
     'glitchStalker': 'ग्लिच घातक',
     'sawGyro': 'आरा घिरनी',
-    'sentinelPrototype': 'प्रहरी प्रोटोटाइप'
+    'sentinelPrototype': 'प्रहरी प्रोटोटाइप',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'बर्फ़ की ढाल! उसकी पीठ पर फ़्रॉस्ट कोर पर गोली चलाओ, या पूरे चार्ज से ढाल तोड़ो।',
+      'sawGyro': 'उसका घूमना गोलियाँ लौटा देता है! पूरे चार्ज से उसे तोड़ो, या जब उसे चक्कर आए तब मारो।'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'लक्ष्य पूरा',
     'beamOutHint': 'तैयार हों तो बीम से लौटें।',
     'learnWeapon': 'अपना नया हथियार सीखें: {weapon}',
+    'grandMaster': '{boss} को हराएँ',
     'tutorial': '{boss} को हराएँ',
     'walk': {
       'charge': 'ड्रोन पर चार्ज शॉट चलाएँ',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'लग गया!',
     'found': 'लूट: {rarity} {item}!',
     'tank': 'रिपेयर जेल मिला!',
-    'giftTank': 'तोहफ़ा: +1 रिपेयर जेल!'
+    'giftTank': 'तोहफ़ा: +1 रिपेयर जेल!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'पहने हुए से तुलना',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} और'
   },
 
   'results': {

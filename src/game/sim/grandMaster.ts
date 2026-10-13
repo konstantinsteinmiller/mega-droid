@@ -18,6 +18,7 @@ import type { StageFeature } from './stageFeatures'
 import type { Enemy, Shot } from './world'
 import { Drops, type DropHost } from './drops'
 import { GM_HP_MUL, WEAK_SPOT_MUL, WEAKNESS_MUL } from './grandMasterTune'
+import { PLAYER_R } from './constants'
 
 export { GM_HP_MUL, WEAK_SPOT_MUL, WEAKNESS_MUL }
 
@@ -155,6 +156,13 @@ const WING_BOB = 0.15
 /** Folded: swung back along the spine (yaw) and tipped down. */
 const WING_FOLD_Y = 1.35
 const WING_FOLD_Z = -0.9
+
+/** The giant's footprint on the roof (its frame, m): the boots and their
+ *  claws, the drill bit at the front, the heel spurs behind. Flux is held off
+ *  it (#148), so the eye never stands inside a leg or the hull. */
+export const GM_FOOT_X = 2.5
+export const GM_FOOT_Z0 = -1.3
+export const GM_FOOT_Z1 = 2.25
 
 const FEET = ['footL', 'footR'] as const
 const ORDER: PartId[] = ['footL', 'footR', 'body', 'armL', 'armR', 'head']
@@ -1040,6 +1048,23 @@ export class GrandMaster implements StageFeature {
     else if (this.state === 'dying') this.stepDeath(dt)
     if (this.root.visible && (this.state === 'fight' || this.state === 'dying') && (playing || this.state === 'dying')) this.stepLook(dt)
     this.stepWings(dt)
+    if (this.root.visible) this.keepOff(p)
+  }
+
+  /** Flux out of the giant's footprint (plus his own radius): out by the
+   *  nearest side, which is never into a wall — the roof is wide, and
+   *  behind the heels there is room to stand. */
+  private keepOff(p: ClimbBody): void {
+    const x0 = this.x - GM_FOOT_X - PLAYER_R
+    const x1 = this.x + GM_FOOT_X + PLAYER_R
+    const z0 = this.z + GM_FOOT_Z0 - PLAYER_R
+    const z1 = this.z + GM_FOOT_Z1 + PLAYER_R
+    if (p.x <= x0 || p.x >= x1 || p.z <= z0 || p.z >= z1) return
+    const out = Math.min(p.x - x0, x1 - p.x, p.z - z0, z1 - p.z)
+    if (out === p.x - x0) p.x = x0
+    else if (out === x1 - p.x) p.x = x1
+    else if (out === p.z - z0) p.z = z0
+    else p.z = z1
   }
 
   private stepIntro(dt: number): void {

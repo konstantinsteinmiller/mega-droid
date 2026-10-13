@@ -59,6 +59,8 @@ export default {
     'noGel': 'No Repair Gel left',
     'beamNotYet': 'Beam out once the objective is done',
     'beamFight': 'Win the fight first, then beam out',
+    'beamGrandMaster': 'Defeat the {boss} first, then beam out',
+    'beamLesson': 'Try your new {weapon} first, then beam out',
     // The gel button's accessible name: how many are carried, and the room.
     'tankCount': 'Repair Gel: {n} of {max}',
     // The borrowed weapon's button (accessible name) and the pickup toast.
@@ -165,7 +167,12 @@ export default {
     'pufferMatriarch': 'Puffer Matriarch',
     'glitchStalker': 'Glitch Stalker',
     'sawGyro': 'Saw Gyro',
-    'sentinelPrototype': 'Sentinel Prototype'
+    'sentinelPrototype': 'Sentinel Prototype',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ice shield! Shoot the frost core on its back, or break the shield with a full charge.',
+      'sawGyro': 'Its spin turns shots! Break it with a full charge, or hit it while it is dizzy.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -221,6 +228,7 @@ export default {
     'complete': 'Objective complete',
     'beamOutHint': 'Beam out when you are ready.',
     'learnWeapon': 'Learn your new {weapon}',
+    'grandMaster': 'Defeat the {boss}',
     'tutorial': 'Defeat {boss}',
     // The tutorial's step of the moment (the walkthrough, `WalkObjective`).
     'walk': {
@@ -315,7 +323,11 @@ export default {
     'autoEquip': 'Equipped!',
     'found': '{rarity} {item} found!',
     'tank': 'Repair Gel found!',
-    'giftTank': 'Gift: +1 Repair Gel!'
+    'giftTank': 'Gift: +1 Repair Gel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs equipped',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} more'
   },
 
   // ─── Results / defeat / pause ─────────────────────────────────────────────

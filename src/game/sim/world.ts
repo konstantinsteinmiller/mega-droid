@@ -92,6 +92,8 @@ export interface Enemy {
   farX?: number
   farZ?: number
   farCheck?: number
+  /** Far from Flux and awake this long (s):  puts it back to sleep. */
+  drowseT?: number
   flash: number
   path: Array<[number, number]> | null
   pathT: number

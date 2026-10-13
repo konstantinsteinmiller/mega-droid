@@ -49,6 +49,8 @@ export default {
     'noGel': 'Neniu Ripara Ĝelo restas',
     'beamNotYet': 'Teleportiĝu, kiam la tasko estas farita',
     'beamFight': 'Unue venku la batalon, poste teleportiĝu',
+    'beamGrandMaster': 'Unue venku la {boss}n, poste teleportiĝu',
+    'beamLesson': 'Unue provu vian novan armilon ({weapon}), poste teleportiĝu',
     'tankCount': 'Ripara Ĝelo: {n} el {max}',
     'borrowed': 'Pruntita {weapon}: {n} el {max} pafoj',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarko Pufofiŝo',
     'glitchStalker': 'Glitĉa Embuskanto',
     'sawGyro': 'Segila Giro',
-    'sentinelPrototype': 'Gardista Prototipo'
+    'sentinelPrototype': 'Gardista Prototipo',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Glacia ŝildo! Pafu al la frosta kerno sur ĝia dorso, aŭ rompu la ŝildon per plena ŝargo.',
+      'sawGyro': 'Ĝia turniĝo forĵetas pafojn! Rompu ĝin per plena ŝargo, aŭ trafu ĝin dum ĝi estas kapturnita.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Celo plenumita',
     'beamOutHint': 'Teleportiĝu, kiam vi pretas.',
     'learnWeapon': 'Lernu vian novan armilon: {weapon}',
+    'grandMaster': 'Venku la {boss}n',
     'tutorial': 'Venku: {boss}',
     'walk': {
       'charge': 'Pafu ŝarĝitan pafon al la drono',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Ekipita!',
     'found': '{item} ({rarity}) trovita!',
     'tank': 'Ripara Ĝelo trovita!',
-    'giftTank': 'Donaco: +1 Ripara Ĝelo!'
+    'giftTank': 'Donaco: +1 Ripara Ĝelo!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'kontraŭ ekipita',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} pli'
   },
 
   'results': {

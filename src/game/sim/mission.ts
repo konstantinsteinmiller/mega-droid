@@ -5,10 +5,11 @@ import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, 
 import {
   Scene, PerspectiveCamera, Fog, HemisphereLight, DirectionalLight, Color, Vector3,
   Mesh, RingGeometry, CylinderGeometry, MeshBasicMaterial, AdditiveBlending, DoubleSide, Group, AmbientLight,
-  Frustum, Matrix4, Sphere, SphereGeometry, WebGLRenderTarget, Quaternion, Euler, Shape, ShapeGeometry, type Object3D
+  Frustum, Matrix4, Sphere, WebGLRenderTarget, Quaternion, Euler, Shape, ShapeGeometry, type Object3D
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { buildCityscape, type Cityscape } from '../world/cityscape'
+import { buildMoltenCore, type MoltenCore } from '../models/moltenCore'
 import { weakSpotUnderRay } from '../data/weakspots'
 import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine, type AtlasMemory } from './atlas'
 import { buildAtlas, animateAtlas } from '../models/atlas'
@@ -51,7 +52,7 @@ import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, blockCut, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle } from './enemies'
+import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, spotWarning, drowse, keepBigOffPlayer } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
@@ -81,6 +82,7 @@ import { rollItem, type Item } from '../data/items'
 import { flow, finishMission, retryFromSnapshot, copyBossWeapon } from '../flow'
 import { showBanner, clearBanner } from '../state/banner'
 import { DEFEAT_DELAY, SINK_S } from './respawn'
+import { rescueLanding } from './rescueSpot'
 import { ExitRun, ExitCamera, planExit, newExitPose, PAD_R, type ExitEvent, type ExitHost } from './exitRun'
 import { cineWorld, type CineWorld, type CineBox } from './cineCam'
 import { FreezeDirector, type FreezeKind, type FreezeSpec } from './freezeCam'
@@ -100,6 +102,7 @@ import {
   BeamInCamera, beamInPose, newBeamInPose, padPlateLift, BEAM_IN_COLUMN, BEAM_IN_DROP, BEAM_IN_END, BEAM_IN_LAND, BEAM_IN_SKIP_AFTER
 } from './beamIn'
 import { updateBoss, syncBossVisual, startBossIntro, BOSS_INTRO_T, bossRoomOf } from './bosses'
+import { nearCut } from '../fx/nearCut'
 import { WeaponSystem } from './weapons'
 import { WEAPONS, type WeaponId } from '../data/weapons'
 import type { BossDef } from '../data/bosses'
@@ -117,6 +120,7 @@ import { BorrowedRun, planBorrowed, secretWeapon } from './borrowed'
 import { Fumble, isHardHit, strayDir, FUMBLE_PANIC } from './fumble'
 import { buildWeaponCapsule } from '../models/weaponCapsule'
 import { loadBossCraneModule, loadFinaleModules } from '../lazy'
+import { beamRefusal, grandMasterUp, shutOut } from './beamGate'
 
 export interface MissionSetup {
   sector: SectorId
@@ -223,7 +227,6 @@ export const RESCUE_LIFT = 1.5
 /** In a rescue Atlas is drawn this much bigger, this high over Flux (m). */
 const RESCUE_ATLAS_SCALE = 1.6
 export const RESCUE_ATLAS_Y = 2.9
-const RESCUE_CLEAR = 1.6
 const FOOT_EVERY = 0.25
 const FOOT_KEEP = 24
 
@@ -367,8 +370,11 @@ const PORTAL_DEPTH = 2
 /** Baseline arm for the perf A/B runner (`?perf=noportal`): the old
  *  distance-only culling. See PERF-LEDGER.md. */
 const NO_PORTAL = perfFlag('noportal')
-/** Back from a pit, the stick is ignored this long (s). */
+/** Back from a pit, the stick is ignored this long (s)… */
 const PIT_HOLD = 0.55
+/** …and a stick still held from before the fall, until it is let go or this
+ *  long has passed (s): a held "forward" never walks him straight off. */
+const PIT_HOLD_MAX = 1.2
 /** From Flux going down to the defeat modal (s): never before the GAME
  *  OVER banner has had its hold. */
 export { DEFEAT_DELAY, RESPAWN_AFTER, SINK_S } from './respawn'
@@ -477,6 +483,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  (`sim/borrowed.ts`): this mission only, never the profile. */
   borrowed!: BorrowedRun
   private bossRoom: Room | null = null
+  /** Every room of the boss's arena (the Fortress's stages, else its room):
+   *  a machine outside them is shut out once the shutter seals (`beamGate`). */
+  private arenaRooms: number[] = []
   private boss: Enemy | null = null
   private bossStarted = false
   /** The first boss's free reboot has been taken (`freeBossReboot`). */
@@ -536,6 +545,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   climb: ClimbRun | null = null
   /** After a pit fall: the stick is ignored this much longer (s). */
   private pitHold = 0
+  /** The stick has not been let go since the set-down (`PIT_HOLD_MAX`). */
+  private pitHeld = false
   /** A hard hit shook the charge loose (`sim/fumble.ts`): the flailing arm,
    *  the stun, the cooldown. */
   readonly fumble = new Fumble()
@@ -718,7 +729,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The low-health heartbeat's countdown (s). */
   private heartT = 0
   /** The molten Core in the ring's pit (the Core Descent's last stage). */
-  private coreGlow: Mesh | null = null
+  private core: MoltenCore | null = null
   /** A snapshot's Core Descent stage, applied once the climb has placed Flux. */
   private pendingVex: { stage: number; hp: number } | null = null
   /** Doors hidden behind a false wall until released (the tutorial's first):
@@ -902,6 +913,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.objects.setupEnemyObjectives(this.enemies, (e) => this.enemies.push(e))
     for (const e of this.enemies) this.scene.add(e.root, e.shadow, e.ring)
     this.bossRoom = bossRoomOf(this.map.rooms)
+    this.arenaRooms = this.map.terrain?.bossStages?.slice() ?? (this.bossRoom ? [this.bossRoom.id] : [])
     this.boss = this.enemies.find(e => e.boss) ?? null
     // Adaptive difficulty (`sim/adaptive.ts`): a boss keeps up with a player
     // geared far past the reference; machines toughen a little with every
@@ -993,21 +1005,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if (ring) {
         const cx = (ring.x0 + ring.w / 2) * CELL
         const cz = (ring.z0 + ring.h / 2) * CELL
-        // A white-hot heart in an additive orange shell, an energy ring round it.
-        const core = new Group()
-        core.add(new Mesh(new SphereGeometry(1.3, 24, 16), new MeshBasicMaterial({ color: '#fff1b0', toneMapped: false })))
-        this.coreGlow = new Mesh(new SphereGeometry(2.1, 24, 16), new MeshBasicMaterial({
-          color: '#ff7a2a', transparent: true, opacity: 0.5, blending: AdditiveBlending, depthWrite: false, toneMapped: false
-        }))
-        core.add(this.coreGlow)
-        const band = new Mesh(new RingGeometry(2.5, 2.75, 48), new MeshBasicMaterial({
-          color: '#ffb04a', transparent: true, opacity: 0.7, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false
-        }))
-        band.rotation.x = -Math.PI / 2
-        band.name = 'band'
-        core.add(band)
-        core.position.set(cx, -1.4, cz)
-        this.propParent(cx, cz).add(core)
+        // A molten core of a size (#155, `models/moltenCore.ts`).
+        const core = buildMoltenCore()
+        this.core = core
+        core.root.position.set(cx, -1.4, cz)
+        this.propParent(cx, cz).add(core.root)
       }
     }
     if (setup.stage) this.placeStageProps()
@@ -1581,13 +1583,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     pushHud({ t: 'damage', x: p.x, y: (spikes ? bottom : p.y) + 1.4, z: p.z, amount: dmg, crit: false, weak: false, toPlayer: true })
   }
 
-  /** The nearest recent footing at least RESCUE_CLEAR from the fall. */
+  /** The newest recent footing clear of the fall and of every drop, facing
+   *  away from the edge (`rescueLanding`). */
   private rescueSpot(x: number, z: number): { x: number; y: number; z: number; yaw: number } | null {
-    for (let k = this.footing.length - 1; k >= 0; k--) {
-      const f = this.footing[k]!
-      if (Math.hypot(f[0] - x, f[1] - z) >= RESCUE_CLEAR) return { x: f[0], z: f[1], y: f[2], yaw: f[3] }
-    }
-    return null
+    return rescueLanding(this.nav, this.footing, x, z)
   }
 
   /** Keep a short trail of solid footing (every FOOT_EVERY on real ground —
@@ -1624,7 +1623,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.slideT = 0
     c.iframes = Math.max(c.iframes, 1.2)
     if (this.climb) this.climb.edgeFlight = false
-    this.pitHold = PIT_HOLD
+    this.pitHold = PIT_HOLD_MAX
+    this.pitHeld = true
     this.fx.riseRing(at.x, at.y + 0.1, at.z, PAL.glowCyan, 0.9, 20)
   }
 
@@ -3028,7 +3028,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const edt = frozenDt(e, dt)
       if (e.boss) updateBoss(this, e, edt, this.bossRoom)
       else if (e.challenge) { updateMiniBoss(this, e, edt); settle(this, e) }
-      else updateEnemy(this, e, edt)
+      else {
+        // Left far behind: back to sleep, off the A* and the long sight rays (#161).
+        drowse(this, e, edt)
+        updateEnemy(this, e, edt)
+      }
       // The climb: a machine keeps to its platform, a drone to Flux's height.
       if (this.climb && !e.boss && !e.challenge) this.climb.tendFoe(e, p.y, dt)
       // Status effects from special weapons
@@ -3045,16 +3049,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         if (e.frozenT > 0) e.frozenT -= dt
       }
     }
+    // The big bodies held off Flux last, once everything has moved.
+    keepBigOffPlayer(this, this.enemies)
     // The arena's anti-cheese: a boss that cannot reach Flux enrages.
     const boss = this.boss
     if (this.arena && boss && this.bossStarted && boss.state !== 'dead' && hud.phase === 'play' && !this.descent?.falling) this.arena.update(dt, boss)
-    if (this.coreGlow) {
-      const k = 0.5 + 0.5 * Math.sin(this.time * 2.4)
-      ;(this.coreGlow.material as MeshBasicMaterial).opacity = 0.35 + 0.25 * k
-      this.coreGlow.scale.setScalar(1 + 0.08 * k)
-      const band = this.coreGlow.parent?.getObjectByName('band')
-      if (band) { band.rotation.z += dt * 0.6; band.position.y = 1.2 + 0.25 * Math.sin(this.time * 1.3) }
-    }
+    this.core?.update(this.time, dt)
     if (this.descent && boss) {
       const live = this.bossStarted && boss.state !== 'dead' && hud.phase === 'play'
       this.descent.update(dt, boss, live, hud.phase === 'play' && !flow.modal)
@@ -3145,10 +3145,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       if (first && this.input.tankQueued) this.useTank()
       // B: beam out — the same rule as the button (objective done, room quiet).
       if (first && this.input.beamQueued) {
-        if (hud.objectiveDone && !hud.combat) this.beamOut()
-        // Said, not just refused: B did nothing visible before the objective.
-        else if (hud.phase === 'play') {
-          pushHud({ t: 'toast', key: hud.objectiveDone ? 'combat.beamFight' : 'combat.beamNotYet', color: '#ffd27a' })
+        const no = this.beamRefused()
+        if (!no) this.beamOut()
+        // Said, not just refused, whatever the reason (#159: B was silent
+        // while the weapon lesson was open).
+        else {
+          pushHud({ t: 'toast', key: no.key, params: no.params, color: '#ffd27a' })
           sfx('denied')
         }
       }
@@ -3721,6 +3723,16 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const uz = (cz - d.z) / l
     this.addHolo('weapon', ex.room, cx - uz * 2.4 + ux * 0.5, cz + ux * 2.4 + uz * 0.5, Math.atan2(-uz, ux), w.color, w.id)
     if (profile.tips[`train:weapon:${w.id}`]) this.lightExit()
+  }
+
+  /** Why B does not beam out now (`sim/beamGate.ts`), or null when it does. */
+  beamRefused(): ReturnType<typeof beamRefusal> {
+    return beamRefusal({
+      objectiveDone: this.objects.objective.done,
+      finale: this.finale?.state ?? null,
+      weaponOwed: this.weaponOwed ? this.exitWeapon ?? '' : '',
+      combat: hud.combat
+    })
   }
 
   /** The boss is down and its weapon still to learn in the room behind the
@@ -4458,6 +4470,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     for (const p of plan.props) if (p.r > 0) this.nav.props.push({ x: p.x, z: p.z, r: p.r, active: true })
     this.roomCranes = plan.cranes.map(s => new RoomCrane(this, s, this.theme))
     for (const c of this.roomCranes) {
+      // One held golem at a time (`golemDrop`): a second would hang offstage
+      // for good, out of reach of every hit — a purge that never ends (#149).
+      if (this.golemDrop) break
       const e = this.enemies.find(o => o.golem && o.dormant && o.room === c.spot.room && o.state !== 'dead')
       if (!e) continue
       c.park(e.x, e.z)
@@ -4556,6 +4571,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.blockLesson = !!this.walk?.blockPending(p.x, p.z)
     c.lessonsTeach = !!this.setup.tutorial
     c.fireLesson = this.lessons.shootLive || (this.training.id === 'charge' && (this.training.phase === 'intro' || this.training.phase === 'try'))
+    c.carried = !!this.climb?.locksMove()
     this.coach.update(c)
   }
 
@@ -4565,10 +4581,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.hudT = 0
   }
 
-  /** A shot bounced off a guard (CombatHost): the charge shot's moment. */
-  onDeflect(): void {
+  /** A shot bounced off a guard (CombatHost): the charge shot's moment. A
+   *  challenge mini-boss's shield says once a mission what gets through it. */
+  onDeflect(e: Enemy): void {
     this.coach.deflected()
+    const hint = e.challenge?.spec.guardHint
+    if (hint && !this.guardHinted.has(hint)) {
+      this.guardHinted.add(hint)
+      pushHud({ t: 'toast', key: hint, color: e.challenge!.spec.def.color })
+    }
   }
+
+  /** The mini-boss guard hints already shown this mission (`onDeflect`). */
+  private readonly guardHinted = new Set<string>()
 
   /** Act on the current interactable (button / E key / tapping it). */
   doInteract(): void {
@@ -4723,6 +4748,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Back from a pit: the stick is ignored for a beat, so a held "forward"
     // does not walk straight back off the ledge that was just restarted on.
     this.pitHold = Math.max(0, this.pitHold - dt)
+    if (Math.hypot(inp.moveX, inp.moveY) < 0.15) this.pitHeld = false
+    if (!this.pitHeld && this.pitHold < PIT_HOLD_MAX - PIT_HOLD) this.pitHold = 0
     // Stunned by a fumble: no moving either.
     const stunned = this.fumble.stunned
     // Riding (a stage's rail cart): the stick waits, looking and shooting work.
@@ -5025,13 +5052,19 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     let sightedAng = SIGHT_ANGLE
     let targetAng = 0
     let fight = false
+    // The shutter sealed behind Flux in the arena: a chaser left outside it
+    // never reaches him, so it makes no fight (#150: it held the beam-out
+    // back for good after the Grand Master, with nothing to shoot).
+    const arena = this.arenaRooms
+    const sealed = this.bossStarted && this.doors.some(d => d.locked && arena.includes(d.to))
+    const here = sealed ? roomAt(this.map, p.x, p.z) : -1
     for (const e of this.enemies) {
       // A golem asleep is a crate: no lock, no target frame, no fire glyph
       if (e.state === 'dead' || e.offstage || e.dormant) continue
       const d = Math.hypot(e.x - p.x, e.z - p.z)
       const ang = Math.abs(angDiff(Math.atan2(-(e.x - p.x), -(e.z - p.z)), p.yaw))
       if (e === c.target) targetAng = ang
-      if (e.awake && d < 22) {
+      if (e.awake && d < 22 && !(sealed && shutOut(sealed, arena, here, roomAt(this.map, e.x, e.z)))) {
         engaged++
         if (!fight && (d < FIGHT_NEAR || this.time - e.hurtAt < FIGHT_HURT || hasLineOfSight(this.nav, p.x, p.z, e.x, e.z))) fight = true
       }
@@ -5457,6 +5490,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       hud.objectiveKey = 'objective.learnWeapon'
       hud.objectiveParams = { weapon: `weapon.${this.exitWeapon}.name` }
     }
+    // Vex down, the Grand Master up: the objective names the giant (#150).
+    if (ob.done && grandMasterUp(this.finale?.state ?? null)) {
+      hud.objectiveKey = 'objective.grandMaster'
+      hud.objectiveParams = { boss: 'boss.grandMaster' }
+    }
     const it = this.interact
     hud.interactKey = !it ? '' : it.kind === 'chest' ? 'interact.chest' : it.kind === 'npc' ? 'interact.rescue' : 'interact.bossDoor'
     const p = this.player
@@ -5690,6 +5728,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         e.shadow.position.y += e.floor
         if (e.ring.visible) e.ring.position.y += e.floor
       }
+      // The eye inside a body (a corpse, a sleeping crate): it is not drawn.
+      nearCut(e, cam.position.x, cam.position.y, cam.position.z)
       if (e.frozenT > 0) e.rig.material.emissive.setRGB(0.15 + e.flash * 0.7, 0.4 + e.flash * 0.5, 0.75)
       // An enraged boss burns red (`sim/bossArena.ts`).
       else if (e.boss && this.arena?.enraged) e.rig.material.emissive.setRGB(0.55 + 0.25 * Math.sin(this.time * 9) + e.flash * 0.4, 0.06, 0.02)
@@ -5707,6 +5747,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       r.clearDepth()
       r.render(this.vmScene, this.vmCamera)
     }
+    // In a Searchlight Drone's light: the screen's edge says so (its cone
+    // fades out round the eye).
+    hudLive.spotLit = hud.phase === 'play' && !cine ? spotWarning(this.enemies) : 0
     tickHud(dt)
   }
 

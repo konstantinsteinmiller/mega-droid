@@ -49,6 +49,8 @@ export default {
     'noGel': 'Няма останал ремонтен гел',
     'beamNotYet': 'Телепортирай се, щом задачата е изпълнена',
     'beamFight': 'Първо спечели битката, после се телепортирай',
+    'beamGrandMaster': 'Първо победи {boss}, после се телепортирай',
+    'beamLesson': 'Първо изпробвай новото си оръжие ({weapon}), после се телепортирай',
     'tankCount': 'Ремонтен гел: {n} от {max}',
     'borrowed': 'Заето оръжие „{weapon}“: {n} от {max} изстрела',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Матриарх Балонка',
     'glitchStalker': 'Глич дебнач',
     'sawGyro': 'Трионен жиро',
-    'sentinelPrototype': 'Прототип Страж'
+    'sentinelPrototype': 'Прототип Страж',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Леден щит! Стреляй по ледената сърцевина на гърба му или счупи щита с пълен заряд.',
+      'sawGyro': 'Въртенето му отбива изстрелите! Счупи го с пълен заряд или го удари, докато е замаян.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Целта е изпълнена',
     'beamOutHint': 'Телепортирай се, когато си готов.',
     'learnWeapon': 'Научи новото си оръжие: {weapon}',
+    'grandMaster': 'Победи {boss}',
     'tutorial': 'Победи {boss}',
     'walk': {
       'charge': 'Стреляй със зареден изстрел по дрона',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Екипирано!',
     'found': 'Намерено: {item} ({rarity})!',
     'tank': 'Намерен ремонтен гел!',
-    'giftTank': 'Подарък: +1 ремонтен гел!'
+    'giftTank': 'Подарък: +1 ремонтен гел!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'спрямо екипираното',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} още'
   },
 
   'results': {

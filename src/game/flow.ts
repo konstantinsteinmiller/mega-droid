@@ -299,11 +299,40 @@ export const endTestRun = (): void => {
   setSaveSandbox(false)
 }
 
+/** The level address the boot scene was built for ('' = none, null = no boot
+ *  yet). The loader primes the boot scene as the app starts, on whatever route
+ *  it is on: opened on `/levels`, that is the first-run intro (or a resume),
+ *  and typing a `#/?level=…` address into the same tab is a hash change, not a
+ *  load, so the game route would adopt that scene instead of the level. */
+let bootAddress: string | null = null
+
+/** DEV: the address now names a level the boot scene was not built for. */
+export const bootIsStale = async (hash: string): Promise<boolean> => {
+  if (!import.meta.env.DEV || bootAddress === null) return false
+  const { levelAddress } = await import('./data/levelCatalog')
+  const want = levelAddress(hash)
+  return want !== '' && want !== bootAddress
+}
+
+let watchingAddress = false
+/** DEV: a hash change to another level reloads the page, so the level always
+ *  wins over the scene primed for the previous address. */
+const watchLevelAddress = (): void => {
+  if (watchingAddress || typeof window === 'undefined') return
+  watchingAddress = true
+  window.addEventListener('hashchange', () => {
+    void bootIsStale(location.hash).then((stale) => { if (stale) location.reload() })
+  })
+}
+
 /** The level a `#/?level=…` address asks for, as the boot target (ahead of a
- *  resume or the tutorial), with the sandbox on. Null: an ordinary boot. */
+ *  resume, the intro or the tutorial), with the sandbox on. Null: an ordinary
+ *  boot. */
 const testBootTarget = async (): Promise<{ kind: 'mission'; quest: Quest; snapshot: null } | null> => {
   endTestRun()
-  const { levelFromHash } = await import('./data/levelCatalog')
+  const { levelFromHash, levelAddress } = await import('./data/levelCatalog')
+  bootAddress = levelAddress(location.hash)
+  watchLevelAddress()
   const quest = levelFromHash(location.hash)
   if (!quest) return null
   testRun = true

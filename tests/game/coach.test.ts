@@ -120,6 +120,20 @@ describe('stuck', () => {
     expect(ids(run(c, 22.1, 24))).not.toContain('look')
   })
 
+  // Playtest: the WASD glyph came up over the Rotor Run's quadcopter flight
+  // (the stick does nothing there) and still stood at the landing.
+  it('a ride is not idling: no move glyph while carried, its idle clock restarts at the landing', () => {
+    const c = new Coach()
+    masterAll(c)
+    // Recalled before the ride: it goes as the ride starts.
+    expect(ids(run(c, 0, 20))).toContain('move')
+    expect(ids(run(c, 20, 21, { carried: true }))).not.toContain('move')
+    expect(ids(run(c, 21, 50, { carried: true }))).not.toContain('move')
+    // Landed: a fresh MOVE_IDLE before it may come back, not at once.
+    expect(ids(run(c, 50, 60))).not.toContain('move')
+    expect(ids(run(c, 60, 70))).toContain('move')
+  })
+
   it('three blockable hits without a block bring the shield back at the next wind-up', () => {
     const c = new Coach()
     masterAll(c)

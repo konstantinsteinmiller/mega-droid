@@ -49,6 +49,8 @@ export default {
     'noGel': 'Δεν έμεινε τζελ επισκευής',
     'beamNotYet': 'Τηλεμεταφέρσου όταν ολοκληρωθεί ο στόχος',
     'beamFight': 'Κέρδισε πρώτα τη μάχη, μετά τηλεμεταφέρσου',
+    'beamGrandMaster': 'Νίκησε πρώτα το {boss}, μετά τηλεμεταφέρσου',
+    'beamLesson': 'Δοκίμασε πρώτα το νέο σου όπλο ({weapon}), μετά τηλεμεταφέρσου',
     'tankCount': 'Τζελ επισκευής: {n} από {max}',
     'borrowed': 'Δανεικό όπλο {weapon}: {n} από {max} βολές',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Μητριάρχης Λαγοκέφαλος',
     'glitchStalker': 'Καραδοκών Γκλιτς',
     'sawGyro': 'Πριονο-Γύρος',
-    'sentinelPrototype': 'Πρωτότυπος Φρουρός'
+    'sentinelPrototype': 'Πρωτότυπος Φρουρός',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ασπίδα πάγου! Πυροβόλησε τον πυρήνα παγετού στην πλάτη του ή σπάσε την ασπίδα με πλήρη φόρτιση.',
+      'sawGyro': 'Η περιστροφή του αποκρούει τις βολές! Σπάσε την με πλήρη φόρτιση ή χτύπα τον όταν ζαλιστεί.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Ο στόχος ολοκληρώθηκε',
     'beamOutHint': 'Τηλεμεταφέρσου όταν είσαι έτοιμος.',
     'learnWeapon': 'Μάθε το νέο σου όπλο: {weapon}',
+    'grandMaster': 'Νίκησε το {boss}',
     'tutorial': 'Νίκησε: {boss}',
     'walk': {
       'charge': 'Χτύπα το ντρόουν με φορτισμένη βολή',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Φοριέται!',
     'found': 'Βρέθηκε: {item} ({rarity})!',
     'tank': 'Βρέθηκε τζελ επισκευής!',
-    'giftTank': 'Δώρο: +1 τζελ επισκευής!'
+    'giftTank': 'Δώρο: +1 τζελ επισκευής!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'σε σχέση με τον εξοπλισμό',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} ακόμη'
   },
 
   'results': {

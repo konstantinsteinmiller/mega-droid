@@ -3,8 +3,8 @@ import type { Enemy, World } from '../world'
 import { CELL, type Room } from '../../world/levelGen'
 import { moveCircle } from '../../world/nav'
 import { setTeleRing } from '../../fx/markers'
-import { PARRY_WINDOW } from '../enemies'
-import { PLAYER_R } from '../constants'
+import { PARRY_WINDOW, keepOffPlayer } from '../enemies'
+import { PLAYER_R, EYE_H } from '../constants'
 
 /**
  * ─── The mini-boss modules' toolkit ──────────────────────────────────────────
@@ -87,15 +87,9 @@ export const near = (w: World, x: number, z: number, r: number): boolean =>
 /** Ease `v` toward `to` at `rate` per second (exponential). */
 export const ease = (v: number, to: number, rate: number, dt: number): number => v + (to - v) * Math.min(1, rate * dt)
 
-/** Keep Flux out of its body (a ground mini-boss is solid to him). */
-export const shoulderPlayer = (w: World, e: Enemy): void => {
-  const d = distToPlayer(w, e)
-  const rr = e.def.radius + PLAYER_R
-  if (d < rr && d > 1e-4) {
-    e.x = w.player.x + ((e.x - w.player.x) / d) * rr
-    e.z = w.player.z + ((e.z - w.player.z) / d) * rr
-  }
-}
+/** Keep Flux out of its body (a ground mini-boss is solid to him): to the
+ *  rim even from dead centre, through the wall test (`keepOffPlayer`). */
+export const shoulderPlayer = (w: World, e: Enemy): void => keepOffPlayer(w, e)
 
 /**
  * A group in world space for what a mini-boss puts on the floor apart from
@@ -116,4 +110,22 @@ export const segDist = (px: number, pz: number, ax: number, az: number, bx: numb
   const l2 = vx * vx + vz * vz
   const t = l2 > 1e-9 ? Math.max(0, Math.min(1, ((px - ax) * vx + (pz - az) * vz) / l2)) : 0
   return Math.hypot(px - (ax + vx * t), pz - (az + vz * t))
+}
+
+/** Slack round a prop's column for `eyeAt` (m): the near plane, the eye's
+ *  bob and a frame of his walk between the tick and the draw. */
+export const EYE_CLEAR = 0.35
+
+/**
+ * Flux's eye is in (or right at) the column of radius `r` at (x, z), from
+ * `lo` to `hi` (world heights): a prop there (an ice spike bursting under
+ * him, the boulder coming down on him, a pylon he walks into) would fill the
+ * view as one flat hard-edged shape, so its module leaves it undrawn while
+ * the eye is there (#148's near cut, for what is not on the body). The hit
+ * itself does not care.
+ */
+export const eyeAt = (w: World, x: number, z: number, r: number, lo: number, hi: number): boolean => {
+  const y = (w.player.y ?? 0) + EYE_H
+  if (y < lo - EYE_CLEAR || y > hi + EYE_CLEAR) return false
+  return Math.hypot(w.player.x - x, w.player.z - z) < r + EYE_CLEAR
 }

@@ -49,6 +49,8 @@ export default {
     'noGel': 'Təmir Geli qalmayıb',
     'beamNotYet': 'Tapşırıq bitəndə teleport ol',
     'beamFight': 'Əvvəl döyüşü qazan, sonra teleport ol',
+    'beamGrandMaster': 'Əvvəl {boss}-u məğlub et, sonra teleport ol',
+    'beamLesson': 'Əvvəl yeni silahını sına: {weapon}, sonra teleport ol',
     'tankCount': 'Təmir Geli: {n}/{max}',
     'borrowed': 'Borc silah {weapon}: {n}/{max} atəş',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Kirpi Balıq Matriarxı',
     'glitchStalker': 'Qliç Ovçusu',
     'sawGyro': 'Mişar Firfırası',
-    'sentinelPrototype': 'Keşikçi Prototipi'
+    'sentinelPrototype': 'Keşikçi Prototipi',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Buz qalxanı! Kürəyindəki şaxta nüvəsinə atəş aç və ya qalxanı tam yüklü atəşlə sındır.',
+      'sawGyro': 'Fırlanması atəşləri yayındırır! Onu tam yüklü atəşlə qır və ya başı gicəllənəndə vur.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Hədəf tamamlandı',
     'beamOutHint': 'Hazır olanda teleport ol.',
     'learnWeapon': 'Yeni silahını öyrən: {weapon}',
+    'grandMaster': '{boss}-u məğlub et',
     'tutorial': 'Bossu məğlub et: {boss}',
     'walk': {
       'charge': 'Drona yüklü atəş aç',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Taxıldı!',
     'found': '{rarity} {item} tapıldı!',
     'tank': 'Təmir Geli tapıldı!',
-    'giftTank': 'Hədiyyə: +1 Təmir Geli!'
+    'giftTank': 'Hədiyyə: +1 Təmir Geli!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'taxılanla müqayisə',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} daha'
   },
 
   'results': {

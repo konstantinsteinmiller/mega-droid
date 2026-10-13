@@ -49,6 +49,8 @@ export default {
     'noGel': 'Geen reparatiegel meer',
     'beamNotYet': 'Teleporteer weg zodra de opdracht klaar is',
     'beamFight': 'Win eerst het gevecht, teleporteer dan weg',
+    'beamGrandMaster': 'Versla eerst de {boss}, teleporteer dan weg',
+    'beamLesson': 'Probeer eerst je nieuwe wapen ({weapon}), teleporteer dan weg',
     'tankCount': 'Reparatiegel: {n} van {max}',
     'borrowed': 'Geleend wapen {weapon}: {n} van {max} schoten',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Kogelvis-Matriarch',
     'glitchStalker': 'Glitch-Sluiper',
     'sawGyro': 'Zaaggyro',
-    'sentinelPrototype': 'Wachter-Prototype'
+    'sentinelPrototype': 'Wachter-Prototype',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'IJsschild! Schiet op de vorstkern op zijn rug, of breek het schild met een volle lading.',
+      'sawGyro': 'Zijn draaien kaatst schoten af! Breek het met een volle lading, of raak hem als hij duizelig is.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Doel voltooid',
     'beamOutHint': 'Teleporteer weg zodra je klaar bent.',
     'learnWeapon': 'Leer je nieuwe wapen: {weapon}',
+    'grandMaster': 'Versla de {boss}',
     'tutorial': 'Versla {boss}',
     'walk': {
       'charge': 'Raak de drone met een geladen schot',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Uitgerust!',
     'found': '{item} ({rarity}) gevonden!',
     'tank': 'Reparatiegel gevonden!',
-    'giftTank': 'Cadeau: +1 Reparatiegel!'
+    'giftTank': 'Cadeau: +1 Reparatiegel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. uitgerust',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} meer'
   },
 
   'results': {

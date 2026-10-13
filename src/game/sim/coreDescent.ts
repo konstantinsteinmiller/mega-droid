@@ -37,9 +37,13 @@ export const STRIKE_COST = 0.08
 const ROOF_GLOOM = 0.35
 /** Vex's tempo on the ring (lower: quicker between attacks). */
 export const RING_TEMPO = 0.8
+/** Landed on the ring, the view starts tilted down onto the Core (rad):
+ *  its rings, the walkway round it and the far side in one frame, before
+ *  Vex comes down over it (a view tilted up at him read as a flat disc). */
+export const RING_LOOK = -0.3
 
 export interface DescentHost extends DropHost {
-  player: { x: number; y: number; z: number; px: number; pz: number; py: number; safeY: number; yaw: number; vx: number; vz: number; vy: number }
+  player: { x: number; y: number; z: number; px: number; pz: number; py: number; safeY: number; yaw: number; pitch?: number; vx: number; vz: number; vy: number }
   rooms: Room[]
   setBossRoom(r: Room): void
   keepRetryPoint(): void
@@ -144,6 +148,7 @@ export class CoreDescent {
     p.y = p.py = p.safeY = 0
     p.vx = p.vz = p.vy = 0
     p.yaw = 0
+    p.pitch = n === 2 ? RING_LOOK : 0
     boss.x = boss.px = cx
     boss.z = boss.pz = n === 2 ? (r.z0 + r.h / 2) * CELL : (r.z0 + 1.6) * CELL
     if (n === 2) boss.tempo = (boss.tempo ?? 1) * RING_TEMPO

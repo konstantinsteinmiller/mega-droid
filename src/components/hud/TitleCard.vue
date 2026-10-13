@@ -1,7 +1,7 @@
 <template lang="pug">
   Transition(name="tc")
     div.title-card(v-if="visible" aria-live="polite" :class="{ challenge }")
-      div.stripe
+      div.stripe(data-zone="title")
       //- A challenge room's mini-boss: the CHALLENGE label over its name.
       div.tc-label(v-if="challenge")
         span.trophy
@@ -16,6 +16,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { hud } from '@/game/state/hud'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import { stage } from './hudLayout'
 
 /** The boss name card: a diagonal stripe sweeps in, the master's name slams
  *  down, then it all slides away as the bar finishes filling. */
@@ -24,6 +25,8 @@ const visible = ref(false)
 /** A challenge (`sim/challenge.ts`): gold, not a Core Master's red. */
 const challenge = computed(() => hud.titleStyle === 'challenge')
 let timer: number | null = null
+// The coach's glyphs step aside while the card is up (#151).
+watch(visible, (v) => { stage.titleUp = v })
 const show = () => {
   if (!hud.titleKey) return
   visible.value = true
@@ -32,7 +35,10 @@ const show = () => {
 }
 watch(() => hud.titleShownAt, show)
 onMounted(() => { if (hud.titleShownAt && performance.now() - hud.titleShownAt < 2000) show() })
-onUnmounted(() => { if (timer !== null) clearTimeout(timer) })
+onUnmounted(() => {
+  if (timer !== null) clearTimeout(timer)
+  stage.titleUp = false
+})
 </script>
 
 <style scoped lang="sass">

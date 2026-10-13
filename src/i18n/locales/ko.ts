@@ -49,6 +49,8 @@ export default {
     'noGel': '수리 젤이 없습니다',
     'beamNotYet': '목표를 완료한 뒤 귀환하세요',
     'beamFight': '먼저 전투에서 이긴 뒤 귀환하세요',
+    'beamGrandMaster': '먼저 {boss}을(를) 쓰러뜨린 뒤 귀환하세요',
+    'beamLesson': '먼저 새 무기({weapon})를 써 본 뒤 귀환하세요',
     'tankCount': '수리 젤: {n}/{max}',
     'borrowed': '빌린 무기 {weapon}: {n}/{max}발',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': '복어 여왕',
     'glitchStalker': '글리치 스토커',
     'sawGyro': '톱날 자이로',
-    'sentinelPrototype': '센티널 프로토타입'
+    'sentinelPrototype': '센티널 프로토타입',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': '얼음 방패! 등 뒤의 서리 코어를 쏘거나 풀 차지로 방패를 부숴라.',
+      'sawGyro': '회전이 탄을 튕겨낸다! 풀 차지로 깨거나 어지러워할 때 공격해라.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': '목표 달성',
     'beamOutHint': '준비되면 귀환하세요.',
     'learnWeapon': '새 무기를 익히세요: {weapon}',
+    'grandMaster': '{boss}을(를) 쓰러뜨리세요',
     'tutorial': '{boss} 처치',
     'walk': {
       'charge': '드론에 차지 샷 쏘기',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': '장착!',
     'found': '{rarity} {item} 발견!',
     'tank': '수리 젤 발견!',
-    'giftTank': '선물: 수리 젤 +1!'
+    'giftTank': '선물: 수리 젤 +1!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': '장착 장비와 비교',
+    // The last chip when more stats change than the card shows.
+    'more': '외 {n}개'
   },
 
   'results': {

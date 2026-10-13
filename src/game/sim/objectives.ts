@@ -252,6 +252,8 @@ export class MissionObjects {
   quest: Quest
   /** Enemy id of the elite target / boss (elite + boss jobs). */
   eliteId = -1
+  /** A purge's machines: the sector's whole cast as spawned (`setupEnemyObjectives`). */
+  private purgeTargets: Enemy[] = []
   private host: ObjectiveHost
   readonly root = new Group()
 
@@ -438,13 +440,17 @@ export class MissionObjects {
         addEnemy(createEnemy(q.target, q.level, cellCenter(sp[0]), cellCenter(sp[1]), r.id, { element: 'none' }))
       }
     }
-    if (q.template === 'purge') this.objective.count = enemies.length
+    if (q.template === 'purge') {
+      this.purgeTargets = enemies.slice()
+      this.objective.count = enemies.length
+    }
   }
 
   // ─── Per-step ──────────────────────────────────────────────────────────────
 
   update(dt: number, time: number): void {
     const h = this.host
+    this.syncPurge()
     for (const c of this.chests) {
       if (!c.opened) {
         // Idle shimmer on the lock lamp
@@ -503,10 +509,23 @@ export class MissionObjects {
     }
   }
 
+  /**
+   * A purge counts its dead machines rather than its kill reports (#149): a
+   * puffer that popped itself, a golem woken and broken in one blow, a
+   * resumed run — every way a target ends dead counts once, and a machine
+   * brought in later (a stand-in, a challenge's mini-boss) not at all.
+   */
+  private syncPurge(): void {
+    if (this.quest.template !== 'purge' || !this.purgeTargets.length) return
+    let dead = 0
+    for (const e of this.purgeTargets) if (e.state === 'dead') dead++
+    if (dead > this.objective.progress) this.progress(dead - this.objective.progress)
+  }
+
   onEnemyKilled(e: Enemy): void {
     const q = this.quest
     if (q.template === 'kill' && e.kind === q.target) this.progress(1)
-    else if (q.template === 'purge') this.progress(1)
+    else if (q.template === 'purge') this.syncPurge()
     else if ((q.template === 'elite' || q.template === 'tutorial' || q.template === 'boss' || q.template === 'climb' || q.template === 'stage') && e.id === this.eliteId) this.progress(1)
   }
 

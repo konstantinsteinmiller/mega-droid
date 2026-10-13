@@ -49,6 +49,8 @@ export default {
     'noGel': 'Жөндеу гелі қалмады',
     'beamNotYet': 'Тапсырма орындалған соң телепортталыңыз',
     'beamFight': 'Алдымен шайқаста жеңіңіз, сосын телепортталыңыз',
+    'beamGrandMaster': 'Алдымен {boss} жеңіңіз, сосын телепортталыңыз',
+    'beamLesson': 'Алдымен жаңа қаруыңызды ({weapon}) сынаңыз, сосын телепортталыңыз',
     'tankCount': 'Жөндеу гелі: {max} ішінен {n}',
     'borrowed': 'Уақытша қару {weapon}: {max} атыстан {n} қалды',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Үрлемебалық матриарх',
     'glitchStalker': 'Глитч аңшы',
     'sawGyro': 'Ара гиро',
-    'sentinelPrototype': 'Күзетші прототипі'
+    'sentinelPrototype': 'Күзетші прототипі',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Мұз қалқаны! Арқасындағы аяз өзегін ат немесе қалқанды толық зарядпен сындыр.',
+      'sawGyro': 'Айналуы оқтарды қайтарады! Оны толық зарядпен сындыр немесе басы айналғанда соқ.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Мақсат орындалды',
     'beamOutHint': 'Дайын болғанда телепортталыңыз.',
     'learnWeapon': 'Жаңа қаруыңды үйрен: {weapon}',
+    'grandMaster': '{boss} жеңіңіз',
     'tutorial': 'Басты жауды жеңіңіз: {boss}',
     'walk': {
       'charge': 'Дронға зарядты оқ атыңыз',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Киілді!',
     'found': '{rarity} {item} табылды!',
     'tank': 'Жөндеу гелі табылды!',
-    'giftTank': 'Сыйлық: +1 жөндеу гелі!'
+    'giftTank': 'Сыйлық: +1 жөндеу гелі!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'киілгенмен салыстыру',
+    // The last chip when more stats change than the card shows.
+    'more': 'тағы +{n}'
   },
 
   'results': {

@@ -1,7 +1,8 @@
 <template lang="pug">
   div.door-prompt(v-show="!flow.modal && !isGamePaused" ref="rootEl" :aria-hidden="on ? 'false' : 'true'")
-    div.dp-head
-      div.dp-label(ref="labelEl" role="status") {{ t(labelKey, { weapon: weaponName, lesson: lessonName }) }}
+    div.dp-head(data-zone="door")
+      div.dp-label(ref="labelEl" role="status")
+        span.dp-text {{ t(labelKey, { weapon: weaponName, lesson: lessonName }) }}
       div.dp-arrow(ref="arrowEl" aria-hidden="true")
         svg(viewBox="0 0 40 40")
           path.dp-arrow-body(:d="ARROW")
@@ -189,7 +190,9 @@ $navy: #141a33
   @media (orientation: portrait)
     top: clamp(84px, 27%, 300px)
   transform: translateX(-50%)
-  width: min(88vw, 30em)
+  // In px, not em: 30em of this box's 16 px left the 26 px label 27
+  // characters a line, and German wrapped to a third, clipped line (#157).
+  width: min(88vw, 760px)
   display: flex
   flex-direction: column
   align-items: center
@@ -208,11 +211,15 @@ $navy: #141a33
   color: #fff
   text-align: center
   text-shadow: 0 2px 0 $navy
-  // Two lines at most, on the narrowest phone, in the longest language.
+// The box grows with its words, three lines at most: the longest language
+// takes two on a desktop or a phone held sideways, three on a phone held
+// upright (tests/game/doorPrompt.test.ts). The clamp is on the words, not the box:
+// clamped with its padding, the box let the top of a clipped line show.
+.dp-text
   display: -webkit-box
   -webkit-box-orient: vertical
-  -webkit-line-clamp: 2
-  line-clamp: 2
+  -webkit-line-clamp: 3
+  line-clamp: 3
   overflow: hidden
   overflow-wrap: anywhere
 .dp-arrow, .dp-edge

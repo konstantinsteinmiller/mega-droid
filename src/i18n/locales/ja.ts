@@ -49,6 +49,8 @@ export default {
     'noGel': 'リペアジェルがない',
     'beamNotYet': '目標を達成したら帰還できる',
     'beamFight': 'まず戦闘に勝ってから帰還しよう',
+    'beamGrandMaster': 'まず{boss}を倒してから帰還しよう',
+    'beamLesson': 'まず新しい武器（{weapon}）を試してから帰還しよう',
     'tankCount': 'リペアジェル：{n}/{max}',
     'borrowed': '借りた武器 {weapon}：残り{n}/{max}発',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'パファー・マトリアーク',
     'glitchStalker': 'グリッチストーカー',
     'sawGyro': 'ソウジャイロ',
-    'sentinelPrototype': 'センチネル・プロトタイプ'
+    'sentinelPrototype': 'センチネル・プロトタイプ',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': '氷の盾！背中のフロストコアを撃つか、フルチャージで盾を砕け。',
+      'sawGyro': '回転で弾をはじく！フルチャージで止めるか、目を回している間に撃て。'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': '目標達成',
     'beamOutHint': '準備ができたら帰還しよう。',
     'learnWeapon': '新しい武器を覚えよう：{weapon}',
+    'grandMaster': '{boss}を倒せ',
     'tutorial': '{boss}を倒せ',
     'walk': {
       'charge': 'ドローンにチャージショットを撃て',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': '装備した！',
     'found': '{item}（{rarity}）を入手！',
     'tank': 'リペアジェルを入手！',
-    'giftTank': 'プレゼント：リペアジェル+1！'
+    'giftTank': 'プレゼント：リペアジェル+1！',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': '装備中と比較',
+    // The last chip when more stats change than the card shows.
+    'more': 'ほか {n} 件'
   },
 
   'results': {

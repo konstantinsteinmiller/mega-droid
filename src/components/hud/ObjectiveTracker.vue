@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.obj(v-if="hud.objectiveKey && hud.phase !== 'hub'" :class="{ done: hud.objectiveDone }")
+  div.obj(v-if="hud.objectiveKey && hud.phase !== 'hub'" :class="{ done: hud.objectiveDone }" data-zone="objective")
     div.obj-head
       span.dot
       span.label {{ hud.objectiveDone ? t('objective.complete') : t('objective.title') }}

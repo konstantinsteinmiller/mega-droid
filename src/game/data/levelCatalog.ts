@@ -197,11 +197,24 @@ export const parseLevelQuery = (q: URLSearchParams): LevelPick | null => {
   return { template, sector, seed, playerLevel }
 }
 
+/** The pick a hash address asks the GAME route for (`#/?level=…`), or null
+ *  (another route, or no level in it). */
+const pickFromHash = (hash: string): LevelPick | null => {
+  const [path = '', query = ''] = hash.replace(/^#/, '').split('?')
+  if (path !== '/' && path !== '') return null
+  return parseLevelQuery(new URLSearchParams(query))
+}
+
 /** The level a hash address asks the GAME route for (`#/?level=…`), or null
  *  (another route, or no level in it). */
 export const levelFromHash = (hash: string): Quest | null => {
-  const [path = '', query = ''] = hash.replace(/^#/, '').split('?')
-  if (path !== '/' && path !== '') return null
-  const pick = parseLevelQuery(new URLSearchParams(query))
+  const pick = pickFromHash(hash)
   return pick ? buildLevel(pick) : null
+}
+
+/** The level a hash address names, in one canonical spelling ('' = none), so
+ *  two addresses for the same level compare equal without building it. */
+export const levelAddress = (hash: string): string => {
+  const pick = pickFromHash(hash)
+  return pick ? new URLSearchParams(levelQuery(pick)).toString() : ''
 }

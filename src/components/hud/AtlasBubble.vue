@@ -10,6 +10,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { hud, hudLive, addHudTicker } from '@/game/state/hud'
 import { setAtlasTextLookup } from '@/game/sim/atlas'
+import { BUBBLE_AVOID, ZONE_GAP, placeBubble, zones } from './hudLayout'
 
 /**
  * Atlas's speech bubble (`sim/atlas.ts`): its line in a small cyan-edged
@@ -20,7 +21,8 @@ import { setAtlasTextLookup } from '@/game/sim/atlas'
  * beam-in and the exit, when the rest of the HUD is away.
  *
  * Positioned from the HUD ticker (the game loop's clock), like the other
- * per-frame HUD pieces.
+ * per-frame HUD pieces, and kept off the HUD's zones (`hudLayout.ts`): moved
+ * to the nearest free spot, or held back while the cards fill the view.
  */
 const { t } = useI18n()
 /** A line that names something fills it from its own key's last part (#117):
@@ -44,13 +46,27 @@ onMounted(() => {
     const w = window.innerWidth
     const h = window.innerHeight
     const inView = hudLive.atlasIn
-    if (docked.value === inView) docked.value = !inView
-    // Beside Atlas (to its right), or docked below the top-left status.
-    const ax = inView ? hudLive.atlasX * w + Math.min(w, h) * 0.085 : Math.max(16, w * 0.02)
-    const ay = inView ? hudLive.atlasY * h - b.offsetHeight / 2 : Math.max(96, h * 0.2)
-    const x = Math.min(Math.max(8, ax), w - b.offsetWidth - 8)
-    const y = Math.min(Math.max(8, ay), h - b.offsetHeight - 8)
-    b.style.transform = `translate3d(${x.toFixed(0)}px, ${y.toFixed(0)}px, 0)`
+    // The dock: under the objective card, right of the vitals (#151: docked
+    // at the left edge it covered the health and energy bars).
+    const r = zones.rects
+    const dock = {
+      x: r.vitals ? r.vitals.x + r.vitals.w + ZONE_GAP : Math.max(16, w * 0.02),
+      y: r.objective ? r.objective.y + r.objective.h + ZONE_GAP : Math.max(96, h * 0.2)
+    }
+    // Beside Atlas (to its right), or at the dock.
+    const want = inView
+      ? { x: hudLive.atlasX * w + Math.min(w, h) * 0.085, y: hudLive.atlasY * h - b.offsetHeight / 2 }
+      : dock
+    // Never over a card, a toast, the bars or the boss bar: the nearest free
+    // spot, or nowhere for now (the line waits under the cards).
+    const obstacles = BUBBLE_AVOID.flatMap(id => (r[id] ? [r[id]!] : []))
+    const at = placeBubble(want, { w: b.offsetWidth, h: b.offsetHeight }, obstacles, { w, h }, [dock])
+    b.style.visibility = at ? '' : 'hidden'
+    if (!at) return
+    // Moved off Atlas's side, the tail would point at nothing.
+    const beside = inView && Math.hypot(at.x - want.x, at.y - want.y) < 24
+    if (docked.value === beside) docked.value = !beside
+    b.style.transform = `translate3d(${at.x.toFixed(0)}px, ${at.y.toFixed(0)}px, 0)`
   })
 })
 onUnmounted(() => {

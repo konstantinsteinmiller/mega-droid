@@ -8,7 +8,7 @@ import { makeTeleRing, setTeleRing, makeBlobShadow } from '../fx/markers'
 import { scaleDmg, scaleHp } from '../data/enemies'
 import { moveCircle, hasLineOfSight, isSolidAt } from '../world/nav'
 import { cellCenter, type Room } from '../world/levelGen'
-import { PARRY_WINDOW, stepMotion } from './enemies'
+import { PARRY_WINDOW, stepMotion, keepOffPlayer } from './enemies'
 import { PLAYER_R, EYE_H } from './constants'
 import { pushHud } from '../state/hud'
 
@@ -166,7 +166,10 @@ export const startBossIntro = (e: Enemy): void => {
 export const updateBoss = (w: World, e: Enemy, dt: number, room: Room | null): void => {
   e.mo.pyaw = e.yaw
   bossTick(w, e, dt, room)
-  if (e.state !== 'dead') stepMotion(e, dt)
+  if (e.state === 'dead') return
+  // Out of Flux's body, whatever moved it (a leap landing on his spot)
+  keepOffPlayer(w, e)
+  stepMotion(e, dt)
 }
 
 const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
@@ -312,12 +315,6 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
     }
   }
   if (e.state !== 'tele') e.ring.visible = false
-  // Keep the player out of the boss's body
-  const rr = e.def.radius + PLAYER_R
-  if (fly === 0 && d < rr && d > 1e-4) {
-    e.x = w.player.x + ((e.x - w.player.x) / d) * rr
-    e.z = w.player.z + ((e.z - w.player.z) / d) * rr
-  }
 }
 
 // ─── Patterns ────────────────────────────────────────────────────────────────

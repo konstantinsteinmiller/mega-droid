@@ -8,7 +8,7 @@ import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import { buildArcSpider, poseArcSpider, newSpiderPose, SPIDER_COLORS, type SpiderPose } from '../../models/miniBoss/arcSpider'
 import { rcyl, sph, paint, merge, staticProp } from '../../models/kit'
 import { toonVC, glowVC } from '../../models/toon'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, floorLayer, segDist } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, floorLayer, segDist, eyeAt } from './kit'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
 
@@ -143,9 +143,13 @@ const edgeDelta = (per: number, a: number, b: number): number => {
 
 // ── Its things on the floor ──
 
+/** A pylon's drawn column: its base's radius and its coil's top (m). */
+const PYLON_R = 0.32
+const PYLON_TOP = 1.29
+
 const makePylon = (): Object3D => {
   const c = SPIDER_COLORS
-  const base = paint(rcyl(0.32, 0.18, 0.06, 12), c.shell)
+  const base = paint(rcyl(PYLON_R, 0.18, 0.06, 12), c.shell)
   base.translate(0, 0.09, 0)
   const post = paint(rcyl(0.11, 0.85, 0.03, 10), c.copper)
   post.translate(0, 0.6, 0)
@@ -280,7 +284,7 @@ const _jy = new Float32Array(ARC_SEGS + 1)
 /** The pylons and their lines, in place; `live` 0 (hidden) … 1 (warning: a
  *  thin straight flickering thread) … 2 (live: a thick jagged bolt, new
  *  every frame). */
-const drawArcs = (e: Enemy, m: SpiderMem, live: number, time: number): void => {
+const drawArcs = (w: World, e: Enemy, m: SpiderMem, live: number, time: number): void => {
   m.layer = floorLayer(e, m.layer)
   const y0 = fy(e)
   while (m.pylonObjs.length < 3) {
@@ -295,7 +299,8 @@ const drawArcs = (e: Enemy, m: SpiderMem, live: number, time: number): void => {
   }
   m.pylonObjs.forEach((p, k) => {
     const at = m.pylons[k]
-    p.visible = live > 0 && !!at
+    // Not drawn while Flux's eye is over its coil (he walked into it).
+    p.visible = live > 0 && !!at && !eyeAt(w, at[0], at[1], PYLON_R, y0, y0 + PYLON_TOP)
     if (at) p.position.set(at[0], y0, at[1])
   })
   const bolt = live > 1.5
@@ -521,7 +526,7 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
           rear = Math.max(0, 1 - e.st * 3)
           heat = 2
           const live = e.st >= ARC_WARN
-          drawArcs(e, m, live ? 2 : 1, w.time + e.st)
+          drawArcs(w, e, m, live ? 2 : 1, w.time + e.st)
           if (live) {
             if (m.ticks === 0) w.sfx('thunder', e.x, e.z)
             const tick = Math.floor((e.st - ARC_WARN) / ARC_TICK)

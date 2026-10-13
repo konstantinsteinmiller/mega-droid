@@ -173,7 +173,10 @@ export const hudLive = {
    *  origin); `holoOn`: on screen. */
   holoX: 0,
   holoY: 0,
-  holoOn: false
+  holoOn: false,
+  /** Flux in a Searchlight Drone's light: 0 dark, 0.5 lit, 1 locked on
+   *  (`sim/enemies.ts` `spotWarning`); ScreenFx glows the screen's edge. */
+  spotLit: 0
 }
 
 export const addHudTicker =(fn: HudTicker): (() => void) => {

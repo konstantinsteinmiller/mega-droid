@@ -3,6 +3,7 @@
     div.bn-probe(ref="probe" aria-hidden="true")
     div.bn-band(
       v-if="visible"
+      data-zone="banner"
       :key="banner.seq"
       :class="bandClass"
       :style="bandStyle"
@@ -21,6 +22,7 @@ import { useI18n } from 'vue-i18n'
 import { banner, bannerSeconds, type BannerKind } from '@/game/state/banner'
 import { isGamePaused } from '@/use/useGamePause'
 import { BANNER_REF_SIZE, fitBannerFontSize } from './bannerFit'
+import { stage } from './hudLayout'
 
 /**
  * The big moment banners: "LEVEL CLEARED" in electric blue as the exit drone
@@ -98,6 +100,8 @@ const refit = (): void => {
 /** Refit once the DOM holds the new words: a post-flush watcher runs before
  *  the browser paints, so the first frame is already the fitted size. */
 watch([() => banner.seq, visible, lang], refit, { flush: 'post' })
+// The coach's glyphs wait while the band is up (`coachHushed`).
+watch(visible, (v) => { stage.bannerUp = v }, { immediate: true })
 
 const onAnimationEnd = (e: AnimationEvent): void => {
   // The band's own fade-out is the last thing to finish (the text's drift
@@ -119,6 +123,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', refit)
   window.removeEventListener('orientationchange', refit)
   document.fonts?.removeEventListener?.('loadingdone', onFontsLoaded)
+  stage.bannerUp = false
 })
 </script>
 

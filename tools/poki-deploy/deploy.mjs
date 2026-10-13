@@ -16,6 +16,10 @@
 //   pnpm deploy:poki --version 4.0.0    set an exact version
 //   pnpm deploy:poki --skip-build       upload the zip that is already there
 //   pnpm deploy:poki --skip-qa          upload, stop before the Inspector
+//   pnpm deploy:poki --skip-qa-testing  upload, then tick EVERY Inspector QA box without a test
+//   pnpm deploy:poki-quick              the same (the script for it)
+//                                       pass: for a re-upload when nothing QA checks has changed
+//                                       and the last full pass was clean (gets it to playtests)
 //   pnpm deploy:poki --qa-only          QA the newest version already in P4D
 //   pnpm deploy:poki --game-id <uuid>   the P4D game for this run (overrides the config)
 //   pnpm deploy:poki --gates-only       OFFLINE: pack + audit the built artifact and stop.
@@ -48,7 +52,7 @@ import { packArtifact } from './lib/pack.mjs'
 import { checkGameId } from './lib/target.mjs'
 import { bold, bytes, cyan, die, dim, fail, info, pass, step, warn, yellow, green, red } from './lib/log.mjs'
 import { inspectorUrl, openVersions, readVersions, uploadVersion, versionsUrl, gameFrameOrigin } from './lib/p4d.mjs'
-import { STEPS, applyVerdicts, runInspectorQa } from './lib/inspector.mjs'
+import { STEPS, applyVerdicts, runInspectorQa, tickAllQa } from './lib/inspector.mjs'
 import { bumpPatch, readVersion, writeVersion } from './lib/version.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -69,6 +73,8 @@ const QA_ONLY = flag('qa-only')
 const GATES_ONLY = flag('gates-only')
 const SKIP_BUILD = flag('skip-build') || QA_ONLY
 const SKIP_QA = flag('skip-qa')
+// Tick every QA box without running the pass (a re-upload whose QA already passed).
+const SKIP_QA_TESTING = flag('skip-qa-testing')
 const KEEP = flag('keep')
 // Default: every QA box gets ticked, and the report carries what was actually
 // proven. --honest-ticks leaves the undecidable blank and crosses failures.
@@ -197,6 +203,14 @@ try {
   if (SKIP_QA || !versionId) {
     step('Inspector QA')
     info('skipped', SKIP_QA ? '--skip-qa' : 'no version id')
+  } else if (SKIP_QA_TESTING) {
+    step('Inspector QA (ticked, not tested)')
+    info('opening', inspectorUrl(versionId))
+    const applied = await tickAllQa(cdp, { versionId, log: m => info(m) })
+    for (const a of applied) console.log(`   ${a.action === 'row not found' ? yellow('?') : green('✓')} ${a.id.padEnd(20)} ${dim(a.action)}`)
+    const missing = applied.filter(a => a.action === 'row not found')
+    if (missing.length) warn(`${missing.length} QA row(s) not found in the Inspector — tick them by hand`)
+    console.log(yellow('   --skip-qa-testing: nothing was tested; this relies on the last full pass.'))
   } else {
     step('Inspector QA')
     info('opening', inspectorUrl(versionId))

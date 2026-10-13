@@ -139,6 +139,14 @@ export const runGates = ({ dist, zip, allowHosts = [], sdkTag = 'game-cdn.poki.c
     else ok('clean build (no dev tooling)', `${forbid.length} marker(s) absent`)
   }
 
+  // ── 4c. the debug UI bake ─────────────────────────────────────────────────
+  // `VITE_APP_RENDER_UI_BAKE=true` draws the HTML HUD into the canvas so Poki's
+  // canvas-only playtest recorder shows it. Wanted in a playtest upload, never
+  // in the final release: a warning, so neither is blocked and neither is silent.
+  const bake = files.filter(f => TEXT.has(extname(f)) && readFileSync(f, 'utf8').includes('data-uib-anc'))
+  if (bake.length) meh('debug UI bake ships', `${relative(dist, bake[0])} — fine for a playtest; set VITE_APP_RENDER_UI_BAKE=false in .env.poki.local for the final release`)
+  else ok('no debug UI bake')
+
   // ── 5. external hosts ─────────────────────────────────────────────────────
   // Poki forbids runtime requests to anything it has not approved. A URL in the
   // bundle is not proof of a request, so this reports rather than fails — but

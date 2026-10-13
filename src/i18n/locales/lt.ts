@@ -49,6 +49,8 @@ export default {
     'noGel': 'Remonto gelio neliko',
     'beamNotYet': 'Teleportuokis, kai užduotis bus atlikta',
     'beamFight': 'Pirma laimėk kovą, tada teleportuokis',
+    'beamGrandMaster': 'Pirma nugalėk: {boss}, tada teleportuokis',
+    'beamLesson': 'Pirma išbandyk naują ginklą ({weapon}), tada teleportuokis',
     'tankCount': 'Remonto gelis: {n} iš {max}',
     'borrowed': 'Pasiskolintas ginklas {weapon}: {n} iš {max} šūvių',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Pūsliažuvės matriarchė',
     'glitchStalker': 'Glitch sėlinys',
     'sawGyro': 'Pjūklinis giroskopas',
-    'sentinelPrototype': 'Sargo prototipas'
+    'sentinelPrototype': 'Sargo prototipas',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ledo skydas! Šauk į šerkšno branduolį jo nugaroje arba sudaužyk skydą pilnu užtaisu.',
+      'sawGyro': 'Jo sukimasis atmuša šūvius! Sudaužyk jį pilnu užtaisu arba pataikyk, kai jam svaigsta galva.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Tikslas įvykdytas',
     'beamOutHint': 'Teleportuokis, kai būsi pasiruošęs.',
     'learnWeapon': 'Išmok naują ginklą: {weapon}',
+    'grandMaster': 'Nugalėk: {boss}',
     'tutorial': 'Nugalėk: {boss}',
     'walk': {
       'charge': 'Pataikyk į droną įkrautu šūviu',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Uždėta!',
     'found': 'Rasta: {item} ({rarity})!',
     'tank': 'Rastas remonto gelis!',
-    'giftTank': 'Dovana: +1 remonto gelis!'
+    'giftTank': 'Dovana: +1 remonto gelis!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'palyginti su dėvimu',
+    // The last chip when more stats change than the card shows.
+    'more': 'dar +{n}'
   },
 
   'results': {

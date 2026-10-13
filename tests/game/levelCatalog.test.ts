@@ -18,7 +18,7 @@ vi.mock('@/use/useCrazyGames', () => ({ triggerHappytime: () => {} }))
 vi.mock('@/game/engine/app', () => ({ app: { setMode: () => {}, setWanted: () => {} } }))
 
 import {
-  LEVEL_TYPES, levelTypes, levelEntries, buildLevel, levelMap, rollAs, levelQuery, parseLevelQuery, levelFromHash,
+  LEVEL_TYPES, levelTypes, levelEntries, buildLevel, levelMap, rollAs, levelQuery, parseLevelQuery, levelFromHash, levelAddress,
   type LevelPick
 } from '@/game/data/levelCatalog'
 import { JOB_TEMPLATES, rollJob, climbJob, storyQuest, bossQuest, tutorialQuest, isBoardRun, type Quest, type QuestTemplate } from '@/game/data/quests'
@@ -187,5 +187,14 @@ describe('level catalog: the address', () => {
     expect(levelFromHash('#/models?level=climb')).toBeNull()
     expect(levelFromHash('#/')).toBeNull()
     expect(levelFromHash('')).toBeNull()
+  })
+
+  it('spells a level address one way, and none for anything else', () => {
+    const a = levelAddress('#/?level=climb&sector=blaze&seed=7&plevel=9')
+    expect(a).toBe('level=climb&sector=blaze&seed=7&plevel=9')
+    expect(levelAddress('#?plevel=9&seed=7&sector=blaze&level=climb')).toBe(a)
+    expect(levelAddress('#/levels?level=climb&sector=blaze&seed=7&plevel=9')).toBe('')
+    expect(levelAddress('#/?level=nope')).toBe('')
+    expect(levelAddress('')).toBe('')
   })
 })

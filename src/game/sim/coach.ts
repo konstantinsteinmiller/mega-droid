@@ -144,6 +144,10 @@ export interface CoachContext {
   /** The tutorial: it has lessons for shooting, so the shoot glyphs keep to
    *  them (taught or recalled) and never point at a plain fight's drones. */
   lessonsTeach?: boolean
+  /** Carried (the Rail Rush's cart, the Rotor Run's quadcopter): the stick
+   *  does nothing, so a long ride is not "stuck" — no WASD glyph over the
+   *  flight, and none waiting for the landing. */
+  carried?: boolean
 }
 
 interface HintState {
@@ -327,7 +331,17 @@ export class Coach {
     // Movement and camera from the first moment of control, together: a
     // player who never finds the camera is stuck in the first corridor.
     // (On touch, movement alone: the ∞ finger covers both.)
-    want('move', fresh('move'))
+    // Carried, the move glyph goes at once, a recall with it; the idle clock
+    // starts again at the landing (and may recall it after that).
+    if (c.carried) {
+      this.lastMove = t
+      this.st.move.wantedUntil = -1
+      if (this.st.move.recall > 0) {
+        this.st.move.recall = 0
+        this.idleRecalled.delete('move')
+      }
+    }
+    want('move', fresh('move') && !c.carried)
     want('look', fresh('look'))
     // No 'walk' glyph: tap-to-walk is gone (the left stick moves).
     const shootTime = !c.lessonsTeach || !!c.fireLesson
@@ -361,7 +375,8 @@ export class Coach {
       // (a recalled shoot glyph stayed up over an empty corridor).
       const now = id === 'block' || id === 'slide' ? c.teleBlock || c.teleRed
         : id === 'fire' || id === 'charge' ? (c.combat || c.aimCandidate) && shootTime
-          : true
+          : id === 'move' ? !c.carried
+            : true
       if (s.recall > 0 && this.open(id) && (now || t < this.helpUntil)) {
         s.wantedUntil = Math.max(s.wantedUntil, t + 0.5)
       }

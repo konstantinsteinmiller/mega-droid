@@ -49,6 +49,8 @@ export default {
     'noGel': 'Ремонтный гель закончился',
     'beamNotYet': 'Телепорт доступен после выполнения задачи',
     'beamFight': 'Сначала выиграй бой, потом телепортируйся',
+    'beamGrandMaster': 'Сначала победи: {boss}, потом телепортируйся',
+    'beamLesson': 'Сначала опробуй новое оружие ({weapon}), потом телепортируйся',
     'tankCount': 'Ремонтный гель: {n} из {max}',
     'borrowed': 'Заимствованное оружие «{weapon}»: {n} из {max} выстрелов',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Матриарх-фугу',
     'glitchStalker': 'Глюк-охотник',
     'sawGyro': 'Пилогироскоп',
-    'sentinelPrototype': 'Прототип Страж'
+    'sentinelPrototype': 'Прототип Страж',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ледяной щит! Стреляй в морозное ядро на его спине или разбей щит полным зарядом.',
+      'sawGyro': 'Вращение отбивает выстрелы! Сломай его полным зарядом или бей, пока у него кружится голова.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Цель выполнена',
     'beamOutHint': 'Телепортируйтесь, когда будете готовы.',
     'learnWeapon': 'Освой новое оружие: {weapon}',
+    'grandMaster': 'Победи: {boss}',
     'tutorial': 'Победите босса: {boss}',
     'walk': {
       'charge': 'Поразите дрона заряженным выстрелом',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Надето!',
     'found': 'Находка: {item} ({rarity})!',
     'tank': 'Найден ремонтный гель!',
-    'giftTank': 'Подарок: +1 ремонтный гель!'
+    'giftTank': 'Подарок: +1 ремонтный гель!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'в сравнении с надетым',
+    // The last chip when more stats change than the card shows.
+    'more': 'ещё +{n}'
   },
 
   'results': {

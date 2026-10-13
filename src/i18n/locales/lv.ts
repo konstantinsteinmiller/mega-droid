@@ -49,6 +49,8 @@ export default {
     'noGel': 'Remonta gels beidzies',
     'beamNotYet': 'Teleportējies, kad uzdevums izpildīts',
     'beamFight': 'Vispirms uzvari cīņā, tad teleportējies',
+    'beamGrandMaster': 'Vispirms uzvari: {boss}, tad teleportējies',
+    'beamLesson': 'Vispirms izmēģini jauno ieroci ({weapon}), tad teleportējies',
     'tankCount': 'Remonta gels: {n} no {max}',
     'borrowed': 'Aizņemtais ierocis {weapon}: {n} no {max} šāvieniem',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Pūšļzivs matriarhe',
     'glitchStalker': 'Glitch glūņa',
     'sawGyro': 'Zāģa žiroskops',
-    'sentinelPrototype': 'Sarga prototips'
+    'sentinelPrototype': 'Sarga prototips',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ledus vairogs! Šauj sala kodolā uz tā muguras vai salauz vairogu ar pilnu lādiņu.',
+      'sawGyro': 'Tā griešanās atvaira šāvienus! Salauz to ar pilnu lādiņu vai trāpi, kad tam reibst galva.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Mērķis sasniegts',
     'beamOutHint': 'Teleportējies, kad esi gatavs.',
     'learnWeapon': 'Apgūsti jauno ieroci: {weapon}',
+    'grandMaster': 'Uzvari: {boss}',
     'tutorial': 'Uzveic bosu: {boss}',
     'walk': {
       'charge': 'Trāpi dronam ar lādētu šāvienu',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Uzvilkts!',
     'found': 'Atrasts: {item} ({rarity})!',
     'tank': 'Atrasts remonta gels!',
-    'giftTank': 'Dāvana: +1 remonta gels!'
+    'giftTank': 'Dāvana: +1 remonta gels!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'salīdzinot ar uzvilkto',
+    // The last chip when more stats change than the card shows.
+    'more': 'vēl +{n}'
   },
 
   'results': {

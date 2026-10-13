@@ -49,6 +49,8 @@ export default {
     'noGel': 'เจลซ่อมหมดแล้ว',
     'beamNotYet': 'วาร์ปกลับได้เมื่อทำภารกิจเสร็จ',
     'beamFight': 'ชนะการต่อสู้ก่อน แล้วค่อยวาร์ปกลับ',
+    'beamGrandMaster': 'เอาชนะ{boss}ก่อน แล้วค่อยวาร์ปกลับ',
+    'beamLesson': 'ลองอาวุธใหม่ ({weapon}) ก่อน แล้วค่อยวาร์ปกลับ',
     'tankCount': 'เจลซ่อม: {n} จาก {max}',
     'borrowed': 'อาวุธยืม {weapon}: {n} จาก {max} นัด',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'แม่ปลาปักเป้า',
     'glitchStalker': 'นักล่ากลิตช์',
     'sawGyro': 'ลูกข่างเลื่อย',
-    'sentinelPrototype': 'ต้นแบบยามเฝ้า'
+    'sentinelPrototype': 'ต้นแบบยามเฝ้า',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'โล่น้ำแข็ง! ยิงแกนเยือกแข็งที่หลังของมัน หรือทำลายโล่ด้วยการชาร์จเต็ม',
+      'sawGyro': 'การหมุนของมันสะท้อนกระสุน! ทำลายด้วยการชาร์จเต็ม หรือโจมตีตอนมันมึนงง'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'สำเร็จเป้าหมาย',
     'beamOutHint': 'พร้อมเมื่อไหร่ก็วาร์ปกลับได้เลย',
     'learnWeapon': 'ฝึกอาวุธใหม่: {weapon}',
+    'grandMaster': 'เอาชนะ{boss}',
     'tutorial': 'โค่น{boss}',
     'walk': {
       'charge': 'ยิงชาร์จใส่โดรน',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'สวมใส่แล้ว!',
     'found': 'พบ {item} ระดับ {rarity}!',
     'tank': 'พบเจลซ่อม!',
-    'giftTank': 'ของขวัญ: +1 เจลซ่อม!'
+    'giftTank': 'ของขวัญ: +1 เจลซ่อม!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'เทียบกับที่สวมอยู่',
+    // The last chip when more stats change than the card shows.
+    'more': 'อีก {n}'
   },
 
   'results': {

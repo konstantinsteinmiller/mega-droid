@@ -11,9 +11,14 @@
       div.l-sub
         span.l-rar {{ t(`rarity.${item.rarity}`) }}
         span.l-lvl {{ t('enemy.level', { n: item.ilvl }) }}
-      ul.l-deltas(v-if="shown.length")
-        li(v-for="l in shown" :key="l.key" :class="l.delta > 0 ? 'plus' : 'minus'") {{ formatStatDelta(t, l.key, l.delta, locale) }}
-        li.more(v-if="hidden > 0") +{{ hidden }}
+      //- Measured against the equipped piece: say so, or "−28 armour" reads
+      //- as the item's own stat (#158).
+      div.l-vs(v-if="cmp.vs && chips.shown.length") {{ t('loot.vsEquipped') }}
+      ul.l-deltas(v-if="chips.shown.length")
+        li(v-for="(l, i) in chips.shown" :key="l.key" :class="{ tail: i === chips.shown.length - 1 && chips.hidden > 0 }")
+          span.chip(:class="l.delta > 0 ? 'plus' : 'minus'") {{ formatStatDelta(t, l.key, l.delta, locale) }}
+          //- "+n more" kept on the last chip's row: never alone on a line.
+          span.chip.more(v-if="i === chips.shown.length - 1 && chips.hidden > 0") {{ t('loot.more', { n: chips.hidden }) }}
 </template>
 
 <script setup lang="ts">
@@ -22,7 +27,7 @@ import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { RARITY_COLOR } from '@/game/models/palette'
 import { equipped } from '@/game/state/profile'
-import { compareItems, rivalFor } from '@/game/data/itemCompare'
+import { compareItems, deltaChips, rivalFor } from '@/game/data/itemCompare'
 import type { Item } from '@/game/data/items'
 import { SLOT_ICON, formatStatDelta } from '@/components/hub/gearFormat'
 
@@ -35,10 +40,8 @@ import { SLOT_ICON, formatStatDelta } from '@/components/hub/gearFormat'
 const props = defineProps<{ item: Item; compact?: boolean }>()
 const { t, locale } = useI18n()
 const cmp = computed(() => compareItems(props.item, rivalFor(props.item, equipped)))
-/** Lines shown; the rest count as "+n" (the workshop has them all). */
-const cap = computed(() => (props.compact ? 3 : 4))
-const shown = computed(() => cmp.value.lines.slice(0, cap.value))
-const hidden = computed(() => Math.max(0, cmp.value.lines.length - cap.value))
+/** Chips shown, gains first; the rest count as "+n more" (the workshop has them all). */
+const chips = computed(() => deltaChips(cmp.value, props.compact ? 3 : 4))
 </script>
 
 <style scoped lang="sass">
@@ -106,6 +109,12 @@ const hidden = computed(() => Math.max(0, cmp.value.lines.length - cap.value))
   color: #cfe0ff
 .l-rar
   color: var(--rc)
+.l-vs
+  margin-top: 4px
+  font-size: clamp(10px, 2.1vmin, 12px)
+  color: #9fb3d8
+  text-transform: uppercase
+  letter-spacing: 0.04em
 .l-deltas
   display: flex
   flex-wrap: wrap
@@ -114,16 +123,21 @@ const hidden = computed(() => Math.max(0, cmp.value.lines.length - cap.value))
   padding: 0
   list-style: none
   li
+    display: flex
+    gap: 4px
+    white-space: nowrap
+  .chip
     padding: 1px 7px
     border-radius: 8px
     font-size: clamp(11px, 2.3vmin, 13px)
     line-height: 1.5
     background: rgba(0, 0, 0, 0.35)
-    white-space: nowrap
   .plus
     color: #8dff7a
   .minus
     color: #ff8a8a
   .more
     color: #cfe0ff
+.l-vs + .l-deltas
+  margin-top: 2px
 </style>

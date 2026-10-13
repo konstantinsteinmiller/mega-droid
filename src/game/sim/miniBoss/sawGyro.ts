@@ -434,6 +434,7 @@ export const SAW_GYRO: MiniBossSpec<GyroMem> = {
   id: 'sawGyro',
   sector: 'rotor',
   nameKey: 'miniboss.sawGyro',
+  guardHint: 'miniboss.guard.sawGyro',
   def: {
     kind: 'miniboss', hp: 590, dmg: 18, speed: 3, radius: 1.2, hitR: 1.3, aimY: 1.0, fly: 0,
     aggro: 30, range: [4.5, 7.5], xp: 175, bolts: [26, 40], cooldown: 1.5, tele: RICO_TELE, unblockable: true, armor: 1,

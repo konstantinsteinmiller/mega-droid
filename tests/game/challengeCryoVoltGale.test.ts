@@ -18,11 +18,12 @@ import type { Mesh } from 'three'
 import { generateMap, cellCenter, CELL } from '@/game/world/levelGen'
 import { createNav } from '@/game/world/nav'
 import { createMiniBoss, startMiniBoss, updateMiniBoss } from '@/game/sim/miniBosses'
-import { roomBox } from '@/game/sim/miniBoss/kit'
+import { roomBox, eyeAt, EYE_CLEAR } from '@/game/sim/miniBoss/kit'
+import { EYE_H } from '@/game/sim/constants'
 import type { MiniBossSpec } from '@/game/sim/miniBoss/types'
 import { MINI_BOSSES } from '@/game/sim/miniBoss/registry'
 import {
-  ICEBREAKER_BRUTE, INTRO_T as BRUTE_INTRO, SLAM_TELE, BOULDER_TELE, SHIELD_TELE, SHIELD_T, type BruteMem
+  ICEBREAKER_BRUTE, INTRO_T as BRUTE_INTRO, SLAM_TELE, BOULDER_TELE, SHIELD_TELE, SHIELD_T, SPIKE_R, SPIKE_TOP, ROCK_R, type BruteMem
 } from '@/game/sim/miniBoss/icebreakerBrute'
 import { ARC_SPIDER, INTRO_T as SPIDER_INTRO, PYLON_TELE, WEB_TELE, DASH_TELE, ARC_WARN, WEB_SLOW, type SpiderMem } from '@/game/sim/miniBoss/arcSpider'
 import {
@@ -183,6 +184,59 @@ describe('the Icebreaker Brute', () => {
     const r = fight(ICEBREAKER_BRUTE as MiniBossSpec, 6)
     expect(ai.guarded!(r.e, r.e.challenge!.mem as BruteMem, r.e.x, r.e.z + 5)).toBe(false)
     expect(SHIELD_T).toBeGreaterThan(2)
+  })
+
+  // Playtest: standing 2.5 m off it, a flat hard-edged cyan pane filled a
+  // third of the view: a spike bursting up under Flux (the eye at 1.36 m is
+  // inside a 1.67 m cone) and the boulder's last metre coming down on him.
+  it("never draws a spike or its boulder round Flux's eye; they are drawn again once he is clear", () => {
+    expect(SPIKE_TOP).toBeGreaterThan(EYE_H)
+    let hidden = 0
+    let shown = 0
+    let rockCut = 0
+    // Flux standing nearly still in its lanes and rings.
+    fight(ICEBREAKER_BRUTE as MiniBossSpec, 60, {
+      speed: 0.02, orbit: 2.5,
+      each: (e, w) => {
+        const m = e.challenge!.mem as BruteMem
+        const ey = EYE_H
+        for (const s of m.spikes) {
+          const d = Math.hypot(s.x - w.player.x, s.z - w.player.z)
+          if (s.obj.visible) {
+            shown++
+            // Drawn by him only while still too low to reach his eye (it bursts up next tick).
+            if (d < SPIKE_R + EYE_CLEAR) expect(SPIKE_TOP * s.obj.scale.y).toBeLessThan(ey - EYE_CLEAR)
+          } else hidden++
+        }
+        const r = m.rock
+        if (r && m.bt >= 0) {
+          const p = r.position
+          const close = Math.hypot(p.x - w.player.x, p.z - w.player.z) < ROCK_R + EYE_CLEAR && Math.abs(p.y - ey) < ROCK_R + EYE_CLEAR
+          if (close) {
+            rockCut++
+            expect(r.visible).toBe(false)
+          }
+        }
+      }
+    })
+    expect(hidden).toBeGreaterThan(0)
+    expect(shown).toBeGreaterThan(0)
+    expect(rockCut).toBeGreaterThan(0)
+  })
+})
+
+describe("a mini-boss's floor props round the eye (eyeAt)", () => {
+  it("counts the eye in a prop's column (with its slack), not one beside or over it", () => {
+    const w = { player: { x: 10, z: 10, yaw: 0, pitch: 0 } } as unknown as World
+    expect(eyeAt(w, 10.2, 10, 0.34, 0, 1.67)).toBe(true)
+    expect(eyeAt(w, 10 + 0.34 + EYE_CLEAR + 0.05, 10, 0.34, 0, 1.67)).toBe(false)
+    // A short prop well under the eye; one on a floor below him.
+    expect(eyeAt(w, 10, 10, 0.3, 0, 0.8)).toBe(false)
+    expect(eyeAt(w, 10, 10, 0.34, -4, -2.33)).toBe(false)
+    // Up on a platform, his eye goes with him.
+    const up = { player: { x: 10, z: 10, y: 3, yaw: 0, pitch: 0 } } as unknown as World
+    expect(eyeAt(up, 10, 10, 0.34, 3, 4.67)).toBe(true)
+    expect(eyeAt(up, 10, 10, 0.34, 0, 1.67)).toBe(false)
   })
 })
 

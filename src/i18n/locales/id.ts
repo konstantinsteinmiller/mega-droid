@@ -49,6 +49,8 @@ export default {
     'noGel': 'Gel Perbaikan habis',
     'beamNotYet': 'Teleport keluar setelah tujuan selesai',
     'beamFight': 'Menangkan pertarungan dulu, lalu teleport keluar',
+    'beamGrandMaster': 'Kalahkan {boss} dulu, lalu teleport keluar',
+    'beamLesson': 'Coba senjata barumu ({weapon}) dulu, lalu teleport keluar',
     'tankCount': 'Gel Perbaikan: {n} dari {max}',
     'borrowed': 'Senjata pinjaman {weapon}: {n} dari {max} tembakan',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Induk Ikan Buntal',
     'glitchStalker': 'Pengintai Glitch',
     'sawGyro': 'Giro Gergaji',
-    'sentinelPrototype': 'Prototipe Penjaga'
+    'sentinelPrototype': 'Prototipe Penjaga',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Perisai es! Tembak inti beku di punggungnya, atau hancurkan perisainya dengan tembakan isi penuh.',
+      'sawGyro': 'Putarannya memantulkan tembakan! Hancurkan dengan tembakan isi penuh, atau serang saat ia pusing.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Tujuan tercapai',
     'beamOutHint': 'Teleport keluar kapan pun kamu siap.',
     'learnWeapon': 'Pelajari senjata barumu: {weapon}',
+    'grandMaster': 'Kalahkan {boss}',
     'tutorial': 'Kalahkan {boss}',
     'walk': {
       'charge': 'Tembak drone dengan tembakan bermuatan',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Dipakai!',
     'found': '{item} {rarity} ditemukan!',
     'tank': 'Gel Perbaikan ditemukan!',
-    'giftTank': 'Hadiah: +1 Gel Perbaikan!'
+    'giftTank': 'Hadiah: +1 Gel Perbaikan!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. terpasang',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} lagi'
   },
 
   'results': {

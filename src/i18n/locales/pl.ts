@@ -49,6 +49,8 @@ export default {
     'noGel': 'Brak żelu naprawczego',
     'beamNotYet': 'Teleportuj się po wykonaniu zadania',
     'beamFight': 'Najpierw wygraj walkę, potem się teleportuj',
+    'beamGrandMaster': 'Najpierw pokonaj: {boss}, potem się teleportuj',
+    'beamLesson': 'Najpierw wypróbuj nową broń ({weapon}), potem się teleportuj',
     'tankCount': 'Żel naprawczy: {n} z {max}',
     'borrowed': 'Pożyczona broń {weapon}: {n} z {max} strzałów',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matrona Rozdymka',
     'glitchStalker': 'Usterkowy Łowca',
     'sawGyro': 'Piłożyro',
-    'sentinelPrototype': 'Prototyp Strażnika'
+    'sentinelPrototype': 'Prototyp Strażnika',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Lodowa tarcza! Strzelaj w mroźny rdzeń na jego plecach albo rozbij tarczę pełnym ładunkiem.',
+      'sawGyro': 'Jego wirowanie odbija strzały! Przełam je pełnym ładunkiem albo trafiaj, gdy jest oszołomiony.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Cel osiągnięty',
     'beamOutHint': 'Teleportuj się, kiedy zechcesz.',
     'learnWeapon': 'Naucz się nowej broni: {weapon}',
+    'grandMaster': 'Pokonaj: {boss}',
     'tutorial': 'Pokonaj bossa: {boss}',
     'walk': {
       'charge': 'Traf drona strzałem naładowanym',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Założone!',
     'found': 'Znaleziono: {item} ({rarity})!',
     'tank': 'Znaleziono żel naprawczy!',
-    'giftTank': 'Prezent: +1 żel naprawczy!'
+    'giftTank': 'Prezent: +1 żel naprawczy!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'w porównaniu z założonym',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} więcej'
   },
 
   'results': {

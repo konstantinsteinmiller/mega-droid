@@ -49,6 +49,8 @@ export default {
     'noGel': 'Hết Gel Sửa Chữa',
     'beamNotYet': 'Dịch chuyển về khi xong mục tiêu',
     'beamFight': 'Thắng trận trước, rồi dịch chuyển về',
+    'beamGrandMaster': 'Hạ {boss} trước, rồi dịch chuyển về',
+    'beamLesson': 'Thử vũ khí mới ({weapon}) trước, rồi dịch chuyển về',
     'tankCount': 'Gel Sửa Chữa: {n}/{max}',
     'borrowed': 'Vũ khí mượn {weapon}: {n}/{max} phát',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Mẹ Cá Nóc',
     'glitchStalker': 'Kẻ Rình Glitch',
     'sawGyro': 'Con Quay Cưa',
-    'sentinelPrototype': 'Lính Gác Nguyên Mẫu'
+    'sentinelPrototype': 'Lính Gác Nguyên Mẫu',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Khiên băng! Bắn vào lõi băng sau lưng nó, hoặc phá khiên bằng phát bắn sạc đầy.',
+      'sawGyro': 'Vòng xoáy của nó làm bật đạn! Phá bằng phát bắn sạc đầy, hoặc đánh khi nó choáng váng.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Hoàn thành mục tiêu',
     'beamOutHint': 'Dịch chuyển về khi bạn sẵn sàng.',
     'learnWeapon': 'Học vũ khí mới: {weapon}',
+    'grandMaster': 'Hạ {boss}',
     'tutorial': 'Đánh bại {boss}',
     'walk': {
       'charge': 'Bắn phát tụ lực vào drone',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Đã trang bị!',
     'found': 'Tìm thấy {item} {rarity}!',
     'tank': 'Tìm thấy Gel Sửa Chữa!',
-    'giftTank': 'Quà: +1 Gel Sửa Chữa!'
+    'giftTank': 'Quà: +1 Gel Sửa Chữa!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'so với đang trang bị',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} nữa'
   },
 
   'results': {

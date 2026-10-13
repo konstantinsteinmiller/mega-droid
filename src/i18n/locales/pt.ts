@@ -49,6 +49,8 @@ export default {
     'noGel': 'Sem Gel de Reparo',
     'beamNotYet': 'Teleporte-se quando cumprir o objetivo',
     'beamFight': 'Vença o combate primeiro, depois teleporte-se',
+    'beamGrandMaster': 'Derrote o {boss} primeiro, depois teleporte-se',
+    'beamLesson': 'Experimente sua nova arma ({weapon}) primeiro, depois teleporte-se',
     'tankCount': 'Gel de Reparo: {n} de {max}',
     'borrowed': 'Arma emprestada {weapon}: {n} de {max} tiros',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarca Baiacu',
     'glitchStalker': 'Espreitador Glitch',
     'sawGyro': 'Giro Serra',
-    'sentinelPrototype': 'Protótipo Sentinela'
+    'sentinelPrototype': 'Protótipo Sentinela',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Escudo de gelo! Atire no núcleo congelado nas costas dele ou quebre o escudo com uma carga completa.',
+      'sawGyro': 'O giro dele desvia os tiros! Quebre-o com uma carga completa ou acerte-o quando estiver tonto.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Objetivo concluído',
     'beamOutHint': 'Teleporte-se quando estiver pronto.',
     'learnWeapon': 'Aprenda sua nova arma: {weapon}',
+    'grandMaster': 'Derrote o {boss}',
     'tutorial': 'Derrote o {boss}',
     'walk': {
       'charge': 'Acerte o drone com um tiro carregado',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Equipado!',
     'found': 'Você encontrou {item} ({rarity})!',
     'tank': 'Gel de Reparo encontrado!',
-    'giftTank': 'Presente: +1 Gel de Reparo!'
+    'giftTank': 'Presente: +1 Gel de Reparo!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. equipado',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} a mais'
   },
 
   'results': {

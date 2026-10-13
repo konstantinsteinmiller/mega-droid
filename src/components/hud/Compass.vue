@@ -1,6 +1,6 @@
 <template lang="pug">
-  div.compass(v-if="hud.phase === 'play' && hud.compass.length" aria-hidden="true")
-    div.strip
+  div.compass(v-if="hud.phase === 'play' && hud.compass.length" aria-hidden="true" data-zone="compass")
+    div.strip(ref="strip")
       span.tick(v-for="i in 9" :key="i" :style="{ left: ((i - 1) / 8) * 100 + '%' }")
       span.mark(
         v-for="(m, i) in hud.compass"
@@ -11,11 +11,13 @@
         span.pin
         //- Behind: an arrow off the strip's end says which way to turn.
         span.turn(v-if="Math.abs(m.bearing) > HALF && i === 0")
-        span.dist {{ Math.round(m.dist) }}
+        span.dist(v-if="labels[i]") {{ Math.round(m.dist) }}
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { hud } from '@/game/state/hud'
+import { compassLabelsShown } from './compassLabels'
 
 /**
  * The objective compass: a strip across the top showing where objective
@@ -26,6 +28,19 @@ import { hud } from '@/game/state/hud'
  */
 const HALF = (80 * Math.PI) / 180
 const pos = (b: number) => 50 + (Math.max(-HALF, Math.min(HALF, b)) / HALF) * 50
+
+/** The distances that have room (`compassLabels.ts`): two pins close together
+ *  drew "60121" for 60 and 121. */
+const strip = ref<HTMLElement | null>(null)
+const stripPx = ref(0)
+const measure = (): void => { stripPx.value = strip.value?.clientWidth ?? 0 }
+const labels = computed(() => compassLabelsShown(hud.compass.map(m => ({ pos: pos(m.bearing), dist: m.dist })), stripPx.value))
+watch(strip, measure, { flush: 'post' })
+onMounted(() => {
+  measure()
+  window.addEventListener('resize', measure)
+})
+onUnmounted(() => window.removeEventListener('resize', measure))
 </script>
 
 <style scoped lang="sass">

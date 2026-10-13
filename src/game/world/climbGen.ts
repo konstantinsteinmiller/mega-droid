@@ -106,7 +106,10 @@ export const generateClimb = (seed: number, challenge = true): MapData => {
     b.stair(17, j, Ramp.PX, L(2) + half, half)
   }
   b.level(18, 1, 18, 3, L(3))
-  const lanePeriod = 2.7 + rng() * 0.6
+  // A ball takes about 0.9 s down a lane and the climb about 2.3 s: a period
+  // of 3.3–3.8 s leaves a lane free a little longer than the climb, so a
+  // clean run needs no lane hop (#163: at 2.7–3.3 s it always did).
+  const lanePeriod = 3.3 + rng() * 0.5
   const laneOrder = shuffle(rng, [0, 1, 2])
   for (let n = 0; n < 3; n++) {
     b.lanes.push({

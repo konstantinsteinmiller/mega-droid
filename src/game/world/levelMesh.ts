@@ -7,6 +7,7 @@ import { levelAtlas } from './textures'
 import { toonVCMap, toonVC, glowVC, outlineMat } from '../models/toon'
 import { rcyl, cap, rbox, xform, paint, paintBy, merge, sph, torus } from '../models/kit'
 import { mulberry32 } from './rng'
+import { wallPipe, wallPipeY } from './wallPipe'
 import { noSlice, type Slice } from '../engine/slicer'
 
 /**
@@ -299,9 +300,9 @@ export const buildLevel = async (
         if (c === Cell.Room && rng() < 0.45) {
           glows[o]!.push(xform(piece('strip', () => paint(cap(0.07, 1.1, 8, 2), theme.accent)), [mx + e.n[0] * 0.12, 2.95, mz + e.n[2] * 0.12], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
         } else if (rng() < 0.25) {
-          const py = 1.1 + rng() * 1.4
-          decor[o]!.push(xform(piece('pipe', () => paint(cap(0.16, CELL, 10, 2), theme.pipe)), [mx + e.n[0] * 0.2, py, mz + e.n[2] * 0.2], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
-          decor[o]!.push(xform(piece('pipeRing', () => paint(torus(0.19, 0.05, 6, 14), theme.pilaster)), [mx + e.n[0] * 0.2, py, mz + e.n[2] * 0.2], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
+          // Over head height, both ends back in the wall (`wallPipe.ts`).
+          const py = wallPipeY(0, WALL_H, rng())
+          if (py !== null) decor[o]!.push(...wallPipe(mx, mz, e.n, py, alongX, theme.pipe, theme.pilaster))
         }
       }
       await slice()

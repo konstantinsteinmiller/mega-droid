@@ -19,9 +19,9 @@ vi.mock('@/game/world/textures', async (orig) => {
   return { ...(await orig<object>()), glowTexture: () => new Texture(), ringTexture: () => new Texture() }
 })
 
-import { Scene } from 'three'
+import { MeshBasicMaterial, PerspectiveCamera, Scene } from 'three'
 import {
-  createEnemy, updateEnemy, syncEnemyVisual, smashLamp, spotlit,
+  createEnemy, updateEnemy, syncEnemyVisual, smashLamp, spotlit, spotWarning,
   SPOT_LOCK, SPOT_FUSE, SPOT_SWEEP, SPOT_DARK, SPOT_TRACK, SPOT_BLIND, SPOT_RUSH, SPOT_STRIKE_R, SPOT_SLIP
 } from '@/game/sim/enemies'
 import { CombatSystem, type CombatHost } from '@/game/sim/combat'
@@ -39,6 +39,7 @@ import { ENEMY_WEAK, weakSpotFacing } from '@/game/data/weakspots'
 import { WALK_SPEED } from '@/game/sim/constants'
 import type { Enemy, World } from '@/game/sim/world'
 import { coplanarOverlaps } from './coplanar'
+import { aimSearchBeam, coneFade, fadeCone, makeSearchBeam, CONE_FADE_OUT } from '@/game/fx/searchBeam'
 
 const DT = 1 / 60
 const noop = (): void => {}
@@ -207,7 +208,7 @@ describe('the Searchlight Drone: light, lock, strike', () => {
     // Hold its light on him, so only the sight line decides
     r.e.spot!.x = r.w.player.x
     r.e.spot!.z = r.w.player.z
-    tick(r.w, r.e, 2)
+    tick(r.w, r.e, 60)
     expect(r.e.state).not.toBe('tele')
     expect(r.e.attack).toBe('lost')
     expect(r.log.marks.length).toBe(0)
@@ -284,6 +285,72 @@ describe('the Searchlight Drone: light, lock, strike', () => {
 // ─── Where it is met ────────────────────────────────────────────────────────
 
 const SEEDS = Array.from({ length: 16 }, (_, i) => (i * 2654435761 + 1013904223) >>> 0)
+
+// Playtest #154: a drone near the camera washed the whole view red-brown with
+// a hard line across it — the eye inside its cone, the near plane cutting the
+// cone's wall. The cone now fades out round the eye; the screen's edge says
+// "you are in the light" instead (hudLive.spotLit).
+describe('the Searchlight Drone\'s cone near the eye', () => {
+  it('is gone with the eye inside it, fades in clear of it, whole from CONE_FADE_OUT', () => {
+    // A cone 6 m long, 1.5 m wide at the floor (the unit cone, scaled).
+    const r = 1.5
+    const len = 6
+    // Inside: on its axis, half way down; near the floor in the pool's middle.
+    expect(coneFade(0, -0.5, 0, r, len)).toBe(0)
+    expect(coneFade(0.3, -0.8, 0, r, len)).toBe(0)
+    // Grazing its wall from outside: still nothing (the near plane's line).
+    expect(coneFade((0.1 + 0.9 * 0.7) + 0.1 / r, -0.7, 0, r, len)).toBe(0)
+    // Well clear of it, beside it or past its floor end: whole.
+    expect(coneFade(3, -0.5, 0, r, len)).toBe(1)
+    expect(coneFade(0, -1 - (CONE_FADE_OUT + 0.1) / len, 0, r, len)).toBe(1)
+    // In between: a smooth fade, rising as the eye backs away.
+    const at = (d: number) => coneFade((0.1 + 0.9 * 0.5) + d / r, -0.5, 0, r, len)
+    expect(at(1)).toBeGreaterThan(0)
+    expect(at(1)).toBeLessThan(1)
+    expect(at(1.4)).toBeGreaterThan(at(1))
+  })
+
+  it('the drawn cone: its opacity follows the eye, the pool and the rim stay lit', () => {
+    const b = makeSearchBeam()
+    const scene = new Scene()
+    scene.add(b.root)
+    // Lamp 5 m up, the pool on the floor below it.
+    aimSearchBeam(b, 0, 5, 0, 0, 0, 0, 1.5, 1, 1, 0)
+    scene.updateMatrixWorld(true)
+    const cam = new PerspectiveCamera()
+    const cone = b.cone.material as MeshBasicMaterial
+    const lit = cone.opacity
+    expect(lit).toBeGreaterThan(0)
+    // Flux's eye in the pool: the cone is not drawn, the pool still is.
+    cam.position.set(0.4, 1.36, 0.2)
+    cam.updateMatrixWorld(true)
+    fadeCone(b.cone, cam)
+    expect(cone.opacity).toBe(0)
+    expect((b.pool.material as MeshBasicMaterial).opacity).toBeGreaterThan(0)
+    expect((b.rim.material as MeshBasicMaterial).opacity).toBeGreaterThan(0)
+    // Across the room: the whole beam again (not compounded from the last frame).
+    cam.position.set(8, 1.36, 0)
+    cam.updateMatrixWorld(true)
+    fadeCone(b.cone, cam)
+    expect(cone.opacity).toBeCloseTo(lit, 5)
+  })
+
+  it('the HUD warning: 0 in the dark, 0.5 in its light, 1 while it locks on', () => {
+    const r = setup(4)
+    expect(spotWarning(r.w.enemies)).toBe(0)
+    expect(runUntil(r.w, r.e, () => !!r.e.spot!.lit)).toBe(true)
+    expect(spotWarning(r.w.enemies)).toBeGreaterThanOrEqual(0.5)
+    // Through the lock it rises toward 1, and holds it while the strike comes.
+    let peak = 0
+    expect(runUntil(r.w, r.e, () => !!r.e.spot!.strike, 15, () => { peak = Math.max(peak, spotWarning(r.w.enemies)) })).toBe(true)
+    expect(peak).toBeGreaterThan(0.9)
+    if (r.e.spot!.lit) expect(spotWarning(r.w.enemies)).toBe(1)
+    // Its light out: no warning.
+    smashLamp(r.w, r.e)
+    tick(r.w, r.e, 60)
+    expect(spotWarning(r.w.enemies)).toBe(0)
+  })
+})
 
 describe('the Searchlight Drone in the Blackout Boulevard', () => {
   it('is met alone first (the Billboard Drop), then in three later rooms with the Stalkers, never in the arena', () => {

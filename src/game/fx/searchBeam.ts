@@ -1,6 +1,6 @@
 import {
   AdditiveBlending, CircleGeometry, Color, CylinderGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry,
-  Vector3
+  Vector3, type Camera
 } from 'three'
 
 /**
@@ -15,6 +15,12 @@ import {
  * It hangs under the machine's own root (drawn and culled with it); the sim
  * keeps the pool in world space and `aimSearchBeam` works it into the root's
  * frame each frame.
+ *
+ * The cone fades out as the eye comes near it and is gone with the eye in
+ * it (`coneFade`): drawn from inside, its far wall washed the whole view
+ * red-brown and the near plane cut its near wall in a hard line across the
+ * screen (playtest #154). The pool and its rim stay; the HUD's edge glow
+ * says "you are in the light" (`hudLive.spotLit`).
  */
 
 export const BEAM_SEARCH = new Color('#fff1b0')
@@ -54,8 +60,43 @@ export const makeSearchBeam = (): SearchBeam => {
   const pool = new Mesh(poolGeo!, glowMat(0.22))
   const rim = new Mesh(rimGeo!, glowMat(0.7))
   cone.renderOrder = pool.renderOrder = rim.renderOrder = 2
+  cone.onBeforeRender = (_r, _s, camera) => fadeCone(cone, camera)
   root.add(cone, pool, rim)
   return { root, cone, pool, rim }
+}
+
+/** The cone is fully drawn with the eye this far (m) outside it, and gone
+ *  with the eye CONE_FADE_IN outside it or nearer (inside: gone). */
+export const CONE_FADE_IN = 0.3
+export const CONE_FADE_OUT = 1.8
+
+/**
+ * How much of the cone to draw (0..1) with the eye at (cx, cy, cz) in the
+ * cone mesh's own frame: apex at the origin, the unit cone opening down −Y,
+ * scaled by (r, len, r). Measured as the eye's distance (m) outside the cone.
+ */
+export const coneFade = (cx: number, cy: number, cz: number, r: number, len: number): number => {
+  const t = -cy
+  const tc = Math.max(0, Math.min(1, t))
+  const radial = Math.hypot(cx, cz) * r - (0.1 + 0.9 * tc) * r
+  const axial = t < 0 ? -t * len : t > 1 ? (t - 1) * len : -Infinity
+  const d = Math.max(radial, axial)
+  const k = Math.max(0, Math.min(1, (d - CONE_FADE_IN) / (CONE_FADE_OUT - CONE_FADE_IN)))
+  return k * k * (3 - 2 * k)
+}
+
+const _eye = new Vector3()
+const _size = new Vector3()
+
+/** Set the cone's opacity from its base (`aimSearchBeam`) and the eye: run
+ *  just before it is drawn, with the camera that draws it. */
+export const fadeCone = (cone: Mesh, camera: Camera): void => {
+  _eye.setFromMatrixPosition(camera.matrixWorld)
+  cone.worldToLocal(_eye)
+  // Its size in the world (its parents may scale it too).
+  _size.setFromMatrixScale(cone.matrixWorld)
+  const base = (cone.userData.opacity as number | undefined) ?? 0
+  ;(cone.material as MeshBasicMaterial).opacity = base * coneFade(_eye.x, _eye.y, _eye.z, _size.x, _size.y)
 }
 
 const _down = new Vector3(0, -1, 0)
@@ -91,4 +132,6 @@ export const aimSearchBeam = (
     mat.color.copy(BEAM_SEARCH).lerp(BEAM_LOCK, k)
     mat.opacity = Math.min(1, base * on * gl * (1 + 0.6 * k))
   }
+  // The cone's own, faded by the eye's nearness as it is drawn (`fadeCone`).
+  b.cone.userData.opacity = (b.cone.material as MeshBasicMaterial).opacity
 }

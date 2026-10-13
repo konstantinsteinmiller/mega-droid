@@ -49,6 +49,8 @@ export default {
     'noGel': 'Sem Gel de Reparação',
     'beamNotYet': 'Teletransporta-te quando cumprires o objetivo',
     'beamFight': 'Vence primeiro o combate e depois teletransporta-te',
+    'beamGrandMaster': 'Derrota primeiro o {boss} e depois teletransporta-te',
+    'beamLesson': 'Experimenta primeiro a tua nova arma ({weapon}) e depois teletransporta-te',
     'tankCount': 'Gel de Reparação: {n} de {max}',
     'borrowed': 'Arma emprestada {weapon}: {n} de {max} tiros',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarca Baiacu',
     'glitchStalker': 'Espreitador Glitch',
     'sawGyro': 'Giro Serra',
-    'sentinelPrototype': 'Protótipo Sentinela'
+    'sentinelPrototype': 'Protótipo Sentinela',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Escudo de gelo! Dispara no núcleo gelado nas costas dele, ou parte o escudo com uma carga completa.',
+      'sawGyro': 'O giro dele desvia os tiros! Parte-o com uma carga completa, ou acerta-lhe quando estiver tonto.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Objetivo concluído',
     'beamOutHint': 'Teletransporta-te quando estiveres pronto.',
     'learnWeapon': 'Aprende a tua nova arma: {weapon}',
+    'grandMaster': 'Derrota o {boss}',
     'tutorial': 'Derrota o {boss}',
     'walk': {
       'charge': 'Acerta no drone com um tiro carregado',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Equipado!',
     'found': 'Encontraste {item} ({rarity})!',
     'tank': 'Gel de Reparação encontrado!',
-    'giftTank': 'Presente: +1 Gel de Reparação!'
+    'giftTank': 'Presente: +1 Gel de Reparação!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. equipado',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} mais'
   },
 
   'results': {

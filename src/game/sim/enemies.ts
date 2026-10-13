@@ -176,6 +176,23 @@ export const spotlit = (w: World, e: Enemy): boolean => {
   return false
 }
 
+/**
+ * The HUD's "you are in the light" level (`hudLive.spotLit`): 0 in the dark,
+ * 0.5 lit by a Searchlight Drone, up to 1 while one locks on or its strike
+ * is coming. The cone itself fades out round the eye (`fx/searchBeam.ts`),
+ * so the screen's edge carries the warning instead.
+ */
+export const spotWarning = (enemies: readonly Enemy[]): number => {
+  let k = 0
+  for (const e of enemies) {
+    const s = e.spot
+    if (!s?.lit || e.state === 'dead') continue
+    const lock = e.state === 'tele' ? Math.min(1, e.st / e.teleDur) : s.strike ? 1 : 0
+    k = Math.max(k, 0.5 + 0.5 * lock)
+  }
+  return k
+}
+
 /** Move the pool toward (tx, tz) at `speed`, never farther than SPOT_REACH from the drone. */
 const sweepPool = (e: Enemy, s: SpotState, tx: number, tz: number, speed: number, dt: number): void => {
   const dx = tx - s.x
@@ -454,6 +471,91 @@ export const settle = (w: World, e: Enemy): void => {
   e.z = z
 }
 
+const _pOut: [number, number] = [0, 0]
+
+/**
+ * Off Flux's body (#148): a machine on the floor — a boss, a mini-boss, a
+ * sleeping crate — never stands inside him. Playtests saw a Master's leap
+ * land on his spot and stay there (distance 0 has no "away", so the old
+ * push skipped it) with the camera inside its mesh for 15 s. It steps out to
+ * the rim, the way it came (else behind its own facing), through the wall
+ * test; what a wall, a root or its sleep leaves of the overlap moves Flux,
+ * never into a wall, onto a block taller than his step or off a ledge (the
+ * Core ring's lava pit). Where both are pinned across the line between them
+ * (a walkway as wide as the machine), they part along it instead. Contact
+ * attacks reach past the rim, so they still land.
+ *
+ * A boss that hovers counts too: Dr. Vex's pod hangs at Flux's eye height,
+ * and skipping every flier let him sit on Flux's spot on the Core ring for
+ * seconds and be walked through in his entrance (playtest 2026-10-13). Small
+ * drones fly over his head and are left alone.
+ */
+export const keepOffPlayer = (w: World, e: Enemy): void => {
+  if ((e.def.fly !== 0 && !e.boss) || e.state === 'dead' || e.offstage || e.hang !== undefined) return
+  const p = w.player
+  const rr = e.def.radius + PLAYER_R
+  let dx = e.x - p.x
+  let dz = e.z - p.z
+  let d = Math.hypot(dx, dz)
+  if (d >= rr) return
+  if (d < 1e-4) {
+    dx = e.px - p.x
+    dz = e.pz - p.z
+    const l = Math.hypot(dx, dz)
+    if (l > 1e-4) {
+      dx /= l
+      dz /= l
+    } else {
+      dx = -Math.sin(e.yaw)
+      dz = -Math.cos(e.yaw)
+    }
+    d = 0
+  } else {
+    dx /= d
+    dz /= d
+  }
+  if (partAlong(w, e, dx, dz, rr)) return
+  // Pinned across: along the walkway, either way.
+  if (partAlong(w, e, -dz, dx, rr)) return
+  partAlong(w, e, dz, -dx, rr)
+}
+
+/**
+ * The big bodies last (a boss, a challenge mini-boss): once every machine
+ * has moved. One ticked after the boss (an add, a drone, a crate) pushes
+ * Flux off itself and can push him into the boss, which already took its
+ * turn: a playtest sampled the Frost Master 1.19 m off him mid-dash, under
+ * its 1.52 m rim. The step ends with them held off him again.
+ */
+export const keepBigOffPlayer = (w: World, enemies: readonly Enemy[]): void => {
+  for (const e of enemies) if (e.boss || e.challenge) keepOffPlayer(w, e)
+}
+
+/** Part the machine and Flux along (ux, uz) — it +u, then he −u with what
+ *  is left — until they are `rr` apart. True once they are. */
+const partAlong = (w: World, e: Enemy, ux: number, uz: number, rr: number): boolean => {
+  const p = w.player
+  for (let k = 0; k < 2; k++) {
+    // How far along u the machine must go from Flux to stand on the rim.
+    const ox = e.x - p.x
+    const oz = e.z - p.z
+    const a = ox * ux + oz * uz
+    const m = Math.sqrt(Math.max(0, a * a - (ox * ox + oz * oz) + rr * rr)) - a
+    if (m < 0.01) return true
+    if (k === 0) {
+      if (!e.dormant) shove(w, e, ux * m, uz * m)
+      continue
+    }
+    moveCircle(w.nav, p.x, p.z, -ux * m, -uz * m, PLAYER_R, _pOut)
+    const feet = p.y ?? 0
+    if (groundAt(w.map, _pOut[0], _pOut[1]) > feet + STEP_UP) return false
+    if (floorAt(w.nav, _pOut[0], _pOut[1], feet) < floorAt(w.nav, p.x, p.z, feet) - STEP_UP) return false
+    p.x = _pOut[0]
+    p.z = _pOut[1]
+  }
+  return Math.hypot(e.x - p.x, e.z - p.z) >= rr - 0.01
+}
+
 /** Steer toward (tx, tz) at `speed`: straight when visible, A* otherwise. */
 const seek = (w: World, e: Enemy, tx: number, tz: number, speed: number, dt: number): void => {
   let gx = tx
@@ -515,17 +617,7 @@ const separate = (w: World, e: Enemy): void => {
       e.z += (dz / d) * push
     }
   }
-  if (e.def.fly === 0) {
-    const dx = e.x - w.player.x
-    const dz = e.z - w.player.z
-    const rr = e.def.radius + PLAYER_R
-    const d2 = dx * dx + dz * dz
-    if (d2 < rr * rr && d2 > 1e-6) {
-      const d = Math.sqrt(d2)
-      e.x += (dx / d) * (rr - d)
-      e.z += (dz / d) * (rr - d)
-    }
-  }
+  keepOffPlayer(w, e)
   const [rx, rz] = resolveCircle(w.nav, e.x, e.z, e.def.radius)
   e.x = rx
   e.z = rz
@@ -572,6 +664,42 @@ export const wake = (w: World, e: Enemy, chain = true): void => {
     }
   }
   w.sfx('alert', e.x, e.z)
+}
+
+/** An awake machine this far from Flux (m, past `ROOM_REACH`)… */
+export const DROWSE_R = 45
+/** …and out of his sight this long (s) goes back to sleep (`drowse`). */
+export const DROWSE_AFTER = 4
+
+/**
+ * Left far behind, a machine goes back to sleep where it stands (#161).
+ * Awake, it chases Flux wherever he goes: a few rooms away its A* runs out of
+ * budget and fails, from scratch every 0.7 s, on top of sight rays across the
+ * map — so every room woken and left made each frame dearer (a playtest:
+ * 17 → 36 ms after five rooms of Magnet). Asleep it costs a distance check,
+ * and it wakes as ever once Flux is back in its aggro, or in its room in sight.
+ * Plain machines mid-chase only: never a golem (its crate sleep is its own) or
+ * a Searchlight Drone, and bosses and mini-bosses run their own updates.
+ * The mission calls it before `updateEnemy`. True: it fell asleep.
+ */
+export const drowse = (w: World, e: Enemy, dt: number): boolean => {
+  if (!e.awake || e.state === 'dead' || e.boss || e.challenge || e.golem || e.spot || e.offstage
+    || distToPlayer(w, e) < DROWSE_R) {
+    e.drowseT = 0
+    return false
+  }
+  e.drowseT = (e.drowseT ?? 0) + dt
+  // It dozes off between moves, never out of a telegraph, a strike or a stun.
+  if (e.drowseT < DROWSE_AFTER || e.state !== 'engage' || seesPlayer(w, e)) return false
+  e.awake = false
+  enterState(e, 'idle')
+  e.drowseT = 0
+  e.path = null
+  e.farT = 0
+  // A mole sleeps on the floor, never as a buried mine.
+  if (e.buried) e.buried = false
+  e.ring.visible = false
+  return true
 }
 
 // ─── Crate golem ──────────────────────────────────────────────────────────────
@@ -960,6 +1088,7 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
   // Asleep as a crate: no perception, no motion, nothing to animate
   if (e.dormant) {
     golemSleep(w, e)
+    keepOffPlayer(w, e)
     return
   }
 

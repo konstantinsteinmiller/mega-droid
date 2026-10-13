@@ -49,6 +49,8 @@ export default {
     'noGel': 'Korjausgeeli on lopussa',
     'beamNotYet': 'Teleporttaa pois, kun tavoite on täytetty',
     'beamFight': 'Voita taistelu ensin, teleporttaa sitten pois',
+    'beamGrandMaster': 'Päihitä ensin {boss}, teleporttaa sitten pois',
+    'beamLesson': 'Kokeile ensin uutta asettasi ({weapon}), teleporttaa sitten pois',
     'tankCount': 'Korjausgeeli: {n}/{max}',
     'borrowed': 'Lainattu {weapon}: {n}/{max} laukausta',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Pallokalamatriarkka',
     'glitchStalker': 'Glitch-Vaanija',
     'sawGyro': 'Sahagyro',
-    'sentinelPrototype': 'Vartijaprototyyppi'
+    'sentinelPrototype': 'Vartijaprototyyppi',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Jääkilpi! Ammu sen selässä olevaa huurreydintä tai riko kilpi täydellä latauksella.',
+      'sawGyro': 'Sen pyörintä torjuu laukaukset! Riko se täydellä latauksella tai osu siihen, kun se on pyörällä päästään.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Tavoite suoritettu',
     'beamOutHint': 'Teleporttaa pois, kun olet valmis.',
     'learnWeapon': 'Opettele uusi aseesi: {weapon}',
+    'grandMaster': 'Päihitä {boss}',
     'tutorial': 'Kukista {boss}',
     'walk': {
       'charge': 'Ammu drooniin latauslaukaus',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Varustettu!',
     'found': 'Löytyi: {item} ({rarity})!',
     'tank': 'Korjausgeeli löytyi!',
-    'giftTank': 'Lahja: +1 korjausgeeli!'
+    'giftTank': 'Lahja: +1 korjausgeeli!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. varusteltu',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} lisää'
   },
 
   'results': {

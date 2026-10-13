@@ -49,6 +49,8 @@ export default {
     'noGel': 'Žádný opravný gel',
     'beamNotYet': 'Teleportuj se, až splníš úkol',
     'beamFight': 'Nejdřív vyhraj boj, pak se teleportuj',
+    'beamGrandMaster': 'Nejdřív poraz: {boss}, pak se teleportuj',
+    'beamLesson': 'Nejdřív vyzkoušej novou zbraň ({weapon}), pak se teleportuj',
     'tankCount': 'Opravný gel: {n} z {max}',
     'borrowed': 'Vypůjčená zbraň {weapon}: {n} z {max} výstřelů',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarcha čtverzubec',
     'glitchStalker': 'Glitch slídil',
     'sawGyro': 'Pilový gyro',
-    'sentinelPrototype': 'Prototyp strážce'
+    'sentinelPrototype': 'Prototyp strážce',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ledový štít! Střílej na mrazivé jádro na jeho zádech, nebo štít rozbij plně nabitou ranou.',
+      'sawGyro': 'Jeho rotace odráží střely! Rozbij ji plně nabitou ranou, nebo ho zasáhni, když je omámený.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Cíl splněn',
     'beamOutHint': 'Teleportuj se, až budeš připraven.',
     'learnWeapon': 'Nauč se novou zbraň: {weapon}',
+    'grandMaster': 'Poraz: {boss}',
     'tutorial': 'Poraz bosse: {boss}',
     'walk': {
       'charge': 'Zasáhni dron nabitou ranou',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Nasazeno!',
     'found': 'Nalezeno: {item} ({rarity})!',
     'tank': 'Nalezen opravný gel!',
-    'giftTank': 'Dárek: +1 opravný gel!'
+    'giftTank': 'Dárek: +1 opravný gel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'oproti vybavenému',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} další'
   },
 
   'results': {

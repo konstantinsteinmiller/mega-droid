@@ -49,6 +49,8 @@ export default {
     'noGel': 'لم يبقَ جل إصلاح',
     'beamNotYet': 'انتقل آنياً بعد إنجاز الهدف',
     'beamFight': 'اربح القتال أولاً، ثم انتقل آنياً',
+    'beamGrandMaster': 'اهزم {boss} أولاً، ثم انتقل آنياً',
+    'beamLesson': 'جرّب سلاحك الجديد {weapon} أولاً، ثم انتقل آنياً',
     'tankCount': 'جل الإصلاح: {n} من {max}',
     'borrowed': 'سلاح مستعار {weapon}: {n} من {max} طلقات',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'أم السمكة المنتفخة',
     'glitchStalker': 'المتربص المعطوب',
     'sawGyro': 'دوامة المنشار',
-    'sentinelPrototype': 'نموذج الحارس'
+    'sentinelPrototype': 'نموذج الحارس',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'درع جليدي! أطلق على نواة الصقيع في ظهره، أو حطّم الدرع بطلقة مشحونة بالكامل.',
+      'sawGyro': 'دورانه يصدّ الطلقات! حطّمه بطلقة مشحونة بالكامل، أو اضربه وهو مترنّح.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'اكتمل الهدف',
     'beamOutHint': 'عُد بالنقل الآني متى كنت مستعداً.',
     'learnWeapon': 'تعلّم سلاحك الجديد {weapon}',
+    'grandMaster': 'اهزم {boss}',
     'tutorial': 'اهزم {boss}',
     'walk': {
       'charge': 'أطلق طلقة مشحونة على المسيّرة',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'تم التجهيز!',
     'found': 'عُثر على {item} (طراز {rarity})!',
     'tank': 'عُثر على جل إصلاح!',
-    'giftTank': 'هدية: +1 جل إصلاح!'
+    'giftTank': 'هدية: +1 جل إصلاح!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'مقارنة بالمجهَّز',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} أخرى'
   },
 
   'results': {

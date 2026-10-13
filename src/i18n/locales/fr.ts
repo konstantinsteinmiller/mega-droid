@@ -49,6 +49,8 @@ export default {
     'noGel': 'Plus de gel réparateur',
     'beamNotYet': 'Téléporte-toi une fois l’objectif rempli',
     'beamFight': 'Gagne d’abord le combat, puis téléporte-toi',
+    'beamGrandMaster': 'Bats d’abord le {boss}, puis téléporte-toi',
+    'beamLesson': 'Essaie d’abord ta nouvelle arme ({weapon}), puis téléporte-toi',
     'tankCount': 'Gel réparateur : {n} sur {max}',
     'borrowed': 'Arme empruntée {weapon} : {n} tirs sur {max}',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarche Fugu',
     'glitchStalker': 'Rôdeur Glitch',
     'sawGyro': 'Gyro-Scie',
-    'sentinelPrototype': 'Prototype Sentinelle'
+    'sentinelPrototype': 'Prototype Sentinelle',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Bouclier de glace ! Tire sur le noyau de givre dans son dos, ou brise le bouclier avec une charge complète.',
+      'sawGyro': 'Sa rotation dévie les tirs ! Brise-la avec une charge complète, ou frappe-le quand il est étourdi.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Objectif rempli',
     'beamOutHint': 'Téléporte-toi quand tu es prêt.',
     'learnWeapon': 'Apprends ta nouvelle arme : {weapon}',
+    'grandMaster': 'Bats le {boss}',
     'tutorial': 'Bats {boss}',
     'walk': {
       'charge': 'Tire un tir chargé sur le drone',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Équipé !',
     'found': 'Butin : {item} ({rarity}) !',
     'tank': 'Gel réparateur trouvé !',
-    'giftTank': 'Cadeau : +1 Gel réparateur !'
+    'giftTank': 'Cadeau : +1 Gel réparateur !',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs équipé',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} de plus'
   },
 
   'results': {

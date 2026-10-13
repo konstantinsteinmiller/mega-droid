@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:playtest": "node scripts/dev-playtest.mjs",
     "dev-playgama": "vite --mode playgama",
     "build": "run-p type-check \"build-only {@}\" --",
     "build-only": "vite build",
@@ -22,6 +23,7 @@
     "build:yandex": "vite build --mode yandex --base=./ && cd dist && tar -a -cf ../mega-droid-yandex.zip * && cd .. && move mega-droid-yandex.zip dist\\",
     "build:poki": "vite build --mode poki --base=./ && node tools/poki-deploy/pack.mjs",
     "deploy:poki": "node tools/poki-deploy/deploy.mjs",
+    "deploy:poki-quick": "node tools/poki-deploy/deploy.mjs --skip-qa-testing",
     "deploy:playgama": "node tools/playgama-deploy/deploy.mjs",
     "build-github-main": "vite build --base=/mega-droid/ --outDir=dist",
     "build-github-develop": "vite build --base=/mega-droid/develop/ --outDir=dist/develop",

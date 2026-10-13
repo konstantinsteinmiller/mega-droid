@@ -49,6 +49,8 @@ export default {
     'noGel': 'Gel Riparatore esaurito',
     'beamNotYet': 'Rientra quando l’obiettivo è completato',
     'beamFight': 'Prima vinci lo scontro, poi rientra',
+    'beamGrandMaster': 'Prima sconfiggi il {boss}, poi rientra',
+    'beamLesson': 'Prima prova la tua nuova arma ({weapon}), poi rientra',
     'tankCount': 'Gel Riparatore: {n} su {max}',
     'borrowed': 'Arma in prestito {weapon}: {n} colpi su {max}',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarca Palla',
     'glitchStalker': 'Predatore Glitch',
     'sawGyro': 'Giro Sega',
-    'sentinelPrototype': 'Prototipo Sentinella'
+    'sentinelPrototype': 'Prototipo Sentinella',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Scudo di ghiaccio! Spara al nucleo gelido sulla sua schiena o rompi lo scudo con una carica piena.',
+      'sawGyro': 'La sua rotazione devia i colpi! Rompila con una carica piena o colpiscilo quando è stordito.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Obiettivo completato',
     'beamOutHint': 'Rientra quando sei pronto.',
     'learnWeapon': 'Impara la tua nuova arma: {weapon}',
+    'grandMaster': 'Sconfiggi il {boss}',
     'tutorial': 'Sconfiggi il {boss}',
     'walk': {
       'charge': 'Colpisci il drone con un colpo caricato',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Equipaggiato!',
     'found': 'Hai trovato {item} ({rarity})!',
     'tank': 'Gel Riparatore trovato!',
-    'giftTank': 'Regalo: +1 Gel Riparatore!'
+    'giftTank': 'Regalo: +1 Gel Riparatore!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs equipaggiato',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} altri'
   },
 
   'results': {

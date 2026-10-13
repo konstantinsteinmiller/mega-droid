@@ -15,7 +15,7 @@ vi.mock('@/game/engine/app', () => ({ app: { setMode: () => {}, setWanted: () =>
 
 import { Group, Scene } from 'three'
 import { CELL, Cell, type MapData, type WindZone } from '@/game/world/levelGen'
-import { createNav, moveBody, type Nav } from '@/game/world/nav'
+import { createNav, groundAt, moveBody, type Nav } from '@/game/world/nav'
 import { generateStage } from '@/game/world/stages'
 import { THEMES, type SectorId } from '@/game/world/themes'
 import { SECTOR_BY_ID } from '@/game/data/regions'
@@ -88,6 +88,8 @@ const walk = (m: MapData, z: WindZone, y: number, posts: Array<{ x: number; z: n
 
 describe('wind turbines are solid', () => {
   it('a body walks round the post, never through it', () => {
+    let walks = 0
+    let all = 0
     for (const sector of STAGES) {
       const m = generateStage(sector, 0)
       const host = hostFor(m, sector)
@@ -101,11 +103,22 @@ describe('wind turbines are solid', () => {
           const out: [number, number] = [0, 0]
           const sx = p.x - dx * 1.5
           const sz = p.z - dz * 1.5
-          moveBody(host.nav, sx, sz, 0, dx * 1.5, dz * 1.5, PLAYER_R, out)
+          // On the post's own floor (a raised room's too: at 0 m every cell
+          // of it was a wall to him), from a spot he can stand on — not from
+          // in or against the wall a post stands by, where no spot clears
+          // both: walls win over posts in the push-out (#160).
+          const feet = groundAt(m, p.x, p.z)
+          moveBody(host.nav, sx, sz, feet, 0, 0, PLAYER_R, out)
+          all++
+          if (Math.hypot(out[0] - sx, out[1] - sz) > 1e-6) continue
+          walks++
+          moveBody(host.nav, sx, sz, feet, dx * 1.5, dz * 1.5, PLAYER_R, out)
           expect(Math.hypot(out[0] - p.x, out[1] - p.z), `${sector}`).toBeGreaterThanOrEqual(TURBINE_R + PLAYER_R - 0.01)
         }
       }
     }
+    // Most posts stand free; only the odd side against a wall is skipped.
+    expect(walks).toBeGreaterThan(all * 0.6)
   })
 
   it('cuts no way off: every doorway and every floor spot of its room is still reached', () => {

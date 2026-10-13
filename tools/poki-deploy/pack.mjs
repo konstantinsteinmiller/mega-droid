@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ─── node tools/poki-deploy/pack.mjs ────────────────────────────────────────
 //
-// The tail of `pnpm build:poki`: zip `dist/` into `dist/mega-droid-poki.zip`
+// The tail of `pnpm build:poki`: zip `dist/` into `dist/chaos-machine-poki.zip`
 // (paths from poki.config.mjs) with the pipeline's own PKZIP writer, then check
 // the result — real zip, `index.html` at the archive root.
 //

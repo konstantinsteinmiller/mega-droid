@@ -67,3 +67,22 @@ export const rivalFor = (it: Item, equipped: (slot: 'buster' | 'helmet' | 'chest
   if (!c1 || !c2) return null
   return itemPower(c1) <= itemPower(c2) ? c1 : c2
 }
+
+export interface DeltaChips {
+  /** The lines shown as chips: the gains first, then the losses. */
+  shown: StatLine[]
+  /** The lines left out ("+n more"; the workshop has them all). */
+  hidden: number
+}
+
+/**
+ * The comparison as at most `cap` chips (#158). Gains lead: a weaker main
+ * stat first in red read as the item's own stat being negative. A single
+ * line over the cap is shown rather than hidden — a "+1 more" chip takes
+ * the room of the line it stands for.
+ */
+export const deltaChips = (c: Comparison, cap: number): DeltaChips => {
+  const lines = [...c.lines.filter(l => l.delta > 0), ...c.lines.filter(l => l.delta < 0)]
+  if (lines.length <= cap + 1) return { shown: lines, hidden: 0 }
+  return { shown: lines.slice(0, cap), hidden: lines.length - cap }
+}

@@ -3,7 +3,11 @@
 // with a retry point at each landing.
 
 import { describe, expect, it, vi } from 'vitest'
-import { CoreDescent, FALL_S, STAGE_AT, STRIKE_EVERY, RING_TEMPO, type DescentHost } from '@/game/sim/coreDescent'
+import { CoreDescent, FALL_S, STAGE_AT, STRIKE_EVERY, RING_TEMPO, RING_LOOK, type DescentHost } from '@/game/sim/coreDescent'
+import { buildMoltenCore, hoopGeometry, hoopParts, CORE_R, CORE_GLOW, CORE_RINGS, HOOP_R } from '@/game/models/moltenCore'
+import { darkFlash } from '@/game/state/screenFx'
+import { coplanarOverlaps } from './coplanar'
+import { Box3, type BufferAttribute } from 'three'
 import { generateVexFortress } from '@/game/world/stages/fortress'
 import { CELL } from '@/game/world/levelGen'
 import type { Enemy } from '@/game/sim/world'
@@ -13,7 +17,7 @@ const rig = () => {
   const stages = map.terrain!.bossStages!
   const roof = map.rooms[stages[0]!]!
   const host = {
-    player: { x: (roof.x0 + 3.5) * CELL, y: 0, z: (roof.z0 + 5) * CELL, px: 0, pz: 0, py: 0, safeY: 0, yaw: 0, vx: 0, vz: 0, vy: 0 },
+    player: { x: (roof.x0 + 3.5) * CELL, y: 0, z: (roof.z0 + 5) * CELL, px: 0, pz: 0, py: 0, safeY: 0, yaw: 0, pitch: 0.5, vx: 0, vz: 0, vy: 0 },
     combat: { maxHp: 100 },
     rooms: map.rooms,
     markers: { spawn: vi.fn() },
@@ -82,6 +86,12 @@ describe('the Core Descent', () => {
     expect(r.boss.z).toBeCloseTo((ring.z0 + ring.h / 2) * CELL)
     expect(r.boss.tempo).toBeCloseTo(RING_TEMPO)
     expect(r.host.say).toHaveBeenCalledWith('hint.vex.core')
+    // Landed facing the Core, the view tilted down onto it (#155): the rings,
+    // the walkway round it and the far side in one frame, not a sky-ward
+    // view of Vex's underside.
+    expect(r.host.player.yaw).toBe(0)
+    expect(r.host.player.pitch).toBe(RING_LOOK)
+    expect(RING_LOOK).toBeLessThan(-0.15)
     // No storm off the roof.
     r.host.markers.spawn.mockClear()
     r.boss.state = 'engage'
@@ -95,5 +105,51 @@ describe('the Core Descent', () => {
     expect(r.d.stage).toBe(2)
     expect(r.boss.hp).toBe(222)
     expect(r.boss.phase2).toBe(true)
+  })
+})
+
+// Playtest #155: the Core read as one flat disc with no scale cue. It is a
+// molten surface with glow falling off outward, energy rings at known radii
+// and a solid containment hoop, all inside its pit; and the fall's black-out
+// really covers the view.
+describe('the molten Core', () => {
+  it('glow falls off outward, rings widen as they go down, all inside the pit', () => {
+    const map = generateVexFortress(3)
+    const ring = map.rooms[map.terrain!.bossStages![2]!]!
+    for (let i = 1; i < CORE_GLOW.length; i++) {
+      expect(CORE_GLOW[i]![0]).toBeGreaterThan(CORE_GLOW[i - 1]![0])
+      expect(CORE_GLOW[i]![1]).toBeLessThan(CORE_GLOW[i - 1]![1])
+    }
+    expect(CORE_GLOW[0]![0]).toBeGreaterThan(CORE_R)
+    for (let i = 1; i < CORE_RINGS.length; i++) {
+      expect(CORE_RINGS[i]![0]).toBeGreaterThan(CORE_RINGS[i - 1]![0])
+      expect(CORE_RINGS[i]![1]).toBeLessThan(CORE_RINGS[i - 1]![1])
+    }
+    // The pit is the ring room's middle 3 × 3 cells: the hoop and its clamps
+    // stay inside it, clear of the walkway.
+    const box = new Box3().setFromBufferAttribute(hoopGeometry().getAttribute('position') as BufferAttribute)
+    const half = 1.5 * CELL
+    expect(Math.max(-box.min.x, box.max.x, -box.min.z, box.max.z)).toBeLessThan(half - 0.1)
+    expect(HOOP_R + 0.2).toBeLessThan(half)
+    expect(ring.w * CELL).toBeGreaterThan(2 * half)
+  })
+
+  it('its hoop and clamps: no two parts in one plane', () => {
+    expect(coplanarOverlaps(hoopParts())).toBe(0)
+  })
+
+  it('breathes and turns its rings', () => {
+    const c = buildMoltenCore()
+    const before = c.root.children.map(o => o.rotation.z)
+    c.update(1, 0.5)
+    const after = c.root.children.map(o => o.rotation.z)
+    expect(after.filter((z, i) => z !== before[i]).length).toBe(CORE_RINGS.length)
+  })
+
+  it('the fall\'s black-out covers the view (a dark flash is not screen-blended)', () => {
+    expect(darkFlash('#000000')).toBe(true)
+    expect(darkFlash('#05070f')).toBe(true)
+    expect(darkFlash('#ffffff')).toBe(false)
+    expect(darkFlash('#ff2d3f')).toBe(false)
   })
 })

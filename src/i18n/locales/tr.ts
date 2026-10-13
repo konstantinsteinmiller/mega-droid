@@ -49,6 +49,8 @@ export default {
     'noGel': 'Tamir Jeli kalmadı',
     'beamNotYet': 'Görev tamamlanınca ışınlan',
     'beamFight': 'Önce savaşı kazan, sonra ışınlan',
+    'beamGrandMaster': 'Önce {boss} yenilmeli, sonra ışınlan',
+    'beamLesson': 'Önce yeni silahını ({weapon}) dene, sonra ışınlan',
     'tankCount': 'Tamir Jeli: {n}/{max}',
     'borrowed': 'Ödünç silah {weapon}: {n}/{max} atış',
     'borrowedGet': '{weapon} ×{n}'
@@ -149,7 +151,12 @@ export default {
     'pufferMatriarch': 'Balon Balığı Ana',
     'glitchStalker': 'Glitch Avcısı',
     'sawGyro': 'Testere Topacı',
-    'sentinelPrototype': 'Nöbetçi Prototipi'
+    'sentinelPrototype': 'Nöbetçi Prototipi',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Buz kalkanı! Sırtındaki don çekirdeğine ateş et ya da kalkanı tam şarjla kır.',
+      'sawGyro': 'Dönüşü atışları sektiriyor! Tam şarjla kır ya da sersemlemişken vur.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -204,6 +211,7 @@ export default {
     'complete': 'Hedef tamamlandı',
     'beamOutHint': 'Hazır olduğunda ışınlan.',
     'learnWeapon': 'Yeni silahını öğren: {weapon}',
+    'grandMaster': 'Yen: {boss}',
     'tutorial': 'Patronu yen: {boss}',
     'walk': {
       'charge': 'Drona şarjlı atış yap',
@@ -286,7 +294,11 @@ export default {
     'autoEquip': 'Takıldı!',
     'found': '{rarity} {item} bulundu!',
     'tank': 'Tamir Jeli bulundu!',
-    'giftTank': 'Hediye: +1 Tamir Jeli!'
+    'giftTank': 'Hediye: +1 Tamir Jeli!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'kuşanılana göre',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} daha'
   },
 
   'results': {

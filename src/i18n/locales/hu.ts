@@ -49,6 +49,8 @@ export default {
     'noGel': 'Elfogyott a javítózselé',
     'beamNotYet': 'Teleportálj ki, ha kész a feladat',
     'beamFight': 'Előbb nyerd meg a harcot, aztán teleportálj ki',
+    'beamGrandMaster': 'Előbb győzd le: {boss}, aztán teleportálj ki',
+    'beamLesson': 'Előbb próbáld ki az új fegyvered ({weapon}), aztán teleportálj ki',
     'tankCount': 'Javítózselé: {n} / {max}',
     'borrowed': 'Kölcsönfegyver, {weapon}: {n} / {max} lövés',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Gömbhal-matriarcha',
     'glitchStalker': 'Glitch-lesvadász',
     'sawGyro': 'Fűrészpörgettyű',
-    'sentinelPrototype': 'Őrszem Prototípus'
+    'sentinelPrototype': 'Őrszem Prototípus',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Jégpajzs! Lőj a hátán lévő fagymagra, vagy törd át a pajzsot teljes töltéssel.',
+      'sawGyro': 'A pörgése eltéríti a lövéseket! Törd meg teljes töltéssel, vagy találd el, amikor szédül.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Feladat teljesítve',
     'beamOutHint': 'Teleportálj ki, ha készen állsz.',
     'learnWeapon': 'Tanuld meg az új fegyvered: {weapon}',
+    'grandMaster': 'Győzd le: {boss}',
     'tutorial': 'Győzd le: {boss}',
     'walk': {
       'charge': 'Lődd le a drónt töltött lövéssel',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Felszerelve!',
     'found': 'Találtál egyet: {rarity} {item}!',
     'tank': 'Javítózselét találtál!',
-    'giftTank': 'Ajándék: +1 Javítózselé!'
+    'giftTank': 'Ajándék: +1 Javítózselé!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'a felszerelthez képest',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} további'
   },
 
   'results': {

@@ -82,6 +82,9 @@ export interface MiniBossSpec<M = unknown> {
   sector: ChallengeSector
   /** i18n key of its name (`miniboss.<id>`). */
   nameKey: string
+  /** i18n key of the one-time toast when its guard (`guarded`) first turns a
+   *  shot (#153): what gets through it (its back, a full charge, the wait). */
+  guardHint?: string
   def: MiniBossDef
   /** Its rig at scale 1 (`Rig.height` is the tele ring's height). */
   build(): Rig

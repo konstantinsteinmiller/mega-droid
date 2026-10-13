@@ -5,7 +5,7 @@ import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import { buildIcebreakerBrute, poseIcebreakerBrute, newBrutePose, ICEBREAKER_COLORS, ICEBREAKER_SCALE, type BrutePose } from '../../models/miniBoss/icebreakerBrute'
 import { rcone, rock, paint, staticProp } from '../../models/kit'
 import { toonVC, glowVC } from '../../models/toon'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, angDiff, floorLayer } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, angDiff, floorLayer, eyeAt } from './kit'
 import { pushHud } from '../../state/hud'
 
 /**
@@ -47,6 +47,9 @@ export const SPIKE_HALF = 0.85
 export const SPIKE_SPEED = 12
 const SPIKE_STEP = 0.9
 const SPIKE_LIFE = 1.1
+/** A spike's drawn column: its base's radius and its tip's height (m). */
+export const SPIKE_R = 0.34
+export const SPIKE_TOP = 1.67
 /** The fan of lanes from half health (rad apart). */
 const FAN = 0.38
 /** The boulder: wind-up (s; the ring goes down at BOULDER_MARK of it),
@@ -56,6 +59,8 @@ const BOULDER_MARK = 0.45
 export const BOULDER_FLY = 1.05
 export const BOULDER_R = 1.6
 const BOULDER_ARC = 6
+/** The boulder's drawn radius, bumps and all (m). */
+export const ROCK_R = 0.5 * ICEBREAKER_SCALE * 1.25
 /** The shield: raising it (s), holding it (s), the arc it covers either side
  *  of its facing (rad), its turn (rad/s) and push (m/s) while it holds. */
 export const SHIELD_TELE = 0.7
@@ -95,7 +100,7 @@ const fy = (e: Enemy): number => e.floor ?? 0
 
 /** An ice spike: a tall jagged cone, a glowing tip. */
 const makeSpike = (): Object3D => {
-  const body = paint(rcone(0.34, 0.05, 1.5, 0.04, 7), ICEBREAKER_COLORS.ice)
+  const body = paint(rcone(SPIKE_R, 0.05, 1.5, 0.04, 7), ICEBREAKER_COLORS.ice)
   body.translate(0, 0.75, 0)
   const tip = paint(rcone(0.12, 0.02, 0.5, 0.01, 7), ICEBREAKER_COLORS.frost)
   tip.translate(0, 1.42, 0)
@@ -168,6 +173,9 @@ const tickHazards = (w: World, e: Enemy, m: BruteMem, dt: number): void => {
     // Up in a snap, down at the end.
     const up = Math.min(1, s.t / 0.1) * Math.min(1, (SPIKE_LIFE - s.t) / 0.25)
     s.obj.scale.set(1, Math.max(0.01, up), 1)
+    // One bursting up under Flux is not drawn: from inside, a cone is a
+    // flat pane across a third of the view (the hit is the lane's, not its).
+    s.obj.visible = !eyeAt(w, s.x, s.z, SPIKE_R, y0, y0 + SPIKE_TOP * up)
   }
   if (m.bt < 0) return
   m.bt += dt
@@ -180,6 +188,9 @@ const tickHazards = (w: World, e: Enemy, m: BruteMem, dt: number): void => {
       const sz = r.userData.sz as number
       r.position.set(sx + (m.bx - sx) * f, y0 + 3.6 * (1 - f) + 0.5 + BOULDER_ARC * 4 * f * (1 - f), sz + (m.bz - sz) * f)
       r.rotation.set(f * 5, f * 3, 0)
+      // Its last metre comes down through the eye of a Flux who stayed in
+      // the ring: not drawn there (the blast still lands).
+      if (eyeAt(w, r.position.x, r.position.z, ROCK_R, r.position.y - ROCK_R, r.position.y + ROCK_R)) r.visible = false
     }
     if (Math.random() < 0.5) w.fx.emit({ x: m.bx + (Math.random() - 0.5), y: y0 + 0.2, z: m.bz + (Math.random() - 0.5), vy: 1, color: ICEBREAKER_COLORS.frost, size: 0.25, sizeEnd: 0.05, life: 0.4 })
     return
@@ -435,6 +446,7 @@ export const ICEBREAKER_BRUTE: MiniBossSpec<BruteMem> = {
   id: 'icebreakerBrute',
   sector: 'cryo',
   nameKey: 'miniboss.icebreakerBrute',
+  guardHint: 'miniboss.guard.icebreakerBrute',
   def: {
     kind: 'miniboss', hp: 440, dmg: 16, speed: 1.9, radius: 1.25, hitR: 1.5, aimY: 1.9, fly: 0,
     aggro: 30, range: [2, 7], xp: 160, bolts: [26, 38], cooldown: 1.6, tele: SLAM_TELE, unblockable: true, armor: 1,

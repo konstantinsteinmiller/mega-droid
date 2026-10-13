@@ -9,6 +9,7 @@ import { addHudTicker, hudEvents } from '@/game/state/hud'
 import { screenFx, pushToast, pushLoot } from '@/game/state/screenFx'
 import { currentMission } from '@/game/boot'
 import { KRANCK_LIFE, kranckTransform } from './kranck'
+import { CALLOUT_AVOID, callOutY, zones, type Rect } from './hudLayout'
 
 /**
  * Floating damage numbers and combat call-outs ("TINK!", "PARRY!", "+12 XP")
@@ -33,9 +34,14 @@ interface Item {
   scale: number
   /** The weak-spot call-out: wobbles as it grows, then pops away. */
   kranck: boolean
+  /** Its box at scale 1 (px), measured once as it spawns. */
+  w: number
+  h: number
 }
 const items: Item[] = []
 const pt = { x: 0, y: 0, visible: false }
+/** The zones the call-outs keep off this frame. */
+const avoid: Array<Rect | undefined> = []
 let off: (() => void) | null = null
 
 const spawn = (x: number, y: number, z: number, text: string, cls: string, life: number, scale: number, color = ''): void => {
@@ -57,6 +63,8 @@ const spawn = (x: number, y: number, z: number, text: string, cls: string, life:
   it.el.className = `ft ${cls}`
   it.el.style.color = color
   it.el.style.display = 'block'
+  it.w = it.el.offsetWidth
+  it.h = it.el.offsetHeight
 }
 
 onMounted(() => {
@@ -65,7 +73,7 @@ onMounted(() => {
     el.className = 'ft'
     el.style.display = 'none'
     layer.value!.appendChild(el)
-    items.push({ el, active: false, x: 0, y: 0, z: 0, t: 0, life: 1, rise: 1, jitter: 0, scale: 1, kranck: false })
+    items.push({ el, active: false, x: 0, y: 0, z: 0, t: 0, life: 1, rise: 1, jitter: 0, scale: 1, kranck: false, w: 0, h: 0 })
   }
   off = addHudTicker((dt) => {
     // Drain the sim's event queue
@@ -90,6 +98,7 @@ onMounted(() => {
       }
     }
     const m = currentMission()
+    CALLOUT_AVOID.forEach((id, i) => { avoid[i] = zones.rects[id] })
     for (const it of items) {
       if (!it.active) continue
       it.t += dt
@@ -104,6 +113,13 @@ onMounted(() => {
         it.el.style.opacity = '0'
         continue
       }
+      // Under the compass and the boss bar (#151: a big boss's "+2090 XP"
+      // rose over the compass).
+      pt.y = Math.max(pt.y, zones.topClear + 12)
+      // And off the toasts, the loot card and the door label (pt2: a boss
+      // kill's "+1690 XP" sat on the level-up toast).
+      const big = it.scale * (it.kranck ? 1.6 : 1.3)
+      pt.y = callOutY(pt.x, pt.y, it.w * big, it.h * big, avoid)
       if (it.kranck) {
         it.el.style.opacity = '1'
         it.el.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%) ${kranckTransform(it.t)}`

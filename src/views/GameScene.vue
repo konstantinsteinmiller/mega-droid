@@ -6,6 +6,7 @@
       ScreenFx
       TrainingFrame
       DamageMarkers
+      HudLayout
       FloatingText
       Crosshair
       FluxBubble
@@ -93,6 +94,7 @@ import HudBars from '@/components/hud/HudBars.vue'
 import Crosshair from '@/components/hud/Crosshair.vue'
 import TargetFrame from '@/components/hud/TargetFrame.vue'
 import FloatingText from '@/components/hud/FloatingText.vue'
+import HudLayout from '@/components/hud/HudLayout.vue'
 import FluxBubble from '@/components/hud/FluxBubble.vue'
 import ScreenFx from '@/components/hud/ScreenFx.vue'
 import DamageMarkers from '@/components/hud/DamageMarkers.vue'

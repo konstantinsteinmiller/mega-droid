@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.coach(v-if="hud.phase === 'play'" aria-live="polite")
+  div.coach(v-if="hud.phase === 'play'" aria-live="polite" :class="{ hushed: coachHushed(stage) }")
     //- Desktop, mouse not captured yet: one click on the scene takes it.
     Transition(name="hint")
       div.capture(v-if="hud.pointerFree" role="img" :aria-label="t('tips.capture')")
@@ -49,6 +49,7 @@ import type { HintId, HintView, InputFamily } from '@/game/sim/coach'
 import InputGlyph from './InputGlyph.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { keyAriaParams } from './keyAria'
+import { stage, coachHushed } from './hudLayout'
 import type { GameIconName } from '@/components/icons/iconNames'
 
 /**
@@ -151,6 +152,11 @@ watch(() => hud.hints, (hints) => {
   position: absolute
   inset: 0
   pointer-events: none
+  transition: opacity 0.2s
+  // A boss's name card is up (#151): a leftover look glyph sat in its band;
+  // the big banner too (its band crossed a weapon lesson's keys).
+  &.hushed
+    opacity: 0
 .spots, .row
   position: absolute
   inset: 0

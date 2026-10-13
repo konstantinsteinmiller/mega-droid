@@ -38,6 +38,28 @@ tooling or an external host ships in it.
 
 The game starts right in the first mission. There is no menu.
 
+### Playtests and the level lab
+
+```bash
+pnpm dev:playtest                  # http://127.0.0.1:2195, no HMR, no reloads
+pnpm dev:playtest -- --port 44123
+```
+
+`pnpm dev` pushes every file edit into the open page, and a full reload in the
+middle of a fight loses the run. For playtests (by hand or by a bot, while
+someone else edits the tree) use `dev:playtest`: the same Vite config with HMR
+and the file watcher off, and the live leaderboard blanked
+(`VITE_LEADERBOARD_URL` / `VITE_LEADERBOARD_SECRET` are in `.env`, so a
+finished test mission would otherwise post a real score). Modules already
+loaded stay as they were; restart the server and reload to pick up edits.
+
+`#/levels` is the dev-only level lab. Its Play button, or an address typed by
+hand, `#/?level=stage&sector=magnet&seed=0&plevel=19`, boots straight into
+that level, ahead of a resume point and ahead of the first-run intro and
+tutorial, also on a fresh browser profile. It plays on a save sandbox: nothing
+it does is written. Changing the address to another level in the same tab
+reloads the page.
+
 ## Highlights
 
 - **No art payload.** Flux, 7 machine archetypes, 6 Core Masters, NPCs and

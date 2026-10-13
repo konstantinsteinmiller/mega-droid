@@ -708,6 +708,24 @@ export const runInspectorQa = async (cdp, {
  * `honest: true`: tick only what was proven or is not applicable, cross what
  * was disproven, and leave the undecidable blank.
  */
+/**
+ * `--skip-qa-testing`: no pass at all. The Inspector is opened on the version,
+ * its QA checklist is waited for, and every box is ticked. For a re-upload of
+ * a build whose QA already passed (nothing that QA looks at has changed), to
+ * get the new version to playtests without the 5-minute pass. Returns what
+ * was applied, row by row.
+ */
+export const tickAllQa = async (cdp, { versionId, log = () => {} }) => {
+  await cdp.navigate(inspectorUrl(versionId), { settleMs: 4000 })
+  await cdp.send('Page.bringToFront').catch(() => {})
+  const ready = await cdp.waitFor(`(${QA_ROWS}).length > 0`, { timeout: 90000, every: 1000 })
+  if (!ready) throw new Error('the Inspector never showed its QA checklist — did the version finish processing?')
+  log('QA checklist loaded')
+  const evidence = Object.fromEntries(STEPS.map(s => [s.probe, { verdict: 'skipped', evidence: '--skip-qa-testing: ticked without a test run' }]))
+  const applied = await applyVerdicts(cdp, evidence, { honest: false })
+  return applied.map(a => (a.action === 'row not found' || a.action === 'already ticked' ? a : { ...a, action: 'ticked (--skip-qa-testing, no run)' }))
+}
+
 export const applyVerdicts = async (cdp, evidence, { honest = false } = {}) => {
   const applied = []
   for (const step of STEPS) {

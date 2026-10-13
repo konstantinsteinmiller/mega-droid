@@ -6,6 +6,7 @@
       :class="{ up: upgrade }"
       :style="{ '--rc': RARITY_COLOR[current.rarity] }"
       role="status"
+      data-zone="loot"
       :aria-label="t('loot.found', { rarity: t(`rarity.${current.rarity}`), item: t(`item.${current.base}`) })"
       @pointerdown.stop="next"
     )

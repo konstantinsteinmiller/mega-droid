@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.top-status
+  div.top-status(data-zone="status")
     BossChip.chip
     div.lvl(:aria-label="t('hud.level', { n: hud.level })")
       span.lv-num {{ hud.level }}

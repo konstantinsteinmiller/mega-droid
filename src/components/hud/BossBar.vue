@@ -1,6 +1,6 @@
 <template lang="pug">
   Transition(name="bb")
-    div.bb(v-if="hud.bossName" aria-hidden="true" :class="{ challenge: hud.bossStyle === 'challenge' }")
+    div.bb(v-if="shown" aria-hidden="true" data-zone="boss" :class="{ challenge: hud.bossStyle === 'challenge' }")
       //- The name over the bar's left end, marked with the skull (a
       //- challenge's mini-boss: the trophy, the bar in amber).
       div.bb-name
@@ -15,10 +15,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { hud } from '@/game/state/hud'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import { bossBarShown } from './hudLayout'
 
 /**
  * The Core Master's energy (#276): a horizontal 28-segment bar right under
@@ -33,6 +34,13 @@ import GameIcon from '@/components/icons/GameIcon.vue'
  */
 const { t } = useI18n()
 const SEG = 28
+/** The bar has shown health since this boss's came up: empty again, the
+ *  boss is dead and the bar goes at once (#151: it hung on empty under the
+ *  kill's banner and toasts). */
+const filled = ref(false)
+watch(() => hud.bossName, () => { filled.value = false })
+watch(() => hud.bossHp01, (v) => { if (v > 0 && hud.bossName) filled.value = true })
+const shown = computed(() => bossBarShown(hud.bossName, hud.bossHp01, filled.value))
 const segPct = computed(() => (Math.ceil(Math.min(1, Math.max(0, hud.bossHp01)) * SEG) / SEG) * 100)
 </script>
 

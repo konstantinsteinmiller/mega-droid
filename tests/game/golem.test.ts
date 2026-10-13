@@ -21,7 +21,7 @@ vi.mock('@/game/world/textures', async (orig) => {
 
 import { Scene, Vector3, type Mesh } from 'three'
 import {
-  createEnemy, updateEnemy, syncEnemyVisual, wake, golemShielded, shotThreatens, golemColors,
+  createEnemy, updateEnemy, syncEnemyVisual, wake, wakeGolem, golemShielded, shotThreatens, golemColors,
   GOLEM_UNFOLD, GOLEM_DODGE_MIN, GOLEM_DODGE_CD, GOLEM_RAM_R, GOLEM_RAM_TELE, GOLEM_RAM_TIME
 } from '@/game/sim/enemies'
 import { CombatSystem, shotBlockable, type CombatHost } from '@/game/sim/combat'
@@ -591,6 +591,50 @@ describe('crate golem: objectives', () => {
     expect(objectiveTarget(src, map, [golem, trooper], 11, 11)).toEqual({ x: 40, z: 40 })
     trooper.state = 'dead'
     expect(objectiveTarget(src, map, [golem, trooper], 11, 11)).toEqual({ x: 10, z: 10 })
+  })
+
+  // #149: a purge stuck at 27/28 with all 28 machines dead.
+  it('a purge counts every dead target once, however it died, and finishes', () => {
+    const map = generateMap({ seed: 31337, rooms: 9, boss: true })
+    const objs = objectsFor(map, job(31337))
+    let done = 0
+    ;(objs as unknown as { host: { onObjectiveDone: () => void } }).host.onObjectiveDone = () => { done++ }
+    const golem = createEnemy('golem', 1, 10, 10, 0, { theme: THEMES.scrapyard })
+    const trooper = createEnemy('trooper', 1, 40, 40, 0)
+    const puffer = createEnemy('puffer', 1, 20, 20, 0)
+    const cast = [trooper, golem, puffer]
+    objs.setupEnemyObjectives(cast, (e) => cast.push(e))
+    expect(objs.objective.count).toBe(3)
+    const die = (e: Enemy): void => { e.state = 'dead'; e.hp = 0 }
+    die(trooper)
+    objs.onEnemyKilled(trooper)
+    // Reported twice (a double report must not count twice)
+    objs.onEnemyKilled(trooper)
+    expect(objs.objective.progress).toBe(1)
+    // A machine brought in later (a stand-in, a mini-boss) is no target
+    const helper = createEnemy('heli', 1, 30, 30, 0)
+    die(helper)
+    objs.onEnemyKilled(helper)
+    expect(objs.objective.progress).toBe(1)
+    // The golem broken while still asleep (woken and killed in one blow), and
+    // the puffer popped by itself: neither reports a kill — the frame counts them
+    golem.dormant = true
+    die(golem)
+    die(puffer)
+    objs.update(1 / 60, 0)
+    expect(objs.objective.progress).toBe(3)
+    expect(objs.objective.done).toBe(true)
+    expect(done).toBe(1)
+  })
+
+  it('woken and broken in one tick (the kill-all cheat path), it reports exactly one kill', () => {
+    const r = setup(9)
+    expect(r.e.dormant).toBe(true)
+    wakeGolem(r.w, r.e)
+    r.e.golem!.unfold = 1
+    r.sys.damageEnemy(r.e, 1e6, { crit: false, charge: 2, fromX: r.w.player.x, fromZ: r.w.player.z, x: r.e.x, y: 1, z: r.e.z, color: '#ffffff' })
+    expect(r.e.state).toBe('dead')
+    expect(r.w.onEnemyKilled).toHaveBeenCalledTimes(1)
   })
 })
 

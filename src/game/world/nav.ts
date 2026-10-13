@@ -209,8 +209,19 @@ export const moveBody = (nav: Nav, x: number, z: number, feet: number, dx: numbe
 }
 
 /** Push a body out of every cell and platform column too high for its feet
- *  (and of the props and slabs `resolveCircle` handles). Writes `_res`. */
+ *  (and of the props and slabs `resolveCircle` handles). Writes `_res`.
+ *  The walls have the last word, as in `resolveCircle` (#160): a crate or a
+ *  pillar against a wall pushed Flux into it. */
 const resolveBody = (nav: Nav, x: number, z: number, r: number, feet: number): void => {
+  resolveBodyWalls(nav, x, z, r, feet)
+  for (let k = 0; k < SETTLE_PASSES; k++) {
+    resolveExtras(nav, _res[0], _res[1], r)
+    resolveBodyWalls(nav, _res[0], _res[1], r, feet)
+  }
+}
+
+/** The wall part of `resolveBody`: cells and columns too high for the feet. Writes `_res`. */
+const resolveBodyWalls = (nav: Nav, x: number, z: number, r: number, feet: number): void => {
   let px = x
   let pz = z
   const map = nav.map
@@ -248,7 +259,8 @@ const resolveBody = (nav: Nav, x: number, z: number, r: number, feet: number): v
       ;[px, pz] = pushOutOfBox(px, pz, r, p.x0, p.z0, p.x1, p.z1)
     }
   }
-  resolveExtras(nav, px, pz, r)
+  _res[0] = px
+  _res[1] = pz
 }
 
 const _box: [number, number] = [0, 0]
@@ -401,8 +413,29 @@ export const moveCircle = (nav: Nav, x: number, z: number, dx: number, dz: numbe
 }
 
 const _res: [number, number] = [0, 0]
-/** Push a circle out of every overlapping solid cell and pillar. */
+/** Rounds of push off the round things, then off the walls: a body wedged
+ *  between a post and a wall slides round the post instead of staying in it,
+ *  and the walls still have the last word. */
+const SETTLE_PASSES = 3
+/**
+ * Push a circle out of every overlapping solid cell and pillar. The walls have
+ * the last word: a pillar's, a prop's or a slab's push knows no walls, and a
+ * crate against a wall pushed a body that slipped behind it into the wall —
+ * where the next frame's cell pass and the crate's push held it, a machine
+ * stuck in a wall for 30 s (#160). Such a body ends against the wall,
+ * overlapping the crate a little.
+ */
 export const resolveCircle = (nav: Nav, x: number, z: number, r: number): [number, number] => {
+  resolveCells(nav, x, z, r)
+  for (let k = 0; k < SETTLE_PASSES; k++) {
+    resolveExtras(nav, _res[0], _res[1], r)
+    resolveCells(nav, _res[0], _res[1], r)
+  }
+  return _res
+}
+
+/** The cell part of `resolveCircle`: out of every overlapping solid cell. Writes `_res`. */
+const resolveCells = (nav: Nav, x: number, z: number, r: number): void => {
   let px = x
   let pz = z
   const i0 = Math.floor((px - r) / CELL)
@@ -440,8 +473,8 @@ export const resolveCircle = (nav: Nav, x: number, z: number, r: number): [numbe
       }
     }
   }
-  resolveExtras(nav, px, pz, r)
-  return _res
+  _res[0] = px
+  _res[1] = pz
 }
 
 /** The part of the push-out after the cells: pillars, props, closed door

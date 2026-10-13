@@ -3,7 +3,7 @@
 // the results screen show.
 
 import { describe, expect, it } from 'vitest'
-import { compareItems, itemStats, rivalFor } from '@/game/data/itemCompare'
+import { compareItems, deltaChips, itemStats, rivalFor } from '@/game/data/itemCompare'
 import type { Item } from '@/game/data/items'
 
 const item = (over: Partial<Item>): Item => ({
@@ -71,5 +71,29 @@ describe('the rival', () => {
   it('a chip meets the weaker socket, or nothing while one is free', () => {
     expect(rivalFor(chip, s => (s === 'chip1' ? weak : s === 'chip2' ? strong : null))).toBe(weak)
     expect(rivalFor(chip, s => (s === 'chip2' ? strong : null))).toBeNull()
+  })
+})
+
+describe('the loot card chips (#158)', () => {
+  it('gains lead; a lower main stat is not the headline', () => {
+    const old = item({ ilvl: 9 })
+    const found = item({ ilvl: 2, affixes: [{ id: 'hp', v: 4 }, { id: 'we', v: 1 }] })
+    const c = compareItems(found, old)
+    expect(c.lines[0]!.key).toBe('armor')
+    const { shown, hidden } = deltaChips(c, 3)
+    expect(hidden).toBe(0)
+    expect(shown.map(l => l.key)).toEqual(['hp', 'we', 'armor'])
+    expect(shown[2]!.delta).toBeLessThan(0)
+  })
+
+  it('one line over the cap is shown, never a lone "+1 more"', () => {
+    const found = item({ affixes: [{ id: 'hp', v: 4 }, { id: 'we', v: 1 }, { id: 'crit', v: 0.02 }] })
+    const c = compareItems(found, null)
+    expect(c.lines).toHaveLength(4)
+    expect(deltaChips(c, 3)).toEqual({ shown: c.lines, hidden: 0 })
+    const more = compareItems(item({ affixes: [{ id: 'hp', v: 4 }, { id: 'we', v: 1 }, { id: 'crit', v: 0.02 }, { id: 'bolts', v: 0.05 }] }), null)
+    const chips = deltaChips(more, 3)
+    expect(chips.shown).toHaveLength(3)
+    expect(chips.hidden).toBe(2)
   })
 })

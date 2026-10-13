@@ -49,6 +49,8 @@ export default {
     'noGel': 'Nema više gela za popravak',
     'beamNotYet': 'Teleportiraj se kad ispuniš zadatak',
     'beamFight': 'Prvo pobijedi u borbi, zatim se teleportiraj',
+    'beamGrandMaster': 'Prvo pobijedi: {boss}, zatim se teleportiraj',
+    'beamLesson': 'Prvo isprobaj novo oružje ({weapon}), zatim se teleportiraj',
     'tankCount': 'Gel za popravak: {n} od {max}',
     'borrowed': 'Posuđeno oružje {weapon}: {n} od {max} hitaca',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matrijarh napuhača',
     'glitchStalker': 'Glitch vrebač',
     'sawGyro': 'Pilni žiro',
-    'sentinelPrototype': 'Prototip čuvara'
+    'sentinelPrototype': 'Prototip čuvara',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Ledeni štit! Pucaj u mraznu jezgru na njegovim leđima ili razbij štit punim punjenjem.',
+      'sawGyro': 'Njegovo vrtenje odbija hice! Razbij ga punim punjenjem ili ga pogodi dok je ošamućen.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Cilj ostvaren',
     'beamOutHint': 'Teleportiraj se kad budeš spreman.',
     'learnWeapon': 'Nauči novo oružje: {weapon}',
+    'grandMaster': 'Pobijedi: {boss}',
     'tutorial': 'Pobijedi bossa: {boss}',
     'walk': {
       'charge': 'Pogodi dron nabijenim hitcem',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Opremljeno!',
     'found': 'Pronađeno: {item} ({rarity})!',
     'tank': 'Pronađen gel za popravak!',
-    'giftTank': 'Dar: +1 gel za popravak!'
+    'giftTank': 'Dar: +1 gel za popravak!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'u odnosu na opremljeno',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} više'
   },
 
   'results': {

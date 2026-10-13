@@ -49,6 +49,8 @@ export default {
     'noGel': 'No queda gel reparador',
     'beamNotYet': 'Teletransporta’t quan hagis complert l’objectiu',
     'beamFight': 'Guanya el combat i després teletransporta’t',
+    'beamGrandMaster': 'Derrota primer el {boss} i després teletransporta’t',
+    'beamLesson': 'Prova primer la nova arma ({weapon}) i després teletransporta’t',
     'tankCount': 'Gel reparador: {n} de {max}',
     'borrowed': 'Arma prestada {weapon}: {n} de {max} trets',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Matriarca Peix Globus',
     'glitchStalker': 'Aguaitador Glitch',
     'sawGyro': 'Giro Serra',
-    'sentinelPrototype': 'Prototip Sentinella'
+    'sentinelPrototype': 'Prototip Sentinella',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Escut de gel! Dispara al nucli gelat de l\'esquena o trenca l\'escut amb una càrrega completa.',
+      'sawGyro': 'El seu gir desvia els trets! Trenca\'l amb una càrrega completa o colpeja\'l quan estigui marejat.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Objectiu complert',
     'beamOutHint': 'Teletransporta\'t quan estiguis a punt.',
     'learnWeapon': 'Aprèn la nova arma: {weapon}',
+    'grandMaster': 'Derrota el {boss}',
     'tutorial': 'Derrota {boss}',
     'walk': {
       'charge': 'Dispara un tret carregat al dron',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Equipat!',
     'found': 'Botí: {item} ({rarity})!',
     'tank': 'Gel reparador trobat!',
-    'giftTank': 'Regal: +1 gel reparador!'
+    'giftTank': 'Regal: +1 gel reparador!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'vs. equipat',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} més'
   },
 
   'results': {

@@ -49,6 +49,8 @@ export default {
     'noGel': '修理凝胶已用完',
     'beamNotYet': '完成目标后才能传送撤离',
     'beamFight': '先赢下战斗，再传送撤离',
+    'beamGrandMaster': '先击败{boss}，再传送撤离',
+    'beamLesson': '先试试你的新武器（{weapon}），再传送撤离',
     'tankCount': '修理凝胶：{n}/{max}',
     'borrowed': '借来的武器{weapon}：剩余{n}/{max}发',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': '河豚母巢',
     'glitchStalker': '故障潜行者',
     'sawGyro': '锯刃陀螺',
-    'sentinelPrototype': '哨兵原型机'
+    'sentinelPrototype': '哨兵原型机',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': '冰盾！射击它背后的寒霜核心，或用满蓄力射击击碎护盾。',
+      'sawGyro': '它的旋转会弹开子弹！用满蓄力射击打断，或趁它眩晕时攻击。'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': '目标完成',
     'beamOutHint': '准备好后即可传送撤离。',
     'learnWeapon': '学会你的新武器：{weapon}',
+    'grandMaster': '击败{boss}',
     'tutorial': '击败{boss}',
     'walk': {
       'charge': '用蓄力弹击中无人机',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': '已装备！',
     'found': '发现{item}（{rarity}）！',
     'tank': '发现修理凝胶！',
-    'giftTank': '礼物：+1 修理凝胶！'
+    'giftTank': '礼物：+1 修理凝胶！',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': '与已装备对比',
+    // The last chip when more stats change than the card shows.
+    'more': '还有 {n} 项'
   },
 
   'results': {

@@ -63,8 +63,9 @@ export interface CombatHost extends World {
   shotHitsProp?(x: number, y: number, z: number, r: number, dmg: number, charge: number): boolean
   /** A lesson's subject (the training drone): struck, turned away, or missed. */
   shotHitsLesson?(s: Shot): 'hit' | 'deflect' | null
-  /** A player shot bounced off a guard (TINK). */
-  onDeflect?(): void
+  /** A player shot bounced off a guard (TINK): `e`, the machine whose guard
+   *  it was (a challenge mini-boss's shield earns its one-time hint). */
+  onDeflect?(e: Enemy): void
   /** A stage's targets on the walls (a secret's buttons, `sim/secrets.ts`),
    *  tested along the shot's step before the wall stops it: true if one
    *  caught the shot (it ends there). */
@@ -938,11 +939,14 @@ export class CombatSystem {
     }
     const breaks = o.charge >= 2 || (o.charge >= 1 && h.stats.piercing) || o.special
     if (guarded && !breaks) {
-      // TINK — the defence holds; the shot skips off.
+      // TINK — the defence holds; the shot skips off. A mini-boss's shield
+      // flares in its own colour where the shot struck (#153): the eye reads
+      // "shielded", not "missed".
       h.fx.sparks(o.x, o.y, o.z, '#ffffff', 7, 5, 0.14)
+      if (e.challenge) h.fx.flash(o.x, o.y, o.z, e.challenge.spec.def.color, 1.6, 0.16)
       pushHud({ t: 'text', x: o.x, y: o.y + 0.3, z: o.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', e.x, e.z)
-      h.onDeflect?.()
+      h.onDeflect?.(e)
       return
     }
     let dmg = amount * e.def.armor

@@ -153,6 +153,46 @@ describe('level-lab test run', () => {
     expect(m.built.every(b => b.snapshot !== null)).toBe(true)
   })
 
+  it('a first-run profile boots the level the address names, not the intro or the tutorial', async () => {
+    const m = await load()
+    m.gs.setStates({
+      [m.keys.WORLD_KEY]: { unlocked: ['scrapyard'], bosses: [], tutorialDone: false, seen: [] },
+      [m.keys.MISSION_KEY]: null
+    })
+    m.prof.loadProfile()
+    const intros: unknown[] = []
+    const fakeMode = {} as never
+    m.flowMod.registerModeFactories(
+      async (quest, snapshot) => { m.built.push({ quest, snapshot }); return fakeMode },
+      () => fakeMode,
+      async () => { intros.push(1); return fakeMode }
+    )
+    // Control: the same fresh profile, no level in the address, sees the intro.
+    expect(m.flowMod.bootTarget()).toEqual({ kind: 'intro' })
+    location.hash = '#/?level=stage&sector=magnet&seed=0&plevel=19'
+    await m.flowMod.createBootMode()
+    expect(intros).toHaveLength(0)
+    expect(m.built).toEqual([{ quest: m.quests.storyQuest(m.SECTOR_BY_ID.magnet, 19, 0), snapshot: null }])
+    expect(m.flowMod.flow.screen).toBe('mission')
+  })
+
+  it('a scene primed on another address is stale once the address names a level', async () => {
+    const m = await load()
+    // Nothing booted yet: nothing to be stale.
+    expect(await m.flowMod.bootIsStale(BLAZE_BOSS)).toBe(false)
+    // Primed on the lab (the intro / a resume), then a level is typed in.
+    location.hash = '#/levels?level=climb&sector=blaze&seed=3&plevel=6'
+    await m.flowMod.createBootMode()
+    expect(await m.flowMod.bootIsStale(BLAZE_BOSS)).toBe(true)
+    expect(await m.flowMod.bootIsStale('#/levels?level=boss&sector=blaze&seed=0&plevel=6')).toBe(false)
+    expect(await m.flowMod.bootIsStale('#/')).toBe(false)
+    // Primed on that level: the same level (in any spelling) is not stale, another one is.
+    location.hash = BLAZE_BOSS
+    await m.flowMod.createBootMode()
+    expect(await m.flowMod.bootIsStale('#/?plevel=6&seed=0&sector=blaze&level=boss')).toBe(false)
+    expect(await m.flowMod.bootIsStale('#/?level=boss&sector=blaze&seed=0&plevel=7')).toBe(true)
+  })
+
   it('a boot after a test run ends it: the profile comes back from the save', async () => {
     const m = await load()
     location.hash = '#/?level=climb&sector=scrapyard&seed=3&plevel=6'

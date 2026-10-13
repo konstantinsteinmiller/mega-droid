@@ -86,6 +86,15 @@ const reach = (m: MapData): Set<number> => {
 }
 
 describe('generateClimb', () => {
+  it('the rolling stairs leave a lane free longer than the climb up them (#163)', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const lanes = generateClimb(seed * 97).terrain!.lanes.filter(l => l.room === 2)
+      expect(lanes).toHaveLength(3)
+      // A ball is about 0.9 s down its lane; the climb takes about 2.3 s.
+      for (const l of lanes) expect(l.period - 0.9, `seed ${seed * 97}`).toBeGreaterThan(2.3)
+    }
+  })
+
   it('is deterministic for a seed (a resumed climb rebuilds the same tower)', () => {
     const a = generateClimb(4242)
     const b = generateClimb(4242)

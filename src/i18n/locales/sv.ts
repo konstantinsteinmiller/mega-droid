@@ -49,6 +49,8 @@ export default {
     'noGel': 'Ingen reparationsgel kvar',
     'beamNotYet': 'Teleportera ut när uppgiften är klar',
     'beamFight': 'Vinn striden först, teleportera sedan ut',
+    'beamGrandMaster': 'Besegra {boss} först, teleportera sedan ut',
+    'beamLesson': 'Testa ditt nya vapen ({weapon}) först, teleportera sedan ut',
     'tankCount': 'Reparationsgel: {n} av {max}',
     'borrowed': 'Lånat vapen {weapon}: {n} av {max} skott',
     'borrowedGet': '{weapon} ×{n}'
@@ -147,7 +149,12 @@ export default {
     'pufferMatriarch': 'Blåsfisk-Matriark',
     'glitchStalker': 'Glitch-Smygare',
     'sawGyro': 'Sågsnurra',
-    'sentinelPrototype': 'Väktar-Prototyp'
+    'sentinelPrototype': 'Väktar-Prototyp',
+    // The one-time toast when its guard first turns a shot (#153).
+    'guard': {
+      'icebreakerBrute': 'Issköld! Skjut på frostkärnan på ryggen, eller krossa skölden med en full laddning.',
+      'sawGyro': 'Snurrandet studsar bort skott! Krossa det med en full laddning, eller träffa den när den är yr.'
+    }
   },
 
   // A challenge room (`sim/challenge.ts`): its name card's label, the prize toast.
@@ -202,6 +209,7 @@ export default {
     'complete': 'Målet klart',
     'beamOutHint': 'Teleportera ut när du är redo.',
     'learnWeapon': 'Lär dig ditt nya vapen: {weapon}',
+    'grandMaster': 'Besegra {boss}',
     'tutorial': 'Besegra {boss}',
     'walk': {
       'charge': 'Skjut drönaren med ett laddskott',
@@ -284,7 +292,11 @@ export default {
     'autoEquip': 'Utrustad!',
     'found': '{item} ({rarity}) hittad!',
     'tank': 'Reparationsgel hittad!',
-    'giftTank': 'Gåva: +1 Reparationsgel!'
+    'giftTank': 'Gåva: +1 Reparationsgel!',
+    // Over the loot chips: they are measured against the equipped piece (#158).
+    'vsEquipped': 'mot utrustat',
+    // The last chip when more stats change than the card shows.
+    'more': '+{n} till'
   },
 
   'results': {

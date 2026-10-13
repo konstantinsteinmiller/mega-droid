@@ -22,7 +22,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const FOREIGN_GAME_IDS = Object.freeze({
   // The predecessor this repo was forked from (its tools/poki-deploy came along).
   '1d51788e-5771-4d70-8290-59366fb9773f': 'Survivalist',
-  '9b504ac8-a798-4111-b0e5-a7c569fcec46': 'Mega Droid',
+  'dc3dfa72-85a4-4ae0-be16-66fa95ed1db0': 'Chaos Machine',
 })
 
 /**

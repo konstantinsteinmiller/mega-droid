@@ -357,7 +357,7 @@ export default {
       'move': 'Moure\'s',
       'look': 'Mirar',
       'parry': 'Parada',
-      'turn': 'Girar (← →)',
+      'turn': 'Girar ({turn})',
       'leap': 'Saltar buits',
       'target': 'Objectiu següent',
       'interact': 'Interactuar'

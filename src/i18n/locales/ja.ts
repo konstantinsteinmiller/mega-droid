@@ -332,7 +332,7 @@ export default {
       'move': '移動',
       'look': '視点',
       'parry': 'パリィ',
-      'turn': '旋回（← →）',
+      'turn': '旋回（{turn}）',
       'leap': '隙間を跳ぶ',
       'target': '次のターゲット',
       'interact': 'アクション'

@@ -37,6 +37,8 @@ export const keyAriaParams = (t: T, spaceKey = 'pause.keys.space'): Record<strin
     beam: spokenKey(t, 'KeyB', spaceKey),
     w1: spokenKey(t, 'Digit1', spaceKey),
     w2: spokenKey(t, 'Digit2', spaceKey),
-    target: spokenKey(t, 'Tab', spaceKey)
+    target: spokenKey(t, 'Tab', spaceKey),
+    // The controls list's turn row: "Turn (← →)" — or its rebound keys.
+    turn: `${spokenKey(t, 'ArrowLeft', spaceKey)} ${spokenKey(t, 'ArrowRight', spaceKey)}`
   }
 }

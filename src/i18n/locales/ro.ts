@@ -357,7 +357,7 @@ export default {
       'move': 'Mișcare',
       'look': 'Privire',
       'parry': 'Parare',
-      'turn': 'Întoarcere (← →)',
+      'turn': 'Întoarcere ({turn})',
       'leap': 'Salt peste gol',
       'target': 'Următoarea țintă',
       'interact': 'Interacțiune'

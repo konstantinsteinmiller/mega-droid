@@ -332,7 +332,7 @@ export default {
       'move': 'Di chuyển',
       'look': 'Nhìn',
       'parry': 'Gạt đòn',
-      'turn': 'Xoay (← →)',
+      'turn': 'Xoay ({turn})',
       'leap': 'Nhảy qua hố',
       'target': 'Mục tiêu kế tiếp',
       'interact': 'Tương tác'

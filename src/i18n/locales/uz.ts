@@ -332,7 +332,7 @@ export default {
       'move': 'Yurish',
       'look': 'Qarash',
       'parry': 'Qaytarish',
-      'turn': 'Burilish (← →)',
+      'turn': 'Burilish ({turn})',
       'leap': 'Sakrab oʻtish',
       'target': 'Keyingi nishon',
       'interact': 'Amal'

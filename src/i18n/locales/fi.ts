@@ -357,7 +357,7 @@ export default {
       'move': 'Liiku',
       'look': 'Katso',
       'parry': 'Torju',
-      'turn': 'Käänny (← →)',
+      'turn': 'Käänny ({turn})',
       'leap': 'Ylitä aukot',
       'target': 'Seuraava kohde',
       'interact': 'Käytä'

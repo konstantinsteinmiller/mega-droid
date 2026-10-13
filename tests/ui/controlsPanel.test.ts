@@ -27,6 +27,8 @@ vi.mock('@/game/boot', () => ({ input: { get device() { return device.value } } 
 type Family = 'touch' | 'mouse'
 const read = (p: string) => readFileSync(resolve(__dirname, '../..', p), 'utf8').replace(/\r\n/g, '\n')
 const at = (messages: unknown, path: string): unknown => path.split('.').reduce<any>((o, k) => o?.[k], messages)
+/** A verb as shown: its {turn} is the default turn keys (`keyAria.ts`). */
+const shown = (v: unknown): unknown => (typeof v === 'string' ? v.replace('{turn}', '← →') : v)
 const i18nFor = (code: string, messages: Record<string, unknown>) => createI18n({
   legacy: false, locale: code, messages: { [code]: messages }, missingWarn: false, fallbackWarn: false
 })
@@ -66,7 +68,7 @@ describe('every row reads "do this → to do that"', () => {
       // The verb is written out, and it is the English string of its key.
       const label = row.get('.action .label')
       const path = label.attributes('data-label')!
-      const want = at(en, path)
+      const want = shown(at(en, path))
       expect(typeof want, `${key}: ${path}`).toBe('string')
       expect(label.text(), key).toBe(want)
       expect(label.text().length, key).toBeGreaterThan(0)
@@ -190,7 +192,7 @@ describe('the labels in every shipped language', () => {
         for (const row of w.findAll('.row')) {
           const label = row.get('.action .label')
           const path = label.attributes('data-label')!
-          const want = at(messages, path)
+          const want = shown(at(messages, path))
           expect(typeof want, `${code} ${path}`).toBe('string')
           expect(label.text(), `${code} ${path}`).toBe(want)
           expect((want as string).trim().length, `${code} ${path}`).toBeGreaterThan(0)
@@ -240,5 +242,27 @@ describe('motion', () => {
     expect(reduced).toMatch(/\.parry-ring\n\s+animation: none/)
     // InputGlyph's own still poses (asserted in inputGlyph.test.ts) exist.
     expect(read('src/components/hud/InputGlyph.vue')).toMatch(/@media \(prefers-reduced-motion: reduce\)/)
+  })
+})
+
+describe('the keys it names follow the bindings and the keyboard (#146)', () => {
+  afterEach(async () => {
+    const { __resetBindingsForTests } = await import('@/game/engine/keyBindings')
+    __resetBindingsForTests()
+  })
+
+  it('a rebound turn key and slide key show as bound: no "← →", no space bar left behind', async () => {
+    const { bindKey } = await import('@/game/engine/keyBindings')
+    let w = legend('mouse')
+    expect(w.get('[data-row="turn"] .action .label').text()).toBe('Turn (← →)')
+    expect(w.find('[data-row="slide"] rect.spacebar').exists()).toBe(true)
+    w.unmount()
+    bindKey('turnLeft', 'KeyQ')
+    bindKey('slide', 'KeyC')
+    w = legend('mouse')
+    expect(w.get('[data-row="turn"] .action .label').text()).toBe('Turn (Q →)')
+    expect(w.find('[data-row="slide"] rect.spacebar').exists()).toBe(false)
+    expect(w.get('[data-row="slide"] text.label').text()).toBe('C')
+    w.unmount()
   })
 })

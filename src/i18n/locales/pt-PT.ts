@@ -357,7 +357,7 @@ export default {
       'move': 'Mover',
       'look': 'Olhar',
       'parry': 'Aparar',
-      'turn': 'Rodar (← →)',
+      'turn': 'Rodar ({turn})',
       'leap': 'Saltar fendas',
       'target': 'Próximo alvo',
       'interact': 'Interagir'

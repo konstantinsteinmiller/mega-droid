@@ -357,7 +357,7 @@ export default {
       'move': 'Judėti',
       'look': 'Žvalgytis',
       'parry': 'Atremti',
-      'turn': 'Sukimasis (← →)',
+      'turn': 'Sukimasis ({turn})',
       'leap': 'Peršokti tarpus',
       'target': 'Kitas taikinys',
       'interact': 'Sąveika'

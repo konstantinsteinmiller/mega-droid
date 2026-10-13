@@ -12,7 +12,7 @@
         div.action(aria-hidden="true")
           span.icon
             GameIcon(:name="r.action")
-          span.label(:data-label="r.label") {{ t(r.label) }}
+          span.label(:data-label="r.label") {{ t(r.label, keys) }}
 </template>
 
 <script setup lang="ts">
@@ -97,7 +97,8 @@ const groups = computed<Group[]>(() => family.value === 'touch'
             aria: 'pause.keys.look'
           },
           { key: 'turn', glyph: { kind: 'key', code: 'ArrowLeft' }, action: 'replay', label: 'pause.label.turn', aria: 'pause.label.turn' },
-          { key: 'slide', glyph: { kind: 'key', wide: true }, action: 'dodge', label: 'combat.slide', aria: 'pause.keys.slide' },
+          // Space by default: a bar; rebound, the key's letter.
+          { key: 'slide', glyph: { kind: 'key', code: 'Space', wide: true }, action: 'dodge', label: 'combat.slide', aria: 'pause.keys.slide' },
           { key: 'leap', glyph: { kind: 'wasd' }, action: 'up', label: 'pause.label.leap', aria: 'pause.leapHint' }
         ]
       },
@@ -126,9 +127,11 @@ const groups = computed<Group[]>(() => family.value === 'touch'
       }
     ])
 
+/** The keys the rows name ("Turn (← →)"), as bound, in this keyboard's letters. */
+const keys = computed(() => keyAriaParams(t))
 const ariaOf = (r: Row): string => r.aria
-  ? t(r.aria, keyAriaParams(t))
-  : t('pause.keys.press', { key: actionKeyLabel(r.glyph.code ?? ''), action: t(r.label) })
+  ? t(r.aria, keys.value)
+  : t('pause.keys.press', { key: actionKeyLabel(r.glyph.code ?? ''), action: t(r.label, keys.value) })
 </script>
 
 <style scoped lang="sass">

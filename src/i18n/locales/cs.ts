@@ -357,7 +357,7 @@ export default {
       'move': 'Pohyb',
       'look': 'Rozhled',
       'parry': 'Vykrytí',
-      'turn': 'Otočení (← →)',
+      'turn': 'Otočení ({turn})',
       'leap': 'Přeskok mezer',
       'target': 'Další cíl',
       'interact': 'Akce'

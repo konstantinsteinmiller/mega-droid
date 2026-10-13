@@ -424,4 +424,21 @@ Wait for my "go" to start implementation, ask to review the decisions first.
 - [x] #142 The neon master level is quite boring with one new enemy introduced, but not much action or evolution in gameplay, add another new machine that has an interesting fighting style and offers a bigger threat to the player in the neon level.
 - [x] #143 The puzzles are quite repetitive after a while and need a bit variation especially after the gale Masters level, think up some new types of puzzles to solve.
 - [x] #144 Vex fortress enemies are too weak, they should have 3x their current HP and 1.5x to 2x of the amount of enemies spawned, its fine if this level is extra hard, as this is the final challenge and replaying this level is something a player is willing to do after so much time investment. 
-- [x] #145 During Vex's second phase the granmaster bot floats/flies in the air, which makes no sense after he lost his feet, give him some wings so the body can keep flying after he lost his feet and legs.  
+- [x] #145 During Vex's second phase the granmaster bot floats/flies in the air, which makes no sense after he lost his feet, give him some wings so the body can keep flying after he lost his feet and legs.
+- [x] #146 the tutorial shows pressing "W" on desktop for the jumping over the gap, but the      
+  billboard but the movement button should be mapped from the keyboard detected.
+  I told you to 
+  adjust the keys everywhere based on a keymapping coming from the keyboard   
+  detection, but some keys are still hardcoded it seems on desktop. FIX IT    
+  EVERYWHERE, so that players never run into problems with what is shown on   
+  screen and how the action actually works. All keyboards need to map and     
+  display the keyboard keys correctly. Verify this with running a playtester  
+  through the tutorial level with different keyboard layout, once per         
+  keyboard and verify all mappings are correct now by making screenshots and  
+  analyzing the shown and used keys.  
+- [ ] #147 The game needs a full level consistency check with headed browser, use 3 Sonnet agents in parallel playing each story and side mission level map once. So not every agent plays each map, I just need every level covered by exactly one agent. 
+  The Playtesters are not blind and know how to control the player well on desktop. The playtesters are not immortal, but have 9999999 hp to not get interrupted by monster or environment death. If an platforming area cannot be overcome by the agent, he skips that area and goes ahead.
+  The goal of this playtests is to find inconsistencies in the level design and enemies behaviour, is the world looking like a non-bugged game level? Are there some platforms or walls or ground tiles missing? Do some walls only have a frontface and therefore allow lookthrough into the next room?
+  Are decorations correctly placed and not in the way of the players objective? Do all challenge mini-bosses fight correctly and dont bug out? Are all doors opening correctly? Also check for other inconsistencies that would make the game look bad and low-effort in a commercial release and make it less commerically viable.
+  Collect all findings in a structured browser report and add the findings here in the roadmap.md as new bullet points to fix later.
+  In the end I want the subagents to find all issues in the game that would deminish its polished value to a gaming audience

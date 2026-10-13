@@ -357,7 +357,7 @@ export default {
       'move': 'Kretanje',
       'look': 'Pogled',
       'parry': 'Pariranje',
-      'turn': 'Okretanje (← →)',
+      'turn': 'Okretanje ({turn})',
       'leap': 'Preskakanje',
       'target': 'Sljedeća meta',
       'interact': 'Radnja'

@@ -357,7 +357,7 @@ export default {
       'move': 'Gå',
       'look': 'Titta',
       'parry': 'Parera',
-      'turn': 'Vänd (← →)',
+      'turn': 'Vänd ({turn})',
       'leap': 'Hoppa över hål',
       'target': 'Nästa mål',
       'interact': 'Använd'

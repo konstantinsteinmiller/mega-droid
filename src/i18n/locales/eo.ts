@@ -357,7 +357,7 @@ export default {
       'move': 'Moviĝi',
       'look': 'Rigardi',
       'parry': 'Pari',
-      'turn': 'Turni (← →)',
+      'turn': 'Turni ({turn})',
       'leap': 'Transsalti',
       'target': 'Sekva celo',
       'interact': 'Interagi'

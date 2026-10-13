@@ -236,6 +236,20 @@ describe('the door\'s glyph: the input its step needs', () => {
     expect(doorInput('clear', 'mouse')).toMatchObject({ kind: 'mouse', button: 'left', click: true })
   })
 
+  it('every key is named by its DEFAULT code, so the glyph draws it as bound and as this keyboard prints it', () => {
+    // A slide rebound off Space must stop drawing a space bar: the code says which action.
+    expect(doorInput('slide', 'mouse')).toMatchObject({ code: 'Space' })
+    for (const n of ['slide', 'chest', 'gel', 'weapon', 'gap'] as const) {
+      const i = doorInput(n, 'mouse')
+      expect(i.code ?? i.litKey, n).toBeTruthy()
+    }
+  })
+
+  it('the gap: walk on at the edge — the move keys with forward lit, never a lone "W" (#146)', () => {
+    expect(doorInput('gap', 'mouse')).toEqual({ kind: 'wasd', litKey: 'KeyW', icon: 'up' })
+    expect(doorInput('gap', 'touch')).toEqual({ kind: 'finger', mode: 'hold', icon: 'up' })
+  })
+
   it('on touch: a held finger for charge and block, a tap for the rest, the button named by its icon', () => {
     expect(doorInput('charge', 'touch')).toEqual({ kind: 'finger', mode: 'hold', icon: 'bolt' })
     expect(doorInput('crate', 'touch')).toEqual({ kind: 'finger', mode: 'hold', icon: 'bolt' })

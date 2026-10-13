@@ -73,6 +73,7 @@ import {
   attachInput, isPointerLocked, releasePointerLock, requestPointerLock, unlockedRecently
 } from '@/game/engine/input'
 import { loadKeyboardLayout } from '@/game/engine/keyLabels'
+import { actionForCode } from '@/game/engine/keyBindings'
 import { input, adoptBootMode, currentMission } from '@/game/boot'
 import { flow, startMission, storyFor, goHub, replayIntro, INTRO_ENABLED } from '@/game/flow'
 import { toggleHelp } from '@/game/help'
@@ -210,7 +211,8 @@ const onKey = (e: KeyboardEvent) => {
   // capture, and the lost capture opens the pause menu (`onLockLost`). The
   // same Esc must not then toggle the menu shut again.
   if (e.code === 'Escape' && (isPointerLocked() || unlockedRecently())) return
-  if (e.code === 'Escape' || e.code === 'KeyP') {
+  // P pauses too, unless the player has bound it to an action (`keyBindings.ts`).
+  if (e.code === 'Escape' || (e.code === 'KeyP' && !actionForCode('KeyP'))) {
     if (flow.modal === 'pause') flow.modal = ''
     else openPause()
   }

@@ -357,7 +357,7 @@ export default {
       'move': 'Gå',
       'look': 'Kig',
       'parry': 'Parér',
-      'turn': 'Drej (← →)',
+      'turn': 'Drej ({turn})',
       'leap': 'Spring over huller',
       'target': 'Næste mål',
       'interact': 'Brug'

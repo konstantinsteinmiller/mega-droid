@@ -357,7 +357,7 @@ export default {
       'move': 'Gå',
       'look': 'Se',
       'parry': 'Parer',
-      'turn': 'Snu (← →)',
+      'turn': 'Snu ({turn})',
       'leap': 'Hopp over hull',
       'target': 'Neste mål',
       'interact': 'Bruk'

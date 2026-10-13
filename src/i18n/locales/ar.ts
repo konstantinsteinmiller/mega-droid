@@ -332,7 +332,7 @@ export default {
       'move': 'حركة',
       'look': 'نظر',
       'parry': 'صدّ',
-      'turn': 'استدارة (← →)',
+      'turn': 'استدارة ({turn})',
       'leap': 'عبور الفجوات',
       'target': 'الهدف التالي',
       'interact': 'تفاعل'

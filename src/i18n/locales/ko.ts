@@ -332,7 +332,7 @@ export default {
       'move': '이동',
       'look': '시점',
       'parry': '패링',
-      'turn': '회전 (← →)',
+      'turn': '회전 ({turn})',
       'leap': '틈 뛰어넘기',
       'target': '다음 목표',
       'interact': '상호작용'

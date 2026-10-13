@@ -357,7 +357,7 @@ export default {
       'move': 'Mozgás',
       'look': 'Nézés',
       'parry': 'Hárítás',
-      'turn': 'Fordulás (← →)',
+      'turn': 'Fordulás ({turn})',
       'leap': 'Átugrás',
       'target': 'Következő célpont',
       'interact': 'Használat'

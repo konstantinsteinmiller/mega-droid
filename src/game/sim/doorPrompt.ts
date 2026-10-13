@@ -188,22 +188,26 @@ export const promptArrow = (gx: number, gz: number, px: number, pz: number, yaw:
 
 /** An `InputGlyph`'s props for a door's need, and the action's HUD icon. */
 export interface DoorInput {
-  kind: 'mouse' | 'key' | 'finger'
+  kind: 'mouse' | 'key' | 'finger' | 'wasd'
   button?: 'left' | 'right'
   hold?: boolean
   click?: boolean
   code?: string
+  /** wasd: the key of the cluster to press, lit (a DEFAULT code). */
+  litKey?: string
   wide?: boolean
   mode?: 'tap' | 'hold'
   /** The action's `GameIcon` (on touch it names the button to use). */
-  icon: 'bolt' | 'buster' | 'shield' | 'dodge' | 'chest' | 'flask'
+  icon: 'bolt' | 'buster' | 'shield' | 'dodge' | 'chest' | 'flask' | 'up'
 }
 
 /**
  * The input a held door's need asks for, per hand (the coach's glyph
  * language, `ControlHints.vue`): charge and crate — hold fire; block — hold
  * the right button / the shield; slide — Space / the slide button; chest —
- * E / a tap; gel — H / the gel button; a plain "clear it" room — fire.
+ * E / a tap; gel — H / the gel button; a plain "clear it" room — fire;
+ * gap — the move keys with forward lit / the stick. Keys are named by their
+ * DEFAULT code: the glyph draws the key as bound, in this keyboard's letters.
  */
 export const doorInput = (need: WalkNeed, family: InputFamily): DoorInput => {
   const touch = family === 'touch'
@@ -214,7 +218,7 @@ export const doorInput = (need: WalkNeed, family: InputFamily): DoorInput => {
     case 'block':
       return touch ? { kind: 'finger', mode: 'hold', icon: 'shield' } : { kind: 'mouse', button: 'right', hold: true, icon: 'shield' }
     case 'slide':
-      return touch ? { kind: 'finger', mode: 'tap', icon: 'dodge' } : { kind: 'key', wide: true, icon: 'dodge' }
+      return touch ? { kind: 'finger', mode: 'tap', icon: 'dodge' } : { kind: 'key', code: 'Space', wide: true, icon: 'dodge' }
     case 'chest':
       return touch ? { kind: 'finger', mode: 'tap', icon: 'chest' } : { kind: 'key', code: 'KeyE', icon: 'chest' }
     case 'gel':
@@ -226,7 +230,9 @@ export const doorInput = (need: WalkNeed, family: InputFamily): DoorInput => {
       // The new weapon's key (its slot's number) / a tap on its button.
       return touch ? { kind: 'finger', mode: 'tap', icon: 'buster' } : { kind: 'key', code: 'Digit1', icon: 'buster' }
     case 'gap':
-      // Walk on at the edge: the stick (the W key) — the edge does the leap.
-      return touch ? { kind: 'finger', mode: 'hold', icon: 'dodge' } : { kind: 'key', code: 'KeyW', icon: 'dodge' }
+      // Walk on at the edge: the stick / the move keys, forward lit — the
+      // edge does the leap. Never a lone keycap: a lone "W" read as a jump key.
+      // Its badge is the leap's own (the controls list's), not the slide's.
+      return touch ? { kind: 'finger', mode: 'hold', icon: 'up' } : { kind: 'wasd', litKey: 'KeyW', icon: 'up' }
   }
 }

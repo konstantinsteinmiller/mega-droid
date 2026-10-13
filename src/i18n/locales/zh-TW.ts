@@ -357,7 +357,7 @@ export default {
       'move': '移動',
       'look': '視角',
       'parry': '彈反',
-      'turn': '轉向（← →）',
+      'turn': '轉向（{turn}）',
       'leap': '跳過缺口',
       'target': '下一個目標',
       'interact': '互動'

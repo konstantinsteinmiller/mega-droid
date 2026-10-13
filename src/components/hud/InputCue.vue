@@ -12,7 +12,7 @@
     div.bounce
       PressCue.press(v-if="hud.blockCue || cue === 'space'")
       span.arrow(v-else)
-      InputGlyph(v-if="cue === 'space'" kind="key" code="Space")
+      InputGlyph(v-if="cue === 'space'" kind="key" code="Space" :wide="true")
       InputGlyph(v-else kind="mouse" v-bind="cue")
 </template>
 

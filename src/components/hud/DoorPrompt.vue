@@ -73,8 +73,8 @@ const input = computed(() => (need.value ? doorInput(need.value, hud.device) : n
 /** The glyph's props, without the badge's icon (unset ones keep their defaults). */
 const glyphProps = computed(() => {
   const i = input.value
-  if (!i) return { kind: 'key' as const }
-  return { kind: i.kind, button: i.button, hold: i.hold, click: i.click, code: i.code, wide: i.wide, mode: i.mode }
+  if (!i) return { kind: 'mouse' as const }
+  return { kind: i.kind, button: i.button, hold: i.hold, click: i.click, code: i.code, litKey: i.litKey, wide: i.wide, mode: i.mode }
 })
 
 const pt = { x: 0, y: 0, visible: false }

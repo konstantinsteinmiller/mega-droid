@@ -357,7 +357,7 @@ export default {
       'move': 'Kustība',
       'look': 'Skatiens',
       'parry': 'Atvairīt',
-      'turn': 'Pagrieziens (← →)',
+      'turn': 'Pagrieziens ({turn})',
       'leap': 'Pārlēkšana',
       'target': 'Nākamais mērķis',
       'interact': 'Darbība'

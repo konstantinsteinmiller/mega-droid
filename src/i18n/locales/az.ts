@@ -357,7 +357,7 @@ export default {
       'move': 'Hərəkət',
       'look': 'Baxış',
       'parry': 'Dəf etmə',
-      'turn': 'Dön (← →)',
+      'turn': 'Dön ({turn})',
       'leap': 'Boşluğu keçmə',
       'target': 'Növbəti hədəf',
       'interact': 'Qarşılıqlı əlaqə'

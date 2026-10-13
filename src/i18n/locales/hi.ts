@@ -332,7 +332,7 @@ export default {
       'move': 'चलना',
       'look': 'देखना',
       'parry': 'पलटवार',
-      'turn': 'मुड़ें (← →)',
+      'turn': 'मुड़ें ({turn})',
       'leap': 'खाई पार करना',
       'target': 'अगला निशाना',
       'interact': 'इंटरैक्ट'

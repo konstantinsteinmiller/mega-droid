@@ -332,7 +332,7 @@ export default {
       'move': 'Laufen',
       'look': 'Umsehen',
       'parry': 'Parieren',
-      'turn': 'Drehen (← →)',
+      'turn': 'Drehen ({turn})',
       'leap': 'Lücken überspringen',
       'target': 'Nächstes Ziel',
       'interact': 'Interagieren'

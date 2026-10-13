@@ -16,27 +16,69 @@ import { boundCode } from './keyBindings'
  *   1. the Keyboard API's layout map (Chromium; refused in some embeds by the
  *      `keyboard-map` permissions policy, absent in Firefox and Safari by
  *      their choice — it is a fingerprinting surface);
- *   2. what the player TYPES: every letter key pressed teaches its own label
- *      (`observeKey`), and a telltale one (KeyW → "z", KeyY → "z") settles
- *      the whole layout. Remembered, so the next session starts right;
+ *   2. what the player TYPES: every character key pressed teaches its own
+ *      label (`observeKey`), and a key that rules the believed layout out
+ *      (KeyW → "z" on AZERTY, KeyS → "r" on Colemak, KeyW → "," on Dvorak)
+ *      switches to the known layout that fits what was typed. Remembered, so
+ *      the next session starts right;
  *   3. before any of that, the browser language: French (not Canadian, not
  *      Swiss) guesses AZERTY; German, Swiss, Czech, Slovak, Hungarian and
  *      the ex-Yugoslav languages guess QWERTZ. A guess only — the first
- *      telltale key overrides it.
+ *      telling key overrides it.
  * Switched off (Options → Controls), the player's chosen layout decides.
+ *
+ * The known layouts are full tables (`ROWS`), so a layout settled by one key
+ * names every other key right before it is pressed. Layouts with their own
+ * letters on the Latin keycaps (Russian, Greek, Arabic…) print the US letters
+ * too: their non-Latin characters are never learned, the Latin ones stay.
+ * Other Latin layouts (Spanish, Nordic, Swiss French…) are QWERTY or QWERTZ
+ * for every letter; their own punctuation keys are learned when typed.
  *
  * Digits always read as digits (AZERTY prints & é " on them unshifted, and a
  * "&" on a weapon button helps nobody). Named keys get symbols.
  */
 
-export type Layout = 'qwerty' | 'qwertz' | 'azerty'
-export const LAYOUTS: Layout[] = ['qwerty', 'qwertz', 'azerty']
+export type Layout = 'qwerty' | 'qwertz' | 'azerty' | 'dvorak' | 'colemak' | 'turkishF'
+export const LAYOUTS: Layout[] = ['qwerty', 'qwertz', 'azerty', 'dvorak', 'colemak', 'turkishF']
+/** The layouts' own names (proper nouns: never translated). */
+export const LAYOUT_NAMES: Record<Layout, string> = {
+  qwerty: 'QWERTY', qwertz: 'QWERTZ', azerty: 'AZERTY', dvorak: 'Dvorak', colemak: 'Colemak', turkishF: 'Türkçe F'
+}
 
-/** Where a layout's letters differ from US QWERTY. */
-const TABLES: Record<Layout, Record<string, string>> = {
-  qwerty: {},
-  qwertz: { KeyY: 'Z', KeyZ: 'Y' },
-  azerty: { KeyQ: 'A', KeyW: 'Z', KeyA: 'Q', KeyZ: 'W', KeyM: ',', Semicolon: 'M' }
+/** The character keys, row by row, then the odd ones out — the order of the
+ *  strings in `ROWS`. */
+const CODES = [
+  'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight',
+  'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote',
+  'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash',
+  'Minus', 'Equal', 'Backquote', 'Backslash'
+] as const
+
+/** What each layout types on `CODES`, unshifted (12 + 11 + 10 + 4). */
+const ROWS: Record<Layout, string> = {
+  qwerty: "qwertyuiop[]" + "asdfghjkl;'" + 'zxcvbnm,./' + '-=`\\',
+  qwertz: 'qwertzuiopü+' + 'asdfghjklöä' + 'yxcvbnm,.-' + 'ß´^#',
+  azerty: 'azertyuiop^$' + 'qsdfghjklmù' + 'wxcvbn,;:!' + ')=²*',
+  dvorak: "',.pyfgcrl/=" + 'aoeuidhtns-' + ';qjkxbmwvz' + '[]`\\',
+  colemak: 'qwfpgjluy;[]' + "arstdhneio'" + 'zxcvbkm,./' + '-=`\\',
+  turkishF: 'fgğıodrnhpqw' + 'uieaütkmlyş' + 'jövcçzsb.,' + '/-+x'
+}
+
+/** Each layout's character per code. */
+const CHARS = Object.fromEntries(LAYOUTS.map(l => [l, Object.fromEntries(CODES.map((c, i) => [c, [...ROWS[l]][i]!]))])) as
+  Record<Layout, Record<string, string>>
+
+/** A character as its keycap prints it ("i" is "İ" on a Turkish keyboard). */
+const upper = (ch: string, layout: Layout): string => {
+  const u = layout === 'turkishF' ? ch.toLocaleUpperCase('tr') : ch.toUpperCase()
+  // "ß" has no one-letter capital: its keycap prints it as it is.
+  return [...u].length === 1 ? u : ch
+}
+
+/** The layouts whose key `code` types `ch`. */
+export const layoutsTyping = (code: string, ch: string): Layout[] => {
+  const c = ch.toLowerCase()
+  return LAYOUTS.filter(l => CHARS[l][code] === c)
 }
 
 type Source = 'none' | 'language' | 'typed' | 'map'
@@ -77,7 +119,9 @@ const fallback = (code: string): string => {
 export const keyLabel = (code: string): string => {
   if (code.startsWith('Digit') || code.startsWith('Numpad')) return fallback(code)
   if (keyboard.auto && exact[code]) return exact[code]!
-  return TABLES[activeLayout.value][code] ?? fallback(code)
+  const l = activeLayout.value
+  const ch = CHARS[l][code]
+  return ch ? upper(ch, l) : fallback(code)
 }
 
 /** The label the HUD draws for a key it was written with (the DEFAULT key of
@@ -86,13 +130,11 @@ export const actionKeyLabel = (defaultCode: string): string => keyLabel(boundCod
 
 // ─── Detection ──────────────────────────────────────────────────────────────
 
-/** Settle a layout from one code → character pair, if it tells. */
+/** The one layout a code → character pair settles, if it settles one
+ *  (KeyW → "w" is QWERTY, QWERTZ or Colemak: none). */
 export const classify = (code: string, ch: string): Layout | null => {
-  const c = ch.toLowerCase()
-  if ((code === 'KeyW' && c === 'z') || (code === 'KeyQ' && c === 'a') || (code === 'KeyA' && c === 'q')) return 'azerty'
-  if ((code === 'KeyY' && c === 'z') || (code === 'KeyZ' && c === 'y')) return 'qwertz'
-  if ((code === 'KeyW' && c === 'w') || (code === 'KeyZ' && c === 'z') || (code === 'KeyY' && c === 'y')) return 'qwerty'
-  return null
+  const l = layoutsTyping(code, ch)
+  return l.length === 1 ? l[0]! : null
 }
 
 /** The browser language's usual layout — a first guess, nothing more. */
@@ -113,28 +155,46 @@ const conclude = (layout: Layout, source: Source): void => {
   if (source === 'typed' || source === 'map') persist()
 }
 
-const LETTER = /^\p{L}$/u
+/** A character a keycap can carry: one printable character, Latin if a letter
+ *  (a Russian or Greek keyboard prints the US letters on the same keys). */
+const printable = (k: string): boolean => [...k].length === 1 && !!k.trim() && (!/\p{L}/u.test(k) || /\p{Script=Latin}/u.test(k))
+
+/** What was typed this session (code → character), the evidence a switch of
+ *  layout weighs. */
+const typed = new Map<string, string>()
+
 /**
  * Learn from a real key press (the game's own keydown handler calls this):
- * its label, and — from a telltale key — the layout.
+ * its label, and the layout when the press rules out the one believed.
  */
-export const observeKey = (e: Pick<KeyboardEvent, 'code' | 'key' | 'ctrlKey' | 'altKey' | 'metaKey'>): void => {
-  if (e.ctrlKey || e.altKey || e.metaKey || !e.key || [...e.key].length !== 1) return
-  if (!e.code.startsWith('Key') && !(e.code in NAMED)) return
-  const l = classify(e.code, e.key)
-  // A telltale key that disagrees with what we believed: the player is typing
-  // on another layout NOW (the OS layout switched after the map was read, or
-  // the guess was wrong). Typing is the live truth — drop the old labels.
-  if (l && l !== keyboard.detected) {
+export const observeKey = (e: Pick<KeyboardEvent, 'code' | 'key' | 'ctrlKey' | 'altKey' | 'metaKey'> & { shiftKey?: boolean }): void => {
+  // Chords, AltGr and Shift type other characters than the keycap's own.
+  if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !e.key || !printable(e.key)) return
+  if (!(CODES as readonly string[]).includes(e.code)) return
+  const ch = e.key.toLowerCase()
+  typed.set(e.code, ch)
+  const fits = layoutsTyping(e.code, ch)
+  const believed = keyboard.detected ?? 'qwerty'
+  if (fits.length && !fits.includes(believed)) {
+    // The player is typing on another layout NOW (the OS layout switched
+    // after the map was read, or the guess was wrong). Typing is the live
+    // truth: the known layout that fits the most of what was typed, and
+    // every old label dropped (no mixed "Z A S D").
+    let best = fits[0]!
+    let score = -1
+    for (const l of fits) {
+      let s = 0
+      for (const [c, k] of typed) if (CHARS[l][c] === k) s++
+      if (s > score) { best = l; score = s }
+    }
     for (const k of Object.keys(exact)) delete exact[k]
-    keyboard.detected = l
+    for (const [c, k] of typed) if (CHARS[best][c] !== k) typed.delete(c)
+    keyboard.detected = best
     keyboard.source = 'typed'
     persist()
-  } else if (l && RANK[keyboard.source] < RANK.typed) conclude(l, 'typed')
-  if (LETTER.test(e.key)) exact[e.code] = e.key.toUpperCase()
+  } else if (fits.length === 1 && RANK[keyboard.source] < RANK.typed) conclude(fits[0]!, 'typed')
+  exact[e.code] = upper(ch, keyboard.detected ?? 'qwerty')
 }
-
-const LETTERS = Array.from({ length: 26 }, (_, i) => `Key${String.fromCharCode(65 + i)}`)
 
 let asked = false
 /** Detect the layout once (safe to call repeatedly). */
@@ -150,14 +210,22 @@ export const loadKeyboardLayout = async (): Promise<void> => {
   if (!kb?.getLayoutMap) return
   try {
     const map = await kb.getLayoutMap()
-    for (const code of [...LETTERS, 'Semicolon', 'Comma', 'Period']) {
-      const k = map.get(code)
-      // Only single printable characters; a dead key or a word keeps the default.
-      if (k && [...k].length === 1 && k.trim()) exact[code] = k.toUpperCase()
+    // Typed before the map came back: the typing is newer.
+    if (typed.size) return
+    let best: Layout = 'qwerty'
+    let score = -1
+    for (const l of LAYOUTS) {
+      let s = 0
+      for (const c of CODES) if (map.get(c)?.toLowerCase() === CHARS[l][c]) s++
+      if (s > score) { best = l; score = s }
     }
-    const w = map.get('KeyW') ?? ''
-    const y = map.get('KeyY') ?? ''
-    conclude(classify('KeyW', w) === 'azerty' ? 'azerty' : classify('KeyY', y) === 'qwertz' ? 'qwertz' : 'qwerty', 'map')
+    for (const code of CODES) {
+      const k = map.get(code)
+      // Only printable characters; a dead key, a word or a Cyrillic letter
+      // keeps the table's label.
+      if (k && printable(k)) exact[code] = upper(k.toLowerCase(), best)
+    }
+    conclude(best, 'map')
   } catch {
     // Permissions policy in an embed, or no layout: typing will tell.
   }
@@ -202,5 +270,6 @@ export const __resetKeyboardForTests = (): void => {
   keyboard.detected = null
   keyboard.source = 'none'
   for (const k of Object.keys(exact)) delete exact[k]
+  typed.clear()
   asked = false
 }

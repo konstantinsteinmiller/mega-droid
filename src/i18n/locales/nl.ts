@@ -332,7 +332,7 @@ export default {
       'move': 'Lopen',
       'look': 'Kijken',
       'parry': 'Pareren',
-      'turn': 'Draaien (← →)',
+      'turn': 'Draaien ({turn})',
       'leap': 'Gaten overspringen',
       'target': 'Volgend doelwit',
       'interact': 'Interactie'

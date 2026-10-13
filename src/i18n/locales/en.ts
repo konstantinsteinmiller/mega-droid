@@ -401,7 +401,8 @@ export default {
       'move': 'Move',
       'look': 'Look',
       'parry': 'Parry',
-      'turn': 'Turn (← →)',
+      // {turn}: the two turn keys as bound, in this keyboard's letters (← → by default).
+      'turn': 'Turn ({turn})',
       'leap': 'Leap gaps',
       'target': 'Next target',
       'interact': 'Interact'

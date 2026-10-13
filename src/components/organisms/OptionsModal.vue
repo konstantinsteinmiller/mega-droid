@@ -14,7 +14,7 @@ import { killCamsEnabled, setKillCamsEnabled } from '@/use/useKillCam'
 import { englishVoice, hasOwnVoice, setEnglishVoice } from '@/use/useEnglishVoice'
 import { touchFirst } from '@/game/engine/input'
 import { ACTIONS, bindKey, bindingsChanged, isBindable, primaryCode, resetBindings, type Action } from '@/game/engine/keyBindings'
-import { keyboard, keyLabel, LAYOUTS, setAutoLayout, setManualLayout, type Layout } from '@/game/engine/keyLabels'
+import { keyboard, keyLabel, LAYOUTS, LAYOUT_NAMES, setAutoLayout, setManualLayout, type Layout } from '@/game/engine/keyLabels'
 
 defineProps<{
   isOpen: boolean
@@ -122,8 +122,8 @@ const hapticsList = computed(() => [
 // Keys are PHYSICAL (`engine/keyBindings.ts`); the layout only decides what
 // they are called (`engine/keyLabels.ts`). Auto-detect on: the detected
 // layout names them; off: the one picked here does.
-const layoutList = LAYOUTS.map(l => ({ value: l, label: l.toUpperCase() }))
-const detectedName = computed(() => (keyboard.detected ?? 'qwerty').toUpperCase())
+const layoutList = LAYOUTS.map(l => ({ value: l, label: LAYOUT_NAMES[l] }))
+const detectedName = computed(() => LAYOUT_NAMES[keyboard.detected ?? 'qwerty'])
 const pickLayout = (v: string): void => { if ((LAYOUTS as string[]).includes(v)) setManualLayout(v as Layout) }
 
 /** The action waiting for its new key, if any. */

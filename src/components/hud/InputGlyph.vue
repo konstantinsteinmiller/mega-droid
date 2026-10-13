@@ -3,7 +3,7 @@
   svg.glyph(v-if="kind === 'wasd'" viewBox="0 0 176 116" aria-hidden="true")
     g(v-for="k in WASD" :key="k.c" :transform="`translate(${k.x} ${k.y})`")
       rect(x="2" y="8" width="54" height="50" rx="11" class="lip")
-      rect(x="2" y="2" width="54" height="50" rx="11" class="cap")
+      rect(x="2" y="2" width="54" height="50" rx="11" class="cap" :class="{ lit: k.c === litKey }")
       text(x="29" y="36" class="label") {{ actionKeyLabel(k.c) }}
 
   //- ── One key ──
@@ -135,6 +135,8 @@ const props = withDefaults(defineProps<{
   label?: string
   /** key: the physical key (`KeyE`); its letter follows the keyboard layout. */
   code?: string
+  /** wasd: the key to press, lit yellow (its DEFAULT code, e.g. `KeyW`: forward). */
+  litKey?: string
   /** key: the wide space bar. */
   wide?: boolean
   /** mouse: which button is lit (none: just move the mouse). */
@@ -151,7 +153,7 @@ const props = withDefaults(defineProps<{
   click?: boolean
   /** finger: tap / hold. */
   mode?: 'tap' | 'hold'
-}>(), { label: '', code: '', wide: false, button: 'left', drag: false, move: false, hold: false, click: false, mode: 'tap' })
+}>(), { label: '', code: '', litKey: '', wide: false, button: 'left', drag: false, move: false, hold: false, click: false, mode: 'tap' })
 
 /** Physical keys: an AZERTY keyboard prints Z Q S D on them. */
 const WASD = [
@@ -185,6 +187,9 @@ const POSES = ['live', 'rest'] as const
   fill: #f4f7ff
   stroke: #141a33
   stroke-width: 3.5
+  // The key to press: yellow, "press this", as on the mouse.
+  &.lit
+    fill: #ffd84a
 .label
   font-family: var(--font-ui)
   font-size: 26px

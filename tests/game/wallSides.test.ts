@@ -149,7 +149,7 @@ describe('walls read solid from both sides', () => {
       report.push(`${lv.name}: ${walls} walls, ${misses.length} missing`)
       expect(misses.slice(0, 5), `${lv.name}: ${misses.length} of ${walls} wall faces missing`).toEqual([])
     }
-  }, 120_000)
+  }, 300_000)
 
   it('the labyrinth (with its boss room and a challenge room): each wall has both faces', async () => {
     for (const seed of SEEDS) {

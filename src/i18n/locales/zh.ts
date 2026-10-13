@@ -332,7 +332,7 @@ export default {
       'move': '移动',
       'look': '视角',
       'parry': '弹反',
-      'turn': '转向（← →）',
+      'turn': '转向（{turn}）',
       'leap': '跳过缺口',
       'target': '下一个目标',
       'interact': '互动'

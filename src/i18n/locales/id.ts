@@ -332,7 +332,7 @@ export default {
       'move': 'Bergerak',
       'look': 'Melihat',
       'parry': 'Tangkis',
-      'turn': 'Berputar (← →)',
+      'turn': 'Berputar ({turn})',
       'leap': 'Melompati celah',
       'target': 'Target berikutnya',
       'interact': 'Interaksi'

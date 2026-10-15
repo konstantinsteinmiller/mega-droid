@@ -730,7 +730,13 @@ export const buildCityscape = async (
   const farKit = newKit()
 
   // The ground the city stands on, from just past the walls to the horizon.
-  const ground = prism(low ? 20 : 40, 240, 240, 0.1, '#2a3048', 0, false)
+  // Over open sky (`Terrain.clouds`) it is the sea of clouds, in the pits'
+  // own mist colour (`climbMesh.ts`): a dark ground there showed through
+  // every gap between the docks, so the walls, hazed pale toward the fog,
+  // read as glass panes over it ("everything is see-through", Sky Docks
+  // playtest 2026-10-16).
+  const groundHex = map.terrain?.clouds ? `#${fog.clone().lerp(new Color('#ffffff'), 0.35).getHexString()}` : '#2a3048'
+  const ground = prism(low ? 20 : 40, 240, 240, 0.1, groundHex, 0, false)
   kit.body.push(at(ground, [cx, -0.6, cz]))
 
   // Landmarks, at spread-out bearings in the far ring. Placed now (the

@@ -53,6 +53,8 @@ export const buildBoulder = (isCracked: boolean): Group => {
 }
 
 let stalGeo: BufferGeometry | null = null
+/** Its mount's top over the origin (m), at scale 1. */
+export const STALACTITE_MOUNT = 0.18
 
 /** A stalactite hanging from the group's origin (its root at the roof),
  *  tip down, about 1.6 m long, with two smaller ones beside it. */

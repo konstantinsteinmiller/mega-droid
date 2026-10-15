@@ -5,10 +5,11 @@
 // it is the same city every time for the same map (a resumed mission).
 
 import { describe, expect, it } from 'vitest'
-import { InstancedMesh, Matrix4, Mesh, Vector3 } from 'three'
+import { Color, InstancedMesh, Matrix4, Mesh, Vector3 } from 'three'
 import { generateMap, CELL, WALL_H } from '@/game/world/levelGen'
 import { generateClimb } from '@/game/world/climbGen'
 import { THEMES } from '@/game/world/themes'
+import { generateStage } from '@/game/world/stages'
 import { buildCityscape, trafficClearance } from '@/game/world/cityscape'
 
 const mapFor = (seed: number) => generateMap({ seed, rooms: 8, boss: true })
@@ -25,6 +26,32 @@ describe('the cityscape', () => {
     }
     expect(await count(11)).toBe(await count(11))
     expect(await count(11)).not.toBe(await count(12))
+  })
+
+  it('over open sky its ground under the level is the sea of clouds, not a dark floor', async () => {
+    // Sky Docks playtest 2026-10-16: a dark ground showed through every gap
+    // between the docks and the fog-pale walls read as glass over it.
+    for (const s of ['gale', 'neon', 'rotor'] as const) {
+      const map = generateStage(s, 1)
+      expect(map.terrain?.clouds, s).toBe(true)
+      const c = await buildCityscape(map, THEMES[s], undefined, 'full')
+      const body = c.root.children[0] as Mesh
+      const pos = body.geometry.attributes.position!
+      const col = body.geometry.attributes.color!
+      const cx = map.w * CELL / 2
+      const cz = map.h * CELL / 2
+      // The pits' own mist colour (`climbMesh.ts`): the fog, lifted toward white.
+      const mist = new Color(THEMES[s].fog).lerp(new Color('#ffffff'), 0.35)
+      let n = 0
+      for (let i = 0; i < pos.count; i++) {
+        if (pos.getY(i) > 0 || Math.hypot(pos.getX(i) - cx, pos.getZ(i) - cz) > 60) continue
+        n++
+        const d = Math.abs(col.getX(i) - mist.r) + Math.abs(col.getY(i) - mist.g) + Math.abs(col.getZ(i) - mist.b)
+        expect(d, s).toBeLessThan(0.15)
+      }
+      expect(n, s).toBeGreaterThan(0)
+      c.dispose()
+    }
   })
 
   it('stands clear of the level: nothing above the ground within 20 m of its reach', async () => {

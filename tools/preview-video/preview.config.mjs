@@ -34,6 +34,18 @@ export default {
   },
 
   formats: {
+    // The portal previews: a SUCCESS and a FAIL clip, portrait and landscape,
+    // 10 s, clean. `pnpm preview:video --formats preview`. Both orientations
+    // stay at or under dprCap() 2, so the canvas is drawn at the full size.
+    preview: {
+      durationMs: 10_000,
+      quality: ['lossless', 'high'],
+      orientations: {
+        portrait: { width: 720, height: 1280, dpr: 2, isMobile: true, hasTouch: true },
+        landscape: { width: 1280, height: 720, dpr: 1.6, isMobile: false, hasTouch: false }
+      },
+      scenarios: { success: 'preview-success', fail: 'preview-fail' }
+    },
     // One trailer shot. Its length is the shot's, passed as --duration by
     // make.mjs. 1920x1080 at dpr 2 is a 960x540 CSS desktop: `dprCap()` is 2
     // on a fine pointer, so the canvas is drawn at the full 1920x1080.

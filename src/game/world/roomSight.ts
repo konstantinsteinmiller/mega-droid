@@ -23,6 +23,8 @@ import { CELL, Cell, WALL_H, type MapData } from './levelGen'
 
 /** The eye over the feet (m): `sim/constants.ts` EYE_H, and a little bob. */
 const EYE = 1.45
+/** Rooms this close (m, wall to wall) always see each other. */
+const NEAR_GAP = CELL
 
 export interface SightOpts {
   /** The eye over the feet (m). */
@@ -221,6 +223,21 @@ export function* roomSightSteps(map: MapData, owner: Int16Array, opts: SightOpts
     const gi = Math.max(0, A[0]! - B[2]!, B[0]! - A[2]!) - 1
     const gj = Math.max(0, A[1]! - B[3]!, B[1]! - A[3]!) - 1
     return Math.hypot(Math.max(0, gi), Math.max(0, gj)) * CELL
+  }
+  // Never a room missing beside Flux (#166, Gale): sampled sight lines can
+  // slip past a wall's end or a door's gap, and a room that pops in when he
+  // steps through reads as a bug. So the rooms a room touches (or nearly:
+  // a corridor's width between), and every room two doors away, are always
+  // drawn; the sight lines only add the ones further off.
+  const door1 = sees.map(r => Uint8Array.from(r))
+  for (let a = 0; a < n; a++) {
+    for (let b = 0; b < n; b++) {
+      if (!door1[a]![b]) continue
+      for (let c = 0; c < n; c++) if (door1[b]![c] && c !== a) sees[a]![c] = 1
+    }
+    for (let b = 0; b < n; b++) {
+      if (b !== a && marks[b]!.length && marks[a]!.length && gap(a, b) <= NEAR_GAP) sees[a]![b] = 1
+    }
   }
   for (let a = 0; a < n; a++) {
     const E = eyes[a]!

@@ -24,6 +24,25 @@ export const boot = async (ctx, { level = 'stage', sector, seed = 1, plevel = 30
   }, undefined, { timeout: 90_000 })
   await ctx.evaluate(() => window.__trailer.prepare())
   await waitPlay(ctx)
+  await closeControlsIntro(ctx)
+}
+
+/**
+ * A touch device's first mission opens the controls legend, and the game
+ * waits under it (the portrait previews are a phone). Close it as the player's
+ * tap would; it can open a moment after play starts, so watch a little while.
+ */
+const closeControlsIntro = async (ctx) => {
+  for (let i = 0; i < 15; i++) {
+    const was = await ctx.evaluate(() => {
+      const f = window.__game.flow
+      if (f.modal !== 'controls') return false
+      f.modal = ''
+      return true
+    })
+    if (was) ctx.log.step('closed the controls legend')
+    await settle(ctx, 100)
+  }
 }
 
 /** Real time: until the mission is in its play phase (beam-in done). */

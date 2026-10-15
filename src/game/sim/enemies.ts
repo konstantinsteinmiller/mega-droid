@@ -438,12 +438,59 @@ const step = (w: World, e: Enemy, dx: number, dz: number): number => {
   return got / want
 }
 
+/** How much of its radius a body's footprint test reaches out to: its rim,
+ *  a little inside, so a post at a cell's middle never reads a neighbour. */
+const RIM = 0.75
+
+/** The highest ground under a body of radius `r` at (x, z): its middle and
+ *  four points on its rim. A drone half over a raised deck is over the deck
+ *  (−∞ where all of it is over a pit or the void). */
+export const groundUnder = (map: MapData, x: number, z: number, r: number): number => {
+  const d = r * RIM
+  return Math.max(
+    groundAt(map, x, z),
+    groundAt(map, x + d, z), groundAt(map, x - d, z),
+    groundAt(map, x, z + d), groundAt(map, x, z - d),
+  )
+}
+
 /** Ground under (x, z) taller than the machine's body can step onto: a
  *  raised block of a climb's terrain (the 2-D wall test only knows walls). */
 export const tooTallFor = (map: MapData, e: Enemy, x: number, z: number): boolean => {
+  const f = e.floor ?? 0
+  // A flyer is held to its whole footprint and to the underside of its body:
+  // a Polar drone hovering at 1.9 m with its middle passed over a 2 m locker
+  // block and sat half sunk into its top (Polarity Works). A walker's feet
+  // are at its middle, and it steps up what it can.
+  if (e.hover || e.def.fly > 0) {
+    const g = groundUnder(map, x, z, e.def.radius)
+    return g > f + STEP_UP && g > f + Math.max(0, e.y) - e.def.radius
+  }
   const g = groundAt(map, x, z)
-  const body = (e.floor ?? 0) + Math.max(0, e.y) - 0.25
-  return g > body + STEP_UP && g > (e.floor ?? 0) + STEP_UP
+  const body = f + Math.max(0, e.y) - 0.25
+  return g > body + STEP_UP && g > f + STEP_UP
+}
+
+/**
+ * After every update, whatever moved the machine (its walk, a strafe, the
+ * pack's spacing, a pull, a knockback, its spawn): out of any wall its body
+ * overlaps, and back off a raised block it does not clear to the last spot
+ * that did. A flyer placed over a block with no such spot rises over it.
+ */
+export const keepClear = (w: World, e: Enemy): void => {
+  settle(w, e)
+  if (!w.map.terrain || e.offstage || e.buried) return
+  if (!tooTallFor(w.map, e, e.x, e.z)) {
+    e.safeX = e.x
+    e.safeZ = e.z
+    return
+  }
+  if (e.safeX !== undefined && !tooTallFor(w.map, e, e.safeX, e.safeZ!)) {
+    e.x = e.safeX
+    e.z = e.safeZ!
+  } else if (e.hover || e.def.fly > 0) {
+    e.floor = Math.max(e.floor ?? 0, groundUnder(w.map, e.x, e.z, e.def.radius))
+  }
 }
 
 /**
@@ -637,6 +684,20 @@ export const BRUTE_RUSH_TIME = 0.95
 export const BRUTE_WALL_STUN = 1.3
 /** An elite Guardroid's arm-cannon volley reaches this far (m). */
 export const BRUTE_VOLLEY_MAX = 16
+/** The Scrapper's moves, borrowed (#164) so a Guardroid is a threat from
+ *  any range, not a target that only walks at Flux: a scrap toss (three
+ *  shells marked on the floor) out to this far (m)… */
+export const BRUTE_TOSS_MAX = 18
+/** …and a leaping stomp onto Flux's spot from this band (m). */
+export const BRUTE_STOMP_MIN = 3.4
+export const BRUTE_STOMP_MAX = 9
+/** Their damage, a little under the Scrapper's own (0.9 / 1.3 of its 14 at
+ *  level 1 against the Guardroid's 20). */
+export const BRUTE_TOSS_DMG = 0.55
+export const BRUTE_STOMP_DMG = 0.8
+const BRUTE_STOMP_T = 0.8
+const BRUTE_STOMP_H = 3.2
+const BRUTE_STOMP_R = 2.6
 
 const startTele = (e: Enemy, attack: string, dur: number, red: boolean): void => {
   e.attack = attack
@@ -1114,6 +1175,8 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
       if (e.kind === 'heli' || e.kind === 'polar' || e.kind === 'puffer' || e.kind === 'hornet') e.y = Math.max(0.45, e.y - dt * 6)
       // A dazed Searchlight Drone sags, but stays over the cover
       else if (e.kind === 'spotter') e.y = Math.max(e.def.fly - 0.9, e.y - dt * 3)
+      // A Guardroid knocked out of its stomp falls back to the floor
+      else if (e.kind === 'brute' && e.y > 0) e.y = Math.max(0, e.y - dt * 7)
       if (e.stunT <= 0) {
         e.cd = Math.max(e.cd, 0.6)
         enterState(e, 'engage')
@@ -1328,14 +1391,14 @@ const stepMachineMotion = (e: Enemy, dt: number, ds: number, fd: number, sd: num
       const k = e.state === 'tele' ? -Math.min(1, e.st / e.teleDur) : -1 + 2 * Math.min(1, e.st / 0.08)
       if (e.step === 0) wantR = k
       else wantL = k
-    } else if (striking && e.attack === 'slam') {
+    } else if (striking && (e.attack === 'slam' || e.attack === 'stomp')) {
       wantS = e.state === 'tele' ? -0.4 * Math.min(1, e.st / e.teleDur) : -0.4 + 1.4 * Math.min(1, e.st / 0.1)
     } else if (striking && e.attack === 'rush') {
       // Both fists drawn back for the wind-up, thrown forward for the charge.
       const k = e.state === 'tele' ? -0.8 * Math.min(1, e.st / e.teleDur) : 0.7
       wantL = k
       wantR = k
-    } else if (striking && e.attack === 'volley') {
+    } else if (striking && (e.attack === 'volley' || e.attack === 'scrapToss')) {
       // The cannon arm raised to aim, kicking back with each fan.
       wantR = e.state === 'tele' ? 0.55 * Math.min(1, e.st / 0.25) : 0.55 - 0.35 * Math.max(0, 1 - ((e.st % 0.35) / 0.12))
     }
@@ -1716,8 +1779,17 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
               e.step = 0
               startTele(e, 'combo', def.tele, false)
             }
-          } else if (d > BRUTE_RUSH_MIN && d < BRUTE_RUSH_MAX && Math.random() < (e.elite ? 0.55 : 0.6)) {
+          } else if (d > BRUTE_STOMP_MIN && d < BRUTE_STOMP_MAX && Math.random() < 0.3) {
+            // Aimed now: the leap commits to where Flux stood at the wind-up.
+            e.tx = px
+            e.tz = pz
+            startTele(e, 'stomp', 0.8, true)
+            w.markers.spawn(px, pz, BRUTE_STOMP_R, 0.8 + BRUTE_STOMP_T)
+          } else if (d > BRUTE_RUSH_MIN && d < BRUTE_RUSH_MAX && Math.random() < (e.elite ? 0.45 : 0.5)) {
             startTele(e, 'rush', e.elite ? 0.6 : 0.8, true)
+          } else if (d > BRUTE_RUSH_MIN && d < BRUTE_TOSS_MAX && (!e.elite || Math.random() < 0.5)) {
+            e.step = 0
+            startTele(e, 'scrapToss', 0.7, true)
           } else if (e.elite && d < BRUTE_VOLLEY_MAX) {
             e.step = 0
             startTele(e, 'volley', 0.7, false)
@@ -1738,8 +1810,41 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             e.hitPlayer = false
             w.sfx('dash', e.x, e.z)
           }
+          if (e.attack === 'stomp') {
+            e.sx = e.x
+            e.sz = e.z
+          }
           enterState(e, 'act')
         }
+      } else if (e.state === 'act' && e.attack === 'stomp') {
+        // The Scrapper's stomp: up and onto the marked spot, a shock ring on landing.
+        const k = Math.min(1, e.st / BRUTE_STOMP_T)
+        step(w, e, e.sx + (e.tx - e.sx) * k - e.x, e.sz + (e.tz - e.sz) * k - e.z)
+        e.y = Math.sin(k * Math.PI) * BRUTE_STOMP_H
+        if (k >= 1) {
+          e.y = 0
+          w.shocks.spawn(e.x, 0.05, e.z, 3.2, '#ff8a3a', 0.45)
+          w.fx.sparks(e.x, 0.3, e.z, '#ffd9a0', 20, 8, 0.24)
+          w.shake(0.45)
+          w.sfx('stomp', e.x, e.z)
+          if (Math.hypot(px - e.x, pz - e.z) < BRUTE_STOMP_R + PLAYER_R) {
+            w.hitPlayer(e, Math.round(e.dmg * BRUTE_STOMP_DMG), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'aoe' })
+          }
+          enterState(e, 'recover')
+        }
+      } else if (e.state === 'act' && e.attack === 'scrapToss') {
+        // The Scrapper's scrap toss: three shells across Flux's spot, each marked.
+        if (e.step < 3 && e.st >= e.step * 0.15) {
+          const ang = Math.atan2(px - e.x, pz - e.z) + Math.PI / 2
+          const off = (e.step - 1) * 2.2
+          const tx = px + Math.sin(ang) * off
+          const tz = pz + Math.cos(ang) * off
+          w.markers.spawn(tx, tz, 1.9, 1.05)
+          w.lobShell(e, tx, tz, 1.0, Math.max(1, Math.round(e.dmg * BRUTE_TOSS_DMG)))
+          w.sfx('lob', e.x, e.z)
+          e.step++
+        }
+        if (e.st > 0.75) enterState(e, 'recover')
       } else if (e.state === 'act' && e.attack === 'rush') {
         const sp = e.elite ? 12 : 10
         const frac = step(w, e, e.tx * sp * dt, e.tz * sp * dt)
@@ -1811,7 +1916,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           if (e.st > 0.4) enterState(e, 'recover')
         }
       } else if (e.state === 'recover') {
-        if (e.st > (e.attack === 'slam' ? 1.2 : e.attack === 'rush' ? 0.8 : 0.9)) {
+        if (e.y > 0) e.y = Math.max(0, e.y - dt * 7)
+        if (e.st > (e.attack === 'slam' || e.attack === 'stomp' ? 1.2 : e.attack === 'rush' ? 0.8 : 0.9)) {
           e.cd = cooldown()
           enterState(e, 'engage')
         }

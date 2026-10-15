@@ -3,7 +3,7 @@ import {
   CELL, Cell, pitKindOf, type MapData, type Terrain, type Ladder, type Lift, type Crusher, type RollerLane, type RewardSpot, type SecretSpec
 } from '../world/levelGen'
 import { floorAt, groundAt, moveBody, platUnder, STEP_UP, type Nav, type Plat, type Slab } from '../world/nav'
-import { tooTallFor } from './enemies'
+import { groundUnder, tooTallFor } from './enemies'
 import { BALL_R } from '../world/climbGen'
 import { secretDoorFace } from '../world/stages/builder'
 import type { LevelMeshes } from '../world/levelMesh'
@@ -1139,7 +1139,12 @@ export class ClimbRun {
     if (h && e.state !== 'dead') {
       const want = clamp(playerY, h[0], h[1])
       const f = e.floor ?? 0
-      e.floor = f + clamp(want - f, -2.4 * dt, 2.4 * dt)
+      // Never below the deck under it: chasing Flux down to a lower deck,
+      // a rotor drone over the raised one sank through its slab to his
+      // height (Sky Docks). It sinks only once it is clear of the deck, and
+      // a deck it flies over lifts it. Then the 2-D step test above keeps a
+      // low one from sliding in under a deck's edge.
+      e.floor = Math.max(f + clamp(want - f, -2.4 * dt, 2.4 * dt), groundUnder(this.host.map, e.x, e.z, e.def.radius))
     }
   }
 

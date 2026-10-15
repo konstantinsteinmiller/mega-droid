@@ -107,13 +107,16 @@ let icicleGeo: BufferGeometry | null = null
 /** An icicle hanging from the group's origin (its root at the ceiling),
  *  tip down, about 1.6 m long, with two smaller ones beside it. */
 let roofMat: MeshBasicMaterial | null = null
+/** The roof's top over its underside (m): a lid, under the wall tops (the
+ *  roof sits 0.15 under them) and never in their plane. */
+export const ROOF_THICK = 0.1
 
 /**
  * The roof an icicle hall hangs its icicles from (`sim/stages/icicles.ts`):
  * `cw` × `cd` cells of `cell` m, its underside at the group's origin. Frosted
  * steel panels in the Cryo Plant, mottled rock where stalactites fall
- * (`rock`). Drawn from below only: a camera over the hall (the rescue's
- * lift, a kill-cam) looks straight through it, and it casts nothing.
+ * (`rock`). A plain lid ROOF_THICK over it closes the hall from above, so
+ * nothing hanging in it is ever seen against the sky. It casts nothing.
  */
 export const buildIcicleRoof = (cw: number, cd: number, cell: number, rock: boolean): Group => {
   const down = (g: BufferGeometry, x: number, y: number, z: number) => xform(g, [x, y, z], [Math.PI / 2, 0, 0])
@@ -138,11 +141,20 @@ export const buildIcicleRoof = (cw: number, cd: number, cell: number, rock: bool
       }
     }
   }
+  // Its top, ROOF_THICK over the underside: seen from above (a higher room
+  // next door, the terraces' ledge) the hall is covered too. Without it the
+  // roof was drawn from below only, and a stalactite's cap seen over the wall
+  // tops hung from nothing against the sky (playtest 2026-10-16).
+  const top = paint(new PlaneGeometry(cw * cell + 0.1, cd * cell + 0.1), rock ? '#4a3d30' : '#2c5674')
+  geos.push(xform(top, [0, ROOF_THICK, 0], [-Math.PI / 2, 0, 0]))
   roofMat ??= new MeshBasicMaterial({ vertexColors: true })
   const root = new Group()
   root.add(new Mesh(merge(geos), roofMat))
   return root
 }
+
+/** Its mount's top over the origin (m), at scale 1. */
+export const ICICLE_MOUNT = 0.15
 
 export const buildIcicle = (): Group => {
   if (!icicleGeo) {

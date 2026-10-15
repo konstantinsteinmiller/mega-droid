@@ -887,6 +887,21 @@ watch(() => hud.borrowed.teach, (on, was) => {
   z-index: 3
 .act.weapon:has(.cue-arrows)
   z-index: 3
+// The block lesson's held shot: the screen dims round the shield button, a
+// lightbox with the button as its one lit hole (a playtester froze there,
+// not seeing what to press).
+.act.block.cue::before
+  content: ''
+  position: absolute
+  inset: -10px
+  z-index: -1
+  border-radius: 50%
+  box-shadow: 0 0 0 200vmax rgba(5, 7, 15, 0.62), 0 0 24px 6px rgba(255, 216, 74, 0.85)
+  pointer-events: none
+  animation: block-lightbox-in 0.35s ease-out both
+@keyframes block-lightbox-in
+  from
+    opacity: 0
 // The press glyph over a button (the block lesson's held shot).
 .press-over
   position: absolute

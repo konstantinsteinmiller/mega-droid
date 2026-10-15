@@ -91,13 +91,38 @@ describe('roomSight: a room sees what stands in plain view', () => {
     }
   })
 
+  it('#166: rooms two doors on, and rooms side by side, are always drawn (no room popping in at a door)', () => {
+    for (const s of STAGES) {
+      for (const seed of SEEDS) {
+        const m = generateStage(s, seed)
+        const sight = sightOf(m)
+        const next = new Map<number, Set<number>>()
+        for (const d of m.doors) {
+          if (d.from < 0 || d.to < 0) continue
+          if (!next.has(d.from)) next.set(d.from, new Set())
+          if (!next.has(d.to)) next.set(d.to, new Set())
+          next.get(d.from)!.add(d.to)
+          next.get(d.to)!.add(d.from)
+        }
+        for (const [a, ns] of next) {
+          for (const b of ns) {
+            for (const c of next.get(b) ?? []) {
+              if (c !== a) expect(sight[a], `${s}/${seed}: room ${a} → ${c} via ${b}`).toContain(c)
+            }
+          }
+        }
+      }
+    }
+  })
+
   it('keeps the culling where walls really hide a room', () => {
     for (const s of STAGES) {
       const m = generateStage(s, 1)
       const n = m.rooms.length
       const seen = sightOf(m).reduce((a, l) => a + l.length, 0)
-      // Far from every room seeing every other: most pairs stay culled.
-      expect(seen, s).toBeLessThan(n * (n - 1) * 0.6)
+      // Far from every room seeing every other (#166 draws two doors ahead, so a
+      // small map like Blaze sees over half its pairs; the rest stays culled).
+      expect(seen, s).toBeLessThan(n * (n - 1) * 0.7)
     }
   })
 

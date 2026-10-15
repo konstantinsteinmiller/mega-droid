@@ -1,7 +1,7 @@
 import type { Group } from 'three'
 import { CELL, cellCenter, type IcicleSpec, type Terrain } from '../../world/levelGen'
-import { buildIcicle, buildIcicleRoof } from '../../models/stageProps/frost'
-import { buildStalactite } from '../../models/stageProps/rock'
+import { buildIcicle, buildIcicleRoof, ICICLE_MOUNT, ROOF_THICK } from '../../models/stageProps/frost'
+import { buildStalactite, STALACTITE_MOUNT } from '../../models/stageProps/rock'
 import type { ClimbBody, ClimbHost } from '../climb'
 import { PLAYER_R } from '../constants'
 import { AtlasCue, type StageFeature } from '../stageFeatures'
@@ -24,6 +24,11 @@ import { AtlasCue, type StageFeature } from '../stageFeatures'
  * and a room whose ledge came too close to the roots got no roof at all
  * (playtest 2026-10-11). A tall drop grows a longer stalactite (up to
  * ICICLE_MAX_LEN) and falls for longer, as a stone does.
+ *
+ * Its mount stretches with it, so its root is set per length: the mount's top
+ * always sits inside the roof slab (MOUNT_IN over the underside, under the
+ * lid). A fixed root let a long stalactite's cap poke up through the roof and
+ * read, from above, as a rock floating over an open room (playtest 2026-10-16).
  */
 
 export const ICICLE_WARN = 1.1
@@ -45,6 +50,8 @@ const REGROW_AFTER = 0.3
 const ROOF_OVER = 0.12
 /** The roof stays this far under the wall tops (m): never in their plane. */
 const WALL_GAP = 0.15
+/** The mount's top over the roof's underside (m): inside the slab. */
+const MOUNT_IN = ROOF_THICK / 2
 
 interface IcicleRt {
   def: IcicleSpec
@@ -53,8 +60,10 @@ interface IcicleRt {
   mesh: Group
   warned: number
   landed: number
-  /** Its root, in its room's roof (m). */
+  /** Its root at full size (m): the mount's top in its room's roof. */
   root: number
+  /** Where the mount's top sits (m), in the roof slab. */
+  top: number
   /** Its length (m) and so its mesh's vertical stretch. */
   len: number
   /** Its fall, root to floor (s). */
@@ -69,19 +78,24 @@ export class Icicles implements StageFeature {
   readonly roofs: Array<{ room: number; x: number; y: number; z: number; w: number; d: number }> = []
   /** The Deep Mine drops stalactites instead (same rhythm, same marker). */
   private readonly rock: boolean
+  /** The mount's top over the root at scale 1 (m). */
+  private readonly mount: number
 
   constructor(host: ClimbHost, t: Terrain) {
     this.host = host
     this.rock = host.theme.id === 'drill'
+    this.mount = this.rock ? STALACTITE_MOUNT : ICICLE_MOUNT
     const ceil = this.buildRoofs(t)
     const map = host.map
     for (const d of t.icicles ?? []) {
       const x = cellCenter(d.i)
       const z = cellCenter(d.j)
       const room = map.room[d.j * map.w + d.i] ?? -1
-      const root = (ceil.get(room) ?? d.y + ICICLE_H + ROOF_OVER) - ROOF_OVER
+      const under = ceil.get(room) ?? d.y + ICICLE_H + ROOF_OVER
+      const len = Math.min(ICICLE_MAX_LEN, Math.max(ICICLE_MIN_LEN, under - ROOF_OVER - d.y - TIP_CLEAR))
+      const top = under + MOUNT_IN
+      const root = top - this.mount * len / ICICLE_LEN
       const drop = root - d.y
-      const len = Math.min(ICICLE_MAX_LEN, Math.max(ICICLE_MIN_LEN, drop - TIP_CLEAR))
       // Free fall: the time grows with the root of the distance.
       const fall = ICICLE_FALL * Math.sqrt(Math.max(0.2, drop - len) / (ICICLE_H - ICICLE_LEN))
       const mesh = this.rock ? buildStalactite() : buildIcicle()
@@ -89,7 +103,7 @@ export class Icicles implements StageFeature {
       mesh.position.set(x, root, z)
       mesh.rotation.y = d.i * 2.3 + d.j
       host.propParent(x, z).add(mesh)
-      this.icicles.push({ def: d, x, z, mesh, warned: -1, landed: -1, root, len, fall })
+      this.icicles.push({ def: d, x, z, mesh, warned: -1, landed: -1, root, top, len, fall })
     }
     const f = this.icicles[0]
     if (f) this.cue = new AtlasCue(host, this.rock ? 'hint.drill.drop' : 'hint.cryo.icicles', f.x, f.z, f.def.y, 8)
@@ -176,7 +190,8 @@ export class Icicles implements StageFeature {
     m.visible = g > 0.02
     const gs = Math.max(0.02, g)
     m.scale.set(gs, gs * sy, gs)
-    m.position.set(c.x, c.root, c.z)
+    // Out of the roof: the smaller mount's top still in the slab.
+    m.position.set(c.x, c.top - this.mount * gs * sy, c.z)
   }
 
   private crash(c: IcicleRt, p: ClimbBody, playing: boolean): void {

@@ -52,7 +52,7 @@ import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, blockCut, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, spotWarning, drowse, keepBigOffPlayer } from './enemies'
+import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, keepClear, spotWarning, drowse, keepBigOffPlayer } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
@@ -1527,6 +1527,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.fx.emit({ x: p.x, y: p.y + 0.1, z: p.z, color: '#dfefff', size: 0.9, sizeEnd: 1.6, life: 0.25 })
       this.shake(0.08)
       this.onEdgeLeap()
+    }
+    // Any way over the gap counts for its lesson: a dash leap, or an
+    // edge-leap off a side cell rather than the arrowed middle. Over a pit
+    // cell and not yet sinking into it is enough.
+    const gapGate = this.walk?.current
+    if (!this.training.done.has('gap') && gapGate?.steps.includes('gap' as never) && roomAt(this.map, out[0], out[1]) === gapGate.room) {
+      const t = this.map.terrain
+      const k = Math.floor(out[1] / CELL) * this.map.w + Math.floor(out[0] / CELL)
+      if (cl.leapt || (t?.pit[k] && cl.pitDark < 0.05 && !cl.pitted)) this.onEdgeLeap()
     }
     if (cl.landSpeed > 8) {
       this.shake(Math.min(0.3, (cl.landSpeed - 8) * 0.04))
@@ -3035,6 +3044,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
       // The climb: a machine keeps to its platform, a drone to Flux's height.
       if (this.climb && !e.boss && !e.challenge) this.climb.tendFoe(e, p.y, dt)
+      // Every map, whatever moved it: no part of it in a wall or a block.
+      if (!e.boss) keepClear(this, e)
       // Status effects from special weapons
       if (e.state !== 'dead') {
         if (e.burnT > 0) {

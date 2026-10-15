@@ -25,6 +25,8 @@ import { SECTOR_BY_ID } from '@/game/data/regions'
 import type { ClimbHost } from '@/game/sim/climb'
 import { IcePillars } from '@/game/sim/stages/icePillars'
 import { Icicles } from '@/game/sim/stages/icicles'
+import { STALACTITE_MOUNT } from '@/game/models/stageProps/rock'
+import { ROOF_THICK } from '@/game/models/stageProps/frost'
 import { generateStage } from '@/game/world/stages'
 import type { AtlasLine } from '@/game/sim/atlas'
 
@@ -235,8 +237,11 @@ describe('the mine\'s rock', () => {
       }
       for (const c of f.icicles) {
         const roof = f.roofs.find(r => r.room === m.room[c.def.j * m.w + c.def.i])!
-        // Its root in the roof, its tip well over the floor it hangs above.
-        expect(roof.y - c.mesh.position.y, `${stage} ${seed}`).toBeCloseTo(0.12, 5)
+        // Its mount's top inside the roof slab (between the underside and
+        // the lid, however long it grew), its tip well over the floor.
+        const mount = c.mesh.position.y + STALACTITE_MOUNT * c.mesh.scale.y
+        expect(mount - roof.y, `${stage} ${seed}`).toBeGreaterThan(0.01)
+        expect(mount - roof.y, `${stage} ${seed}`).toBeLessThan(ROOF_THICK - 0.01)
         const tip = c.mesh.position.y - 1.6 * c.mesh.scale.y
         expect(tip - c.def.y, `${stage} ${seed}`).toBeGreaterThanOrEqual(2.4)
       }

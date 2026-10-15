@@ -137,6 +137,9 @@ export const placeGolems = (
 const SIDE_PAIR_SPOTS = 16
 /** Where a teacher stands: about this far from the door the player comes in by. */
 const TEACH_DIST = 8
+/** The tutorial's machines take this much more to bring down (#165): at the
+ *  plain level-1 figure they fell before they could put up any fight. */
+export const TUTORIAL_HP_MUL = 1.33
 
 /**
  * The tutorial's cast, scripted rather than rolled (see `walkthrough.ts`):
@@ -182,6 +185,7 @@ export const spawnTutorial = async (
       if (!at) break
       taken.push(at)
       const e = createEnemy(kind, level, at[0], at[1], room.id)
+      e.hp = e.maxHp = Math.round(e.maxHp * TUTORIAL_HP_MUL)
       e.yaw = Math.atan2(dx - at[0], dz - at[1])
       // Held in its own room: an unleashed Hardhat wandered back into an
       // earlier room, and a gate waiting for its room to go quiet sent the

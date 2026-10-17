@@ -19,6 +19,10 @@
  *   frost      the duel: Flux in profile, his shot in flight at the Frost Master
  *   vex        the villain: Dr. Vex Mk-I looming over a small, defiant Flux
  *   blaze      the charge: Flux leaping at the lens, the Blaze Master behind
+ *   volt       the storm: Flux close, charging up at the Volt Master in the lightning (#176)
+ *   magnet     the pull: Flux braced against the Magnet Master's field, firing back
+ *   drill      the eruption: the Drill Master bursts from the floor behind a leaping Flux
+ *   rotor      the dive: the Rotor Master and its drones swoop out of a dusk sky
  *   (plates of the last four: the composition view, `#/models?m=thumb&v=<id>`)
  *
  *   pnpm art:promotion                           paint missing masters → cut → compress
@@ -223,6 +227,77 @@ const SCENARIOS = {
     },
     check: 'Flux with a ROUND white helmet, black visor, round amber eyes looking at the viewer, white arm cannon with the charge · ONE red-and-orange Blaze Master with a flame crest',
     logo: { landscape: [0.5, 0.84, 0.26], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.5, 0.84, 0.34] }
+  },
+
+  // ── #176: four more, on the pattern that scored best in #120 (neon, blaze,
+  // frost): one big face, a charge at the lens, one Master behind. ──
+
+  volt: {
+    variant: 'volt',
+    families: ['16x9'],
+    world: 'the top of the Volt Tower in a thunderstorm: a deep electric-violet night sky torn by yellow lightning, dark navy steel below',
+    cast: [
+      `${FLUX} Fierce and electrified: his amber eyes narrowed, head tilted up at the storm.`,
+      '- THE VOLT MASTER, the one opponent, a BIG robot boss: a humanoid robot twice Flux\'s height in YELLOW and VIOLET armour: a violet dome helmet with a jagged yellow LIGHTNING-BOLT crest on top, a dark visor with two round glowing white-cyan eyes, a violet ring core with a cyan centre on its chest, round violet shoulder pads, and both fists balls of crackling cyan-white electricity. It hovers above and behind Flux in the lightning, a step darker than him: the threat, not a co-star.'
+    ],
+    moment: 'THE MOMENT — the storm breaks. The Volt Master hurls a forked lightning bolt down from above; Flux, low and close, thrusts his arm cannon up past the lens with a blazing amber-white charge on the muzzle, an instant from firing into it.',
+    rules: RULES('deep electric violet, and the amber-white of the charge against a thin yellow lightning fork', 'deep violet and navy night'),
+    shots: {
+      landscape: 'THE SHOT — WIDE 16:9, a LOW CLOSE-UP. Flux\'s helmet is huge in the centre-left, from under the top fifth to below the middle, three-quarter to the viewer, his amber eyes looking straight OUT at whoever is looking at the picture. His arm cannon angles up toward the upper right, foreshortened; the blazing charge on its muzzle is the brightest point of the image and sits an eighth in from the edges, whole. The Volt Master hangs in the upper right behind, big, cropped by the top edge, a lightning fork from its fist toward Flux. The lower strip is dark steel and haze.'
+    },
+    check: 'Flux with a ROUND white helmet, black visor, round amber eyes looking at the viewer, white arm cannon with the charge whole inside the frame · ONE big yellow-and-violet Volt Master with a lightning crest',
+    logo: { landscape: [0.2, 0.82, 0.22], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.26, 0.82, 0.3] }
+  },
+
+  magnet: {
+    variant: 'magnet',
+    families: ['16x9'],
+    world: 'the Polarity Works: a dark steel foundry, deep navy blue walls, giant red and blue induction coils glowing in the dark behind',
+    cast: [
+      `${FLUX} Straining and defiant: his amber eyes narrowed hard, leaning against the pull.`,
+      '- THE MAGNET MASTER, the one opponent, a BIG robot boss: a broad humanoid robot twice Flux\'s height in cobalt-BLUE armour: two upright horseshoe-magnet horns on its dome helmet, one tipped RED and one tipped BLUE, a dark visor with two round glowing white eyes, a grey round core on its chest, heavy blue shoulders, and forearms ending in big magnet clamps, one glowing red and one glowing blue. Behind Flux and to the right: the threat, a step darker than him.'
+    ],
+    moment: 'THE MOMENT — the pull. The Magnet Master drags Flux toward itself: bolts, nuts and scrap fly past him in a stream toward its red and blue clamps, curved magnetic field lines glowing in the air; Flux digs his boots in, sparks spraying off the floor, his arm cannon swung round past the lens with a blazing amber-white charge, an instant from firing back point-blank.',
+    rules: RULES('deep navy blue with ONE red pole and ONE blue pole glow, and the amber-white of the charge', 'deep navy and dark steel'),
+    shots: {
+      landscape: 'THE SHOT — WIDE 16:9, a CLOSE three-quarter shot. Flux fills the centre-left from the top fifth to the bottom, leaning hard to the left against the pull, three-quarter to the viewer so his visor and amber eyes read clearly and look out of the picture. His arm cannon comes toward the lens at lower centre-right with the blazing charge, the brightest point, whole and an eighth in from the edges. The Magnet Master looms in the right third behind, big, cropped by the top edge, its red and blue clamps reaching; a stream of flying bolts and scrap curves from behind Flux toward it.'
+    },
+    check: 'Flux with a ROUND white helmet, black visor, round amber eyes looking at the viewer, white arm cannon with the charge · ONE big cobalt-blue Magnet Master with red and blue horseshoe horns',
+    logo: { landscape: [0.2, 0.84, 0.22], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.24, 0.84, 0.3] }
+  },
+
+  drill: {
+    variant: 'drill',
+    families: ['16x9'],
+    world: 'the Deep Mine: a dark rock cavern in deep brown and charcoal, warm amber work lamps far off, a burst of dust and boulders',
+    cast: [
+      `${FLUX} Mid-jump and startled into fury: his amber eyes wide then narrowing, head snapped round toward the viewer.`,
+      '- THE DRILL MASTER, the one opponent, a BIG robot boss: a heavy humanoid robot twice Flux\'s height in ORANGE and BLACK armour with hazard-yellow trim: a huge grey spinning DRILL BIT spike on top of its helmet, a dark visor with two round glowing yellow eyes, a yellow round core on its chest, black shoulder plates, and both forearms giant grey cone DRILLS. It is bursting UP out of the cracked floor behind Flux, rock and dust exploding around it.'
+    ],
+    moment: 'THE MOMENT — the eruption. The floor cracks open and the Drill Master bursts up behind Flux, boulders flying; Flux has leapt clear and spins in mid-air toward the viewer, arm cannon thrust past the lens with a blazing amber-white charge on the muzzle, an instant from firing.',
+    rules: RULES('deep brown and charcoal with an orange accent on the boss, and a COOL blue-white rim light on Flux so the white hero pops off the warm rock', 'deep brown rock and charcoal dust (never pale dust behind Flux\'s helmet)'),
+    shots: {
+      landscape: 'THE SHOT — WIDE 16:9, Flux coming AT the viewer. He fills the centre-left, full body in a dynamic mid-air leap on a diagonal, the cannon and its blazing charge nearest the lens at centre-right, an eighth in from the edges, his visor and amber eyes looking straight out at the viewer. The Drill Master erupts from the floor in the right third behind him, big, its drill crest cropped by the top edge, boulders and dust flying outward from it in a burst that frames Flux.'
+    },
+    check: 'Flux with a ROUND white helmet, black visor, round amber eyes looking at the viewer, white arm cannon with the charge · ONE big orange-and-black Drill Master with a drill-bit crest and drill arms, bursting from the ground',
+    logo: { landscape: [0.2, 0.84, 0.22], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.24, 0.84, 0.3] }
+  },
+
+  rotor: {
+    variant: 'rotor',
+    families: ['16x9'],
+    world: 'Rotor Run at dusk: a high rooftop helipad, a deep teal-to-indigo dusk sky with a last orange glow at the horizon, city lights far below',
+    cast: [
+      `${FLUX} Grinning in his eyes, fearless: his amber eyes narrowed and bright, head tilted up and back at the attackers.`,
+      '- THE ROTOR MASTER, the one opponent, a BIG robot boss: a humanoid robot twice Flux\'s height in LIME-GREEN and BLACK armour: a spinning lime-green ROTOR disc over its dome helmet like a halo, a dark visor with two round glowing white eyes, a pale-green round core on its chest, and long white rotor BLADES held like swords in both hands. It dives from the sky above and behind Flux, three small lime-green rotor drones diving with it.'
+    ],
+    moment: 'THE MOMENT — the dive. The Rotor Master swoops down out of the dusk sky with its drone swarm; Flux, low and close, swings his arm cannon up past the lens with a blazing amber-white charge on the muzzle, an instant from firing at them.',
+    rules: RULES('deep teal and indigo dusk with a lime-green accent on the boss, and the amber-white of the charge', 'deep teal-indigo dusk sky (the orange horizon glow stays low and far, never behind Flux\'s helmet)'),
+    shots: {
+      landscape: 'THE SHOT — WIDE 16:9, a LOW CLOSE-UP. Flux\'s helmet is huge in the centre-left, from under the top fifth to below the middle, three-quarter to the viewer, his amber eyes looking straight OUT of the picture. His arm cannon angles up to the right, foreshortened, with the blazing charge, the brightest point, whole and an eighth in from the edges. The Rotor Master dives in the upper right behind, big, cropped by the top edge, its blades swept back; the three small drones trail it. The lower strip is dark rooftop and haze.'
+    },
+    check: 'Flux with a ROUND white helmet, black visor, round amber eyes looking at the viewer, white arm cannon with the charge · ONE big lime-green-and-black Rotor Master with a rotor halo, plus three small drones',
+    logo: { landscape: [0.2, 0.84, 0.22], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.24, 0.84, 0.3] }
   }
 }
 

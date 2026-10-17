@@ -80,6 +80,10 @@ jobs:
       - name: Copy Main Build
         run: cp -r main/dist/* dist/
 
+      # #176: the cover vote page, a static page beside the game (/cover-vote/).
+      - name: Copy Cover Vote
+        run: cp -r main/cover-vote dist/cover-vote
+
 #      - name: Copy Develop Build
 #        run: cp -r develop/dist/* dist/develop/
 

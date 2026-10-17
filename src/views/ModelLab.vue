@@ -376,6 +376,43 @@ const THUMB: Record<string, ThumbShot> = {
     crouch: 0.08, charge: 0.6, glow: 1.3, turn: 4.56, key: 1.0, fired: 1.1, lights: false,
     bosses: [{ id: 'vexMk1', at: [1.3, 1.5, -3.9], yaw: -0.7, scale: 1.7, act: 'tele', k: 0.8 }]
   },
+  // ── #176: four more scenarios, built on what won #120 (one face, a charge,
+  // one big Master behind). ──
+  // `volt`: the storm. Flux close and low, cannon charging up at the Volt
+  // Master hanging in the lightning above him: amber against electric violet.
+  volt: {
+    bg: 'sector', theme: 'volt', cam: [0.1, 0.7, -0.9], look: [0.1, 1.55, -2.8], fov: 46, at: [-0.35, 0, -2.5], yaw: 0.4,
+    pose: { ...THUMB_STANCE, head: [-0.2, -0.4, 0.06], shoulderR: [-2.3, 0, 0.45], elbowR: [-0.1, 0, 0] },
+    crouch: 0.08, charge: 1.2, glow: 1.6, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'voltMaster', at: [1.2, 0.9, -4.6], yaw: -0.5, scale: 2.0, act: 'attack', k: 0.6 }]
+  },
+  // `magnet`: the pull. Flux braced, dragged toward the Magnet Master, firing
+  // back point-blank: red and blue poles meeting at the amber charge.
+  magnet: {
+    bg: 'sector', theme: 'magnet', cam: [0.2, 0.85, 0.3], look: [0.35, 1.25, -2.9], fov: 48, at: [-0.85, 0, -2.3], yaw: 1.2,
+    pose: { ...THUMB_WIDE, chest: [0.1, 0.25, 0.05], head: [0.0, -0.55, 0.06], shoulderR: [-1.6, 0, 0.3], elbowR: [-0.05, 0, 0] },
+    crouch: 0.1, charge: 1.2, glow: 1.5, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'magnetMaster', at: [1.4, 0, -3.6], yaw: -0.9, scale: 1.8, act: 'tele', k: 0.7 }]
+  },
+  // `drill`: the eruption. The Drill Master bursts up out of the mine floor
+  // behind Flux, who spins round mid-jump, cannon charged.
+  drill: {
+    bg: 'sector', theme: 'drill', cam: [0.0, 0.6, 0.4], look: [0.2, 1.4, -3.0], fov: 52, at: [-0.5, 0.35, -1.9], yaw: 0.5,
+    pose: {
+      chest: [0.2, 0.15, 0], head: [-0.2, -0.3, 0.05], shoulderR: [-1.9, 0, 0.5], elbowR: [-0.1, 0, 0], shoulderL: [0.5, 0, -0.5],
+      elbowL: [-1.2, 0, 0], hipL: [-0.9, 0, -0.15], kneeL: [1.2, 0, 0], hipR: [0.4, 0, 0.15], kneeR: [0.8, 0, 0]
+    },
+    crouch: 0, charge: 1.1, glow: 1.4, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'drillMaster', at: [1.5, 0.3, -4.1], yaw: -0.5, scale: 2.0, act: 'attack', k: 0.6 }]
+  },
+  // `rotor`: the swarm. Flux back to the viewer's left, looking out, the
+  // Rotor Master and its drones diving from the night sky.
+  rotor: {
+    bg: 'sector', theme: 'rotor', cam: [0.15, 0.8, -0.6], look: [0.2, 1.6, -2.8], fov: 48, at: [-0.45, 0, -2.4], yaw: 0.5,
+    pose: { ...THUMB_STANCE, head: [-0.15, -0.45, 0.06], shoulderR: [-2.4, 0, 0.4], elbowR: [-0.1, 0, 0] },
+    crouch: 0.07, charge: 1.1, glow: 1.5, turn: 4.56, key: 1.0, lights: false,
+    bosses: [{ id: 'rotorMaster', at: [1.3, 1.4, -4.3], yaw: -0.6, scale: 1.9, act: 'attack', k: 0.6 }]
+  },
   // Head to boots on the hub's pad
   full: {
     bg: 'lab', cam: [-0.6, 0.72, 2.9], look: [0.08, 1.08, 0], fov: 36, at: [0, 0.38, 0], yaw: 0.3,

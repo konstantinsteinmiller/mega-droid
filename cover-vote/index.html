@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mega Droid Cover Vote</title>
+<meta name="description" content="Rate every Mega Droid cover from half a star to five: which one would you click?">
+<style>
+  :root {
+    --bg: #0e1020; --card: #181b33; --line: #2a2e52; --text: #eef0ff; --muted: #9aa0c8;
+    --star: #ffc21a; --star-off: #3a3f6a; --accent: #ffb020; --good: #5fe39a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.8rem; }
+  .lede { color: var(--muted); margin: 0 0 20px; }
+  .bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .progress { flex: 1; height: 8px; background: var(--card); border-radius: 4px; overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  button { font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: #1a1200; cursor: pointer; }
+  button:disabled { background: var(--card); color: var(--muted); cursor: default; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .card.done { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .card img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; cursor: zoom-in; background: #000; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; gap: 8px; }
+  .label { font-weight: 700; }
+  .stars { display: flex; cursor: pointer; touch-action: manipulation; }
+  .star { position: relative; width: 34px; height: 34px; }
+  .star svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .star .on { clip-path: inset(0 100% 0 0); }
+  .star.half .on { clip-path: inset(0 50% 0 0); }
+  .star.full .on { clip-path: none; }
+  .val { min-width: 2.6em; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .result { padding: 0 12px 12px; display: none; }
+  .show-results .result { display: block; }
+  .result .meter { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .result .meter i { display: block; height: 100%; background: var(--good); }
+  .result small { color: var(--muted); }
+  .rank { display: inline-block; min-width: 1.8em; text-align: center; border-radius: 6px; background: var(--bg); margin-right: 6px; }
+  .msg { color: var(--muted); }
+  dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; }
+  dialog::backdrop { background: rgb(0 0 0 / .85); }
+  dialog img { display: block; max-width: 96vw; max-height: 90vh; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Which Mega Droid cover would you click?</h1>
+  <p class="lede">Rate every cover from half a star to five: how appealing is it, and how much does it make you want to click and play? Tap the left half of a star for a half star. The overall results show once you have rated all of them.</p>
+  <div class="bar">
+    <div class="progress"><i id="prog"></i></div>
+    <span class="msg" id="count"></span>
+    <button id="send" disabled>Submit ratings</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="msg" id="status"></p>
+</main>
+<dialog id="zoom"><img alt=""></dialog>
+<script>
+const API = 'https://mega-adventure-leaderboard.rodent-race.workers.dev/covers'
+const COVERS = ['frost', 'render', 'blaze', 'scrapper', 'neon-first', 'render-logo', 'vex', 'neon', 'volt', 'magnet', 'drill', 'rotor']
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>'
+
+const store = {
+  get (k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
+  set (k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} }
+}
+let voter = store.get('cv-voter')
+if (!voter) { voter = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join(''); store.set('cv-voter', voter) }
+// Order shuffled once per voter, labelled by position, so neither file names nor order sway a vote.
+let order = store.get('cv-order')
+if (!Array.isArray(order) || order.length !== COVERS.length || !COVERS.every((c) => order.includes(c))) {
+  order = [...COVERS]
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]] }
+  store.set('cv-order', order)
+}
+const ratings = Object.assign({}, store.get('cv-ratings'))
+const label = (i) => `Cover ${String.fromCharCode(65 + i)}`
+
+const grid = document.getElementById('grid')
+const cards = {}
+order.forEach((id, i) => {
+  const card = document.createElement('div')
+  card.className = 'card'
+  card.innerHTML = `<img src="covers/${id}.webp" alt="${label(i)}" loading="lazy" width="1280" height="720">
+    <div class="row"><span class="label">${label(i)}</span><span class="stars" role="slider" aria-label="Rating for ${label(i)}" aria-valuemin="0.5" aria-valuemax="5" tabindex="0">${('<span class="star">' + STAR.replace('<svg', '<svg class="off" fill="var(--star-off)"') + STAR.replace('<svg', '<svg class="on" fill="var(--star)"') + '</span>').repeat(5)}</span><span class="val"></span></div>
+    <div class="result"></div>`
+  const stars = card.querySelector('.stars')
+  const pick = (e) => {
+    const r = stars.getBoundingClientRect()
+    const half = Math.min(10, Math.max(1, Math.ceil(((e.clientX - r.left) / r.width) * 10)))
+    rate(id, half)
+  }
+  stars.addEventListener('click', pick)
+  stars.addEventListener('keydown', (e) => {
+    const cur = ratings[id] ?? 0
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { rate(id, Math.min(10, cur + 1)); e.preventDefault() }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { rate(id, Math.max(1, cur - 1)); e.preventDefault() }
+  })
+  card.querySelector('img').addEventListener('click', () => {
+    const d = document.getElementById('zoom'); d.querySelector('img').src = `covers/${id}.webp`; d.showModal()
+  })
+  grid.append(card)
+  cards[id] = card
+  paint(id)
+})
+document.getElementById('zoom').addEventListener('click', (e) => e.currentTarget.close())
+
+function rate (id, half) { ratings[id] = half; store.set('cv-ratings', ratings); paint(id); progress() }
+function paint (id) {
+  const half = ratings[id] ?? 0
+  const card = cards[id]
+  card.classList.toggle('done', half > 0)
+  card.querySelectorAll('.star').forEach((s, i) => {
+    s.className = 'star' + (half >= (i + 1) * 2 ? ' full' : half === i * 2 + 1 ? ' half' : '')
+  })
+  card.querySelector('.val').textContent = half ? (half / 2).toFixed(1) : '–'
+  card.querySelector('.stars').setAttribute('aria-valuenow', half / 2)
+}
+function progress () {
+  const n = COVERS.filter((c) => ratings[c]).length
+  document.getElementById('prog').style.width = `${(n / COVERS.length) * 100}%`
+  document.getElementById('count').textContent = `${n} / ${COVERS.length}`
+  document.getElementById('send').disabled = n < COVERS.length
+}
+progress()
+
+function showResults (t) {
+  const ranked = [...COVERS].sort((a, b) => (t.covers[b]?.stars ?? 0) - (t.covers[a]?.stars ?? 0))
+  for (const id of COVERS) {
+    const c = t.covers[id] ?? { n: 0, stars: 0 }
+    cards[id].querySelector('.result').innerHTML =
+      `<span class="rank">#${ranked.indexOf(id) + 1}</span><strong>${c.stars.toFixed(2)} ★</strong> <small>overall, ${c.n} vote${c.n === 1 ? '' : 's'}</small><div class="meter"><i style="width:${c.stars * 20}%"></i></div>`
+  }
+  grid.classList.add('show-results')
+  document.getElementById('status').textContent = `${t.voters} ${t.voters === 1 ? "person has" : "people have"} voted so far. You can change your stars and submit again.`
+}
+
+document.getElementById('send').addEventListener('click', async () => {
+  const btn = document.getElementById('send')
+  btn.disabled = true
+  document.getElementById('status').textContent = 'Sending…'
+  try {
+    const body = { voter, ratings: Object.fromEntries(COVERS.map((c) => [c, ratings[c]])) }
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    if (!r.ok) throw new Error(r.status)
+    store.set('cv-sent', true)
+    showResults(await r.json())
+  } catch {
+    document.getElementById('status').textContent = 'Could not send your ratings. Please try again in a moment.'
+  }
+  progress()
+})
+// A returning voter who already sent a full ballot sees the current totals straight away.
+if (store.get('cv-sent')) fetch(API).then((r) => r.ok && r.json()).then((t) => t && showResults(t)).catch(() => {})
+</script>
+</body>
+</html>

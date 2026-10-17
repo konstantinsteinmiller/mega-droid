@@ -346,6 +346,25 @@ const rankOf = (dist: [number, number][], score: number): number => {
   return above + 1
 }
 
+// ── #176 cover vote ─────────────────────────────────────────────────────────
+// The vote page (cover-vote/ on GitHub Pages) sends every cover's rating in
+// one POST once the voter has rated them all, and only then sees the totals.
+
+/** The covers on the ballot; a rating for anything else is refused. */
+const COVER_IDS = /^[a-z0-9-]{1,32}$/
+const MAX_COVERS = 40
+
+const coverTotals = async (env: Env) => {
+  const { results } = await env.DB
+    .prepare('SELECT cover, COUNT(*) AS n, AVG(half) AS avg FROM cover_votes GROUP BY cover')
+    .all<{ cover: string; n: number; avg: number }>()
+  const voters = await env.DB.prepare('SELECT COUNT(DISTINCT voter) AS v FROM cover_votes').first<{ v: number }>()
+  return {
+    voters: voters?.v ?? 0,
+    covers: Object.fromEntries((results ?? []).map((r) => [r.cover, { n: r.n, stars: Math.round((r.avg / 2) * 100) / 100 }]))
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
@@ -473,6 +492,46 @@ export default {
      }
     }
 
+
+    // ── GET /covers ── the totals (the page shows them only after a full ballot)
+    if (request.method === 'GET' && url.pathname === '/covers') {
+      try {
+        return json(await coverTotals(env), 200, cors)
+      } catch {
+        return json({ error: 'unavailable' }, 503, cors)
+      }
+    }
+
+    // ── POST /covers ── { voter, ratings: { <cover>: halfStars 1..10 } }
+    if (request.method === 'POST' && url.pathname === '/covers') {
+      try {
+        let body: Record<string, unknown>
+        try {
+          body = (await request.json()) as Record<string, unknown>
+        } catch {
+          return json({ error: 'bad json' }, 400, cors)
+        }
+        if (!validId(body.voter)) return json({ error: 'bad voter' }, 400, cors)
+        const ratings = body.ratings as Record<string, unknown> | null
+        if (!ratings || typeof ratings !== 'object') return json({ error: 'bad ratings' }, 400, cors)
+        const rows = Object.entries(ratings)
+        if (!rows.length || rows.length > MAX_COVERS) return json({ error: 'bad ratings' }, 400, cors)
+        for (const [cover, half] of rows) {
+          if (!COVER_IDS.test(cover) || !Number.isInteger(half) || (half as number) < 1 || (half as number) > 10) {
+            return json({ error: 'bad rating' }, 400, cors)
+          }
+        }
+        const now = Date.now()
+        const upsert = env.DB.prepare(
+          'INSERT INTO cover_votes (voter, cover, half, updated_at) VALUES (?, ?, ?, ?) ' +
+          'ON CONFLICT(voter, cover) DO UPDATE SET half = excluded.half, updated_at = excluded.updated_at'
+        )
+        await env.DB.batch(rows.map(([cover, half]) => upsert.bind(body.voter, cover, half, now)))
+        return json(await coverTotals(env), 200, cors)
+      } catch {
+        return json({ error: 'unavailable' }, 503, cors)
+      }
+    }
 
     return json({ error: 'not found' }, 404, cors)
   }

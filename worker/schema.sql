@@ -25,3 +25,14 @@ CREATE TABLE IF NOT EXISTS board_cache (
   json       TEXT NOT NULL,
   updated_at INTEGER NOT NULL
 );
+
+-- #176 cover vote: one row per (voter, cover). `half` is the rating in half
+-- stars, 1..10 (0.5..5 stars). `voter` is an anonymous id the vote page mints
+-- per browser; re-voting replaces that voter's row, it never adds a second.
+CREATE TABLE IF NOT EXISTS cover_votes (
+  voter      TEXT NOT NULL,
+  cover      TEXT NOT NULL,
+  half       INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (voter, cover)
+);

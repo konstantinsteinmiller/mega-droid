@@ -20,12 +20,16 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  *                     glowing barrels roll ACROSS each step from the side
  *                     (a hatch, a lamp, a gutter), so the descent is a
  *                     crossing: wait for the barrel, then step down
- *   5 Forge hammers   a one-cell walkway over lava under piston hammers, a
- *                     spur with a capsule between two of them
- *   6 The big drop    a shaft of staggered ledges, 9 → 6 → 3; from the
+ *   5 Furnace floor   a plain fight (#177): an elite Guardroid with a Gear
+ *                     Roller and a Rotor Drone, the barrels' payoff before
+ *                     the hammers
+ *   6 Forge hammers   a one-cell walkway over lava under two piston hammers,
+ *                     a spur with a capsule between them; or the south walk
+ *                     round them, past a crate golem (#168)
+ *   7 The big drop    a shaft of staggered ledges, 9 → 6 → 3; from the
  *                     middle ledge a dash leap over the shaft reaches a side
  *                     ledge with the borrowed weapon (and leaps back)
- *   7 Slag lift       a lift down the last storey (the ledge is ringed by
+ *   8 Slag lift       a lift down the last storey (the ledge is ringed by
  *                     slag, so the lift is the way), the last checkpoint,
  *                     a secret behind a colour puzzle, the boss shutter
  *   Arena             7 × 7 at y = 0
@@ -33,11 +37,11 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  * Deterministic from the seed; the seed varies the details, never the route:
  * a mirrored layout, which vent columns jet from the walls and which from
  * the floor, the vents' beat, the side the barrels come from and their
- * rhythm, the hammers' count and timing, the secret's key colour, and what
- * waits on one of the reward ledges. Grid 40 × 20 cells.
+ * rhythm, the hammers' timing, the secret's key colour, and what
+ * waits on one of the reward ledges. Grid 48 × 29 cells.
  */
 
-const GRID_W = 40
+const GRID_W = 48
 const GRID_H = 29
 /** Fire vents: seconds per cycle (the jets roar `VENT_ON` of it), and the
  *  wall nozzle's mouth over its floor (chest height: the jet hits a body). */
@@ -146,29 +150,52 @@ export const generateMeltdown = (seed: number): MapData => {
   b.checkpoint(29, 3, YAW_PX, [[29, 2], [29, 3], [29, 4], [29, 5]])
   b.foe('turret', 37, 2, YAW_NX, [37, 2, 37, 2])
   b.foe('flyer', 35, 3, YAW_NX, [29, 2, 37, 5], [L(3), L(5)])
-  b.corridor(37, 6, 0, 1, 2, L(3))
+  b.corridor(38, 4, 1, 0, 2, L(3))
 
-  // ── 5 Forge hammers ───────────────────────────────────────────────────────
+  // ── 5 Furnace floor ───────────────────────────────────────────────────────
+  // #177: playtesters drifted off around the barrels and the hammers, two
+  // timing rooms in a row. A plain fight between them: an ELITE Guardroid
+  // (2.5x armour, harder hits) holding the middle, a Gear Roller and a Rotor
+  // Drone to keep Flux moving. The way on is back west, into the hammers.
+  b.addRoom(40, 2, 7, 8, 'combat', 'hall', L(3))
+  b.checkpoint(40, 4, YAW_PX, [[40, 3], [40, 4], [40, 5]])
+  b.foe('ground', 44, 5, YAW_NX, [41, 2, 46, 9], undefined, 'brute', undefined, true)
+  b.foe('ground', 43, 8, YAW_NX, [41, 6, 46, 9], undefined, 'roller')
+  b.foe('flyer', 45, 3, YAW_NX, [40, 2, 46, 9], [L(3), L(3) + 2.5], 'heli')
+  b.rewards.push({ x: cellCenter(46), z: cellCenter(9), y: L(3), room: 4, kind: 'hp' })
+  b.corridor(39, 9, -1, 0, 2, L(3))
+
+  // ── 6 Forge hammers ───────────────────────────────────────────────────────
   // The entry platform, a one-cell walkway west over lava under piston
   // hammers, a spur between two of them with a capsule, the far platform.
   // Never a hammer over the first walkway cell (the walk ahead in view).
   b.addRoom(28, 8, 10, 5, 'combat', 'hammer', L(3))
-  b.pitKind(4, 'lava')
+  b.pitKind(5, 'lava')
   b.pits(28, 8, 37, 12)
   floor(36, 8, 37, 10, L(3))
   floor(29, 10, 35, 10, L(3))
   floor(33, 11, 33, 11, L(3))
-  floor(28, 9, 28, 11, L(3))
-  const hammers = rng() < 0.5 ? [34, 32, 30] : [34, 32, 31, 30]
+  floor(28, 9, 28, 12, L(3))
+  // #168: the other way across, no hammers and no leaps: down the entry
+  // platform's south end and along the room's south wall, a solid walk over
+  // the lava with a crate golem asleep on it, which wakes as Flux comes near
+  // (the lane's one cell wide: it has to be fought, not passed).
+  floor(36, 11, 37, 12, L(3))
+  floor(29, 12, 35, 12, L(3))
+  // Two hammers (#177 took out the middle one), the spur's capsule between them.
+  rng()
+  const hammers = [34, 30]
   const swing = 2.4 + rng() * 0.5
-  hammers.forEach((i, n) => b.crushers.push({ i, j: 10, y: L(3), period: swing, phase: (n * 0.5 + rng() * 0.2) * swing, room: 4 }))
-  b.rewards.push({ x: cellCenter(33), z: cellCenter(11), y: L(3), room: 4, kind: 'hp' })
+  hammers.forEach((i, n) => b.crushers.push({ i, j: 10, y: L(3), period: swing, phase: (n * 0.5 + rng() * 0.2) * swing, room: 5 }))
+  b.rewards.push({ x: cellCenter(33), z: cellCenter(11), y: L(3), room: 5, kind: 'hp' })
   b.checkpoint(37, 9, YAW_NX, [[36, 8], [37, 8], [36, 9], [37, 9], [36, 10], [37, 10]])
   b.foe('flyer', 28, 9, YAW_PX, [28, 8, 36, 12], [L(3), L(3) + 3])
-  b.foe('turret', 28, 11, YAW_PX, [28, 11, 28, 11])
+  // #168: no mortar here any more (players died to its shells and the hammers
+  // at once); the golem holds the south walk instead.
+  b.foe('ground', 31, 12, YAW_PX, [29, 12, 35, 12], undefined, 'golem')
   b.corridor(27, 10, -1, 0, 2, L(3))
 
-  // ── 6 The big drop ────────────────────────────────────────────────────────
+  // ── 7 The big drop ────────────────────────────────────────────────────────
   // A shaft: the entry ledge (9), a ledge a storey down (6), the bottom
   // ledge (3). Off the middle ledge, one cell of shaft away at the same
   // height, the side ledge with the borrowed weapon: a dash leap there and
@@ -181,7 +208,7 @@ export const generateMeltdown = (seed: number): MapData => {
   floor(19, 11, 21, 14, L(1))
   b.link([22, 10], [22, 8], 'leap')
   b.link([22, 8], [22, 10], 'leap')
-  b.rewards.push({ x: cellCenter(21), z: cellCenter(8), y: L(2), room: 5, kind: 'weapon' })
+  b.rewards.push({ x: cellCenter(21), z: cellCenter(8), y: L(2), room: 6, kind: 'weapon' })
   b.checkpoint(25, 10, YAW_NX, [[24, 9], [25, 9], [24, 10], [25, 10], [24, 11], [25, 11]])
   b.checkpoint(20, 12, YAW_NX, [[19, 11], [20, 11], [21, 11], [19, 12], [20, 12], [21, 12], [20, 13], [21, 13], [20, 14], [21, 14]])
   b.chest(19, 14, YAW_NX)
@@ -190,27 +217,27 @@ export const generateMeltdown = (seed: number): MapData => {
   b.foe('ground', 20, 13, YAW_PX, [19, 11, 21, 14])
   b.corridor(18, 13, -1, 0, 2, L(1))
 
-  // ── 7 Slag lift ───────────────────────────────────────────────────────────
+  // ── 8 Slag lift ───────────────────────────────────────────────────────────
   // The ledge (3) is ringed by slag; the lift waits up at it and rides down
   // to the floor (0) once stood on. The floor is the last checkpoint, before
   // the boss shutter; a colour puzzle on its walls hides an alcove.
   b.addRoom(10, 11, 7, 6, 'combat', 'lift', L(0))
-  b.pitKind(6, 'lava')
+  b.pitKind(7, 'lava')
   floor(15, 11, 16, 13, L(1))
   b.pits(14, 11, 14, 16)
   b.pits(15, 14, 16, 16)
   b.lifts.push({
     kind: 'v', hw: 1.46, hd: 1.46, ax: cellCenter(14), ay: L(1), az: cellCenter(12), bx: cellCenter(14), by: L(0), bz: cellCenter(12),
-    travel: 1.9, wait: 1.6, phase: 0, room: 6
+    travel: 1.9, wait: 1.6, phase: 0, room: 7
   })
   b.checkpoint(16, 13, YAW_NX, [[15, 11], [16, 11], [15, 12], [16, 12], [15, 13], [16, 13]])
-  b.rewards.push({ x: cellCenter(10), z: cellCenter(11), y: L(0), room: 6, kind: 'hp' })
+  b.rewards.push({ x: cellCenter(10), z: cellCenter(11), y: L(0), room: 7, kind: 'hp' })
   b.foe('ground', 11, 12, YAW_PX, [10, 11, 13, 16])
   b.foe('ground', 12, 16, YAW_NZ, [10, 13, 13, 16])
   // The key colour's buttons ON, the rest OFF: buttons on the north and west
   // walls of the floor, the alcove south of it.
   const key = Math.floor(rng() * 3)
-  b.secret(6, 'color', [11, 17, 12, 18], { i: 11, j: 17, axis: 'z' },
+  b.secret(7, 'color', [11, 17, 12, 18], { i: 11, j: 17, axis: 'z' },
     [[10, 12, 'w', 0], [11, 11, 'n', 1], [12, 11, 'n', 2], [13, 11, 'n', 1], [10, 15, 'w', 2]], [], 'tank', key)
   b.checkpoint(11, 14, YAW_NX, [[10, 13], [11, 13], [12, 13], [13, 13], [10, 14], [11, 14], [12, 14], [13, 14], [10, 15], [11, 15], [12, 15], [13, 15]])
   b.corridor(9, 14, -1, 0, 2, L(0), true)
@@ -242,7 +269,7 @@ export const generateMeltdown = (seed: number): MapData => {
   // in that wall faces Flux as he lands, the way on (west, to the lift)
   // never passes it. Level with the ledge, over the void like the stack.
   floor(19, 15, 21, 15, L(1))
-  b.challengeRoom(5, { mouth: { i: 20, j: 15, di: 0, dj: 1 } })
+  b.challengeRoom(6, { mouth: { i: 20, j: 15, di: 0, dj: 1 } })
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

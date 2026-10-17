@@ -48,7 +48,8 @@ export const spawnClimb = async (
   for (let n = 0; n < t.foes.length; n++) {
     const f = t.foes[n]!
     let kind: EnemyKind = f.kind ?? (f.role === 'turret' ? 'turret' : f.role === 'flyer' ? (flyPool ? weighted(rng, flyPool) : 'heli') : weighted(rng, pool))
-    let golem = false
+    // A post that names a golem gets the sector's crate colours too
+    let golem = f.kind === 'golem' && !!table.theme
     if (!f.kind && f.role !== 'turret' && f.role !== 'flyer') {
       const first = FIRST[ground++]
       if (first === 'golem') {
@@ -57,7 +58,7 @@ export const spawnClimb = async (
     }
     const e = golem
       ? createEnemy('golem', level, f.x, f.z, f.room, { theme: THEMES[table.theme!] })
-      : createEnemy(kind, level, f.x, f.z, f.room, { element: table.element, echo: f.echo as BossId | undefined })
+      : createEnemy(kind, level, f.x, f.z, f.room, { element: table.element, echo: f.echo as BossId | undefined, elite: f.elite })
     // Posts face the game's way (forward = −sin, −cos); machines face (sin, cos).
     e.yaw = f.yaw + Math.PI
     e.floor = f.y

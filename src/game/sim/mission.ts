@@ -1,5 +1,6 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
 import { planDecor } from '../world/decor'
+import { decorTargets, decorHit, DECOR_BOLTS, type DecorTarget } from './decorBreak'
 import { RoomCrane, CRANE_G } from './roomCrane'
 import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, SQUASH_FLAT_Y, squashY } from './squash'
 import {
@@ -652,6 +653,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  moment until the player blocks (`cueBlock`); once a mission. */
   private blockCue: Shot | null = null
   private blockCueDone = false
+  /** The same freeze for the block room's Rotor Drone (#171): its first
+   *  swoop held just before it rams Flux, until he blocks (`cueSwoop`). */
+  private swoopCue: Enemy | null = null
+  private swoopCueDone = false
   /** After that block, the shield stays up this long (s) even if the tap was
    *  already let go: the parry it was promised happens. */
   private blockCueHold = 0
@@ -720,6 +725,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   crane: BossCrane | null = null
   /** The level's room cranes (#114, `sim/roomCrane.ts`). */
   private roomCranes: RoomCrane[] = []
+  /** The set dressing a shot can break (#169, `sim/decorBreak.ts`). */
+  private decorTargets: DecorTarget[] = []
+  /** A downed sky vehicle's smoke, bound once (`Cityscape.sinking`). */
+  private readonly skySmoke = (x: number, y: number, z: number): void => {
+    if (Math.random() < 0.5) return
+    this.fx.emit({ x, y, z, vy: 2, color: Math.random() < 0.4 ? '#ff8a2a' : '#3a3a44', size: 2.2, sizeEnd: 4, life: 1.1 })
+  }
   /** The tutorial's golem, held up by its room's crane until Flux comes. */
   private golemDrop: { e: Enemy; crane: RoomCrane; falling: boolean; vy: number } | null = null
   /** Vex's Core Descent (`sim/coreDescent.ts`), in the Fortress only. */
@@ -1250,7 +1262,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return parryWindow(this.input.device, this.stats.parryBonus)
   }
 
-  hitPlayer(e: Enemy | null, dmg: number, o: { blockable: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss' {
+  hitPlayer(e: Enemy | null, dmg: number, o: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss' {
     const c = this.combat
     const p = this.player
     if (c.dead || hud.phase !== 'play') return 'miss'
@@ -1280,8 +1292,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // What a held shield takes off this hit (`blockCut`): 0 = it cannot.
     const cut = blockCut(o, !!e)
     if (cut > 0 && ((c.blocking && frontal && c.guardBroken <= 0) || forced || chained)) {
-      // Only a blockable attack can be parried (a blast is softened at best).
-      if (o.blockable && (forced || chained || this.time - c.blockPressedAt <= win)) {
+      // Only a blockable attack can be parried (a blast is softened at best),
+      // and a dash's contact (`parryable`, #172): it stuns the dasher.
+      if ((o.blockable || (o.parryable && !!e && o.kind === 'melee')) && (forced || chained || this.time - c.blockPressedAt <= win)) {
         // ── PARRY ──
         this.hitStop = Math.max(this.hitStop, 0.14)
         this.shake(0.25)
@@ -1960,7 +1973,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   shotHitsProp(x: number, y: number, z: number, r: number, dmg: number, charge: number): boolean {
-    return this.objects.shotHitsCrate(x, y, z, r, dmg, charge) || this.objects.shotHitsChest(x, y, z, r) ||
+    return this.shotHitsDecor(x, y, z, x, y, z, r) || this.objects.shotHitsCrate(x, y, z, r, dmg, charge) || this.objects.shotHitsChest(x, y, z, r) ||
       !!this.climb?.shotHits(x, y, z, r, charge) || this.shotHitsCraneLoad(x, y, z, r, charge)
   }
 
@@ -1998,7 +2011,45 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** A stage's wall buttons (`sim/secrets.ts`, via `ClimbRun.shotStep`). */
   shotHitsStage(s: Shot): boolean {
-    return this.climb?.shotStep(s) ?? false
+    return (this.climb?.shotStep(s) ?? false) || this.shotHitsDecor(s.px, s.py, s.pz, s.x, s.y, s.z, s.radius)
+  }
+
+  /**
+   * A player hit along (ax, ay, az) → (bx, by, bz) on the set dressing
+   * (#169): the first prop it passes through breaks — it goes from its
+   * room's meshes, its body from the floor — and drops a bolt. Tested along
+   * the shot's step before the wall stops it, so a prop on a wall's face is
+   * reached too.
+   */
+  private shotHitsDecor(ax: number, ay: number, az: number, bx: number, by: number, bz: number, r: number): boolean {
+    if (!this.decorTargets.length) return false
+    const d = decorHit(this.decorTargets, ax, ay, az, bx, by, bz, r)
+    if (!d) return false
+    d.broken = true
+    this.level.breakDecor?.(d.n)
+    if (d.navIdx >= 0) this.nav.props[d.navIdx]!.active = false
+    const x = (d.x0 + d.x1) / 2
+    const y = (d.y0 + d.y1) / 2
+    const z = (d.z0 + d.z1) / 2
+    this.fx.sparks(x, y, z, this.theme.crate, 14, 5, 0.22)
+    this.fx.sparks(x, y, z, '#ffb04a', 8, 4, 0.16)
+    this.fx.emit({ x, y, z, color: '#ffffff', size: 1.1, sizeEnd: 1.8, life: 0.18 })
+    this.sfx('bonk', x, z)
+    this.system.spawnPickup('bolt', DECOR_BOLTS, x, Math.max(y, d.y0 + 0.6), z)
+    return true
+  }
+
+  /** A player shot over the walls on the city's traffic (#169): a downed
+   *  taxi or parcel drone bursts into flame, with a bang, and sinks. */
+  shotHitsSky(s: Shot): boolean {
+    if (!this.city?.shotHits(s.x, s.y, s.z, s.radius, _v)) return false
+    this.fx.orbBurst(_v.x, _v.y, _v.z, '#ff7a3a', 3)
+    this.fx.flash(_v.x, _v.y, _v.z, '#ffd27a', 7, 0.3)
+    this.fx.sparks(_v.x, _v.y, _v.z, '#ffb04a', 18, 9, 0.5)
+    // Far off, but loud enough to tell: the clamp in `sfx` would all but
+    // mute it at this range.
+    sfx('explode', 0, 0.5)
+    return true
   }
 
   /** A secret's prize (`ClimbHost.secretPrize`): a Repair Gel past the cap
@@ -3219,6 +3270,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         return
       }
     }
+    // The block room's held Rotor Drone: only a block lets it ram, parried.
+    if (this.swoopCue && this.freeze.shot?.kind === 'lesson') {
+      if (first && this.input.blockPressed) {
+        this.releaseSwoopCue()
+        return
+      }
+    }
     const ended = this.freeze.update(dt, pressed)
     this.fx.update(dt)
     this.system.rubble.update(dt, this.nav)
@@ -3396,6 +3454,45 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     p.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.atan2(s.y - (p.y + EYE_H), Math.max(0.8, Math.hypot(s.x - p.x, s.z - p.z)))))
     this.startFreeze({ kind: 'lesson', dur: Infinity, frame: 'fp', skippable: false, fx: '', tx: s.x, ty: s.y, tz: s.z })
     return true
+  }
+
+  /**
+   * The block room's Rotor Drone (#171, `World.cueSwoop`): its first swoop
+   * at Flux stops in the air a moment before it rams him, the view on it,
+   * the block input cued (`hud.blockCue`) as for the Trooper's shot — a
+   * drone's ram is parried too — and only a block lets time run on. Once a
+   * mission.
+   */
+  cueSwoop(e: Enemy, eta: number): boolean {
+    if (!this.walk?.active || this.swoopCueDone || this.swoopCue || this.blockCue || this.freeze.active) return false
+    if (e.kind !== 'heli' || eta > BLOCK_CUE_ETA) return false
+    const g = this.walk.current
+    if (!g || !g.steps.includes('block') || e.room !== g.room) return false
+    this.swoopCue = e
+    this.swoopCueDone = true
+    hud.blockCue = true
+    const p = this.player
+    p.yaw = Math.atan2(-(e.x - p.x), -(e.z - p.z))
+    p.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.atan2(e.y - (p.y + EYE_H), Math.max(0.8, Math.hypot(e.x - p.x, e.z - p.z)))))
+    this.startFreeze({ kind: 'lesson', dur: Infinity, frame: 'fp', skippable: false, fx: '', tx: e.x, ty: e.y, tz: e.z })
+    return true
+  }
+
+  /** The block came: the shield up and fresh, and time runs again — the
+   *  drone rams inside the parry window and is stunned. */
+  private releaseSwoopCue(): void {
+    const c = this.combat
+    this.swoopCue = null
+    hud.blockCue = false
+    c.power = c.maxPower
+    c.guardBroken = 0
+    c.riposteT = 0
+    c.hurtT = 0
+    c.slideT = 0
+    c.blockPressedAt = this.time
+    this.blockCueHold = BLOCK_CUE_HOLD
+    this.freeze.end()
+    this.writeHud()
   }
 
   /**
@@ -4478,7 +4575,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private setupDressing(): void {
     if (!this.map.terrain) return
     const plan = planDecor(this.map, this.setup.sector)
-    for (const p of plan.props) if (p.r > 0) this.nav.props.push({ x: p.x, z: p.z, r: p.r, active: true })
+    const navOf = plan.props.map(p => {
+      if (p.r <= 0) return -1
+      this.nav.props.push({ x: p.x, z: p.z, r: p.r, active: true })
+      return this.nav.props.length - 1
+    })
+    this.decorTargets = decorTargets(plan.props, n => navOf[n]!)
     this.roomCranes = plan.cranes.map(s => new RoomCrane(this, s, this.theme))
     for (const c of this.roomCranes) {
       // One held golem at a time (`golemDrop`): a second would hang offstage
@@ -5727,6 +5829,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // Once play has begun, the rest of the city streams in: a few ms a frame.
     if (this.city && hud.phase === 'play' && !this.cityDone) this.cityDone = this.city.stream(CITY_STREAM_MS)
     this.city?.update(this.time)
+    this.city?.sinking(this.skySmoke)
 
     for (const e of this.enemies) {
       if (!e.root.visible && e.state !== 'dead') continue

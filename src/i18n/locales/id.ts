@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: meluncur · {tank}: Gel Perbaikan · {use}: interaksi · {beam}: teleport keluar',
       'more': '{w1} / {w2}: senjata spesial · {target}: ganti target · Esc: jeda',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} atau {b}'
     }
   },
   'levelUp': {

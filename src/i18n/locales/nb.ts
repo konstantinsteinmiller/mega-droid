@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: skli · {tank}: Reparasjonsgel · {use}: bruk · {beam}: teleporter',
       'more': '{w1} / {w2}: spesialvåpen · {target}: bytt mål · Esc: pause',
       'space': 'Mellomrom',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} eller {b}'
     }
   },
   'levelUp': {

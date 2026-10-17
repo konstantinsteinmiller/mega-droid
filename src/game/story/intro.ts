@@ -5,7 +5,7 @@ import {
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
-import { buildHero, animateHeroIdle, animateHeroWalk, type HeroColors } from '../models/hero'
+import { buildHero, animateHeroIdle, type HeroColors } from '../models/hero'
 import { buildPip, animatePip } from '../models/npc'
 import { buildTeleporter, type PadMesh } from '../models/props'
 import { buildTrooper, poseTrooper, buildHeli, poseHeli, buildBrute, poseBrute } from '../models/enemies'
@@ -33,7 +33,7 @@ import { setSongStartHint } from '../audio/music'
 import {
   INTRO_END, SKIP_AFTER, ATLAS_HOLD, eventsBetween, overlayAt, shotIndexAt, streetTime, streetRate, ringReach, ramp, clamp01,
   STREET_FROM, STREET_RELEASE, AFTER, STREET_DONE, SHOTS, STREET_AT as STREET_TIME_AT, type ShotId,
-  SHOW_HIT, SHOW_DIVE, SHOW_GUARD_UP, SHOW_PARRY, SHOW_GUARD_DOWN, SHOW_SHIELD_UP, SHOW_VOLLEY, SHOW_ORB_FLIGHT, SHOW_SHIELD_DOWN,
+  SHOW_HIT, SHOW_DIVE, SHOW_PARRY, SHOW_GUARD_DOWN, SHOW_SHIELD_UP, SHOW_VOLLEY, SHOW_ORB_FLIGHT,
   SHOW_TROOP_SHOTS, SHOW_TROOP_FLIGHT, SHOW_TROOP_BACK,
   SHOW_ANSWER, SHOW_ANSWER_HIT, SHOW_SLAM, SHOW_SLIDE_FROM, SHOW_RING_OVER, SHOW_SLIDE_TO, SHOW_FINISH, SHOW_FINISH_HIT,
   SHOW_GEL, SHOW_GEL_BURST, SHOW_BIG_DROP, SHOW_BIG_LAND, SHOW_BIG_STEPS, SHOW_FLEE_FROM, SHOW_FLEE_TO, SHOW_OVER_FIRE,
@@ -46,12 +46,10 @@ import { cine, cineLive, resetCine, setGateHandler, setSkipHandler, skipHold } f
 import { holdProgress, stepHold } from './holdSkip'
 import { sceneQuality, type SceneQuality } from '../engine/quality'
 import { buildAtlas, animateAtlas } from '../models/atlas'
-import { dashPose } from '../models/dash'
+import { poseStreetFlux, newStreetFlux, DASH_RUN, D1_AT } from './streetFlux'
 import { Shatter } from '../fx/shatter'
 
-/** The street's two slides (action s): under the Trooper's swing, and under
- *  its shock ring. */
-export const DASH_RUN: readonly [number, number] = [1.1, 1.6]
+export { DASH_RUN } from './streetFlux'
 
 import { playVoiceSoon, prefetchVoice, stopVoice } from '../audio/voice'
 import { audio, audioAllowed } from '../audio/engine'
@@ -114,15 +112,11 @@ const BIG = 1.6
 const BIG_X = 0.4
 const BIG_Z = -12
 const BIG_STOMP = 1.6
-/** How far Flux's dash away from it carries him (m, toward the camera). */
-const FLEE = 2.8
 /** The muzzle flash's life, and the tracer's fade after the hit (s). */
 const FLASH_FOR = 0.14
 const TRACER_FADE = 0.22
 const _muzzle = new Vector3()
 
-/** Drone 2's post for its volley, where the answer shot meets it (street space). */
-const D1_AT = new Vector3(1.4, 3.0, -8.2)
 const VALLEY_AT = new Vector3(300, 0, 0)
 const CUTIN_AT = new Vector3(0, 0, 300)
 
@@ -346,6 +340,7 @@ export class IntroMode implements GameMode {
   private runner!: Rig
   private runnerRoot = new Group()
   private runMotion = newMotion(7)
+  private readonly flux = newStreetFlux()
   private trooper!: Rig
   private trooperRoot = new Group()
   private drones: Rig[] = []
@@ -928,37 +923,11 @@ export class IntroMode implements GameMode {
     // Fog in the skyline's haze: the far street melts into the city.
     this.light(STREET_HAZE, '#1a0f2a', 0.85, '#ff7ad8', 0.7, '#3ff4ff', 1.1, 14, 62)
     this.street.animate(st)
-    // Flux: runs at the camera, slides under the swing, plants, charges.
+    // Flux: runs at the camera, slides under the swing, plants, charges —
+    // then the showcase (`streetFlux.ts`).
     const R = this.runner
-    const run = st < 1.1
-    let z: number
-    if (st < 1.1) z = -16 + 6.8 * st
-    else if (st < 1.6) z = -8.52 + (1 - Math.pow(1 - (st - 1.1) / 0.5, 2)) * 4.92
-    else z = -3.6
-    const turn = ramp(1.6, 1.9, st)
-    // The answer shot: he turns and raises the cannon at drone 2, up and to
-    // the right (it used to leave straight ahead and bend to the drone).
-    const ans = ramp(SHOW_ANSWER - 0.35, SHOW_ANSWER - 0.05, st) * (1 - ramp(SHOW_ANSWER_HIT + 0.2, SHOW_ANSWER_HIT + 0.6, st))
-    const ry = Math.PI * turn + ans * (Math.atan2(D1_AT.x, D1_AT.z - z) - Math.PI)
-    const m = this.runMotion
-    m.walk = run ? 1 : 0.2
-    m.phase = st * 12
-    m.stride = m.phase
-    animateHeroWalk(R, m, st)
-    const dash = dashPose(R, st, DASH_RUN[0], DASH_RUN[1])
-    this.runnerRoot.position.set(0, -dash.drop, z)
-    this.runnerRoot.rotation.set(dash.lean + 0.18 * (run && dash.on === 0 ? 1 : 0), ry, 0)
-    this.runnerRoot.scale.set(1, 1 - dash.stretch * 0.5, 1 + dash.stretch)
-    this.dashOn = dash.on
-    const aim = ramp(1.75, 2.0, st)
-    if (aim > 0) {
-      pose(R, 'shoulderR', -1.5 * aim - 0.38 * ans, 0, 0.12)
-      pose(R, 'elbowR', -0.05, 0, 0)
-      pose(R, 'hipL', -0.35 * aim, 0, -0.08)
-      pose(R, 'hipR', 0.3 * aim, 0, 0.08)
-      pose(R, 'kneeL', 0.35 * aim, 0, 0)
-      pose(R, 'chest', 0.05, 0.2 * aim, 0)
-    }
+    poseStreetFlux(R, this.runnerRoot, this.runMotion, st, this.flux)
+    this.dashOn = this.flux.dashOn
     // The charge ring at the muzzle, then the shot a hand's width off the shield.
     this.streetSet.updateMatrixWorld(true)
     const muzzle = _muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
@@ -984,7 +953,7 @@ export class IntroMode implements GameMode {
     // The charged shot breaks its guard: the shield comes down and stays down.
     const guard = (0.4 + 0.6 * ramp(1.1, 1.3, st)) * (1 - ramp(SHOW_HIT + 0.25, SHOW_HIT + 0.8, st))
     const tm = this.trooperMotion
-    tm.walk = step < 1 && step > 0 ? 1 : 0
+    tm.walk = clamp01(5 * step * (1 - step))
     tm.phase = st * 9
     // Its blaster up for its two shots (#127).
     const troopAim = ramp(SHOW_TROOP_SHOTS[0]! - 0.3, SHOW_TROOP_SHOTS[0]!, st) * (1 - ramp(SHOW_TROOP_SHOTS[1]! + 0.5, SHOW_TROOP_SHOTS[1]! + 0.8, st))
@@ -1020,44 +989,15 @@ export class IntroMode implements GameMode {
   private renderShowcase(st: number, t: number, muzzle: Vector3): void {
     const R = this.runner
     const F = this.runnerRoot
-    // Flux: the dash under the ring carries him forward; he settles after.
-    // Then the Overload (#137): he turns his back on the big Guardroid, dashes
-    // away from it, and turns back to it, charging all the while.
-    const fz = -3.6 - 1.4 * ramp(SHOW_SLIDE_FROM, SHOW_SLIDE_TO, st) + FLEE * ramp(SHOW_FLEE_FROM, SHOW_FLEE_TO, st)
-    if (st > STREET_RELEASE) {
-      const flee = st > (SHOW_SLIDE_TO + SHOW_FLEE_FROM) / 2
-      const dash = flee ? dashPose(R, st, SHOW_FLEE_FROM, SHOW_FLEE_TO) : dashPose(R, st, SHOW_SLIDE_FROM, SHOW_SLIDE_TO)
-      F.position.set(0, -dash.drop, fz)
-      F.rotation.x = dash.lean
-      F.scale.set(1, 1 - dash.stretch * 0.5, 1 + dash.stretch)
-      this.dashOn = Math.max(this.dashOn, dash.on)
-      const away = ramp(SHOW_FLEE_FROM - 0.25, SHOW_FLEE_FROM, st) * (1 - ramp(SHOW_FLEE_TO + 0.1, SHOW_FLEE_TO + 0.45, st))
-      F.rotation.y += Math.PI * away
-    }
-    // The shield: up for the parry and for the volley; a flash on each hit.
-    const guard = Math.max(
-      ramp(SHOW_GUARD_UP, SHOW_GUARD_UP + 0.1, st) * (1 - ramp(SHOW_GUARD_DOWN - 0.1, SHOW_GUARD_DOWN, st)),
-      // The Trooper's two shots: up just before each lands — a perfect block.
-      ...SHOW_TROOP_SHOTS.map(v => ramp(v + SHOW_TROOP_FLIGHT - 0.12, v + SHOW_TROOP_FLIGHT - 0.04, st) *
-        (1 - ramp(v + SHOW_TROOP_FLIGHT + 0.15, v + SHOW_TROOP_FLIGHT + 0.3, st))),
-      ramp(SHOW_SHIELD_UP, SHOW_SHIELD_UP + 0.15, st) * (1 - ramp(SHOW_SHIELD_DOWN - 0.15, SHOW_SHIELD_DOWN, st))
-    )
-    if (guard > 0) {
-      pose(R, 'shoulderL', -1.35 * guard, 0, 0.35 * guard)
-      pose(R, 'elbowL', -0.5 * guard, 0, 0)
-    }
+    const fz = F.position.z
+    const guard = this.flux.guard
     // The game's own barrier, a hand's width in front of him; its ripple and
     // parry ring are set off on the beats (`showcaseBursts`).
     this.shieldAt.set(F.position.x + 0.05, 1.05, fz - 0.62)
     this.shield.root.position.copy(this.shieldAt)
     this.shield.update(this.frameDt, guard > 0.02, 1, t)
     // The Repair Gel: the flask up in his left hand, then the green burst.
-    const gel = ramp(SHOW_GEL, SHOW_GEL + 0.35, st) * (1 - ramp(SHOW_GEL_BURST, SHOW_GEL_BURST + 0.45, st))
     this.flask.visible = st >= SHOW_GEL && st < SHOW_GEL_BURST
-    if (gel > 0) {
-      pose(R, 'shoulderL', -2.5 * gel, 0, 0.25 * gel)
-      pose(R, 'elbowL', -0.9 * gel, 0, 0)
-    }
     const heal = st >= SHOW_GEL_BURST ? clamp01((st - SHOW_GEL_BURST) / 0.9) : -1
     this.healRing.visible = heal >= 0 && heal < 1
     if (heal >= 0) {
@@ -1065,21 +1005,6 @@ export class IntroMode implements GameMode {
       this.healRing.rotation.set(Math.PI / 2, 0, 0)
       this.healRing.scale.setScalar(0.8 + 0.5 * heal)
       this.healMat.opacity = 0.85 * (1 - heal)
-    }
-    // The hero pose after the gel: chin up, the cannon held across.
-    const hero = ramp(SHOW_GEL_BURST + 0.3, SHOW_GEL_BURST + 0.9, st)
-    if (hero > 0) {
-      pose(R, 'shoulderR', -1.5 + 0.9 * hero, 0, 0.12 + 0.5 * hero)
-      pose(R, 'elbowR', -0.05 - 0.9 * hero, 0, 0)
-      pose(R, 'chest', 0.05, 0.2 - 0.3 * hero, 0)
-    }
-
-    // The Overload: the cannon up at the Guardroid's head, a kick on the release.
-    const up = ramp(SHOW_FLEE_TO + 0.3, SHOW_FLEE_TO + 0.6, st) * (1 - ramp(SHOW_OVER_HIT + 0.4, SHOW_OVER_HIT + 0.9, st))
-    if (up > 0) {
-      const kick = ramp(SHOW_OVER_FIRE, SHOW_OVER_FIRE + 0.05, st) * (1 - ramp(SHOW_OVER_FIRE + 0.1, SHOW_OVER_FIRE + 0.4, st))
-      pose(R, 'shoulderR', -1.5 - 0.3 * up - 0.35 * kick, 0, 0.12)
-      pose(R, 'chest', 0.05 - 0.15 * kick, 0.2, 0)
     }
     this.renderBig(st, t)
 

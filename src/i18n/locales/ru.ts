@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: подкат · {tank}: ремонтный гель · {use}: действие · {beam}: телепорт',
       'more': '{w1} / {w2}: спецоружие · {target}: смена цели · Esc: пауза',
       'space': 'Пробел',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} или {b}'
     }
   },
   'levelUp': {

@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: gliti · {tank}: Ripara Ĝelo · {use}: interagi · {beam}: teleportiĝi',
       'more': '{w1} / {w2}: specialaj armiloj · {target}: ŝanĝi celon · Esc: paŭzo',
       'space': 'Spaco',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} aŭ {b}'
     }
   },
   'levelUp': {

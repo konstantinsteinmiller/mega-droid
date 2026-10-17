@@ -1,4 +1,4 @@
-import { boundCode } from '@/game/engine/keyBindings'
+import { boundCode, shownAltCode } from '@/game/engine/keyBindings'
 import { keyLabel } from '@/game/engine/keyLabels'
 
 type T = (key: string, params?: Record<string, unknown>) => string
@@ -26,6 +26,13 @@ export const spokenKey = (t: T, defaultCode: string, spaceKey = 'pause.keys.spac
   return NAMES[c] ?? keyLabel(c)
 }
 
+/** A key and its taught alternate, if it has one: "1 or Q" (#174). */
+export const spokenKeys = (t: T, defaultCode: string, spaceKey = 'pause.keys.space'): string => {
+  const a = spokenKey(t, defaultCode, spaceKey)
+  const alt = shownAltCode(defaultCode)
+  return alt ? t('pause.keys.either', { a, b: NAMES[alt] ?? keyLabel(alt) }) : a
+}
+
 /** Every placeholder the key sentences use. */
 export const keyAriaParams = (t: T, spaceKey = 'pause.keys.space'): Record<string, string> => {
   const move = ['KeyW', 'KeyA', 'KeyS', 'KeyD'].map(c => spokenKey(t, c, spaceKey))
@@ -35,7 +42,7 @@ export const keyAriaParams = (t: T, spaceKey = 'pause.keys.space'): Record<strin
     tank: spokenKey(t, 'KeyH', spaceKey),
     use: spokenKey(t, 'KeyE', spaceKey),
     beam: spokenKey(t, 'KeyB', spaceKey),
-    w1: spokenKey(t, 'Digit1', spaceKey),
+    w1: spokenKeys(t, 'Digit1', spaceKey),
     w2: spokenKey(t, 'Digit2', spaceKey),
     target: spokenKey(t, 'Tab', spaceKey),
     // The controls list's turn row: "Turn (← →)" — or its rebound keys.

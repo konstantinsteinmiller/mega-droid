@@ -7,13 +7,18 @@
       path(:d="bound === 'MouseLeft' ? 'M10 1.5 A8.5 8.5 0 0 0 1.5 10 L1.5 12 L10 12 Z' : 'M10 1.5 A8.5 8.5 0 0 1 18.5 10 L18.5 12 L10 12 Z'" class="m-hot")
       line(x1="10" y1="1.5" x2="10" y2="12" class="m-seam")
       line(x1="1.5" y1="12" x2="18.5" y2="12" class="m-seam")
-    template(v-else) {{ keyLabel(bound) }}
+    //- A taught alternate shares the cap: "1/Q" (#174).
+    template(v-else)
+      | {{ keyLabel(bound) }}
+      template(v-if="alt")
+        span.or /
+        | {{ keyLabel(alt) }}
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { keyLabel } from '@/game/engine/keyLabels'
-import { boundCode } from '@/game/engine/keyBindings'
+import { boundCode, shownAltCode } from '@/game/engine/keyBindings'
 
 /**
  * A small inline keycap — "[E] Open" on a desktop prompt, "1" on a weapon
@@ -25,6 +30,8 @@ const props = defineProps<{ code: string }>()
 /** The key as bound now: the prompt was written with the DEFAULT key
  *  (`keyBindings.ts`), the player may have moved the action. */
 const bound = computed(() => boundCode(props.code))
+/** The action's taught alternate key, if any (`shownAltCode`). */
+const alt = computed(() => shownAltCode(props.code))
 </script>
 
 <style scoped lang="sass">
@@ -50,6 +57,9 @@ const bound = computed(() => boundCode(props.code))
   &.mouse
     min-width: 1.3em
     padding: 0.12em
+.or
+  margin: 0 0.1em
+  opacity: 0.55
 .bar
   width: 1.9em
   height: 0.28em

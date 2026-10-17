@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: liu\'u · {tank}: korjausgeeli · {use}: käytä · {beam}: teleporttaa pois',
       'more': '{w1} / {w2}: erikoisaseet · {target}: vaihda kohdetta · Esc: tauko',
       'space': 'Välilyönti',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} tai {b}'
     }
   },
   'levelUp': {

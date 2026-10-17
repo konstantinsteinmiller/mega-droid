@@ -27,7 +27,8 @@ describe('spoken keys', () => {
     const p = keyAriaParams(t)
     expect(t('pause.keys.move', p)).toBe('WASD / arrows: move.')
     expect(t('pause.keys.slide', p)).toBe('Space: slide · H: Repair Gel · E: interact · B: beam out')
-    expect(t('pause.keys.more', p)).toBe('1 / 2: special weapons · Tab: switch target · Esc: pause')
+    // #174: Q fires the first special weapon too, and is spoken with the 1.
+    expect(t('pause.keys.more', p)).toBe('1 or Q / 2: special weapons · Tab: switch target · Esc: pause')
     expect(t('tips.dodgeKeys', keyAriaParams(t, 'tips.spaceKey'))).toContain('press Space to slide')
   })
 
@@ -45,6 +46,14 @@ describe('spoken keys', () => {
     const p = keyAriaParams(t)
     expect(t('pause.keys.slide', p)).toBe('C: slide · G: Repair Gel · E: interact · B: beam out')
     expect(t('lesson.gelKeys', { key: spokenKey(t, 'KeyH') })).toContain('Press G')
+  })
+
+  it('the Q alternate follows the layout and drops out once rebound away (#174)', () => {
+    const t = tFor('de')
+    press('KeyQ', 'a')
+    expect(keyAriaParams(t).w1).toBe('1 oder A')
+    bindKey('beam', 'KeyQ')
+    expect(keyAriaParams(t).w1).toBe('1')
   })
 
   it('the space bar is named in the language, inflected where the sentence needs it', () => {

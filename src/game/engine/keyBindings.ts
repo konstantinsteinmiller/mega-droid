@@ -32,12 +32,14 @@ export const DEFAULT_BINDINGS: Readonly<Record<Action, readonly string[]>> = {
   right: ['KeyD'],
   turnLeft: ['ArrowLeft'],
   turnRight: ['ArrowRight'],
-  slide: ['Space', 'KeyQ'],
+  slide: ['Space'],
   block: ['ShiftLeft', 'ShiftRight'],
   interact: ['KeyE', 'KeyF'],
   beam: ['KeyB'],
   tank: ['KeyH'],
-  weapon1: ['Digit1', 'Numpad1'],
+  // Q (#174): the first special weapon under the left hand, beside WASD. It
+  // used to be an untaught second slide key; Space slides.
+  weapon1: ['Digit1', 'Numpad1', 'KeyQ'],
   weapon2: ['Digit2', 'Numpad2'],
   weapon3: ['Digit3', 'Numpad3'],
   target: ['Tab'],
@@ -124,6 +126,22 @@ export const bindingsChanged = (): boolean => ACTIONS.some(a => overrides[a] !==
 export const boundCode = (defaultCode: string): string => {
   for (const a of ACTIONS) if (DEFAULT_BINDINGS[a][0] === defaultCode) return primaryCode(a)
   return defaultCode
+}
+
+/** Alternates the hints draw beside the main key ("1 / Q"): the rest stay
+ *  untaught. */
+const SHOWN_ALT: Partial<Record<Action, string>> = { weapon1: 'KeyQ' }
+
+/**
+ * The taught alternate of the action whose DEFAULT main key is `defaultCode`
+ * (`KeyQ` for `Digit1`), while it still works that action and is not its
+ * main key; else null (a rebinding took it, or there is none).
+ */
+export const shownAltCode = (defaultCode: string): string | null => {
+  const a = ACTIONS.find(x => DEFAULT_BINDINGS[x][0] === defaultCode)
+  const alt = a && SHOWN_ALT[a]
+  if (!a || !alt || primaryCode(a) === alt) return null
+  return codesFor(a).includes(alt) ? alt : null
 }
 
 const save = (): void => {

@@ -36,11 +36,12 @@ import { buildEnemyRig, poseHardhat, poseTrooper, poseHeli, poseHopper, poseRoll
 import { newMotion } from '@/game/models/motion'
 import { golemColors, SPOT_R } from '@/game/sim/enemies'
 import { makeSearchBeam, aimSearchBeam, type SearchBeam } from '@/game/fx/searchBeam'
+import { SHOT_STYLES, buildShotProp, poseShotProp, type ShotProp } from '@/game/fx/weaponShots'
 
 const host = ref<HTMLElement | null>(null)
 const ENEMIES: EnemyKind[] = ['hardhat', 'trooper', 'heli', 'hopper', 'roller', 'brute', 'turret', 'golem', 'polar', 'mole', 'puffer', 'stalker', 'spotter', 'hornet', 'warden', 'gatekeeper']
 const BOSSES: BossId[] = ['scrapper', 'blazeMaster', 'frostMaster', 'voltMaster', 'galeMaster', 'magnetMaster', 'drillMaster', 'tideMaster', 'neonMaster', 'rotorMaster', 'vexMk1']
-const models = ['hero', 'hubview', 'turn', 'gear', 'viewmodel', 'fp', 'thumb', 'props', 'enemies', 'bosses', ...ENEMIES, ...BOSSES]
+const models = ['hero', 'hubview', 'turn', 'gear', 'viewmodel', 'fp', 'thumb', 'props', 'shots', 'enemies', 'bosses', ...ENEMIES, ...BOSSES]
 let bossRigs: Array<{ id: BossId; rig: Rig }> = []
 let enemyRigs: Array<{ kind: EnemyKind; rig: Rig }> = []
 const hashQuery = new URLSearchParams(location.hash.split('?')[1] ?? '')
@@ -97,6 +98,9 @@ const GEAR_ROWS: string[][][] = [
 /** `bg=hub` lights the bench like the hub (dark lab, cool rim light). */
 const hubLight = hashQuery.get('bg') === 'hub'
 let heroRigs: Rig[] = []
+/** `m=shots`: every copied weapon's shot in flight, side on (`size=1.5` as a Master throws it). */
+let shotProps: ShotProp[] = []
+const shotSize = Number(hashQuery.get('size') ?? 1)
 /**
  * `m=fp` — the in-mission first-person view (viewmodel scene, camera at the
  * origin looking down −Z, arm placed like mission.ts). `block=1` holds the
@@ -628,6 +632,7 @@ const show = (name: string) => {
   enemyRigs = []
   bossRigs = []
   heroRigs = []
+  shotProps = []
   camera.fov = 35
   camera.updateProjectionMatrix()
   const th = THEMES.scrapyard
@@ -708,6 +713,16 @@ const show = (name: string) => {
     stage.add(vm.root)
     camera.position.set(0, 1.9, 4.6)
     camera.lookAt(0, 1, 0)
+  } else if (name === 'shots') {
+    SHOT_STYLES.forEach((id, i) => {
+      const p = buildShotProp(id)
+      p.root.visible = true
+      p.root.position.set((i - (SHOT_STYLES.length - 1) / 2) * 1.6, 0.9, 0)
+      stage.add(p.root)
+      shotProps.push(p)
+    })
+    camera.position.set(0, 1.2, 8 / zoom)
+    camera.lookAt(0, 0.9, 0)
   } else if (name === 'bosses' || (BOSSES as string[]).includes(name)) {
     const ids = name === 'bosses' ? BOSSES : [name as BossId]
     ids.forEach((id, i) => {
@@ -845,12 +860,16 @@ const loop = () => {
     else if (kind === 'golem') poseGolemLab(r, still ? 0 : t)
     else if (kind === 'spotter') poseSpotter(r, Math.atan2(SPOTTER_LENS.y + 2.4, 3 - SPOTTER_LENS.z), spotLock, spotLamp, still ? 0 : t)
   }
+  for (const p of shotProps) {
+    const x = p.root.position.x
+    poseShotProp(p, x, 0.9, 0, 1, 0, 0, shotSize, still ? 0.3 : t)
+  }
   for (const { id, rig: r } of bossRigs) poseBoss(r, id, t, 'idle', 0)
   if (bossRigs.length > 1) stage.rotation.y = fixedAngle ?? Math.sin(t * 0.4) * 0.4
   if (enemyRigs.length > 1) stage.rotation.y = fixedAngle ?? Math.sin(t * 0.4) * 0.5
   if (heroRigs.length > 0 || current.value === 'hubview') stage.rotation.y = 0
   else if (spotBeam) stage.rotation.y = fixedAngle ?? 0
-  else if (current.value !== 'props' && enemyRigs.length <= 1 && bossRigs.length <= 1) stage.rotation.y = fixedAngle ?? t * 0.6
+  else if (current.value !== 'props' && current.value !== 'shots' && enemyRigs.length <= 1 && bossRigs.length <= 1) stage.rotation.y = fixedAngle ?? t * 0.6
   const r = getRenderer()
   r.clear()
   r.render(scene, camera)

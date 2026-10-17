@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: sürüşmə · {tank}: Təmir Geli · {use}: qarşılıqlı əlaqə · {beam}: teleport',
       'more': '{w1} / {w2}: xüsusi silahlar · {target}: hədəfi dəyiş · Esc: fasilə',
       'space': 'Boşluq',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} və ya {b}'
     }
   },
   'levelUp': {

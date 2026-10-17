@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: स्लाइड · {tank}: रिपेयर जेल · {use}: इंटरैक्ट · {beam}: बीम से लौटें',
       'more': '{w1} / {w2}: विशेष हथियार · {target}: टारगेट बदलें · Esc: रोकें',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} या {b}'
     }
   },
   'levelUp': {

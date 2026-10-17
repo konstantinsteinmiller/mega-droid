@@ -436,7 +436,9 @@ export default {
       'space': 'Space',
       // A one-key row, read aloud: "H: Repair Gel". `{key}` is the key's
       // letter on this keyboard, `{action}` the row's visible label.
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      // Two keys that do the same, read aloud: "1 or Q".
+      'either': '{a} or {b}'
     }
   },
   'levelUp': {

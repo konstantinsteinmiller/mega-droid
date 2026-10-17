@@ -8,6 +8,7 @@ import type { Nav } from '../world/nav'
 import type { MapData } from '../world/levelGen'
 import type { Particles } from '../fx/particles'
 import type { FloorMarkers, ShockRings } from '../fx/markers'
+import type { ShotProp, ShotStyle } from '../fx/weaponShots'
 
 /**
  * Shared shapes for the mission sim. Kept free of three.js VALUES (types only)
@@ -202,6 +203,9 @@ export interface Shot {
   weapon: string
   /** A Neon Blade on its way back (it turned at half its flight). */
   back?: boolean
+  /** A player shot that has cleared the level's walls (#169): it flies on
+   *  into the sky, where the city's traffic can be shot down. */
+  sky?: boolean
   /** Enemy orbs that steer toward the player and can be shot down. */
   homePlayer: boolean
   destructible: boolean
@@ -213,6 +217,12 @@ export interface Shot {
   /** A charged shot's comet tail and the energy rings it sheds (combat.ts),
    *  built the first time its pool slot fires one. */
   aura?: Group | null
+  /** The themed part this shot flies as (`fx/weaponShots.ts`) in place of the
+   *  round core, and the ones its pool slot has built so far. */
+  prop?: ShotProp | null
+  /** …and its size against the prop's own (a Master's is larger than Flux's). */
+  propSize?: number
+  props?: Partial<Record<ShotStyle, ShotProp>>
 }
 
 export type PickupKind = 'bolt' | 'hp' | 'hpBig' | 'we' | 'weBig' | 'core'
@@ -294,8 +304,13 @@ export interface World {
   slowPlayer?(mul: number, dur: number): void
   /** A machine joins the fight mid-mission (a Hornet Queen's drones). */
   addEnemy?(e: Enemy): void
-  /** Melee / AoE / contact damage from an enemy to the player. */
-  hitPlayer(e: Enemy | null, dmg: number, opts: { blockable: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss'
+  /** The block lesson's Rotor Drone, `eta` s from ramming Flux: true when
+   *  the mission froze time on it until a block (#171). */
+  cueSwoop?(e: Enemy, eta: number): boolean
+  /** Melee / AoE / contact damage from an enemy to the player. `parryable`:
+   *  an unblockable dash/charge contact a perfect block still parries — the
+   *  attacker is stunned (a plain block only softens it, as before). */
+  hitPlayer(e: Enemy | null, dmg: number, opts: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss'
   shake(amount: number): void
   sfx(name: string, x?: number, z?: number): void
 }

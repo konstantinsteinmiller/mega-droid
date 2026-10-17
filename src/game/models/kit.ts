@@ -544,6 +544,24 @@ export const pose = (rig: Rig, name: string, rx = 0, ry = 0, rz = 0): void => {
   b.quaternion.copy(r.q).multiply(_pq)
 }
 
+const _pt = new Quaternion()
+/**
+ * `pose`, weighted: the bone turns from wherever the layers before put it
+ * (a gait, an idle) toward the target by `w` 0..1. A layer laid on with
+ * `pose(rig, b, k * x)` starts from REST the moment `k` leaves 0, so the
+ * joint jumps from the layer below; this one starts from where it is.
+ */
+export const poseToward = (rig: Rig, name: string, rx: number, ry: number, rz: number, w: number): void => {
+  if (w <= 0) return
+  const b = rig.bones[name]
+  const r = rig.rest[name]
+  if (!b || !r) return
+  _pe.set(rx, ry, rz)
+  _pt.copy(r.q).multiply(_pq.setFromEuler(_pe))
+  if (w >= 1) b.quaternion.copy(_pt)
+  else b.quaternion.slerp(_pt, w)
+}
+
 /** Offset a bone from its rest position (units, bone-parent space). */
 export const nudge = (rig: Rig, name: string, dx = 0, dy = 0, dz = 0): void => {
   const b = rig.bones[name]

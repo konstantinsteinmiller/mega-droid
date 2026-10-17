@@ -456,7 +456,8 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
           }
           if (!e.hitPlayer && d < SWOLLEN_R * 0.9 + PLAYER_R) {
             e.hitPlayer = true
-            w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+            // A perfect block stops the bounce cold: the parry stuns her (#172).
+            if (w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
           }
           if (m.run >= m.routeLen) { e.state = 'recover'; e.st = 0 }
         } else if (m.attack === 'mines') {

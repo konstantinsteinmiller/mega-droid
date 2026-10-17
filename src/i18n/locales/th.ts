@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: สไลด์ · {tank}: เจลซ่อม · {use}: โต้ตอบ · {beam}: วาร์ปกลับ',
       'more': '{w1} / {w2}: อาวุธพิเศษ · {target}: สลับเป้า · Esc: หยุดชั่วคราว',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} หรือ {b}'
     }
   },
   'levelUp': {

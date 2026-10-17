@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: skluz · {tank}: opravný gel · {use}: akce · {beam}: teleport',
       'more': '{w1} / {w2}: speciální zbraně · {target}: změna cíle · Esc: pauza',
       'space': 'Mezerník',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} nebo {b}'
     }
   },
   'levelUp': {

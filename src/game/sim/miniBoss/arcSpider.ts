@@ -579,7 +579,8 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
           if (Math.random() < 0.7) w.fx.sparks(e.x, fy(e) + 0.15, e.z, SPIDER_COLORS.coil, 2, 3, 0.1)
           if (!e.hitPlayer && distToPlayer(w, e) < e.def.radius + PLAYER_R + 0.2) {
             e.hitPlayer = true
-            w.hitPlayer(e, Math.round(e.dmg * 1.1), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+            // A perfect block stops the dash cold: the parry stuns it (#172).
+            if (w.hitPlayer(e, Math.round(e.dmg * 1.1), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
           }
           if (m.ran >= m.pathLen || (frac < 0.3 && ml > 0.05 && e.st > 0.1)) { e.state = 'recover'; e.st = 0 }
         }

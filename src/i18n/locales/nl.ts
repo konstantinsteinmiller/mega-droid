@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: glijden · {tank}: reparatiegel · {use}: interactie · {beam}: teleporteren',
       'more': '{w1} / {w2}: speciale wapens · {target}: ander doelwit · Esc: pauze',
       'space': 'Spatie',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} of {b}'
     }
   },
   'levelUp': {

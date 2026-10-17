@@ -426,6 +426,9 @@ export class LessonHologram {
     const turn = smooth(span(u, 0.85, 1.0)) * (1 - smooth(span(u, 1.5, 1.8)))
     this.stand(-1.2, -k * 2.8, FACE_PX - turn * (Math.PI / 2))
     animateHeroIdle(this.flux, t)
+    // The idle leaves the knees alone: straight, for the dash to bend from.
+    pose(this.flux, 'kneeL', 0, 0, 0)
+    pose(this.flux, 'kneeR', 0, 0, 0)
     const d = dashPose(this.flux, u, 1.0, 1.35)
     this.flux.root.position.y = -d.drop
     this.flux.root.rotation.x = d.lean

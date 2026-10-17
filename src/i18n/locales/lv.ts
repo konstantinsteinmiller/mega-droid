@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: slīdiens · {tank}: remonta gels · {use}: darbība · {beam}: teleports',
       'more': '{w1} / {w2}: speciālie ieroči · {target}: mainīt mērķi · Esc: pauze',
       'space': 'Atstarpe',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} vai {b}'
     }
   },
   'levelUp': {

@@ -1,4 +1,4 @@
-import { BufferGeometry, Group, Mesh, Color, type Object3D } from 'three'
+import { BufferGeometry, Group, Mesh, Color, type BufferAttribute, type Object3D } from 'three'
 import { CELL, WALL_H, Cell, Ramp, pitKindOf, type MapData, type Door, type Terrain } from './levelGen'
 import type { Theme } from './themes'
 import { levelAtlas } from './textures'
@@ -491,13 +491,20 @@ export const buildClimbLevel = async (
   await slice()
 
   // ── Set dressing: each prop into its room's decor and glow (#114) ──
+  // Each keeps its vertex runs in the merged meshes, so a prop shot to bits
+  // (#169) can be taken out of them (`LevelMeshes.breakDecor`).
+  const vertsOf = (gs: BufferGeometry[]): number => gs.reduce((a, g) => a + g.getAttribute('position').count, 0)
+  const dressRuns: Array<{ room: number; toon: [number, number]; glow: [number, number] } | null> = []
   for (const p of dressing.props) {
     // A wall prop's origin is on the wall's line: its own cell is its face's.
     const o = owner[p.face ? Number(p.face.split(':')[0]) : K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))]!
-    if (o < 0) continue
+    if (o < 0) { dressRuns.push(null); continue }
     const parts = decorParts(p.kind)
+    const t0 = vertsOf(decor[o]!)
+    const g0 = vertsOf(glows[o]!)
     for (const g of parts.toon) decor[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
     for (const g of parts.glow) glows[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
+    dressRuns.push({ room: o, toon: [t0, vertsOf(decor[o]!) - t0], glow: [g0, vertsOf(glows[o]!) - g0] })
   }
   await slice()
 
@@ -726,7 +733,11 @@ export const buildClimbLevel = async (
   const rooms: Group[] = []
   const bounds: LevelMeshes['bounds'] = []
   const floorMat = toonVCMap(levelAtlas())
+  const decorGeo: Array<BufferGeometry | null> = []
+  const glowGeo: Array<BufferGeometry | null> = []
   for (let r = 0; r < nRooms; r++) {
+    decorGeo.push(null)
+    glowGeo.push(null)
     const g = new Group()
     const geo = batches[r]!.build()
     if (geo) {
@@ -741,13 +752,18 @@ export const buildClimbLevel = async (
     if (decor[r]!.length) {
       const dg = merge(decor[r]!)
       dg.computeBoundingSphere()
+      decorGeo[r] = dg
       g.add(new Mesh(dg, toonVC()))
       const ol = new Mesh(dg, outlineMat(0.035))
       ol.renderOrder = -1
       g.add(ol)
     }
     await slice()
-    if (glows[r]!.length) g.add(new Mesh(merge(glows[r]!), glowVC()))
+    if (glows[r]!.length) {
+      const gg = merge(glows[r]!)
+      glowGeo[r] = gg
+      g.add(new Mesh(gg, glowVC()))
+    }
     if (lava[r]!.length) g.add(new Mesh(merge(lava[r]!), lavaMaterial()))
     secretWalls.forEach((w, n) => { if (secretOwner[n] === r) g.add(w) })
     rooms.push(g)
@@ -772,8 +788,27 @@ export const buildClimbLevel = async (
   })
   const out: LevelMeshes = { root, rooms, sky: buildSky(theme), bounds, owner, doorFrames }
   if (secretWalls.length) out.secretWalls = secretWalls
+  out.breakDecor = (n: number): void => {
+    const run = dressRuns[n]
+    if (!run) return
+    dropRun(decorGeo[run.room] ?? null, run.toon)
+    dropRun(glowGeo[run.room] ?? null, run.glow)
+  }
   return out
 }
+
+/** Take a run of vertices out of a merged mesh (a broken prop, #169): every
+ *  one moves to a single point far under the level, so its triangles (and
+ *  the outline's hull of them) shrink to nothing. Only that run uploads. */
+export const dropRun = (geo: BufferGeometry | null, [start, count]: [number, number]): void => {
+  if (!geo || count <= 0) return
+  const pos = geo.getAttribute('position') as BufferAttribute
+  for (let i = start; i < start + count; i++) pos.setXYZ(i, 0, DROP_Y, 0)
+  pos.addUpdateRange(start * 3, count * 3)
+  pos.needsUpdate = true
+}
+/** Where a dropped run's vertices go (m): far below every floor. */
+const DROP_Y = -500
 
 /** A door frame (rounded striped lintel, two posts, floor stripes) standing
  *  on the corridor floor at `y` — the labyrinth's frame, lifted. */

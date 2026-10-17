@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: csúszás · {tank}: Javítózselé · {use}: használat · {beam}: teleport',
       'more': '{w1} / {w2}: különleges fegyverek · {target}: célpontváltás · Esc: szünet',
       'space': 'Szóköz',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} vagy {b}'
     }
   },
   'levelUp': {

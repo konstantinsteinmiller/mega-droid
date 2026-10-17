@@ -1,5 +1,5 @@
 import {
-  AdditiveBlending, BackSide, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, Float32BufferAttribute,
+  AdditiveBlending, BackSide, BufferGeometry, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DoubleSide, Float32BufferAttribute,
   Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, PlaneGeometry, RepeatWrapping, SRGBColorSpace,
   SphereGeometry, type Material
 } from 'three'
@@ -24,6 +24,16 @@ import { toonVC, glowVC, outlineMat } from './toon'
 const NEON = ['#ff3fd0', '#3ff4ff', '#ffb03a', '#9d6bff', '#3fff9a']
 export const STREET_HALF = 4.8
 const LEN = 46
+/** The ground round the street, out to the far skyline ring (m): its radius
+ *  and its height, clear under the asphalt's underside (-0.2). */
+export const STREET_GROUND_R = 150
+export const STREET_GROUND_Y = -0.6
+/** How far the window-grid facade stands off its tower's street face, and
+ *  where the neon window strips stand in front of it (m, out from the wall):
+ *  each clear of the next by centimetres that hold at the far skyline's
+ *  depth, so no two opaque faces share a plane. */
+export const FACADE_GAP = 0.06
+const STRIP_OUT = 0.16
 
 const lcg = (seed: number) => {
   let s = seed >>> 0 || 1
@@ -501,6 +511,18 @@ const buildBackdrop = (low: boolean): Group => {
   const near = ring(95, 42, tex.near, -4)
   near.renderOrder = -8
   g.add(far, near)
+  // The ground the skyline stands on, out to the far ring (#170): past the
+  // street's end and between its towers the rings' buildings floated over the
+  // sky's low band. Under the asphalt (whose underside is at -0.2), never in
+  // its plane; the rings' feet (-4, -6) sink into it (they draw after it, see
+  // through, and the depth test hides what is below it).
+  const ground = new Mesh(
+    new CircleGeometry(STREET_GROUND_R, 64).rotateX(-Math.PI / 2),
+    new MeshBasicMaterial({ color: new Color('#0e0a1e'), fog: false, toneMapped: false })
+  )
+  ground.position.y = STREET_GROUND_Y
+  ground.name = 'streetGround'
+  g.add(ground)
   // The Volt Tower, lit, at the end of the street: where this fight is.
   const spireMat = new MeshBasicMaterial({ color: new Color('#3a2a5a'), fog: false, toneMapped: false })
   const spire = new Mesh(rcone(5, 0.6, 70, 0.3, 12), spireMat)
@@ -541,11 +563,14 @@ export interface Street {
   root: Group
   /** Billboards' flicker and the rain, on the action clock (s). */
   animate(t: number): void
+  /** The merged set's pieces, one geometry each, in street space — kept only
+   *  when asked (`keepParts`): the z-fighting test reads them. */
+  parts?: BufferGeometry[]
 }
 
 /** `low` (budget phones, `engine/quality.ts`): a third of the rain, fewer
  *  puddles, half-size backdrop textures. */
-export const buildStreet = (opts: { low?: boolean } = {}): Street => {
+export const buildStreet = (opts: { low?: boolean; keepParts?: boolean } = {}): Street => {
   const low = !!opts.low
   const root = new Group()
   const toon: BufferGeometry[] = []
@@ -585,15 +610,18 @@ export const buildStreet = (opts: { low?: boolean } = {}): Street => {
           uv[i + 1] = uv[i + 1]! * (fh / 10)
         }
         const face = new Mesh(pg, facadeMat)
-        face.position.set(s * (STREET_HALF + 1.2) - s * 0.01, 1.2 + fh / 2, zc)
+        // Clear of the tower's own face by FACADE_GAP, never a centimetre:
+        // at the cold open's 15-40 m the two would tear into each other.
+        face.position.set(s * (STREET_HALF + 1.2 - FACADE_GAP), 1.2 + fh / 2, zc)
         face.rotation.y = -s * Math.PI / 2
         root.add(face)
       }
       // A setback storey on top.
       toon.push(xform(paint(rbox(d * 0.7, 3, w * 0.7, 0.1), '#262c52'), [x, h + 1.5, zc]))
-      // Window strips facing the street, in one neon per tower.
+      // Window strips facing the street, in one neon per tower: standing
+      // wholly in front of the facade plane, not half through it.
       const col = NEON[Math.floor(r() * NEON.length)]!
-      const face = s * (STREET_HALF + 1.2) - s * 0.02
+      const face = s * (STREET_HALF + 1.2 - STRIP_OUT)
       for (let y = 2; y < h - 1; y += 1.6 + r() * 1.2) {
         if (r() < 0.35) continue
         glowG.push(xform(paint(rbox(0.05, 0.14, w * (0.4 + r() * 0.5), 0.3), r() < 0.8 ? '#28345e' : col), [face, y, zc + (r() - 0.5)]))
@@ -686,6 +714,7 @@ export const buildStreet = (opts: { low?: boolean } = {}): Street => {
   const red = new Color('#ff2d3f')
   return {
     root,
+    parts: opts.keepParts ? [...toon, ...glowG] : undefined,
     animate: (t) => {
       for (const b of billboards) {
         // Mostly the ad; Vex's face cuts in, glitching, more and more often.

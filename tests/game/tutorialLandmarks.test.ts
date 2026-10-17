@@ -25,4 +25,12 @@ describe('the tutorial rooms\' landmarks', () => {
       expect(mine.length).toBeLessThanOrEqual(LANDMARKS_PER_ROOM + 2)
     })
   })
+
+  // #175: a wall prop shaped like a doorway (two posts and a lintel) on a
+  // wall with no door sent players looking for a way through.
+  it('hangs no fake door frame on any wall', () => {
+    const { props } = planDecor(map, 'scrapyard')
+    const doorLike: DecorKind[] = ['shoring']
+    expect(props.filter(p => doorLike.includes(p.kind as DecorKind))).toEqual([])
+  })
 })

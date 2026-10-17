@@ -1,173 +1,357 @@
 {
   "source": "https://mega-adventure-leaderboard.rodent-race.workers.dev",
-  "fetchedAt": 1791983734181,
-  "updatedAt": 1791983734118,
-  "total": 27,
+  "fetchedAt": 1792279675472,
+  "updatedAt": 1792279675547,
+  "total": 57,
   "entries": [
     {
       "rank": 1,
+      "name": "Dynamo475548",
+      "score": 48101,
+      "flair": 20
+    },
+    {
+      "rank": 2,
       "name": "Cannon908807",
       "score": 18913,
       "flair": 14
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "Rivet465294",
       "score": 12045,
       "flair": 12
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "Gizmo777605",
       "score": 9304,
       "flair": 10
     },
     {
-      "rank": 4,
+      "rank": 5,
+      "name": "Circuit354258",
+      "score": 6502,
+      "flair": 9
+    },
+    {
+      "rank": 6,
+      "name": "DARK5899",
+      "score": 5244,
+      "flair": 8
+    },
+    {
+      "rank": 7,
+      "name": "Circuit958342",
+      "score": 3747,
+      "flair": 7
+    },
+    {
+      "rank": 8,
       "name": "Dynamo892057",
       "score": 3529,
       "flair": 7
     },
     {
-      "rank": 5,
+      "rank": 9,
+      "name": "Blaster799071",
+      "score": 2575,
+      "flair": 6
+    },
+    {
+      "rank": 10,
       "name": "Circuit379427",
       "score": 2056,
       "flair": 6
     },
     {
-      "rank": 6,
+      "rank": 11,
       "name": "Circuit890216",
       "score": 1906,
       "flair": 6
     },
     {
-      "rank": 7,
+      "rank": 12,
       "name": "Dynamo662293",
       "score": 1778,
       "flair": 5
     },
     {
-      "rank": 8,
+      "rank": 13,
       "name": "Circuit504409",
       "score": 1404,
       "flair": 5
     },
     {
-      "rank": 9,
+      "rank": 14,
+      "name": "Rivet273152",
+      "score": 1272,
+      "flair": 5
+    },
+    {
+      "rank": 15,
       "name": "Circuit164796",
       "score": 1095,
       "flair": 5
     },
     {
-      "rank": 10,
+      "rank": 16,
       "name": "Buster679788",
       "score": 901,
       "flair": 4
     },
     {
-      "rank": 11,
+      "rank": 17,
+      "name": "Cannon504019",
+      "score": 891,
+      "flair": 4
+    },
+    {
+      "rank": 18,
+      "name": "Servo372050",
+      "score": 778,
+      "flair": 4
+    },
+    {
+      "rank": 19,
+      "name": "EnchantedZombie.",
+      "score": 638,
+      "flair": 4
+    },
+    {
+      "rank": 20,
       "name": "Gizmo130233",
       "score": 615,
       "flair": 4
     },
     {
-      "rank": 11,
+      "rank": 20,
       "name": "Gizmo301696",
       "score": 615,
       "flair": 4
     },
     {
-      "rank": 13,
+      "rank": 22,
+      "name": "Piston707492",
+      "score": 558,
+      "flair": 3
+    },
+    {
+      "rank": 23,
+      "name": "thedestroyer87",
+      "score": 516,
+      "flair": 3
+    },
+    {
+      "rank": 23,
+      "name": "Sprocket953273",
+      "score": 516,
+      "flair": 3
+    },
+    {
+      "rank": 25,
+      "name": "ice_king_123",
+      "score": 500,
+      "flair": 3
+    },
+    {
+      "rank": 25,
+      "name": "Cuong3110",
+      "score": 500,
+      "flair": 3
+    },
+    {
+      "rank": 27,
       "name": "_N3XuS_",
       "score": 474,
       "flair": 3
     },
     {
-      "rank": 14,
+      "rank": 27,
+      "name": "Cannon950010",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Sprocket956661",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Gizmo683934",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "SillyTomato.IdK5",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Dynamo557907",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Servo205695",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "_NExus_",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Cannon303517",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Piston238116",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Cannon858751",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 27,
+      "name": "Dynamo236046",
+      "score": 474,
+      "flair": 3
+    },
+    {
+      "rank": 39,
       "name": "Piston655938",
       "score": 460,
       "flair": 3
     },
     {
-      "rank": 14,
+      "rank": 39,
       "name": "Circuit403360",
       "score": 460,
       "flair": 3
     },
     {
-      "rank": 14,
+      "rank": 39,
       "name": "Piston899850",
       "score": 460,
       "flair": 3
     },
     {
-      "rank": 14,
+      "rank": 39,
       "name": "Piston927542",
       "score": 460,
       "flair": 3
     },
     {
-      "rank": 14,
+      "rank": 39,
       "name": "Android312987",
       "score": 460,
       "flair": 3
     },
     {
-      "rank": 19,
+      "rank": 44,
       "name": "Android665399",
       "score": 340,
       "flair": 3
     },
     {
-      "rank": 20,
+      "rank": 45,
       "name": "Android213867",
       "score": 332,
       "flair": 3
     },
     {
-      "rank": 21,
+      "rank": 46,
       "name": "Servo773490",
       "score": 328,
       "flair": 3
     },
     {
-      "rank": 22,
+      "rank": 47,
       "name": "Android647047",
       "score": 318,
       "flair": 3
     },
     {
-      "rank": 23,
+      "rank": 48,
       "name": "Circuit910837",
       "score": 188,
       "flair": 2
     },
     {
-      "rank": 24,
+      "rank": 49,
+      "name": "Android946839",
+      "score": 162,
+      "flair": 2
+    },
+    {
+      "rank": 49,
+      "name": "Circuit758522",
+      "score": 162,
+      "flair": 2
+    },
+    {
+      "rank": 49,
+      "name": "Rivet388900",
+      "score": 162,
+      "flair": 2
+    },
+    {
+      "rank": 49,
+      "name": "SkinnyTiger.dS10",
+      "score": 162,
+      "flair": 2
+    },
+    {
+      "rank": 53,
       "name": "Sprocket932332",
       "score": 126,
       "flair": 2
     },
     {
-      "rank": 25,
+      "rank": 54,
       "name": "Android731972",
       "score": 120,
       "flair": 2
     },
     {
-      "rank": 26,
+      "rank": 55,
       "name": "Dynamo550667",
       "score": 98,
       "flair": 2
     },
     {
-      "rank": 27,
+      "rank": 56,
       "name": "Blaster686068",
       "score": 32,
+      "flair": 1
+    },
+    {
+      "rank": 57,
+      "name": "Sprocket516102",
+      "score": 12,
       "flair": 1
     }
   ],
   "dist": [
+    [
+      48101,
+      1
+    ],
     [
       18913,
       1
@@ -181,7 +365,23 @@
       1
     ],
     [
+      6502,
+      1
+    ],
+    [
+      5244,
+      1
+    ],
+    [
+      3747,
+      1
+    ],
+    [
       3529,
+      1
+    ],
+    [
+      2575,
       1
     ],
     [
@@ -201,6 +401,10 @@
       1
     ],
     [
+      1272,
+      1
+    ],
+    [
       1095,
       1
     ],
@@ -209,12 +413,36 @@
       1
     ],
     [
+      891,
+      1
+    ],
+    [
+      778,
+      1
+    ],
+    [
+      638,
+      1
+    ],
+    [
       615,
       2
     ],
     [
-      474,
+      558,
       1
+    ],
+    [
+      516,
+      2
+    ],
+    [
+      500,
+      2
+    ],
+    [
+      474,
+      12
     ],
     [
       460,
@@ -241,6 +469,10 @@
       1
     ],
     [
+      162,
+      4
+    ],
+    [
       126,
       1
     ],
@@ -254,6 +486,10 @@
     ],
     [
       32,
+      1
+    ],
+    [
+      12,
       1
     ]
   ]

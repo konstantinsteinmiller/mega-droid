@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: slysti · {tank}: remonto gelis · {use}: sąveika · {beam}: teleportuotis',
       'more': '{w1} / {w2}: specialieji ginklai · {target}: keisti taikinį · Esc: pauzė',
       'space': 'Tarpas',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} arba {b}'
     }
   },
   'levelUp': {

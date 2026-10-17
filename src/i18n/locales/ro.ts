@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: alunecare · {tank}: Gel Reparator · {use}: interacțiune · {beam}: teleportare',
       'more': '{w1} / {w2}: arme speciale · {target}: schimbă ținta · Esc: pauză',
       'space': 'Spațiu',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} sau {b}'
     }
   },
   'levelUp': {

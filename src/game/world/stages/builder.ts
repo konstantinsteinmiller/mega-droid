@@ -444,14 +444,15 @@ export class Builder {
   }
 
   /** A machine's post, leashed to a rectangle of cells (inclusive). */
-  foe(role: FoePost['role'], i: number, j: number, yaw: number, box: [number, number, number, number], fly?: [number, number], kind?: FoePost['kind'], echo?: string): void {
+  foe(role: FoePost['role'], i: number, j: number, yaw: number, box: [number, number, number, number], fly?: [number, number], kind?: FoePost['kind'], echo?: string, elite?: boolean): void {
     const [i0, j0, i1, j1] = box
     const pad = 0.75
     this.foes.push({
       role, x: cellCenter(i), z: cellCenter(j), y: this.floor[this.k(i, j)]!, yaw, room: this.room[this.k(i, j)]!,
       leash: [i0 * CELL + pad, j0 * CELL + pad, (i1 + 1) * CELL - pad, (j1 + 1) * CELL - pad], fly,
       ...(kind ? { kind } : {}),
-      ...(echo ? { echo } : {})
+      ...(echo ? { echo } : {}),
+      ...(elite ? { elite } : {})
     })
   }
 

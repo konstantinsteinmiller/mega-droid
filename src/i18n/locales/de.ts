@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: rutschen · {tank}: Reparaturgel · {use}: interagieren · {beam}: rausbeamen',
       'more': '{w1} / {w2}: Spezialwaffen · {target}: Ziel wechseln · Esc: Pause',
       'space': 'Leertaste',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} oder {b}'
     }
   },
   'levelUp': {

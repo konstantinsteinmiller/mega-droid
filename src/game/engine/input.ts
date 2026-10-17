@@ -31,9 +31,9 @@
  *     nothing). Moving the mouse looks, the left button shoots (hold to
  *     charge, release to fire the charge), the right button blocks.
  *   • WASD moves (↑ / ↓ too), ← / → turn, Space slides (the dodge), 1/2 fire
- *     the special weapons, H drinks a tank, E interacts, B beams out, Tab
- *     switches target. Q still slides and Shift still blocks, untaught: the
- *     coach only ever SHOWS one input per action. Ctrl no longer slides —
+ *     the special weapons (Q fires the first too, taught beside the 1), H
+ *     drinks a tank, E interacts, B beams out, Tab switches target. Shift
+ *     still blocks, untaught. Ctrl no longer slides —
  *     Ctrl+W, with W held for walking, closes the tab.
  *   • Esc releases the capture (the browser owns that key while it is
  *     captured); the scene treats a lost capture as "pause".

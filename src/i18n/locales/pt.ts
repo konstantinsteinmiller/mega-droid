@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: deslizar · {tank}: Gel de Reparo · {use}: interagir · {beam}: teleportar',
       'more': '{w1} / {w2}: armas especiais · {target}: trocar alvo · Esc: pausar',
       'space': 'Espaço',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} ou {b}'
     }
   },
   'levelUp': {

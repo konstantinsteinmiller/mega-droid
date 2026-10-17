@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: sirpanish · {tank}: taʼmir geli · {use}: amal · {beam}: teleport',
       'more': '{w1} / {w2}: maxsus qurollar · {target}: nishonni almashtirish · Esc: pauza',
       'space': 'Probel',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} yoki {b}'
     }
   },
   'levelUp': {

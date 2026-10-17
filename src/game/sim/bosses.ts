@@ -401,7 +401,8 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
       const frac = step(w, e, e.tx * 13 * dt, e.tz * 13 * dt)
       if (!e.hitPlayer && d < e.def.radius + PLAYER_R + 0.2) {
         e.hitPlayer = true
-        w.hitPlayer(e, Math.round(e.dmg * 1.2), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+        // A perfect block stops the charge cold: the parry stuns the boss (#172).
+        if (w.hitPlayer(e, Math.round(e.dmg * 1.2), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') return false
       }
       if (frac < 0.4 && e.st > 0.1) {
         w.fx.sparks(e.x + e.tx, 1, e.z + e.tz, '#ffe07a', 20, 7)

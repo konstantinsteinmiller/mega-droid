@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: 슬라이딩 · {tank}: 수리 젤 · {use}: 상호작용 · {beam}: 귀환',
       'more': '{w1} / {w2}: 특수 무기 · {target}: 타깃 전환 · Esc: 일시정지',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} 또는 {b}'
     }
   },
   'levelUp': {

@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: γλίστρημα · {tank}: τζελ επισκευής · {use}: χρήση · {beam}: τηλεμεταφορά',
       'more': '{w1} / {w2}: ειδικά όπλα · {target}: αλλαγή στόχου · Esc: παύση',
       'space': 'Διάστημα',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} ή {b}'
     }
   },
   'levelUp': {

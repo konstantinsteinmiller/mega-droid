@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: esvarar · {tank}: xel reparador · {use}: interactuar · {beam}: teletransporte',
       'more': '{w1} / {w2}: armas especiais · {target}: cambiar de obxectivo · Esc: pausa',
       'space': 'Espazo',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} ou {b}'
     }
   },
   'levelUp': {

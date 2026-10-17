@@ -177,6 +177,17 @@ describe('the hold ring', () => {
 })
 
 describe('InputGlyph in a frozen frame', () => {
+  // #174: the first special weapon's key is drawn with its Q alternate.
+  it('draws a key with a taught alternate as two caps and a slash', () => {
+    const w = mount(InputGlyph, { props: { kind: 'key', code: 'Digit1' } })
+    expect(w.findAll('rect.cap')).toHaveLength(2)
+    expect(w.findAll('text.label').map(e => e.text())).toEqual(['1', 'Q'])
+    expect(w.find('path.or').exists()).toBe(true)
+    const one = mount(InputGlyph, { props: { kind: 'key', code: 'Digit2' } })
+    expect(one.findAll('rect.cap')).toHaveLength(1)
+    expect(one.find('path.or').exists()).toBe(false)
+  })
+
   const classes = (w: ReturnType<typeof mount>) => w.findAll('[class]').flatMap(e => e.classes())
 
   it('draws touch "move" as a finger on an ∞, moving on one clock and resting for reduced motion', () => {

@@ -131,7 +131,7 @@ export class WeaponSystem {
           const home = this.nearestOnLine(mx, mz, a, taken)
           if (home) taken.push(home)
           const s = sys.spawnPlayerShot('charge1', mx, my, mz, Math.sin(a), dy, Math.cos(a), dmg, false, home)
-          this.tag(s, id, '#c9d3e6')
+          this.tag(s, id, '#c9d3e6', 0.6)
         }
         h.sfx('shoot')
         break
@@ -267,7 +267,7 @@ export class WeaponSystem {
           const a = yaw + (k - 1) * 0.55
           const home = tgt && k === 1 ? tgt : marks[k] ?? marks[0] ?? tgt
           const s = sys.spawnPlayerShot('charge1', mx, my + 0.2, mz, Math.sin(a), dy + 0.15, Math.cos(a), Math.round(dmg * 0.7), false, home)
-          this.tag(s, id, '#b8ff5a')
+          this.tag(s, id, '#b8ff5a', 0.8)
           s.turn = 5
           s.vx *= 0.7
           s.vy *= 0.7
@@ -288,13 +288,17 @@ export class WeaponSystem {
     return 'ok'
   }
 
-  private tag(s: import('./world').Shot, id: WeaponId, color: string): void {
+  /** `size`: the themed body against its own length (a spread's pellets and a
+   *  swarm's drones are small). A weapon with no body of its own (flame,
+   *  lightning) keeps the glowing core. */
+  private tag(s: import('./world').Shot, id: WeaponId, color: string, size = 1): void {
     s.kind = 'special'
     s.weapon = id
     s.element = WEAPONS[id].element
     ;(s.sprite.material as import('three').SpriteMaterial).color.set(color)
     ;(s.core!.material as MeshBasicMaterial).color.set('#ffffff')
     s.color = color
+    this.host.system.setShotStyle(s, id, size)
   }
 
   private nearestInFront(): Enemy | null {
@@ -335,7 +339,7 @@ export class WeaponSystem {
     for (let k = 0; k < 4; k++) {
       const a = yaw + (k / 3 - 0.5) * 0.5
       const s = h.system.spawnPlayerShot('charge1', h.player.x + Math.sin(a) * 0.8, (h.player.y ?? 0) + EYE_H - 0.4, h.player.z + Math.cos(a) * 0.8, Math.sin(a), 0, Math.cos(a), dmg, false, tgt)
-      this.tag(s, 'galeGuard', '#7fffc8')
+      this.tag(s, 'galeGuard', '#7fffc8', 0.8)
       s.pierce = 2
     }
     this.guardT = 0

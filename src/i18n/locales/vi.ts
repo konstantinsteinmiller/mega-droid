@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: trượt · {tank}: Gel Sửa Chữa · {use}: tương tác · {beam}: dịch chuyển về',
       'more': '{w1} / {w2}: vũ khí đặc biệt · {target}: đổi mục tiêu · Esc: tạm dừng',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} hoặc {b}'
     }
   },
   'levelUp': {

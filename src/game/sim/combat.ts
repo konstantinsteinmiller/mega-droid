@@ -6,9 +6,11 @@ import type { Enemy, Shot, ShotKind, World, Pickup, PickupKind } from './world'
 import type { PlayerStats } from './stats'
 import { glowTexture } from '../world/textures'
 import { SHOT_LOOK, CHARGE_AURA, buildAura, tintAura, poseAura, type ChargeKind } from '../fx/chargedShot'
-import { hasLineOfSight, floorAt } from '../world/nav'
+import { hasLineOfSight, floorAt, type Nav } from '../world/nav'
+import { WALL_H } from '../world/levelGen'
 import { parryWindow, wake, golemShielded, wakeGolem, ROCK_G, tryStun, smashLamp, shove } from './enemies'
 import { Rubble } from '../fx/rubble'
+import { buildShotProp, poseShotProp, isShotStyle, type ShotStyle } from '../fx/weaponShots'
 import { pushHud } from '../state/hud'
 import { incomingShot } from '../state/damageFeed'
 import { buildBolt, buildCapsule } from '../models/props'
@@ -70,6 +72,20 @@ export interface CombatHost extends World {
    *  tested along the shot's step before the wall stops it: true if one
    *  caught the shot (it ends there). */
   shotHitsStage?(s: Shot): boolean
+  /** A player shot over the walls (`Shot.sky`): true if it struck the city's
+   *  traffic (a flying taxi or a parcel drone, #169). It ends there. */
+  shotHitsSky?(s: Shot): boolean
+}
+
+/** How far a player shot flies on once it has cleared the walls (m). */
+export const SKY_RUN = 100
+
+/** The highest wall top of the level (m): a shot above it has nothing left
+ *  to strike but the sky. */
+export const roofOf = (nav: Nav): number => {
+  let top = WALL_H
+  for (const y of nav.map.terrain?.wallTop ?? []) if (y > top && Number.isFinite(y)) top = y
+  return top
 }
 
 /** Height of the player's feet: the climb's floors (`nav.floorAt`, and an
@@ -153,6 +169,24 @@ interface RingHazard {
   source: Enemy
 }
 
+/** What a Core Master's own attack throws, as the weapon it gave Flux (the
+ *  same part in flight), and how much larger than Flux's copy of it. The
+ *  flame and lightning attacks keep their effects. */
+const BOSS_SHOT: Record<string, [ShotStyle, number]> = {
+  droneSwarm: ['droneSwarm', 1.1],
+  rotorStorm: ['droneSwarm', 1.1],
+  magnetMissiles: ['magnetPull', 1.2],
+  polarStorm: ['magnetPull', 1.2],
+  bubbleVolley: ['bubbleLance', 1.1],
+  bladeBoomerang: ['neonBlade', 1.3],
+  neonVolley: ['neonBlade', 0.8],
+  iceVolley: ['iceLance', 1.1],
+  iceVolleyBig: ['iceLance', 1.1],
+  featherFan: ['galeGuard', 1],
+  featherStorm: ['galeGuard', 1],
+  drillBombs: ['drillBomb', 1.5]
+}
+
 /** Low-quality devices get half the special weapons' trail particles. */
 const LOW_FX = sceneQuality() === 'low'
 
@@ -204,15 +238,64 @@ export class CombatSystem {
     s.element = 'none'
     s.weapon = ''
     s.back = false
+    s.sky = false
     s.homePlayer = false
     s.destructible = false
     s.burn = 0
     s.freeze = 0
     s.rock = null
+    this.dropProp(s)
     s.sprite.visible = true
     s.core!.visible = true
     if (s.aura) s.aura.visible = false
     return s
+  }
+
+  private roofNav: Nav | null = null
+  private roofY = WALL_H
+  /** The level's highest wall top (`roofOf`), worked out once a level. */
+  private roof(): number {
+    const nav = this.host.nav
+    if (nav !== this.roofNav) {
+      this.roofNav = nav
+      this.roofY = roofOf(nav)
+    }
+    return this.roofY
+  }
+
+  private dropProp(s: Shot): void {
+    if (s.prop) s.prop.root.visible = false
+    s.prop = null
+  }
+
+  /**
+   * Fly this shot as a weapon's own part (`fx/weaponShots.ts`) instead of a
+   * round core: the glow stays (it is also the parry cue), the body is the
+   * drill, magnet, crystal… `size`: against the part's own length.
+   */
+  setShotStyle(s: Shot, style: string, size = 1): void {
+    if (!isShotStyle(style)) return
+    s.props ??= {}
+    let p = s.props[style]
+    if (!p) {
+      p = buildShotProp(style)
+      s.props[style] = p
+      this.root.add(p.root)
+    }
+    this.dropProp(s)
+    s.prop = p
+    s.propSize = size
+    p.root.visible = true
+    s.core!.visible = false
+    // Posed now, so a shot spawned between a sync and the next draws in place.
+    poseShotProp(p, s.x, s.y, s.z, s.vx, s.vy, s.vz, size, -s.life)
+  }
+
+  /** A Core Master's own attack throws that Master's weapon. */
+  private themeBossShot(s: Shot, e: Enemy): void {
+    if (!e.bossId) return
+    const t = BOSS_SHOT[e.attack]
+    if (t) this.setShotStyle(s, t[0], t[1])
   }
 
   private look(s: Shot, kind: keyof typeof SHOT_LOOK, glowColor?: string): void {
@@ -295,6 +378,7 @@ export class CombatSystem {
     s.blockable = shotBlockable(s.kind)
     const glow = e.element === 'fire' ? '#ff7a2a' : e.element === 'ice' ? '#7fe8ff' : e.element === 'volt' ? '#fff04a' : '#ff5a3a'
     this.look(s, 'enemy', glow)
+    this.themeBossShot(s, e)
     return s
   }
 
@@ -327,7 +411,8 @@ export class CombatSystem {
     s.life = 5
     s.turn = 1.8
     this.look(s, 'enemy', '#d3fbff')
-    s.sprite.scale.setScalar(1.3)
+    // A Master's weapon in flight keeps a smaller halo (it is also the parry cue).
+    s.sprite.scale.setScalar(s.prop ? 0.9 : 1.3)
     s.core!.scale.setScalar(0.2)
     s.radius = 0.25
   }
@@ -396,7 +481,7 @@ export class CombatSystem {
       ;(s.sprite.material as SpriteMaterial).color.set('#6e5a40')
       s.sprite.scale.setScalar(1.5)
       s.rock = this.rubble.stone(true)
-    }
+    } else this.themeBossShot(s, e)
   }
 
   // ─── Update ────────────────────────────────────────────────────────────────
@@ -407,6 +492,7 @@ export class CombatSystem {
       if (!s.active) {
         // Ended elsewhere (a Gale Guard leaf ate it): its stone crumbles too
         if (s.rock) this.kill(s)
+        if (s.prop) this.dropProp(s)
         continue
       }
       s.px = s.x
@@ -527,10 +613,19 @@ export class CombatSystem {
         continue
       }
 
-      // World collision (walls, closed doors, pillars, wall-corner and door
-      // posts, floor — on the climb a ledge's floor, so its cliff face stops
-      // a shot too)
-      if (s.y < floorAt(h.nav, s.x, s.z) + 0.02 || !hasLineOfSight(h.nav, s.px, s.pz, s.x, s.z)) {
+      // Over every wall top (#169): nothing in the level stops it, and it
+      // flies on into the sky — over the walls there is no roof, so a shot
+      // the walls no longer stop must not end at its usual range either.
+      if (s.owner === 'player' && s.y > this.roof()) {
+        if (!s.sky) {
+          s.sky = true
+          s.life = Math.max(s.life, SKY_RUN / (Math.hypot(s.vx, s.vy, s.vz) || 1))
+        }
+        if (h.shotHitsSky?.(s)) {
+          this.kill(s)
+          continue
+        }
+      } else if (s.y < floorAt(h.nav, s.x, s.z) + 0.02 || !hasLineOfSight(h.nav, s.px, s.pz, s.x, s.z)) {
         this.wallHit(s)
         if (s.owner === 'enemy') h.onShotBlocked?.(s)
         this.kill(s)
@@ -645,13 +740,19 @@ export class CombatSystem {
         s.rock.position.set(x, y, z)
         s.rock.rotation.set(s.life * 9, s.life * 4, s.life * 6)
       }
+      if (s.prop) {
+        // A lobbed shell has no velocity of its own: it noses along its arc.
+        const shell = s.kind === 'shell'
+        // Its remaining life is a free, steady clock (it only counts down)
+        poseShotProp(s.prop, x, y, z, shell ? s.x - s.px : s.vx, shell ? s.y - s.py : s.vy, shell ? s.z - s.pz : s.vz, s.propSize ?? 1, -s.life)
+      }
       // Player shots start small and grow over their first ~2.5 m, so a
       // charge shot leaving the buster does not white out the screen.
       if (s.owner === 'player' && s.kind !== 'reflect') {
         const L = SHOT_LOOK[s.kind]!
         const d = Math.hypot(x - h.player.x, z - h.player.z)
         const k = Math.min(1, Math.max(0.15, (d - 0.4) / 2.5))
-        s.sprite.scale.setScalar(L.g * k)
+        s.sprite.scale.setScalar(L.g * k * (s.prop ? 0.6 : 1))
         const A = CHARGE_AURA[s.kind as ChargeKind]
         if (s.aura) s.aura.visible = !!A
         if (A) this.syncAura(s, x, y, z, k)
@@ -692,6 +793,7 @@ export class CombatSystem {
     s.sprite.visible = false
     if (s.core) s.core.visible = false
     if (s.aura) s.aura.visible = false
+    this.dropProp(s)
     if (s.rock) {
       // A stone breaks where it ends: on a wall, the floor, Flux, a golem
       this.rubble.crumble(s.x, s.y, s.z, s.kind === 'shell' ? 7 : 4)

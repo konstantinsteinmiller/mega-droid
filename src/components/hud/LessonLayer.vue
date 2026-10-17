@@ -61,7 +61,7 @@ import InputGlyph from './InputGlyph.vue'
 import ChargeDemo from './ChargeDemo.vue'
 import { DEMO_ANCHOR, DEMO_CLIP } from './glyphGeometry'
 import GameIcon from '@/components/icons/GameIcon.vue'
-import { spokenKey } from './keyAria'
+import { spokenKey, spokenKeys } from './keyAria'
 
 /**
  * The scene lessons' glyphs (see `game/sim/lessons.ts`). No words: the glyph
@@ -106,7 +106,7 @@ const aria = computed(() => {
 /** Keys spoken as this keyboard and the bindings have them (`keyAria.ts`). */
 const ariaText = computed(() => {
   const slot = hud.lesson?.slot ?? 1
-  const n = hud.device === 'touch' ? slot : spokenKey(t, `Digit${slot}`)
+  const n = hud.device === 'touch' ? slot : spokenKeys(t, `Digit${slot}`)
   return t(aria.value, { n, key: spokenKey(t, 'KeyH') })
 })
 

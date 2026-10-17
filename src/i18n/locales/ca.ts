@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: lliscar · {tank}: gel reparador · {use}: interactuar · {beam}: teletransport',
       'more': '{w1} / {w2}: armes especials · {target}: canviar d\'objectiu · Esc: pausa',
       'space': 'Espai',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} o {b}'
     }
   },
   'levelUp': {

@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: плъзгане · {tank}: ремонтен гел · {use}: действие · {beam}: телепорт',
       'more': '{w1} / {w2}: специални оръжия · {target}: смяна на целта · Esc: пауза',
       'space': 'Интервал',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} или {b}'
     }
   },
   'levelUp': {

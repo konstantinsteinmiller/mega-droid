@@ -6,6 +6,14 @@
       rect(x="2" y="2" width="54" height="50" rx="11" class="cap" :class="{ lit: k.c === litKey }")
       text(x="29" y="36" class="label") {{ actionKeyLabel(k.c) }}
 
+  //- ── A key and its taught alternate: 1 / Q (#174) ──
+  svg.glyph(v-else-if="kind === 'key' && alt" viewBox="0 0 140 64" aria-hidden="true")
+    g(v-for="(c, n) in [code, alt]" :key="c" :transform="`translate(${n * 80} 0)`")
+      rect(x="2" y="10" width="56" height="52" rx="11" class="lip")
+      rect(x="2" y="2" width="56" height="52" rx="11" class="cap")
+      text(x="30" y="37" class="label") {{ n ? keyLabel(c) : actionKeyLabel(c) }}
+    path(d="M77 12 L63 50" class="or")
+
   //- ── One key ──
   svg.glyph(v-else-if="kind === 'key'" :viewBox="isWide ? '0 0 124 64' : '0 0 60 64'" aria-hidden="true")
     rect(x="2" y="10" :width="isWide ? 120 : 56" height="52" rx="11" class="lip")
@@ -122,8 +130,8 @@
  * and a glow builds, then lets go.
  */
 import { computed, useId } from 'vue'
-import { actionKeyLabel } from '@/game/engine/keyLabels'
-import { boundCode } from '@/game/engine/keyBindings'
+import { actionKeyLabel, keyLabel } from '@/game/engine/keyLabels'
+import { boundCode, shownAltCode } from '@/game/engine/keyBindings'
 import {
   FINGER_HOLD, HAND, INFINITY, MOUSE_BODY, MOUSE_BUTTONS, MOUSE_HOLD, MOUSE_MID, MOUSE_SIDES, type MouseSide
 } from './glyphGeometry'
@@ -165,6 +173,9 @@ const WASD = [
 /** The space bar stays a bar only while the action is still on Space
  *  (`keyBindings.ts`); rebound, it is a key with its letter. */
 const isWide = computed(() => props.wide && (!props.code || boundCode(props.code) === 'Space'))
+/** A key's taught alternate, drawn as a second cap after a slash ("1 / Q":
+ *  either, never both — a slash, not a plus). */
+const alt = computed(() => props.kind === 'key' && props.code && !props.wide ? shownAltCode(props.code) : null)
 /** The mouse button to press; none when the mouse only moves. */
 const lit = computed<MouseSide | null>(() => props.move || props.button === 'none' ? null : props.button)
 /** What the mouse glyph acts out. */
@@ -197,6 +208,11 @@ const POSES = ['live', 'rest'] as const
   text-anchor: middle
 .spacebar
   fill: #9aa6c8
+.or
+  stroke: #ffffff
+  stroke-width: 5
+  stroke-linecap: round
+  filter: drop-shadow(0 2px 0 #141a33)
 // Mouse. Only the button to press is coloured — solid yellow, never pulsing
 // toward the white of the other one — and the wheel is a small grey slot.
 .body

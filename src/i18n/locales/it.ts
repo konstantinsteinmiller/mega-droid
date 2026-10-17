@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: scivolata · {tank}: Gel Riparatore · {use}: interagisci · {beam}: rientra',
       'more': '{w1} / {w2}: armi speciali · {target}: cambia bersaglio · Esc: pausa',
       'space': 'Spazio',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} o {b}'
     }
   },
   'levelUp': {

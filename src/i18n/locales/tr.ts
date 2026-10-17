@@ -365,7 +365,8 @@ export default {
       'slide': '{slide}: kayma · {tank}: Tamir Jeli · {use}: etkileşim · {beam}: ışınlan',
       'more': '{w1} / {w2}: özel silahlar · {target}: hedef değiştir · Esc: duraklat',
       'space': 'Boşluk',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} veya {b}'
     }
   },
   'levelUp': {

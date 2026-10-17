@@ -8,7 +8,7 @@ import {
 import { PAL } from './palette'
 import { toonVC, glowVC, outlineMat } from './toon'
 import { buildBarrier, type BarrierFx } from './barrier'
-import { HERO_GAIT, gaitAmp, type EnemyMotion } from './motion'
+import { HERO_GAIT, gaitAmp, type EnemyMotion, type GaitSpec } from './motion'
 import { legL, legR, gaitLegs, poseLegs, stanceDrop } from './gait'
 
 /**
@@ -604,10 +604,10 @@ export const animateHeroVictory = (rig: Rig, t: number): void => {
 /**
  * A walk (the exit cutscene): the planted-foot gait of `models/gait.ts` at
  * `m.phase` (`HERO_GAIT`), the arms swinging against the legs, the chest
- * leaning into the walk. `m.walk` 0..1 is how much of a stride he takes.
+ * leaning into the walk. `m.walk` 0..1 is how much of a stride he takes;
+ * `g` another gait of his (the intro's sprint).
  */
-export const animateHeroWalk = (rig: Rig, m: EnemyMotion, t: number): void => {
-  const g = HERO_GAIT
+export const animateHeroWalk = (rig: Rig, m: EnemyMotion, t: number, g: GaitSpec = HERO_GAIT): void => {
   const wk = gaitAmp(m.walk)
   gaitLegs(g, m, wk)
   poseLegs(rig)

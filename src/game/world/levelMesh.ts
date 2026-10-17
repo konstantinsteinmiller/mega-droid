@@ -39,6 +39,9 @@ export interface LevelMeshes {
    *  while its door is. (The labyrinth's walls hide a frame whose rooms are
    *  both culled, so its frames share one always-visible group.) */
   doorFrames?: Object3D[]
+  /** Take a set-dressing prop (by `planDecor(...).props` index) out of its
+   *  room's meshes: it was shot to bits (#169). */
+  breakDecor?: (n: number) => void
 }
 
 export class QuadBatch {

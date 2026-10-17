@@ -231,6 +231,8 @@ export interface FoePost {
   kind?: EnemyKind
   /** An `echo` post's Master (the Fortress's Twin Masters). */
   echo?: string
+  /** A tougher machine of its kind (`createEnemy`'s elite: more armour, harder hits). */
+  elite?: boolean
   x: number
   z: number
   y: number

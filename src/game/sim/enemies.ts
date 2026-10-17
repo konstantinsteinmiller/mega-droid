@@ -1627,6 +1627,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         const dz = w.player.z - e.z
         const dd = Math.hypot(dx, dz)
         const sp = 11
+        // The block lesson may hold the ram just short of Flux (#171).
+        if (!e.hitPlayer && w.cueSwoop?.(e, Math.max(0, dd - 1.0 - PLAYER_R) / sp)) break
         if (dd > 0.05) step(w, e, (dx / dd) * sp * dt, (dz / dd) * sp * dt)
         e.y += (1.25 - e.y) * Math.min(1, dt * 7)
         if (!e.hitPlayer && dd < 1.0 + PLAYER_R) {

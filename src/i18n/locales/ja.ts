@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}：スライディング · {tank}：リペアジェル · {use}：アクション · {beam}：帰還',
       'more': '{w1}／{w2}：特殊武器 · {target}：ターゲット切替 · Esc：ポーズ',
       'space': 'Space',
-      'press': '{key}：{action}'
+      'press': '{key}：{action}',
+      'either': '{a} または {b}'
     }
   },
   'levelUp': {

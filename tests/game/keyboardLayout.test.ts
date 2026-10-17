@@ -7,7 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   ACTIONS, DEFAULT_BINDINGS, actionForCode, bindKey, bindingsChanged, boundCode, codesFor, isBindable,
-  primaryCode, resetBindings, __resetBindingsForTests
+  primaryCode, resetBindings, shownAltCode, __resetBindingsForTests
 } from '@/game/engine/keyBindings'
 import {
   activeLayout, actionKeyLabel, classify, guessFromLanguage, keyboard, keyLabel, LAYOUTS, loadKeyboardLayout,
@@ -63,6 +63,29 @@ describe('key bindings', () => {
     expect(boundCode('KeyW')).toBe('KeyW')
     expect(boundCode('MouseRight')).toBe('MouseRight')
     expect(actionKeyLabel('KeyE')).toBe('G')
+  })
+
+  // #174: Q fires the first special weapon (it used to be a second slide key).
+  it('Q is the first special weapon\'s taught alternate, no longer a slide key', () => {
+    expect(actionForCode('KeyQ')).toBe('weapon1')
+    expect(actionForCode('Digit1')).toBe('weapon1')
+    expect(codesFor('slide')).toEqual(['Space'])
+    expect(shownAltCode('Digit1')).toBe('KeyQ')
+    expect(shownAltCode('Digit2')).toBeNull()
+    expect(shownAltCode('KeyE')).toBeNull()
+    // AZERTY prints A on the Q key: the hint says so.
+    setManualLayout('azerty')
+    setAutoLayout(false)
+    expect(keyLabel(shownAltCode('Digit1')!)).toBe('A')
+  })
+
+  it('the Q alternate leaves the hints once a rebinding takes it', () => {
+    bindKey('beam', 'KeyQ')
+    expect(actionForCode('KeyQ')).toBe('beam')
+    expect(shownAltCode('Digit1')).toBeNull()
+    resetBindings()
+    bindKey('weapon1', 'KeyQ')
+    expect(shownAltCode('Digit1')).toBeNull()
   })
 
   it('reset puts every default back', () => {
@@ -340,6 +363,12 @@ describe('input follows the bindings', () => {
     expect(input.moveY).toBeGreaterThan(0)
     key('keyup', 'KeyI')
     expect(input.moveY).toBe(0)
+  })
+
+  it('Q fires the first special weapon (#174)', () => {
+    key('keydown', 'KeyQ', 'q')
+    expect(input.weaponQueued).toBe(1)
+    expect(input.slideQueued).toBe(false)
   })
 
   it('Esc always pauses', () => {

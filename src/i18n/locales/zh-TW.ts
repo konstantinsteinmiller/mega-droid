@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}：滑鏟 · {tank}：修理凝膠 · {use}：互動 · {beam}：傳送撤離',
       'more': '{w1} / {w2}：特殊武器 · {target}：切換目標 · Esc：暫停',
       'space': '空白鍵',
-      'press': '{key}：{action}'
+      'press': '{key}：{action}',
+      'either': '{a} 或 {b}'
     }
   },
   'levelUp': {

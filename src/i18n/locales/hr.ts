@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: klizanje · {tank}: gel za popravak · {use}: radnja · {beam}: teleport',
       'more': '{w1} / {w2}: posebna oružja · {target}: promjena mete · Esc: pauza',
       'space': 'Razmaknica',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} ili {b}'
     }
   },
   'levelUp': {

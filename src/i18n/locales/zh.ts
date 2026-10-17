@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}：滑铲 · {tank}：修理凝胶 · {use}：互动 · {beam}：传送撤离',
       'more': '{w1} / {w2}：特殊武器 · {target}：切换目标 · Esc：暂停',
       'space': 'Space',
-      'press': '{key}：{action}'
+      'press': '{key}：{action}',
+      'either': '{a} 或 {b}'
     }
   },
   'levelUp': {

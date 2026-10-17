@@ -322,7 +322,8 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
           }
           if (!e.hitPlayer && distToPlayer(w, e) < e.def.radius + PLAYER_R + 0.25) {
             e.hitPlayer = true
-            w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+            // A perfect block stops the lunge cold: the parry stuns it (#172).
+            if (w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
           }
           const done = e.st * LUNGE_SPEED >= m.len
           // A wall stops it short: a thud and a short daze (its opening).

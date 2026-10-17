@@ -145,23 +145,22 @@ describe('generateMeltdown', () => {
     expect(a.start).toEqual(b.start)
   })
 
-  it('seven sections and the arena; the seed varies the details, never the route', () => {
+  it('eight sections and the arena; the seed varies the details, never the route', () => {
     const mirrored = new Set<boolean>()
-    const hammers = new Set<number>()
     const barrelSide = new Set<number>()
     for (const seed of SEEDS) {
       const m = generateMeltdown(seed)
       const t = m.terrain!
       // (The beam-in room, off the chain, comes last.)
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(['hall', 'lava', 'vents', 'rolling', 'hammer', 'drop', 'lift', 'arena'])
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(['hall', 'lava', 'vents', 'rolling', 'hall', 'hammer', 'drop', 'lift', 'arena'])
       expect(m.w).toBeLessThanOrEqual(48)
       expect(m.h).toBeLessThanOrEqual(40)
       mirrored.add(m.start.x > m.w * CELL / 2)
-      hammers.add(t.crushers.length)
+      // Two hammers, the middle one gone (#177).
+      expect(t.crushers.length).toBe(2)
       barrelSide.add(t.lanes[0]!.dz)
     }
     expect(mirrored.size).toBe(2)
-    expect(hammers.size).toBe(2)
     expect(barrelSide.size).toBe(2)
   })
 
@@ -295,6 +294,62 @@ describe('generateMeltdown', () => {
       expect(t.floor[front]).toBe(s.prizeAt.y)
       for (const b of s.buttons) expect(got.has(idx(m, b.x + b.nx * 0.5, b.z + b.nz * 0.5))).toBe(true)
       expect(s.target.some(v => v === 1)).toBe(true)
+    }
+  })
+
+  it('the furnace floor between the barrels and the hammers holds an elite Guardroid, a Gear Roller and a Rotor Drone (#177)', () => {
+    for (const seed of SEEDS) {
+      const t = generateMeltdown(seed).terrain!
+      const room = t.sections.indexOf('rolling') + 1
+      expect(t.sections[room]).toBe('hall')
+      expect(t.sections[room + 1]).toBe('hammer')
+      const foes = t.foes.filter(f => f.room === room)
+      expect(foes.find(f => f.kind === 'brute')?.elite).toBe(true)
+      expect(foes.some(f => f.kind === 'roller')).toBe(true)
+      expect(foes.some(f => f.kind === 'heli' && f.role === 'flyer')).toBe(true)
+    }
+  })
+
+  it('the hammer room has no mortar and a walk round the hammers, held by a crate golem (#168)', () => {
+    for (const seed of SEEDS) {
+      const m = generateMeltdown(seed)
+      const t = m.terrain!
+      const room = t.sections.indexOf('hammer')
+      const r = m.rooms[room]!
+      const foes = t.foes.filter(f => f.room === room)
+      expect(foes.some(f => f.role === 'turret' || f.kind === 'turret')).toBe(false)
+      const golems = foes.filter(f => f.kind === 'golem')
+      expect(golems).toHaveLength(1)
+      const g = idx(m, golems[0]!.x, golems[0]!.z)
+      // Walk the room on its own floor, never under a hammer and never a
+      // leap: from the entry checkpoint to the exit corridor's door cell.
+      const hammers = new Set(t.crushers.map(c => c.j * m.w + c.i))
+      const cp = t.checkpoints.find(c => c.room === room)!
+      const flood = (block: Set<number>): Set<number> => {
+        const seen = new Set<number>()
+        const stack = [idx(m, cp.x, cp.z)]
+        while (stack.length) {
+          const k = stack.pop()!
+          if (seen.has(k) || block.has(k)) continue
+          seen.add(k)
+          const i = k % m.w
+          const j = (k - i) / m.w
+          for (const [di, dj] of DIRS) {
+            const ni = i + di
+            const nj = j + dj
+            if (ni < r.x0 || ni >= r.x0 + r.w || nj < r.z0 || nj >= r.z0 + r.h) continue
+            const nk = nj * m.w + ni
+            if (standable(m, nk) && t.floor[nk] === t.floor[k]) stack.push(nk)
+          }
+        }
+        return seen
+      }
+      // The far platform: the room's cells on the side of the exit corridor.
+      const farX = r.x0 + (cp.x > (r.x0 + r.w / 2) * CELL ? 0 : r.w - 1)
+      const far = (s: Set<number>) => [...s].some(k => k % m.w === farX)
+      expect(far(flood(hammers)), `seed ${seed}: a way round the hammers`).toBe(true)
+      // …and the golem stands in it: without its cell, no way round.
+      expect(far(flood(new Set([...hammers, g]))), `seed ${seed}: the golem blocks it`).toBe(false)
     }
   })
 

@@ -20,7 +20,7 @@ import {
   HP_FILL_TO, LV_POP, FLASH_FULL, STREET_END, SHOW_HIT, SHOW_PARRY, SHOW_VOLLEY, SHOW_SLAM, SHOW_RING_OVER, SHOW_SLIDE_FROM,
   SHOW_SLIDE_TO, SHOW_FINISH_HIT, SHOW_GEL_BURST, SHOW_GEL, SHOW_BIG_DROP, SHOW_BIG_LAND, SHOW_FLEE_FROM, SHOW_FLEE_TO,
   SHOW_OVER_CHARGE, SHOW_OVER_L1, SHOW_OVER_L2, SHOW_OVER_L3, SHOW_OVER_FIRE, SHOW_OVER_HIT, OVER_SHOT, OVER_STATS,
-  overCharge, overLevel, bigOn
+  overCharge, overLevel, bigOn, SAFE_FROM, CUT_DIP
 } from '@/game/story/introScript'
 import { Color } from 'three'
 import { chargeInfo } from '@/game/sim/stats'
@@ -209,6 +209,16 @@ describe('the intro script', () => {
     // No tape rewind any more.
     for (let t = 0; t < INTRO_END; t += 0.5) expect(overlayAt(t).rewind).toBe(0)
     expect(overlayAt(WAKE_FROM - 0.01).black).toBeGreaterThan(0.95)
+    // The cuts between sets dip through black (no camera jump on screen),
+    // briefly: the beats either side keep their time.
+    for (const at of [LAB_FROM, SAFE_FROM]) {
+      expect(overlayAt(at).black).toBe(1)
+      expect(overlayAt(at - CUT_DIP / 2).black).toBeGreaterThan(0.4)
+      expect(overlayAt(at + CUT_DIP / 2).black).toBeGreaterThan(0.4)
+      expect(overlayAt(at - CUT_DIP).black).toBe(0)
+      expect(overlayAt(at + CUT_DIP).black).toBe(0)
+    }
+    expect(CUT_DIP).toBeLessThanOrEqual(0.25)
     expect(overlayAt(WAKE_FROM + 0.5).eyelid).toBe(1)
     expect(overlayAt(WAKE_FROM + 3.5).eyelid).toBe(0)
     expect(overlayAt(WAKE_FROM + 1).hp).toBe(0)

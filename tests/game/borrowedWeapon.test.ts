@@ -306,7 +306,7 @@ describe('no Weapon Energy', () => {
     const host = {
       nav: {} as WeaponHost['nav'],
       fx: { emit: () => {}, flash: () => {}, sparks: () => {} } as unknown as WeaponHost['fx'],
-      system: { spawnPlayerShot: shot, shots: [], damageEnemy: () => {} } as unknown as WeaponHost['system'],
+      system: { spawnPlayerShot: shot, setShotStyle: () => {}, shots: [], damageEnemy: () => {} } as unknown as WeaponHost['system'],
       enemies: [],
       stats: baseStats(),
       player: { x: 0, z: 0, yaw: 0 },

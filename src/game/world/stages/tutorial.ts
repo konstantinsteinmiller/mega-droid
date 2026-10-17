@@ -64,7 +64,10 @@ export const TUTORIAL_ROOM_STYLE: RoomStyle[] = [
   { wall: '#a88a3a', wallLow: '#725d24', accent: '#ffe14d', prop: 'ventGrille' },   // 5 slide: hazard ochre
   { wall: '#5d86b0', wallLow: '#3e5c7c', accent: '#bfe9ff', prop: 'droneCradle' },  // 6 drones: sky blue
   { wall: '#9a4f48', wallLow: '#6a3530', accent: '#ffb38a', prop: 'valveWheel' },   // 7 roller: brick red
-  { wall: '#7d7a4e', wallLow: '#56543a', accent: '#e8d48a', prop: 'shoring' },      // 8 golem: olive, under its crane
+  // 8 golem: olive, a lifting magnet under its crane. Not the mine's timber
+  // shoring: two posts and a beam on a bare wall read as a door frame with no
+  // door (#175).
+  { wall: '#7d7a4e', wallLow: '#56543a', accent: '#e8d48a', prop: 'horseshoe' },
   { wall: '#4f566a', wallLow: '#363b4a', accent: '#ff6b6b', prop: 'skullEmblem' }   // 9 antechamber: Vex's slate
 ]
 

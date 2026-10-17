@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: сырғу · {tank}: жөндеу гелі · {use}: әрекет · {beam}: телепорт',
       'more': '{w1} / {w2}: арнайы қару · {target}: нысананы ауыстыру · Esc: кідіріс',
       'space': 'Бос орын',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} немесе {b}'
     }
   },
   'levelUp': {

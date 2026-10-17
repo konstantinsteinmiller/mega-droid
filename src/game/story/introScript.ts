@@ -467,9 +467,22 @@ const EYELID: ReadonlyArray<readonly [number, number]> = [
 const DARK_FROM = 35.4 + AFTER
 
 /** Every overlay at `t` (written into `o`, which is returned). */
+/** How long a cut's dip to black takes on each side of the cut (s). */
+export const CUT_DIP = 0.18
+/** A dip to black centred on the cut at `at`: black on the cut itself. */
+const dip = (at: number, t: number): number => {
+  const d = Math.abs(t - at)
+  return d >= CUT_DIP ? 0 : 1 - ramp(0, CUT_DIP, d)
+}
+
 export const overlayAt = (t: number, o: IntroOverlay = newOverlay()): IntroOverlay => {
   // In from black off the loader; the cut to the wake-up is to black too.
-  o.black = Math.max(1 - ramp(0, 0.8, t), t >= DARK_FROM && t < 37.0 + AFTER ? ramp(DARK_FROM, WAKE_FROM, t) : 0)
+  o.black = Math.max(
+    1 - ramp(0, 0.8, t), t >= DARK_FROM && t < 37.0 + AFTER ? ramp(DARK_FROM, WAKE_FROM, t) : 0,
+    // The cuts between sets (the cut-in to the lab, the lab to safe mode)
+    // dip through black, so neither camera jumps on screen.
+    dip(LAB_FROM, t), dip(SAFE_FROM, t)
+  )
   o.rewind = 0
   o.eyelid = t < WAKE_FROM || t > 39.2 + AFTER ? 0 : keys(EYELID, t)
   o.blur = t < WAKE_FROM || t > 40.5 + AFTER ? 0 : 10 * (1 - ramp(37.45 + AFTER, 40.2 + AFTER, t))

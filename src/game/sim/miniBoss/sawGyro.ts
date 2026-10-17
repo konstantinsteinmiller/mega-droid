@@ -324,7 +324,11 @@ export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
           if (Math.random() < 0.8) w.fx.emit({ x: e.x, y: y0 + 0.05, z: e.z, vy: 2.5, color: '#ffcf4a', size: 0.22, sizeEnd: 0.02, life: 0.3, gravity: 8 })
           if (!e.hitPlayer && near(w, e.x, e.z, e.def.radius + 0.1)) {
             e.hitPlayer = true
-            w.hitPlayer(e, Math.round(e.dmg * 1.2), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+            // A perfect block stops the ricochet cold: the parry stuns it (#172).
+            if (w.hitPlayer(e, Math.round(e.dmg * 1.2), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') {
+              hidePath(m)
+              break
+            }
           }
           if (hitX || hitZ || (frac < 0.35 && e.st > 0.05)) {
             // A wall: off it, sparks, a thud.

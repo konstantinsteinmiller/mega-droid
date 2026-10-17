@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: підкат · {tank}: ремонтний гель · {use}: дія · {beam}: телепорт',
       'more': '{w1} / {w2}: спецзброя · {target}: зміна цілі · Esc: пауза',
       'space': 'Пробіл',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} або {b}'
     }
   },
   'levelUp': {

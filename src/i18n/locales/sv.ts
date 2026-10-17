@@ -388,7 +388,8 @@ export default {
       'slide': '{slide}: glid · {tank}: Reparationsgel · {use}: använd · {beam}: teleportera',
       'more': '{w1} / {w2}: specialvapen · {target}: byt mål · Esc: paus',
       'space': 'Mellanslag',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} eller {b}'
     }
   },
   'levelUp': {

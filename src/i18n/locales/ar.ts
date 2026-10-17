@@ -363,7 +363,8 @@ export default {
       'slide': '{slide}: انزلاق · {tank}: جل الإصلاح · {use}: تفاعل · {beam}: انتقال آني',
       'more': '{w1} / {w2}: أسلحة خاصة · {target}: تبديل الهدف · Esc: إيقاف مؤقت',
       'space': 'Space',
-      'press': '{key}: {action}'
+      'press': '{key}: {action}',
+      'either': '{a} أو {b}'
     }
   },
   'levelUp': {

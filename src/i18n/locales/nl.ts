@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Nog {s} seconden, nog {n} drones',
     'tink': 'TING!',
     'perfect': 'PERFECT!',
     'parry': 'GEPAREERD!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} vernietigd!',
     'objectiveDone': 'Doel voltooid!',
     'rescued': 'Werkbot in veiligheid geteleporteerd!',
-    'bossDoor': 'Het rolluik knarst open…'
+    'bossDoor': 'Het rolluik knarst open…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Lucht vrij! +{n} bouten',
+    'skyFail': 'Te traag! De drones zijn terug.'
   },
   'interact': {
     'chest': 'Openen',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Voltooi nog {n} missie om dit te ontgrendelen | Voltooi nog {n} missies om dit te ontgrendelen',
       'aria': '{name}, vergrendeld: voltooi nog {n} missie | {name}, vergrendeld: voltooi nog {n} missies'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Wapenkamer',
+      'workshop': 'Smederij',
+      'circuits': 'Chiplab',
+      'records': 'Eregalerij',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Openen',
+      'brief': 'Briefing opnieuw'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Volgende',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanche tegen {boss}: XP, bouten en buit. Het verhaal blijft waar het is.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Na je volgende missie verschijnt hier een nieuwe klus.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Loop naar {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Terug naar de hal',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pips voorraad',
+      'hello': 'Psst, Flux! Ik heb wat spulletjes voor je gescoord.',
+      'aria': 'Praat met Pip: voorraad'
     }
   },
   'hero': {

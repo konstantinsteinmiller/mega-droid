@@ -118,7 +118,14 @@ export interface MapData {
    *  waits on. Carved by `addChallengeRoom` (a labyrinth) or
    *  `Builder.challengeRoom` (a hand-built map). */
   challenge?: { room: number; door: number; at: [number, number] }
+  /** The sky shoot over a stage's room (#178, `sim/skyShoot.ts`): a ring of
+   *  harmless drones to shoot down against the clock. */
+  skyShoot?: SkyShootSpec
 }
+
+/** Where the sky shoot's drones circle: the room, its floor (m), the ring's
+ *  middle (world m) and radius. */
+export interface SkyShootSpec { room: number; x: number; z: number; y: number; r: number }
 
 // ─── Terrain (the climb) ─────────────────────────────────────────────────────
 

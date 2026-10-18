@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Mancano {s} secondi, restano {n} droni',
     'tink': 'TINK!',
     'perfect': 'PERFETTO!',
     'parry': 'PARATA!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} distrutto!',
     'objectiveDone': 'Obiettivo completato!',
     'rescued': 'Robot operaio teletrasportato in salvo!',
-    'bossDoor': 'La saracinesca si apre cigolando…'
+    'bossDoor': 'La saracinesca si apre cigolando…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Cielo libero! +{n} bulloni',
+    'skyFail': 'Troppo lento! I droni sono tornati.'
   },
   'interact': {
     'chest': 'Apri',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Completa ancora {n} missione per sbloccarlo | Completa ancora {n} missioni per sbloccarlo',
       'aria': '{name}, bloccato: completa ancora {n} missione | {name}, bloccato: completa ancora {n} missioni'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Armeria',
+      'workshop': 'Forgia',
+      'circuits': 'Laboratorio chip',
+      'records': 'Albo d\'oro',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Apri',
+      'brief': 'Rivedi il briefing'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Prossima',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Rivincita con {boss}: XP, bulloni e bottino. La storia non avanza.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Dopo la tua prossima missione qui comparirà un nuovo incarico.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Vai a {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Torna alla sala',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Le scorte di Pip',
+      'hello': 'Psst, Flux! Ti ho rimediato un po\' di cose.',
+      'aria': 'Parla con Pip: scorte'
     }
   },
   'hero': {

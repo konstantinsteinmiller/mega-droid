@@ -63,6 +63,10 @@ export const generateMeltdown = (seed: number): MapData => {
   b.foe('turret', 2, 2, YAW_PZ, [2, 2, 2, 2])
   b.foe('ground', 6, 3, YAW_NX, [5, 2, 7, 3])
   b.checkpoint(3, 5, YAW_PX, [[3, 5], [4, 5], [3, 6], [4, 6]])
+  // #178: the sky shoot. A ring of blue drones circles over the roof (clear
+  // of the chimney): shoot one down and the clock starts; all eight before
+  // it runs out pays a bonus, too slow and the ring comes back for another go.
+  b.skyShoot = { room: 0, x: cellCenter(4) + CELL / 2, z: cellCenter(4), y: L(7), r: 5.2 }
   b.corridor(8, 4, 1, 0, 2, L(7))
 
   // ── 2 Catwalks over lava ──────────────────────────────────────────────────

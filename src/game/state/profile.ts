@@ -605,6 +605,8 @@ export interface MissionSnapshot {
   atCheckpoint?: boolean
   /** The Core Descent (#109): the stage Vex is fought in and his health. */
   vex?: { stage: number; hp: number }
+  /** The sky shoot (#178) was won: a resume brings no ring back. */
+  sky?: boolean
 }
 
 /** The retry point a mission built from `s` keeps: `s` itself when it is a

@@ -5,7 +5,7 @@
     div.q-icon(v-else)
       GameIcon(:name="ICON[quest.template]")
     div.q-body
-      div.q-title {{ story && quest.template === 'boss' ? t('quest.bossTitle', { boss: t(`boss.${SECTOR_BY_ID[quest.sector].boss}`) }) : quest.template === 'stage' ? t(`quest.stageName.${quest.sector}`) : t(`quest.${quest.template}`) }}
+      div.q-title {{ questTitle(t, quest) }}
       div.q-desc {{ t(`quest.desc.${quest.template}`, params) }}
       div.q-meta
         //- A climb ends in a rematch: the boss named on the card, in the
@@ -32,8 +32,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
-import type { GameIconName } from '@/components/icons/iconNames'
-import type { Quest, QuestTemplate } from '@/game/data/quests'
+import type { Quest } from '@/game/data/quests'
+import { QUEST_ICON, questTitle } from './questFormat'
 import { SECTOR_COLOR } from '@/game/data/signature'
 import { SECTOR_BY_ID } from '@/game/data/regions'
 import MasterPortrait from '@/components/atoms/MasterPortrait.vue'
@@ -42,10 +42,7 @@ import type { BossId } from '@/game/models/bosses'
 const props = defineProps<{ quest: Quest; story?: boolean }>()
 defineEmits<{ deploy: []; reroll: [] }>()
 const { t } = useI18n()
-const ICON: Record<QuestTemplate, GameIconName> = {
-  tutorial: 'star', boss: 'skull', kill: 'bomb', collect: 'gem', rescue: 'heart', elite: 'trophy', supply: 'chest', purge: 'flame',
-  climb: 'up', stage: 'rocket'
-}
+const ICON = QUEST_ICON
 const boss = computed(() => SECTOR_BY_ID[props.quest.sector].boss as BossId)
 /** A Tower Run: its own livery (hazard stripes, a climbing arrow). */
 const climb = computed(() => props.quest.template === 'climb')

@@ -1,7 +1,7 @@
 import { reactive, watch } from 'vue'
 import { app } from './engine/app'
 import type { Quest } from './data/quests'
-import { rollJob, storyQuest, tutorialQuest, climbJob, climbSectors } from './data/quests'
+import { rollJob, storyQuest, bossQuest, tutorialQuest, climbJob, climbSectors } from './data/quests'
 import { SECTORS, SECTOR_BY_ID } from './data/regions'
 import { rollItem, type Item } from './data/items'
 import { WEAPONS, type WeaponId } from './data/weapons'
@@ -81,7 +81,14 @@ export const flow = reactive({
 type MissionFactory = (
   quest: Quest, snapshot: MissionSnapshot | null, onProgress?: (p01: number) => void
 ) => Promise<import('./engine/app').GameMode>
-type HubFactory = () => import('./engine/app').GameMode
+/**
+ * Where Flux turns up in the walkable lab (#173): on its teleporter (a boot,
+ * the end of a film), in front of the briefing table (after a debrief: the
+ * briefing happens there, and he turns to the door), or on the pedestal he
+ * beamed out from (back from that mission).
+ */
+export type HubArrival = { kind: 'home' } | { kind: 'brief' } | { kind: 'pad'; id: string }
+type HubFactory = (arrival: HubArrival) => import('./engine/app').GameMode
 /** The intro cutscene (`story/intro.ts`), as far as the flow drives it. */
 export interface IntroHandle extends Pick<import('./engine/app').GameMode, 'scene' | 'camera' | 'update' | 'render' | 'dispose' | 'enter'> {
   skip(): void
@@ -198,7 +205,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
       hello,
       onEnd: () => {
         debriefLive = null
-        goHub()
+        goHub({ kind: 'brief' })
       }
     })
     // Both of Atlas's lines heard before the film takes over.
@@ -237,7 +244,7 @@ export const startEnding = async (): Promise<void> => {
       if (!profile.world.seen.includes('ending')) profile.world.seen.push('ending')
       if (choice === 'ngplus') startNewGamePlus()
       saveProfile()
-      goHub()
+      goHub({ kind: 'home' })
     }
   })
   endingLive = m
@@ -374,7 +381,7 @@ export const createBootMode = async (onProgress?: (p01: number) => void): Promis
   flow.screen = 'hub'
   hud.phase = 'hub'
   setMusicTrack('hub')
-  const h = hubFactory!()
+  const h = hubFactory!({ kind: 'home' })
   onProgress?.(1)
   oweDebriefAtBoot()
   return h
@@ -590,8 +597,20 @@ export const retryFromSnapshot = async (s: MissionSnapshot): Promise<void> => {
   await startMission(s.quest, s)
 }
 
-export const goHub = (): void => {
+/** The pedestal the last deploy left from (`deployFromPad`): back from that
+ *  mission, Flux lands on it. Spent by the next `goHub`. */
+let lastPad: string | null = null
+
+/** A pedestal's Deploy (#173): remember where Flux left from, then go. */
+export const deployFromPad = (pad: string, quest: Quest): Promise<void> => {
+  lastPad = pad
+  return startMission(quest)
+}
+
+export const goHub = (arrival?: HubArrival): void => {
   if (!hubFactory) return
+  const at: HubArrival = arrival ?? (lastPad ? { kind: 'pad', id: lastPad } : { kind: 'home' })
+  lastPad = null
   flow.modal = ''
   flow.introPlay = false
   flow.screen = 'hub'
@@ -601,7 +620,7 @@ export const goHub = (): void => {
   hud.bossName = ''
   setMusicTrack('hub')
   startGameMusic()
-  const h = hubFactory()
+  const h = hubFactory(at)
   app.setMode(h)
   app.setWanted(true)
   ensureJobs()
@@ -649,10 +668,12 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
     // The tutorial IS the Scrapyard's story mission: its mini-boss (the
     // Scrapper) counts as that sector's Core Master.
     if (quest.kind === 'story') {
-      // The Fortress (Vex and the Grand Master) won: the ending follows.
-      if (quest.sector === 'fortress') pendingEnding = true
       const sector = SECTOR_BY_ID[quest.sector]
       if (!profile.world.bosses.includes(sector.boss)) {
+        // The Fortress (Vex and the Grand Master) won: the ending follows.
+        // Its first fall in a run only: a rematch on its pedestal is a fight,
+        // not the end of the story again.
+        if (quest.sector === 'fortress') pendingEnding = true
         profile.world.bosses.push(sector.boss)
         profile.story++
         // The story moves on: its debrief follows the results, once per run
@@ -831,6 +852,43 @@ export const storyFor = (sector: SectorId): Quest | null => {
   if (sector === tutorial.sector && !profile.world.tutorialDone) return tutorial
   if (profile.world.bosses.includes(s.boss)) return null
   return storyQuest(s, profile.level, profile.quests.storyAttempts[`story_${sector}`] ?? 0, profile.world.ngPlus)
+}
+
+/**
+ * A secured sector's pedestal (#173): its story mission again, for its XP,
+ * bolts and loot. Its Master stays beaten and the story does not move (no
+ * debrief, no unlock, no ending). The Scrapyard's story mission was the
+ * tutorial, which is not played twice: its rematch is the labyrinth to the
+ * Scrapper (`bossQuest`, as on New Game+). Each rematch draws a new map.
+ */
+export const replayFor = (sector: SectorId): Quest | null => {
+  const s = SECTOR_BY_ID[sector]
+  if (!profile.world.bosses.includes(s.boss)) return null
+  const n = profile.questsDone + 1
+  return sector === 'scrapyard'
+    ? bossQuest(s, profile.level, n, profile.world.ngPlus)
+    : storyQuest(s, profile.level, n, profile.world.ngPlus)
+}
+
+/** The mission on a pedestal (#173): a job pad's job, a sector's story
+ *  mission while its Master stands, its rematch once it fell; null for a
+ *  locked one. */
+export const padQuest = (id: string): Quest | null => {
+  if (id.startsWith('job')) return profile.quests.jobs[Number(id.slice(3))] ?? null
+  if (!id.startsWith('story:')) return null
+  const s = id.slice(6) as SectorId
+  return storyFor(s) ?? replayFor(s)
+}
+
+/** The briefing the table replays (#173): the debrief of the last Master
+ *  that has one, or null before the first. */
+export const briefingToReplay = (): DebriefPlan | null => {
+  const b = profile.world.bosses
+  for (let i = b.length - 1; i >= 0; i--) {
+    const plan = debriefFor(b[i]!)
+    if (plan) return plan
+  }
+  return null
 }
 
 export const statsNow = () => computeStats()

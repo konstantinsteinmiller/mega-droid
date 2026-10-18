@@ -1,7 +1,8 @@
 <template lang="pug">
   div.scene-root
     div.canvas-host(ref="canvasHost")
-    div.input-surface(v-show="flow.screen === 'mission'" ref="surface")
+    //- The mission's gestures, and the walk through the lab (#173).
+    div.input-surface(v-show="flow.screen === 'mission' || flow.screen === 'hub'" ref="surface")
     div.hud-layer(v-if="flow.screen === 'mission'" :class="{ cine: hud.phase === 'beamOut' || hud.introCine || (hud.freezeKind && hud.freezeFrame !== 'fp') }")
       ScreenFx
       TrainingFrame
@@ -14,6 +15,7 @@
       ObjectiveLocator
       TargetFrame(v-if="!hud.bossName")
       BossBar
+      SkyClock
       TitleCard
       LootCard
       ControlHints
@@ -105,6 +107,7 @@ import Compass from '@/components/hud/Compass.vue'
 import ObjectiveLocator from '@/components/hud/ObjectiveLocator.vue'
 import ContextButtons from '@/components/hud/ContextButtons.vue'
 import BossBar from '@/components/hud/BossBar.vue'
+import SkyClock from '@/components/hud/SkyClock.vue'
 import TitleCard from '@/components/hud/TitleCard.vue'
 import ControlHints from '@/components/hud/ControlHints.vue'
 import LessonLayer from '@/components/hud/LessonLayer.vue'

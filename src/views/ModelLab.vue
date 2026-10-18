@@ -28,6 +28,7 @@ import { generateMap } from '@/game/world/levelGen'
 import { buildLevel, doorFramePos } from '@/game/world/levelMesh'
 import { mulberry32 } from '@/game/world/rng'
 import { HubMode } from '@/game/sim/hub'
+import { createInput } from '@/game/engine/input'
 import { PAL } from '@/game/models/palette'
 import { glowVC } from '@/game/models/toon'
 import { pose, nudge, type Rig, type V3 } from '@/game/models/kit'
@@ -574,7 +575,7 @@ const buildThumb = async (shot: ThumbShot): Promise<void> => {
     // The hub exactly as the game builds it; its own Flux and Pip step
     // aside, and so do the additive light columns over the pad (seen from
     // this close they are a cyan haze across him, not a beam)
-    sc = new HubMode().scene
+    sc = new HubMode(createInput()).scene
     sc.traverse((o) => {
       if ((o as SkinnedMesh).isSkinnedMesh && o.parent) o.parent.visible = false
       const m = (o as Mesh).material

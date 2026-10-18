@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} sekunder tilbage, {n} droner mangler',
     'tink': 'PLING!',
     'perfect': 'PERFEKT!',
     'parry': 'PARERET!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} ødelagt!',
     'objectiveDone': 'Mål klaret!',
     'rescued': 'Arbejdsbotten teleporteret i sikkerhed!',
-    'bossDoor': 'Porten knirker op…'
+    'bossDoor': 'Porten knirker op…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Himlen er ryddet! +{n} bolte',
+    'skyFail': 'For langsom! Dronerne er tilbage.'
   },
   'interact': {
     'chest': 'Åbn',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Klar {n} mission mere for at låse op | Klar {n} missioner mere for at låse op',
       'aria': '{name}, låst: klar {n} mission mere | {name}, låst: klar {n} missioner mere'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Våbenkammer',
+      'workshop': 'Smedje',
+      'circuits': 'Chiplab',
+      'records': 'Æreshal',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Åbn',
+      'brief': 'Se briefing igen'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Næste',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Omkamp mod {boss}: XP, bolte og bytte. Historien bliver, hvor den er.',
+    // A job pad with no job on it.
+    'jobEmpty': 'En ny opgave dukker op her efter din næste mission.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Gå til {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Tilbage til hallen',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pips forsyninger',
+      'hello': 'Psst, Flux! Jeg har skrabet et par ting sammen til dig.',
+      'aria': 'Tal med Pip: forsyninger'
     }
   },
   'hero': {

@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} detik lagi, {n} drone tersisa',
     'tink': 'TING!',
     'perfect': 'SEMPURNA!',
     'parry': 'TANGKIS!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} hancur!',
     'objectiveDone': 'Tujuan tercapai!',
     'rescued': 'Robot pekerja diteleport ke tempat aman!',
-    'bossDoor': 'Pintu baja terbuka berderit…'
+    'bossDoor': 'Pintu baja terbuka berderit…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Langit bersih! +{n} baut',
+    'skyFail': 'Terlalu lambat! Drone kembali lagi.'
   },
   'interact': {
     'chest': 'Buka',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Selesaikan {n} misi lagi untuk membuka',
       'aria': '{name}, terkunci: selesaikan {n} misi lagi'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Gudang Senjata',
+      'workshop': 'Tempaan',
+      'circuits': 'Lab Chip',
+      'records': 'Galeri Juara',
+      'table': 'Pengarahan'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Buka',
+      'brief': 'Ulangi pengarahan'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Berikutnya',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Tanding ulang dengan {boss}: XP, baut, dan jarahan. Ceritanya tidak maju.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Tugas baru muncul di sini setelah misimu berikutnya.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Jalan ke {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Kembali ke aula',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Perbekalan Pip',
+      'hello': 'Psst, Flux! Aku kumpulkan beberapa barang buatmu.',
+      'aria': 'Bicara dengan Pip: perbekalan'
     }
   },
   'hero': {

@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} sekuntia jäljellä, vielä {n} droonia',
     'tink': 'KLING!',
     'perfect': 'TÄYDELLINEN!',
     'parry': 'TORJUNTA!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} tuhottu!',
     'objectiveDone': 'Tavoite suoritettu!',
     'rescued': 'Työbotti teleportattu turvaan!',
-    'bossDoor': 'Luukku narisee auki…'
+    'bossDoor': 'Luukku narisee auki…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Taivas tyhjä! +{n} pulttia',
+    'skyFail': 'Liian hidas! Droonit palasivat.'
   },
   'interact': {
     'chest': 'Avaa',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Suorita vielä {n} tehtävä avataksesi | Suorita vielä {n} tehtävää avataksesi',
       'aria': '{name}, lukittu: suorita vielä {n} tehtävä | {name}, lukittu: suorita vielä {n} tehtävää'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Asevarasto',
+      'workshop': 'Ahjo',
+      'circuits': 'Sirulabra',
+      'records': 'Kunniagalleria',
+      'table': 'Tehtävänanto'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Avaa',
+      'brief': 'Katso tehtävänanto uudelleen'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Seuraava',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Uusintaottelu: {boss}. XP:tä, pultteja ja saalista. Tarina pysyy ennallaan.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Uusi keikka ilmestyy tähän seuraavan tehtäväsi jälkeen.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Kävele kohteeseen: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Takaisin halliin',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipin tarvikkeet',
+      'hello': 'Psst, Flux! Haalin sinulle vähän tavaraa.',
+      'aria': 'Juttele Pipin kanssa: tarvikkeet'
     }
   },
   'hero': {

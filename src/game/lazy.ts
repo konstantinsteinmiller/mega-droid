@@ -29,3 +29,6 @@ export const loadBossCraneModule = () => import('./sim/bossCrane')
 export const loadFinaleModules = () => Promise.all([import('./sim/coreDescent'), import('./sim/grandMaster')])
 /** The street's models (Vex's face for the scene bubbles). */
 export const loadStreetModule = () => import('./models/street')
+/** The hall's holograms (the Masters over their pedestals, the valley over
+ *  the briefing table): fetched once the walkable lab is up (#173). */
+export const loadHubHoloModule = () => import('./models/hubHolo')

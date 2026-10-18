@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Preostalo sekundi: {s}, dronova: {n}',
     'tink': 'DZING!',
     'perfect': 'SAVRŠENO!',
     'parry': 'PARIRANJE!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} uništen!',
     'objectiveDone': 'Cilj ostvaren!',
     'rescued': 'Radni robot teleportiran na sigurno!',
-    'bossDoor': 'Kapija se uz škripu otvara…'
+    'bossDoor': 'Kapija se uz škripu otvara…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Nebo čisto! +{n} vijaka',
+    'skyFail': 'Presporo! Dronovi su se vratili.'
   },
   'interact': {
     'chest': 'Otvori',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Završi još {n} misiju za otključavanje | Završi još {n} misije za otključavanje | Završi još {n} misija za otključavanje',
       'aria': '{name}, zaključano: završi još {n} misiju | {name}, zaključano: završi još {n} misije | {name}, zaključano: završi još {n} misija'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Oružarnica',
+      'workshop': 'Kovačnica',
+      'circuits': 'Laboratorij čipova',
+      'records': 'Kuća slavnih',
+      'table': 'Brifing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Otvori',
+      'brief': 'Ponovi brifing'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Sljedeća',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanš: {boss}. XP, vijci i plijen. Priča ostaje gdje jest.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Novi posao pojavit će se ovdje nakon tvoje sljedeće misije.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Idi na mjesto: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Natrag u dvoranu',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipove zalihe',
+      'hello': 'Pst, Flux! Skupio sam ti nekoliko stvarčica.',
+      'aria': 'Razgovaraj s Pipom: zalihe'
     }
   },
   'hero': {

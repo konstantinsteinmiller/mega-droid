@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
-// ─── The lab's menus open one at a time ──────────────────────────────────────
+// ─── The lab's stations open one at a time ───────────────────────────────────
 //
 // Every lab menu was open from the first visit, which was a lot to take in
 // after one mission. Now the Workshop opens after two finished missions,
-// Circuits after three and the leaderboard pill after four
-// (`hubUnlocks.ts`). Until then a menu stays where it is, dimmed, with a lock:
-// it cannot be opened, a tap on it answers with the "no" sound and a hint
-// that says how many missions are left (hover on desktop; on touch it goes
-// after 3 s or on the next tap; one at a time), and it is spoken as locked.
-// The visit where it opens gives it a "new" badge and a short fanfare; the
-// badge stays until the menu is first opened, and that is saved.
+// Circuits after three and the leaderboard after four (`hubUnlocks.ts`). In
+// the walkable lab (#173) each of them is a station in the Deployment Hall,
+// with a label floating over it: until it opens, the station stands dark and
+// its label stays where it is, dimmed, with a lock. A tap on it answers with
+// the "no" sound and a hint that says how many missions are left (hover on
+// desktop; on touch it goes after 3 s or on the next tap; one at a time), and
+// it is spoken as locked. The visit where it opens gives it a "new" chip and
+// a short fanfare; the chip stays until the station is first used, and that
+// is saved. The leaderboard keeps its pill in the status bar too.
 //
 // The locale half: the hint and the spoken name exist in every language, with
 // real plural forms (three in ru/uk/pl, six in ar) through `i18n/plural.ts`.
@@ -31,21 +33,37 @@ import { flow } from '@/game/flow'
 import { sfx } from '@/game/audio/sfx'
 import { hubTab } from '@/components/hub/hubLesson'
 import { FLOOR_TIP, ALL_OPEN, openedTip, unlockedTip } from '@/components/hub/hubUnlocks'
+import { hubUi, hubDialog } from '@/game/state/hubUi'
+import { placesFor } from '@/game/sim/hubPlaces'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
 
-// The hub's game-side imports, reduced to what it reads. The four panels
+// The hub's game-side imports, reduced to what it reads. The three panels
 // render a marker, the board a marker while it is open, and the upgrade tour
 // is its own spec (tests/game/hubLesson.test.ts). A live leaderboard build,
-// so the pill is on screen.
-vi.mock('@/game/boot', () => ({ input: { device: 'touch' }, currentHub: () => null }))
+// so the pill and the Hall of Fame are there. The hub mode is a stand-in that
+// records where a tap walks Flux.
+const hub = vi.hoisted(() => ({ goTo: null as unknown as ReturnType<typeof import('vitest')['vi']['fn']> }))
+vi.mock('@/game/boot', async () => {
+  const { vi: v } = await import('vitest')
+  hub.goTo = v.fn()
+  return { input: { device: 'touch' }, currentHub: () => ({ goTo: hub.goTo, interact: () => {} }) }
+})
 vi.mock('@/game/flow', async () => {
   const { reactive } = await import('vue')
-  return { flow: reactive({ modal: '' as string, loading: false, screen: 'hub' }) }
+  return {
+    flow: reactive({ modal: '' as string, loading: false, screen: 'hub' }),
+    padQuest: () => null, rerollJob: () => {}, briefingToReplay: () => null, storyFor: () => null
+  }
 })
 vi.mock('@/game/audio/sfx', () => ({ sfx: vi.fn() }))
 vi.mock('@/use/useQaAdTrigger', () => ({ registerQaAdTap: () => false }))
 vi.mock('@/use/useLeaderboard', () => ({ leaderboardListEnabled: true }))
+vi.mock('@/use/useAdGate', async () => {
+  const { ref } = await import('vue')
+  return { canOfferReward: ref(false), adInFlight: ref(false), claimReward: vi.fn() }
+})
+vi.mock('@/use/useSound', () => ({ resumeMusicAfterAd: () => {} }))
 vi.mock('@/components/organisms/LeaderboardModal.vue', async () => {
   const { h: hh } = await import('vue')
   return {
@@ -57,17 +75,17 @@ vi.mock('@/components/organisms/LeaderboardModal.vue', async () => {
   }
 })
 const stubs = vi.hoisted(() => ({
-  /** A panel that says which tab is open. */
+  /** A panel that says which station is open. */
   panel: async (id: string) => {
     const { h } = await import('vue')
     return { default: { name: id, render: () => h('div', { class: `panel-${id}` }) } }
   }
 }))
-vi.mock('@/components/hub/MissionsTab.vue', () => stubs.panel('missions'))
 vi.mock('@/components/hub/HeroTab.vue', () => stubs.panel('hero'))
 vi.mock('@/components/hub/CircuitsTab.vue', () => stubs.panel('circuits'))
 vi.mock('@/components/hub/WorkshopTab.vue', () => stubs.panel('workshop'))
 vi.mock('@/components/hub/HubLesson.vue', () => ({ default: { name: 'HubLesson', render: () => null } }))
+vi.mock('@/components/story/HubSceneLayer.vue', () => ({ default: { name: 'HubSceneLayer', render: () => null } }))
 
 type Messages = Record<string, unknown>
 const i18nFor = (locale: string, messages: Messages) =>
@@ -76,11 +94,13 @@ const i18nFor = (locale: string, messages: Messages) =>
 let w: VueWrapper | null = null
 /** Mounted, with its first visit's writes (floor, "new" flags) on screen. */
 const mountHub = async (locale = 'en', messages: Messages = en) => {
+  hubUi.places = placesFor(true).map(p => ({ id: p.id, state: 'open' as const }))
   w = mount(HubScreen, { attachTo: document.body, global: { plugins: [i18nFor(locale, messages)] } })
   await nextTick()
   return w
 }
-const tabEl = (wr: VueWrapper, id: string) => wr.get(`[data-lesson="tab-${id}"]`)
+/** A station's label in the hall. */
+const station = (wr: VueWrapper, id: string) => wr.get(`[data-place="${id}"]`)
 const pill = (wr: VueWrapper) => wr.get('.pill.ranks')
 const tips = (wr: VueWrapper) => wr.findAll('.lock-tip')
 const sfxCalls = (name: string) => vi.mocked(sfx).mock.calls.filter(c => c[0] === name).length
@@ -110,6 +130,9 @@ const player = (n: number, extraTips: Record<string, true | number> = {}) => {
 
 beforeEach(() => {
   vi.mocked(sfx).mockClear()
+  hub.goTo.mockClear()
+  hubDialog.open = false
+  hubDialog.board = false
   flow.modal = ''
   hubTab.value = 'missions'
 })
@@ -121,24 +144,23 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('a locked menu', () => {
-  it('stays on screen, dimmed, with a lock, spoken as locked with what it waits for', async () => {
+describe('a locked station', () => {
+  it('keeps its label, dimmed, with a lock, spoken as locked with what it waits for', async () => {
     player(1)
     const wr = await mountHub()
-    for (const id of ['missions', 'hero']) {
-      expect(tabEl(wr, id).classes()).not.toContain('locked')
-      expect(tabEl(wr, id).find('.lock').exists()).toBe(false)
+    expect(station(wr, 'hero').classes()).not.toContain('locked')
+    expect(station(wr, 'hero').find('.m-lock').exists()).toBe(false)
+    for (const id of ['workshop', 'circuits', 'records']) {
+      const s = station(wr, id)
+      expect(s.classes()).toContain('locked')
+      expect(s.attributes('aria-disabled')).toBe('true')
+      expect(s.get('.m-lock').findComponent(GameIcon).props('name')).toBe('lock')
+      // Its own glyph and name are still there: it is dimmed, not hidden.
+      expect(s.find('.m-name').text()).not.toBe('')
     }
-    for (const id of ['workshop', 'circuits']) {
-      const t = tabEl(wr, id)
-      expect(t.classes()).toContain('locked')
-      expect(t.attributes('aria-disabled')).toBe('true')
-      expect(t.get('.lock').findComponent(GameIcon).props('name')).toBe('lock')
-      // Its own glyph and label are still there: it is dimmed, not hidden.
-      expect(t.find('.t-label').text()).not.toBe('')
-    }
-    expect(tabEl(wr, 'workshop').attributes('aria-label')).toBe('Workshop, locked: complete 1 more mission')
-    expect(tabEl(wr, 'circuits').attributes('aria-label')).toBe('Circuits, locked: complete 2 more missions')
+    expect(station(wr, 'workshop').attributes('aria-label')).toBe('Forge, locked: complete 1 more mission')
+    expect(station(wr, 'circuits').attributes('aria-label')).toBe('Chip Lab, locked: complete 2 more missions')
+    expect(station(wr, 'records').attributes('aria-label')).toBe('Hall of Fame, locked: complete 3 more missions')
     expect(pill(wr).classes()).toContain('locked')
     expect(pill(wr).find('.lock').exists()).toBe(true)
     expect(pill(wr).attributes('aria-label')).toBe('Leaderboard, locked: complete 3 more missions')
@@ -146,29 +168,35 @@ describe('a locked menu', () => {
     expect(wr.get('.pill.cog').classes()).not.toContain('locked')
   })
 
-  it('cannot be opened: a tap plays the "no" sound and opens nothing', async () => {
+  it('cannot be opened: a tap plays the "no" sound, and Flux only walks over to its lock', async () => {
     player(1)
     const wr = await mountHub()
-    await tap(tabEl(wr, 'workshop'))
+    await tap(station(wr, 'workshop'))
     expect(hubTab.value).toBe('missions')
-    expect(wr.find('.panel-missions').exists()).toBe(true)
     expect(wr.find('.panel-workshop').exists()).toBe(false)
     expect(sfxCalls('denied')).toBe(1)
-    expect(sfxCalls('uiClick')).toBe(0)
+    expect(hub.goTo).toHaveBeenCalledWith('workshop', false)
     await tap(pill(wr))
     expect(wr.find('.board-open').exists()).toBe(false)
     expect(sfxCalls('denied')).toBe(2)
   })
 
-  it('opens like any tab once the count is reached', async () => {
+  it('opens once the count is reached: a tap walks Flux there to use it, and its panel opens', async () => {
     player(4, { [FLOOR_TIP]: 0 })
     const wr = await mountHub()
     for (const id of ['workshop', 'circuits']) {
-      expect(tabEl(wr, id).classes()).not.toContain('locked')
-      expect(tabEl(wr, id).attributes('aria-label')).toBeUndefined()
+      expect(station(wr, id).classes()).not.toContain('locked')
+      expect(station(wr, id).attributes('aria-label')).toBe(`Walk to ${id === 'workshop' ? 'Forge' : 'Chip Lab'}`)
     }
-    await tap(tabEl(wr, 'circuits'))
+    await tap(station(wr, 'circuits'))
+    expect(hub.goTo).toHaveBeenCalledWith('circuits', true)
+    // At the chip lab (the hub mode opens it on arrival): the Circuits panel.
+    hubTab.value = 'circuits'
+    await nextTick()
     expect(wr.find('.panel-circuits').exists()).toBe(true)
+    // Back to the hall: the panel's own button (the tour's last anchor).
+    await wr.get('[data-lesson="tab-missions"]').trigger('click')
+    expect(hubTab.value).toBe('missions')
     await tap(pill(wr))
     expect(wr.find('.board-open').exists()).toBe(true)
     expect(sfxCalls('denied')).toBe(0)
@@ -176,18 +204,18 @@ describe('a locked menu', () => {
 })
 
 describe('the lock hint', () => {
-  it('shows while the mouse is over a locked menu, and goes when it leaves', async () => {
+  it('shows while the mouse is over a locked station\'s label, and goes when it leaves', async () => {
     player(1)
     const wr = await mountHub()
-    await tabEl(wr, 'circuits').trigger('pointerenter', { pointerType: 'mouse' })
+    await station(wr, 'circuits').trigger('pointerenter', { pointerType: 'mouse' })
     await nextTick()
     expect(tips(wr)).toHaveLength(1)
     expect(tips(wr)[0]!.text()).toBe('Complete 2 more missions to unlock')
     expect(tips(wr)[0]!.attributes('role')).toBe('tooltip')
-    await tabEl(wr, 'circuits').trigger('pointerleave', { pointerType: 'mouse' })
+    await station(wr, 'circuits').trigger('pointerleave', { pointerType: 'mouse' })
     expect(tips(wr)).toHaveLength(0)
-    // Hovering an open tab says nothing.
-    await tabEl(wr, 'hero').trigger('pointerenter', { pointerType: 'mouse' })
+    // Hovering an open one says nothing.
+    await station(wr, 'hero').trigger('pointerenter', { pointerType: 'mouse' })
     expect(tips(wr)).toHaveLength(0)
   })
 
@@ -196,13 +224,13 @@ describe('the lock hint', () => {
     player(1)
     const wr = await mountHub()
     // A finger's pointerenter is not a hover.
-    await tabEl(wr, 'workshop').trigger('pointerenter', { pointerType: 'touch' })
+    await station(wr, 'workshop').trigger('pointerenter', { pointerType: 'touch' })
     expect(tips(wr)).toHaveLength(0)
-    await tap(tabEl(wr, 'workshop'))
+    await tap(station(wr, 'workshop'))
     expect(tips(wr)).toHaveLength(1)
     expect(tips(wr)[0]!.text()).toBe('Complete 1 more mission to unlock')
     // The finger lifting off is not "leaving".
-    await tabEl(wr, 'workshop').trigger('pointerleave', { pointerType: 'touch' })
+    await station(wr, 'workshop').trigger('pointerleave', { pointerType: 'touch' })
     vi.advanceTimersByTime(2999)
     await nextTick()
     expect(tips(wr)).toHaveLength(1)
@@ -214,17 +242,17 @@ describe('the lock hint', () => {
   it('leaves on the next tap anywhere', async () => {
     player(1)
     const wr = await mountHub()
-    await tap(tabEl(wr, 'workshop'))
+    await tap(station(wr, 'workshop'))
     expect(tips(wr)).toHaveLength(1)
     await wr.get('.topbar').trigger('pointerdown', { pointerType: 'touch' })
     expect(tips(wr)).toHaveLength(0)
   })
 
-  it('shows one at a time: a tap on another locked menu moves it there', async () => {
+  it('shows one at a time: a tap on another locked one moves it there', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     player(1)
     const wr = await mountHub()
-    await tap(tabEl(wr, 'workshop'))
+    await tap(station(wr, 'workshop'))
     vi.advanceTimersByTime(2000)
     await tap(pill(wr))
     expect(tips(wr)).toHaveLength(1)
@@ -234,7 +262,7 @@ describe('the lock hint', () => {
     await nextTick()
     expect(tips(wr)).toHaveLength(1)
     // A mouse over a third one while a tap's hint is up: still just one.
-    await tabEl(wr, 'circuits').trigger('pointerenter', { pointerType: 'mouse' })
+    await station(wr, 'circuits').trigger('pointerenter', { pointerType: 'mouse' })
     await nextTick()
     expect(tips(wr)).toHaveLength(1)
     expect(tips(wr)[0]!.text()).toBe('Complete 2 more missions to unlock')
@@ -245,7 +273,7 @@ describe('the lock hint', () => {
     player(1)
     const wr = await mountHub()
     // Enter/Space on a focused button: a click with `detail` 0.
-    await tabEl(wr, 'circuits').trigger('click')
+    await station(wr, 'circuits').trigger('click')
     await nextTick()
     expect(tips(wr)).toHaveLength(1)
     expect(sfxCalls('denied')).toBe(1)
@@ -254,7 +282,7 @@ describe('the lock hint', () => {
     expect(tips(wr)).toHaveLength(0)
   })
 
-  it('is placed inside the screen, pointing at its control', async () => {
+  it('is placed inside the screen, pointing at its label', async () => {
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(200)
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(40)
     const width = window.innerWidth
@@ -262,10 +290,10 @@ describe('the lock hint', () => {
     try {
       player(1)
       const wr = await mountHub()
-      // The Workshop tab in a portrait phone's bottom-right corner.
-      const el = tabEl(wr, 'workshop').element
+      // The Forge's label near a portrait phone's bottom-right corner.
+      const el = station(wr, 'workshop').element
       el.getBoundingClientRect = () => ({ left: 316, top: 700, width: 88, height: 60, right: 404, bottom: 760, x: 316, y: 700, toJSON: () => ({}) })
-      await tap(tabEl(wr, 'workshop'))
+      await tap(station(wr, 'workshop'))
       await nextTick()
       const tip = tips(wr)[0]!
       expect(tip.classes()).toContain('placed')
@@ -279,45 +307,50 @@ describe('the lock hint', () => {
 })
 
 describe('the unlock moment', () => {
-  it('the first visit with the Workshop open: a "new" badge and one fanfare', async () => {
+  it('the first visit with the Forge open: a "new" chip and one fanfare', async () => {
     player(2, { [FLOOR_TIP]: 0 })
     const wr = await mountHub()
-    const t = tabEl(wr, 'workshop')
-    expect(t.classes()).toContain('fresh')
-    expect(t.get('.new-chip').text()).toBe('NEW')
-    expect(tabEl(wr, 'circuits').find('.new-chip').exists()).toBe(false)
+    const s = station(wr, 'workshop')
+    expect(s.classes()).toContain('fresh')
+    expect(s.get('.m-chip.new').text()).toBe('NEW')
+    expect(station(wr, 'circuits').find('.m-chip.new').exists()).toBe(false)
     expect(sfxCalls('objective')).toBe(1)
     expect(saved()[unlockedTip('workshop')]).toBe(true)
   })
 
-  it('the badge stays until the menu is opened, then is gone for good, across reloads', async () => {
+  it('the chip stays until the station is used, then is gone for good, across reloads', async () => {
     player(2, { [FLOOR_TIP]: 0 })
     await mountHub().then(x => x.unmount())
-    // Back in the lab without having opened it: still new, but no second fanfare.
+    // Back in the lab without having used it: still new, but no second fanfare.
     vi.mocked(sfx).mockClear()
     let wr = await mountHub()
-    expect(tabEl(wr, 'workshop').find('.new-chip').exists()).toBe(true)
+    expect(station(wr, 'workshop').find('.m-chip.new').exists()).toBe(true)
     expect(sfxCalls('objective')).toBe(0)
-    await tap(tabEl(wr, 'workshop'))
+    // Flux at the forge: its panel opens.
+    hubTab.value = 'workshop'
+    await nextTick()
     expect(wr.find('.panel-workshop').exists()).toBe(true)
-    expect(tabEl(wr, 'workshop').find('.new-chip').exists()).toBe(false)
-    expect(tabEl(wr, 'workshop').classes()).not.toContain('fresh')
+    expect(station(wr, 'workshop').find('.m-chip.new').exists()).toBe(false)
+    expect(station(wr, 'workshop').classes()).not.toContain('fresh')
     expect(saved()[openedTip('workshop')]).toBe(true)
     wr.unmount()
     // A reload reads the flag back from the save.
     profile.tips = { ...saved() } as typeof profile.tips
+    hubTab.value = 'missions'
     wr = await mountHub()
-    expect(tabEl(wr, 'workshop').find('.new-chip').exists()).toBe(false)
+    expect(station(wr, 'workshop').find('.m-chip.new').exists()).toBe(false)
   })
 
-  it('the leaderboard pill gets its badge at four, and loses it when the board opens', async () => {
+  it('the leaderboard gets its chip at four (the pill and the Hall of Fame), and loses it when the board opens', async () => {
     player(4, { [FLOOR_TIP]: 0, [unlockedTip('workshop')]: true, [openedTip('workshop')]: true, [unlockedTip('circuits')]: true, [openedTip('circuits')]: true })
     const wr = await mountHub()
     expect(pill(wr).classes()).toContain('fresh')
     expect(pill(wr).find('.new-chip').exists()).toBe(true)
+    expect(station(wr, 'records').find('.m-chip.new').exists()).toBe(true)
     expect(sfxCalls('objective')).toBe(1)
     await tap(pill(wr))
     expect(pill(wr).find('.new-chip').exists()).toBe(false)
+    expect(station(wr, 'records').find('.m-chip.new').exists()).toBe(false)
     expect(saved()[openedTip('leaderboard')]).toBe(true)
   })
 
@@ -330,17 +363,17 @@ describe('the unlock moment', () => {
     flow.modal = ''
     await nextTick()
     expect(sfxCalls('objective')).toBe(1)
-    expect(tabEl(wr, 'circuits').find('.new-chip').exists()).toBe(true)
+    expect(station(wr, 'circuits').find('.m-chip.new').exists()).toBe(true)
   })
 })
 
-describe('returning players keep their menus', () => {
-  it('a save from the old lab (one mission, tour taken) keeps every menu, none of them "new"', async () => {
+describe('returning players keep their stations', () => {
+  it('a save from the old lab (one mission, tour taken) keeps every station, none of them "new"', async () => {
     player(1, { 'lesson:upgrade': true })
     const wr = await mountHub()
     for (const id of ['workshop', 'circuits']) {
-      expect(tabEl(wr, id).classes()).not.toContain('locked')
-      expect(tabEl(wr, id).find('.new-chip').exists()).toBe(false)
+      expect(station(wr, id).classes()).not.toContain('locked')
+      expect(station(wr, id).find('.m-chip.new').exists()).toBe(false)
     }
     expect(pill(wr).classes()).not.toContain('locked')
     expect(pill(wr).find('.new-chip').exists()).toBe(false)
@@ -354,13 +387,13 @@ describe('returning players keep their menus', () => {
     await mountHub().then(x => x.unmount())
     expect(profile.tips[FLOOR_TIP]).toBe(0)
     expect(saved()[FLOOR_TIP]).toBe(0)
-    // Two missions later: the Workshop (and the tour) were used.
+    // Two missions later: the Forge (and the tour) were used.
     profile.questsDone = 2
     profile.tips['lesson:upgrade'] = true
     profile.inv.items[0]!.upg = 1
     const wr = await mountHub()
-    expect(tabEl(wr, 'workshop').classes()).not.toContain('locked')
-    expect(tabEl(wr, 'circuits').classes()).toContain('locked')
+    expect(station(wr, 'workshop').classes()).not.toContain('locked')
+    expect(station(wr, 'circuits').classes()).toContain('locked')
   })
 })
 
@@ -424,8 +457,9 @@ describe('the requirement, in every language', () => {
   it('reads right on screen in Russian and German', async () => {
     player(0)
     let wr = await mountHub('ru', ru as Messages)
-    expect(tabEl(wr, 'workshop').attributes('aria-label')).toBe('Мастерская, закрыто: выполните ещё 2 миссии')
-    await tap(tabEl(wr, 'circuits'))
+    // The station's own name in Russian, in the locked sentence.
+    expect(station(wr, 'workshop').attributes('aria-label')).toBe(`${(ru as M).hub.place.workshop}, закрыто: выполните ещё 2 миссии`)
+    await tap(station(wr, 'circuits'))
     expect(tips(wr)[0]!.text()).toBe('Выполните ещё 3 миссии, чтобы открыть')
     wr.unmount()
     player(1)

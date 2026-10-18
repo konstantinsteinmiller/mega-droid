@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Liko sekundžių: {s}, dronų: {n}',
     'tink': 'DZIN!',
     'perfect': 'TOBULA!',
     'parry': 'ATREMTA!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} sunaikintas!',
     'objectiveDone': 'Tikslas įvykdytas!',
     'rescued': 'Darbininkas robotas nuteleportuotas į saugią vietą!',
-    'bossDoor': 'Sklendė girgždėdama atsiveria…'
+    'bossDoor': 'Sklendė girgždėdama atsiveria…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Dangus švarus! +{n} varžtų',
+    'skyFail': 'Per lėtai! Dronai sugrįžo.'
   },
   'interact': {
     'chest': 'Atidaryti',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Įvykdyk dar {n} misiją, kad atrakintum | Įvykdyk dar {n} misijas, kad atrakintum | Įvykdyk dar {n} misijų, kad atrakintum',
       'aria': '{name}, užrakinta: įvykdyk dar {n} misiją | {name}, užrakinta: įvykdyk dar {n} misijas | {name}, užrakinta: įvykdyk dar {n} misijų'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Ginklinė',
+      'workshop': 'Kalvė',
+      'circuits': 'Lustų laboratorija',
+      'records': 'Šlovės salė',
+      'table': 'Instruktažas'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Atidaryti',
+      'brief': 'Kartoti instruktažą'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Kita',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanšas: {boss}. PT, varžtai ir grobis. Siužetas nejuda į priekį.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Po kitos tavo misijos čia atsiras naujas darbas.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Nueiti: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Atgal į salę',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipo atsargos',
+      'hello': 'Ps, Flux! Sukrapščiau tau keletą daiktų.',
+      'aria': 'Kalbėtis su Pipu: atsargos'
     }
   },
   'hero': {

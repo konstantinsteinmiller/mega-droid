@@ -24,6 +24,9 @@ import { weakSpotAt, WEAK_SPOT_MUL } from '../data/weakspots'
 export const GUARD_BROKEN = 0.7
 /** …on a Hardhat under its helmet (#124). */
 export const HARDHAT_COVERED = 0.3
+/** A sky shoot's drone (#178) takes this share of a quick shot (a pellet):
+ *  about six to bring one down, where one half charge does it. */
+export const SKY_PELLET = 0.34
 
 /** Scratch for a weak spot's position. */
 const _weak = { x: 0, y: 0, z: 0, r: 0 }
@@ -1009,6 +1012,9 @@ export class CombatSystem {
       if (e.boss && e.state !== 'stun') this.stun(e, 0.9)
     }
     amount *= weakMul
+    // A sky shoot's drone (#178) shrugs off most of a quick shot: a well-timed
+    // charge is the way to take it down.
+    if (e.sky && o.charge === 0 && !o.special) amount *= SKY_PELLET
     // A shot on the weak spot: ×1.5, a crit to the eye and the ear, KRANCK!
     if (o.weakSpot) {
       amount *= WEAK_SPOT_MUL
@@ -1122,6 +1128,12 @@ export class CombatSystem {
     h.shake(e.boss ? 0.8 : e.elite ? 0.4 : 0.2)
     h.sfx(e.boss ? 'death' : 'explode', e.x, e.z)
     if (e.boss) h.hitStop = Math.max(h.hitStop, 0.35)
+    // A sky shoot's drone pays nothing on its own (its round pays, once:
+    // a failed round must not be a bolt farm).
+    if (e.sky) {
+      h.onEnemyKilled(e, 0)
+      return
+    }
     const xp = scaleXp(e.def.xp, e.level) * (e.elite ? 3 : 1)
     pushHud({ t: 'text', x: e.x, y: cy + 0.8, z: e.z, key: 'combat.xp', color: '#9dff5a', params: { n: xp } })
     // Drops

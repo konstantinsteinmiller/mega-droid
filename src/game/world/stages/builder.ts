@@ -99,6 +99,8 @@ export class Builder {
   exit: MapData['exit'] | null = null
   /** The optional mini-boss room, if the map has one (`challengeRoom`). */
   challenge: MapData['challenge'] | null = null
+  /** The sky shoot over a room, if the stage has one (#178). */
+  skyShoot: MapData['skyShoot'] | null = null
   /** Round cover posts standing on the floor (`MapData.pillars`; `coverPillar`). */
   pillars: Pillar[] = []
   links: NavLink[] = []
@@ -670,6 +672,7 @@ export const finish = (b: Builder, start: { x: number; z: number; yaw: number },
   if (b.beam) map.beam = b.beam
   if (b.exit) map.exit = b.exit
   if (b.challenge) map.challenge = b.challenge
+  if (b.skyShoot) map.skyShoot = b.skyShoot
   return map
 }
 
@@ -769,6 +772,7 @@ export const mirrorX = (m: MapData): MapData => {
     start: { x: X - m.start.x, z: m.start.z, yaw: -m.start.yaw },
     ...(m.exit ? { exit: { ...m.exit, pad: [mi(m.exit.pad[0]), m.exit.pad[1]] as [number, number] } } : {}),
     ...(m.challenge ? { challenge: { ...m.challenge, at: [mi(m.challenge.at[0]), m.challenge.at[1]] as [number, number] } } : {}),
+    ...(m.skyShoot ? { skyShoot: { ...m.skyShoot, x: X - m.skyShoot.x } } : {}),
     terrain
   }
 }

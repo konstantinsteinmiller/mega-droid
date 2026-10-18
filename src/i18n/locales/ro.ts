@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Secunde rămase: {s}, drone rămase: {n}',
     'tink': 'TINK!',
     'perfect': 'PERFECT!',
     'parry': 'PARADĂ!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} a fost distrus!',
     'objectiveDone': 'Obiectiv îndeplinit!',
     'rescued': 'Robotul muncitor e în siguranță!',
-    'bossDoor': 'Oblonul se deschide scârțâind…'
+    'bossDoor': 'Oblonul se deschide scârțâind…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Cer curat! +{n} șuruburi',
+    'skyFail': 'Prea încet! Dronele s-au întors.'
   },
   'interact': {
     'chest': 'Deschide',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Mai termină {n} misiune pentru deblocare | Mai termină {n} misiuni pentru deblocare | Mai termină {n} de misiuni pentru deblocare',
       'aria': '{name}, blocat: mai termină {n} misiune | {name}, blocat: mai termină {n} misiuni | {name}, blocat: mai termină {n} de misiuni'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Armurărie',
+      'workshop': 'Forjă',
+      'circuits': 'Laborator de cipuri',
+      'records': 'Sala Gloriei',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Deschide',
+      'brief': 'Revezi briefingul'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Următoarea',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanșă cu {boss}: XP, șuruburi și pradă. Povestea nu avansează.',
+    // A job pad with no job on it.
+    'jobEmpty': 'După următoarea ta misiune, aici apare o sarcină nouă.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Mergi la {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Înapoi în hală',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Proviziile lui Pip',
+      'hello': 'Pst, Flux! Ți-am făcut rost de câteva lucruri.',
+      'aria': 'Vorbește cu Pip: provizii'
     }
   },
   'hero': {

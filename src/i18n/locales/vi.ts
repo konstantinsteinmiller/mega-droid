@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Còn {s} giây, còn {n} drone nữa',
     'tink': 'KENG!',
     'perfect': 'HOÀN HẢO!',
     'parry': 'GẠT ĐÒN!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} đã bị tiêu diệt!',
     'objectiveDone': 'Hoàn thành mục tiêu!',
     'rescued': 'Robot công nhân đã được đưa về nơi an toàn!',
-    'bossDoor': 'Cửa sập kẽo kẹt mở ra…'
+    'bossDoor': 'Cửa sập kẽo kẹt mở ra…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Bầu trời sạch bóng! +{n} bu lông',
+    'skyFail': 'Chậm quá! Drone quay lại rồi.'
   },
   'interact': {
     'chest': 'Mở',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Hoàn thành thêm {n} nhiệm vụ để mở khóa',
       'aria': '{name}, đã khóa: hoàn thành thêm {n} nhiệm vụ'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Kho vũ khí',
+      'workshop': 'Lò rèn',
+      'circuits': 'Phòng chip',
+      'records': 'Đại sảnh danh vọng',
+      'table': 'Họp nhiệm vụ'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Mở',
+      'brief': 'Xem lại buổi họp'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Kế tiếp',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Tái đấu với {boss}: XP, bu lông và báu vật. Cốt truyện vẫn giữ nguyên.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Một nhiệm vụ phụ mới sẽ xuất hiện ở đây sau nhiệm vụ tiếp theo của bạn.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Đi tới {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Về đại sảnh',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Đồ tiếp tế của Pip',
+      'hello': 'Psst, Flux! Tớ kiếm được vài thứ cho cậu này.',
+      'aria': 'Nói chuyện với Pip: đồ tiếp tế'
     }
   },
   'hero': {

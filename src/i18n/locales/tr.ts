@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} saniye kaldı, {n} dron kaldı',
     'tink': 'ÇIN!',
     'perfect': 'MÜKEMMEL!',
     'parry': 'SAVUŞTURMA!',
@@ -238,7 +240,10 @@ export default {
     'bossDown': '{boss} yok edildi!',
     'objectiveDone': 'Hedef tamamlandı!',
     'rescued': 'İşçi robot güvenle ışınlandı!',
-    'bossDoor': 'Kepenk gıcırdayarak açılıyor…'
+    'bossDoor': 'Kepenk gıcırdayarak açılıyor…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Gökyüzü temiz! +{n} cıvata',
+    'skyFail': 'Çok yavaş! Dronlar geri döndü.'
   },
   'interact': {
     'chest': 'Aç',
@@ -410,6 +415,36 @@ export default {
     'unlock': {
       'hint': 'Açmak için {n} görev daha tamamla',
       'aria': '{name}, kilitli: {n} görev daha tamamla'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Cephanelik',
+      'workshop': 'Demirhane',
+      'circuits': 'Çip Laboratuvarı',
+      'records': 'Şöhretler Salonu',
+      'table': 'Brifing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Aç',
+      'brief': 'Brifingi tekrarla'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Sıradaki',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Rövanş: {boss}. XP, cıvata ve ganimet. Hikâye olduğu yerde kalır.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Bir sonraki görevinden sonra burada yeni bir iş çıkar.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Git: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Salona dön',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pip\'in malzemeleri',
+      'hello': 'Pışşt, Flux! Senin için birkaç şey buldum.',
+      'aria': 'Pip ile konuş: malzemeler'
     }
   },
   'hero': {

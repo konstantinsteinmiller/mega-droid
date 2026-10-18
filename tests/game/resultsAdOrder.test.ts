@@ -197,6 +197,9 @@ describe('the Fortress won: the ad, then the ending (#102), then its card', () =
       return { skip() {}, advance() {}, choose() {} } as never
     })
     m.flow.quest = { ...storyQuest(SECTOR_BY_ID.fortress, 32, 0), kind: 'story' }
+    // Vex's FIRST fall in this run: only that one owes the ending (#173: a
+    // rematch from the Fortress gate is a fight, not the end again).
+    profile.world.bosses = profile.world.bosses.filter(b => b !== SECTOR_BY_ID.fortress.boss)
     return { m, order, profile, end: (c: 'ngplus' | 'lab') => onEnd!(c) }
   }
 

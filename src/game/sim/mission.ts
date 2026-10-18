@@ -122,6 +122,7 @@ import { Fumble, isHardHit, strayDir, FUMBLE_PANIC } from './fumble'
 import { buildWeaponCapsule } from '../models/weaponCapsule'
 import { loadBossCraneModule, loadFinaleModules } from '../lazy'
 import { beamRefusal, grandMasterUp, shutOut } from './beamGate'
+import { SkyShoot } from './skyShoot'
 
 export interface MissionSetup {
   sector: SectorId
@@ -487,6 +488,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** Every room of the boss's arena (the Fortress's stages, else its room):
    *  a machine outside them is shut out once the shutter seals (`beamGate`). */
   private arenaRooms: number[] = []
+  /** The sky shoot over a stage's room (#178), if the map has one. */
+  private sky: SkyShoot | null = null
   private boss: Enemy | null = null
   private bossStarted = false
   /** The first boss's free reboot has been taken (`freeBossReboot`). */
@@ -1032,6 +1035,24 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.lessons = new LessonDirector(this, { guided: !!plan })
     if (plan) this.walk = new Walkthrough(this, plan, chest)
     if (setup.snapshot) this.applySnapshot(setup.snapshot)
+    // The sky shoot's ring (#178): after the snapshot (its drones are not on
+    // the build's list a resume marks), before the precompile (their
+    // materials compile with the rest). Won earlier this run: no ring.
+    if (this.map.skyShoot) {
+      const self = this
+      this.sky = new SkyShoot({
+        get player() { return self.player },
+        level: setup.enemyLevel,
+        stats: () => self.stats,
+        addEnemy: (e) => self.addEnemy(e),
+        fx: this.fx,
+        sfx: (n, x, z) => self.sfx(n, x, z),
+        spawnPickup: (k, v, x, y, z) => self.spawnPickup(k, v, x, y, z),
+        reward: (xp) => self.gainXp(xp)
+      }, this.map.skyShoot)
+      if (setup.snapshot?.sky) this.sky.markWon()
+      else this.sky.update(0, false)
+    }
     if (this.pendingVex && this.descent && this.boss) {
       this.descent.restore(this.boss, this.pendingVex.stage, this.pendingVex.hp)
       this.pendingVex = null
@@ -1179,6 +1200,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     hud.bossDown = false
     hud.locatorOn = false
     hud.locatorCd01 = -1
+    hud.skyT = -1
+    hud.skyLeft = 0
     hud.cineSkip = false
     // It opens on Flux himself, third person (`sim/beamIn.ts`).
     hud.introCine = true
@@ -1742,6 +1765,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     this.objects.onEnemyKilled(e)
+    this.sky?.onKilled(e)
     this.gainXp(xp)
     this.dirty = true
     this.maybeKillCam(e)
@@ -2973,7 +2997,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       climb: this.climb?.save(),
       borrowed: this.borrowed.save(),
       checkpoint: this.cpSnap ?? undefined,
-      vex: this.descent && this.boss && this.descent.stage > 0 ? { stage: this.descent.stage, hp: Math.round(this.boss.hp) } : undefined
+      vex: this.descent && this.boss && this.descent.stage > 0 ? { stage: this.descent.stage, hp: Math.round(this.boss.hp) } : undefined,
+      sky: this.sky?.won || undefined
     }
   }
 
@@ -3180,6 +3205,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (this.lessons.weaponLive) this.combat.we = this.combat.maxWe
     this.walk?.update(lt.playing, hud.combat)
     this.stepTraining(lt.playing, dt)
+    this.sky?.update(dt, lt.playing)
     this.training.update(this.time, lt.playing)
     this.updateDoorPrompt(dt, lt.playing)
     this.stepGuards()
@@ -4330,7 +4356,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** A machine went down: maybe the kill-cam (`sim/killCam.ts`). */
   private maybeKillCam(e: Enemy): void {
-    if (e.boss || hud.phase !== 'play' || this.freeze.active || this.exit.active) return
+    // Never on a sky shoot's drone: its round runs against the clock.
+    if (e.boss || e.sky || hud.phase !== 'play' || this.freeze.active || this.exit.active) return
     const p = this.player
     let alertNear = false
     for (const o of this.enemies) {

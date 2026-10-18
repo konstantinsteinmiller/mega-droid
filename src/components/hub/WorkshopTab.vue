@@ -93,19 +93,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import RewardAdBadge from '@/components/atoms/RewardAdBadge.vue'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import ItemDetail from './ItemDetail.vue'
 import { SLOT_ICON } from './gearFormat'
-import { profile, saveProfile, computeStats, isEquipped, upgradeItem, itemById, supplyDropBolts, equipItem } from '@/game/state/profile'
+import { profile, saveProfile, computeStats, isEquipped, upgradeItem, itemById, equipItem } from '@/game/state/profile'
 import { currentHub } from '@/game/boot'
 import { itemPower, mainStat, upgradeCost, MAX_UPG } from '@/game/data/items'
 import { RARITY_COLOR } from '@/game/models/palette'
 import { sfx } from '@/game/audio/sfx'
-import { claimReward, canOfferReward, adInFlight } from '@/use/useAdGate'
-import { resumeMusicAfterAd } from '@/use/useSound'
+import { usePipSupplies, mmss } from './pipSupplies'
 import { workshopSel } from './hubLesson'
 
 /** The Workshop: Repair Tanks, and upgrading gear with bolts (+1 … +10,
@@ -113,65 +112,9 @@ import { workshopSel } from './hubLesson'
 const { t } = useI18n()
 const TANK_PRICE = 150
 
-// ─── Supply drop (rewarded) ──────────────────────────────────────────────────
-// Free bolts for a video, scaled by level and paced by a cooldown that lives
-// in the save (so a reload does not reset it). Hidden whenever no rewarded ad
-// is ready — an offer that then fails reads as a broken game.
-const DROP_COOLDOWN_MS = 4 * 60_000
-const dropAmount = computed(() => supplyDropBolts())
-const now = ref(Date.now())
-let clock: number | null = null
-onMounted(() => { clock = window.setInterval(() => { now.value = Date.now() }, 1000) })
-onUnmounted(() => { if (clock !== null) clearInterval(clock) })
-const dropLeft = computed(() => Math.max(0, Math.ceil((profile.stats.lastDropAt + DROP_COOLDOWN_MS - now.value) / 1000)))
-const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-const claimDrop = async () => {
-  if (dropLeft.value > 0) return
-  const n = dropAmount.value
-  try {
-    await claimReward(() => {
-      profile.bolts += n
-      profile.stats.lastDropAt = Date.now()
-      now.value = Date.now()
-      saveProfile()
-      sfx('loot')
-    })
-  } finally {
-    // The ad hard-stopped the lab music and its play intent; nothing else
-    // restarts it until the next mission, so bring it back here.
-    resumeMusicAfterAd()
-  }
-}
-/** The best buster the player owns (by power), and what its next upgrade
- *  costs: short of that, the rewarded top-up pays two such upgrades. */
-const bestBuster = computed(() => profile.inv.items.filter(it => it.slot === 'buster' && it.upg < MAX_UPG)
-  .sort((a, b) => itemPower(b) - itemPower(a))[0] ?? null)
-const shortForUpgrade = computed(() => !!bestBuster.value && profile.bolts < upgradeCost(bestBuster.value))
-const upgradeAdAmount = computed(() => (bestBuster.value ? upgradeCost(bestBuster.value) * 2 : 0))
-const claimUpgradeAd = async () => {
-  const n = upgradeAdAmount.value
-  if (!n) return
-  try {
-    await claimReward(() => {
-      profile.bolts += n
-      saveProfile()
-      sfx('loot')
-    })
-  } finally {
-    resumeMusicAfterAd()
-  }
-}
-/**
- * Which video-for-bolts row shows: never both (playtest 2026-10-12: "+6122"
- * beside "+860" for the same video read as nonsense — the level-scaled drop
- * falls far behind two upgrades of a late cannon). The bigger one that can be
- * claimed now; the drop with its cooldown only when no top-up is offered.
- */
-const adOffer = computed<'upgrade' | 'drop' | null>(() => {
-  if (!canOfferReward.value) return null
-  if (!shortForUpgrade.value) return 'drop'
-  return dropLeft.value === 0 && dropAmount.value > upgradeAdAmount.value ? 'drop' : 'upgrade'
-})
+// The rewarded bolts (the supply drop or the upgrade top-up): Pip's offer,
+// shown here too, where the upgrade tour points at it (`pipSupplies.ts`).
+const { dropAmount, dropLeft, upgradeAdAmount, adOffer, claimDrop, claimUpgradeAd, adInFlight } = usePipSupplies()
 const stats = computed(() => { void profile.hero.skills; return computeStats() })
 const items = computed(() => [...profile.inv.items]
   .sort((a, b) => Number(!!isEquipped(b.id)) - Number(!!isEquipped(a.id)) || itemPower(b) - itemPower(a)))

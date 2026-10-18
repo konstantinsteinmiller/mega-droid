@@ -77,7 +77,7 @@
   },
   "de/atlas_debrief_toLab": {
     "engine": "elevenlabs",
-    "at": "2026-10-08"
+    "at": "2026-10-18"
   },
   "de/atlas_exit": {
     "engine": "elevenlabs",
@@ -965,7 +965,7 @@
   },
   "de/pip_debrief_go": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/pip_debrief_hello": {
     "engine": "elevenlabs",
@@ -1105,7 +1105,7 @@
   },
   "de/story_vex_diagnosis": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/vex_fortress_welcome": {
     "engine": "elevenlabs",

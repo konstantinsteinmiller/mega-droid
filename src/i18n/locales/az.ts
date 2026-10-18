@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} saniyə qaldı, daha {n} dron',
     'tink': 'ÇIN!',
     'perfect': 'MÜKƏMMƏL!',
     'parry': 'DƏF EDİLDİ!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} məhv edildi!',
     'objectiveDone': 'Hədəf tamamlandı!',
     'rescued': 'İşçi robot təhlükəsiz yerə teleport edildi!',
-    'bossDoor': 'Qapı cırıldayaraq açılır…'
+    'bossDoor': 'Qapı cırıldayaraq açılır…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Səma təmizdir! +{n} bolt',
+    'skyFail': 'Çox yavaş! Dronlar geri qayıtdı.'
   },
   'interact': {
     'chest': 'Aç',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Açmaq üçün daha {n} missiya tamamla | Açmaq üçün daha {n} missiya tamamla',
       'aria': '{name}, kilidli: daha {n} missiya tamamla | {name}, kilidli: daha {n} missiya tamamla'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Silah anbarı',
+      'workshop': 'Dəmirxana',
+      'circuits': 'Çip laboratoriyası',
+      'records': 'Şöhrət zalı',
+      'table': 'Brifinq'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Aç',
+      'brief': 'Brifinqi təkrarla'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Növbəti',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanş: {boss}. TƏ, bolt və qənimət. Hekayə olduğu yerdə qalır.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Növbəti missiyandan sonra burada yeni tapşırıq çıxacaq.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Get: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Zala qayıt',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': "Pip'in ehtiyatları",
+      'hello': 'Pss, Flux! Sənin üçün bir neçə şey tapdım.',
+      'aria': 'Pip ilə danış: ehtiyatlar'
     }
   },
   'hero': {

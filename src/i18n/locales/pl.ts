@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Zostało sekund: {s}, dronów: {n}',
     'tink': 'DZYŃ!',
     'perfect': 'IDEALNIE!',
     'parry': 'PAROWANIE!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} zniszczony!',
     'objectiveDone': 'Cel osiągnięty!',
     'rescued': 'Robot roboczy przeteleportowany w bezpieczne miejsce!',
-    'bossDoor': 'Wrota otwierają się ze zgrzytem…'
+    'bossDoor': 'Wrota otwierają się ze zgrzytem…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Niebo czyste! +{n} śrub',
+    'skyFail': 'Za wolno! Drony wróciły.'
   },
   'interact': {
     'chest': 'Otwórz',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Ukończ jeszcze {n} misję, aby odblokować | Ukończ jeszcze {n} misje, aby odblokować | Ukończ jeszcze {n} misji, aby odblokować',
       'aria': '{name}, zablokowane: ukończ jeszcze {n} misję | {name}, zablokowane: ukończ jeszcze {n} misje | {name}, zablokowane: ukończ jeszcze {n} misji'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Zbrojownia',
+      'workshop': 'Kuźnia',
+      'circuits': 'Laboratorium chipów',
+      'records': 'Galeria sław',
+      'table': 'Odprawa'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Otwórz',
+      'brief': 'Powtórz odprawę'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Następna',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Rewanż: {boss}. XP, śruby i łupy. Fabuła zostaje na miejscu.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Po twojej następnej misji pojawi się tu nowe zlecenie.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Idź tam: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Wróć do hali',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Zapasy Pipa',
+      'hello': 'Psst, Flux! Załatwiłem ci parę rzeczy.',
+      'aria': 'Porozmawiaj z Pipem: zapasy'
     }
   },
   'hero': {

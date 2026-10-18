@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} másodperc van hátra, még {n} drón',
     'tink': 'TINK!',
     'perfect': 'TÖKÉLETES!',
     'parry': 'HÁRÍTÁS!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} megsemmisítve!',
     'objectiveDone': 'Feladat teljesítve!',
     'rescued': 'Munkásrobot biztonságba teleportálva!',
-    'bossDoor': 'A redőny csikorogva felnyílik…'
+    'bossDoor': 'A redőny csikorogva felnyílik…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Tiszta az ég! +{n} csavar',
+    'skyFail': 'Túl lassú! Visszajöttek a drónok.'
   },
   'interact': {
     'chest': 'Kinyitás',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Teljesíts még {n} küldetést a feloldáshoz | Teljesíts még {n} küldetést a feloldáshoz',
       'aria': '{name}, zárolva: teljesíts még {n} küldetést | {name}, zárolva: teljesíts még {n} küldetést'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Fegyvertár',
+      'workshop': 'Kovácsműhely',
+      'circuits': 'Chiplabor',
+      'records': 'Hírességek csarnoka',
+      'table': 'Eligazítás'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Megnyitás',
+      'brief': 'Eligazítás újra'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Következő',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Visszavágó: {boss}. TP, csavarok és zsákmány. A történet nem halad tovább.',
+    // A job pad with no job on it.
+    'jobEmpty': 'A következő küldetésed után itt új megbízás jelenik meg.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Menj ide: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Vissza a csarnokba',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pip készletei',
+      'hello': 'Pszt, Flux! Összeszedtem neked pár dolgot.',
+      'aria': 'Beszélj Pippel: készletek'
     }
   },
   'hero': {

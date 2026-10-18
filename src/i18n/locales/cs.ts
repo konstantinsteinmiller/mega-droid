@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Zbývá sekund: {s}, dronů: {n}',
     'tink': 'CINK!',
     'perfect': 'PERFEKTNÍ!',
     'parry': 'VYKRYTÍ!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} zničen!',
     'objectiveDone': 'Cíl splněn!',
     'rescued': 'Pracovní robot teleportován do bezpečí!',
-    'bossDoor': 'Vrata se se skřípěním otevírají…'
+    'bossDoor': 'Vrata se se skřípěním otevírají…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Nebe čisté! +{n} šroubů',
+    'skyFail': 'Moc pomalu! Drony jsou zpátky.'
   },
   'interact': {
     'chest': 'Otevřít',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Dokonči ještě {n} misi pro odemčení | Dokonči ještě {n} mise pro odemčení | Dokonči ještě {n} misí pro odemčení',
       'aria': '{name}, zamčeno: dokonči ještě {n} misi | {name}, zamčeno: dokonči ještě {n} mise | {name}, zamčeno: dokonči ještě {n} misí'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Zbrojnice',
+      'workshop': 'Kovárna',
+      'circuits': 'Čipová laboratoř',
+      'records': 'Síň slávy',
+      'table': 'Instruktáž'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Otevřít',
+      'brief': 'Přehrát instruktáž'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Další',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Odveta: {boss}. XP, šrouby a kořist. Příběh zůstane, kde je.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Po tvé další misi se tu objeví nová zakázka.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Jít na místo: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Zpět do haly',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipovy zásoby',
+      'hello': 'Pst, Flux! Sehnal jsem ti pár věcí.',
+      'aria': 'Mluvit s Pipem: zásoby'
     }
   },
   'hero': {

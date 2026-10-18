@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} सेकंड बाकी, {n} ड्रोन बाकी',
     'tink': 'टन्न!',
     'perfect': 'परफ़ेक्ट!',
     'parry': 'पलटवार!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} नष्ट!',
     'objectiveDone': 'लक्ष्य पूरा!',
     'rescued': 'वर्कर-बॉट बीम होकर सुरक्षित पहुँचा!',
-    'bossDoor': 'शटर घरघराते हुए खुल रहा है…'
+    'bossDoor': 'शटर घरघराते हुए खुल रहा है…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'आसमान साफ़! +{n} बोल्ट',
+    'skyFail': 'बहुत धीमे! ड्रोन वापस आ गए।'
   },
   'interact': {
     'chest': 'खोलें',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'अनलॉक करने के लिए {n} और मिशन पूरा करें | अनलॉक करने के लिए {n} और मिशन पूरे करें',
       'aria': '{name}, लॉक है: {n} और मिशन पूरा करें | {name}, लॉक है: {n} और मिशन पूरे करें'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'शस्त्रागार',
+      'workshop': 'भट्ठी',
+      'circuits': 'चिप लैब',
+      'records': 'हॉल ऑफ़ फ़ेम',
+      'table': 'ब्रीफ़िंग'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'खोलें',
+      'brief': 'ब्रीफ़िंग दोबारा देखें'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'अगला',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': '{boss} से दोबारा मुकाबला: XP, बोल्ट और लूट। कहानी आगे नहीं बढ़ती।',
+    // A job pad with no job on it.
+    'jobEmpty': 'तुम्हारे अगले मिशन के बाद यहाँ नया काम आएगा।',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': '{place} तक चलें',
+    // A station's panel: back out to the hall.
+    'back': 'हॉल में वापस',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'पिप का सामान',
+      'hello': 'पस्स्ट, Flux! मैंने तुम्हारे लिए कुछ चीज़ें जुटाई हैं।',
+      'aria': 'पिप से बात करें: सामान'
     }
   },
   'hero': {

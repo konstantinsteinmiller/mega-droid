@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '残り{s}秒、ドローンあと{n}機',
     'tink': 'カキン！',
     'perfect': 'パーフェクト！',
     'parry': 'パリィ！',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss}撃破！',
     'objectiveDone': '目標達成！',
     'rescued': '作業ロボを安全な場所へ転送した！',
-    'bossDoor': 'シャッターがきしみながら開く…'
+    'bossDoor': 'シャッターがきしみながら開く…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': '空がクリア！ +{n} ネジ',
+    'skyFail': '遅すぎ！ドローンが戻ってきた。'
   },
   'interact': {
     'chest': '開ける',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'あと{n}回ミッションをクリアすると解放',
       'aria': '{name}、ロック中：あと{n}回ミッションをクリア'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': '武器庫',
+      'workshop': '鍛冶場',
+      'circuits': 'チップラボ',
+      'records': '殿堂',
+      'table': 'ブリーフィング'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': '開く',
+      'brief': 'ブリーフィングをもう一度'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': '次',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': '{boss}と再戦：経験値、ネジ、お宝。ストーリーは進まないよ。',
+    // A job pad with no job on it.
+    'jobEmpty': '次のミッションの後、ここに新しい依頼が届くよ。',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': '{place}へ移動',
+    // A station's panel: back out to the hall.
+    'back': 'ホールに戻る',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'ピップの補給品',
+      'hello': 'ねえねえ、フラックス！いくつか集めておいたよ。',
+      'aria': 'ピップと話す：補給品'
     }
   },
   'hero': {

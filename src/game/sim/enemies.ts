@@ -709,7 +709,7 @@ const startTele = (e: Enemy, attack: string, dur: number, red: boolean): void =>
 /** Wake an enemy (and, a beat later, its room-mates). A machine asleep in
  *  disguise sleeps through all of it: only a hit wakes it (`wakeGolem`). */
 export const wake = (w: World, e: Enemy, chain = true): void => {
-  if (e.awake || e.state === 'dead' || e.offstage || e.dormant) return
+  if (e.awake || e.state === 'dead' || e.offstage || e.dormant || e.sky) return
   e.awake = true
   e.hold = false
   enterState(e, 'alert')
@@ -1146,6 +1146,8 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
     e.deathT += dt
     return
   }
+  // A sky shoot's drone flies the ring (`sim/skyShoot.ts`), nothing else.
+  if (e.sky) return
   // Asleep as a crate: no perception, no motion, nothing to animate
   if (e.dormant) {
     golemSleep(w, e)

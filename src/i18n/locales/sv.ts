@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} sekunder kvar, {n} drönare kvar',
     'tink': 'PLING!',
     'perfect': 'PERFEKT!',
     'parry': 'PARERAT!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} förstörd!',
     'objectiveDone': 'Målet klart!',
     'rescued': 'Arbetsboten teleporterad i säkerhet!',
-    'bossDoor': 'Porten gnisslar upp…'
+    'bossDoor': 'Porten gnisslar upp…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Himlen rensad! +{n} bultar',
+    'skyFail': 'För långsamt! Drönarna är tillbaka.'
   },
   'interact': {
     'chest': 'Öppna',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Klara {n} uppdrag till för att låsa upp | Klara {n} uppdrag till för att låsa upp',
       'aria': '{name}, låst: klara {n} uppdrag till | {name}, låst: klara {n} uppdrag till'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Vapenförråd',
+      'workshop': 'Smedja',
+      'circuits': 'Chiplabb',
+      'records': 'Ärans hall',
+      'table': 'Genomgång'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Öppna',
+      'brief': 'Se genomgången igen'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Nästa',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Returmatch mot {boss}: XP, bultar och byte. Berättelsen stannar där den är.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Ett nytt jobb dyker upp här efter ditt nästa uppdrag.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Gå till {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Tillbaka till hallen',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pips förnödenheter',
+      'hello': 'Psst, Flux! Jag har skrapat ihop några grejer åt dig.',
+      'aria': 'Prata med Pip: förnödenheter'
     }
   },
   'hero': {

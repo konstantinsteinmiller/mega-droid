@@ -3,9 +3,10 @@
 //
 // The hero was called Cobalt, and a player who opened the "Cobalt" tab in the
 // lab wondered what a metal was for: a name alone reads as a plain word, and
-// "flux" is one too. So the hub tells the player it is a character three ways:
-// the tab wears his face glyph and speaks as "Flux, your combat android", and
-// his panel opens on a name plate (his face, FLUX, "Your combat android").
+// "flux" is one too. So the hub tells the player it is a character: in the
+// walkable lab (#173) his gear is at the Armory, whose label wears his face
+// glyph and carries his name under the station's, and its panel opens on a
+// name plate (his face, FLUX, "Your combat android").
 //
 // The locale half runs over every shipped language: the rename has to reach
 // all of them (ja transliterates the name, the others keep it in Latin), and
@@ -24,17 +25,27 @@ import { flow } from '@/game/flow'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
 import HeroTab from '@/components/hub/HeroTab.vue'
+import { hubTab } from '@/components/hub/hubLesson'
+import { hubUi } from '@/game/state/hubUi'
+import { placesFor } from '@/game/sim/hubPlaces'
 
-// The hub's game-side imports, reduced to what it reads. The other three tabs
-// and the upgrade tour are stubbed: this is about the tab bar and the hero
-// panel, not their contents.
+// The hub's game-side imports, reduced to what it reads. The other panels
+// and the upgrade tour are stubbed: this is about the Armory's label and the
+// hero panel, not their contents.
 vi.mock('@/game/boot', () => ({ input: { device: 'touch' }, currentHub: () => null }))
-vi.mock('@/game/flow', () => ({ flow: { modal: '', loading: false, screen: 'hub' } }))
+vi.mock('@/game/flow', () => ({
+  flow: { modal: '', loading: false, screen: 'hub' }, padQuest: () => null, rerollJob: () => {}, briefingToReplay: () => null, storyFor: () => null
+}))
+vi.mock('@/use/useAdGate', async () => {
+  const { ref } = await import('vue')
+  return { canOfferReward: ref(false), adInFlight: ref(false), claimReward: () => {} }
+})
+vi.mock('@/use/useSound', () => ({ resumeMusicAfterAd: () => {} }))
+vi.mock('@/components/story/HubSceneLayer.vue', () => ({ default: { name: 'HubSceneLayer', render: () => null } }))
 vi.mock('@/game/audio/sfx', () => ({ sfx: () => {} }))
 vi.mock('@/use/useQaAdTrigger', () => ({ registerQaAdTap: () => false }))
 vi.mock('@/use/useLeaderboard', () => ({ leaderboardListEnabled: false }))
 vi.mock('@/components/organisms/LeaderboardModal.vue', () => ({ default: { name: 'LeaderboardModal', render: () => null } }))
-vi.mock('@/components/hub/MissionsTab.vue', () => ({ default: { name: 'MissionsTab', render: () => null } }))
 vi.mock('@/components/hub/CircuitsTab.vue', () => ({ default: { name: 'CircuitsTab', render: () => null } }))
 vi.mock('@/components/hub/WorkshopTab.vue', () => ({ default: { name: 'WorkshopTab', render: () => null } }))
 vi.mock('@/components/hub/HubLesson.vue', () => ({ default: { name: 'HubLesson', render: () => null } }))
@@ -103,8 +114,10 @@ describe('the two new strings, in every locale', () => {
 const i18nFor = (locale: string, messages: Messages) =>
   createI18n({ legacy: false, locale, fallbackLocale: 'en', messages: { en, [locale]: messages } })
 
-const mountHub = (locale = 'en', messages: Messages = en) =>
-  mount(HubScreen, { global: { plugins: [i18nFor(locale, messages)] } })
+const mountHub = (locale = 'en', messages: Messages = en) => {
+  hubUi.places = placesFor(false).map(p => ({ id: p.id, state: 'open' as const }))
+  return mount(HubScreen, { global: { plugins: [i18nFor(locale, messages)] } })
+}
 
 beforeEach(() => {
   profile.hero.pendingAttrs = 0
@@ -112,41 +125,38 @@ beforeEach(() => {
   // Every menu open (`hubUnlocks.ts`): the tabs here are the unlocked ones.
   profile.questsDone = 4
   flow.modal = ''
+  hubTab.value = 'missions'
 })
 
-describe('the hero tab in the lab', () => {
-  it('is labelled Flux, wears the face glyph and is spoken as the android', () => {
+describe('the Armory in the lab', () => {
+  it('its label wears his face glyph and carries his name under the station\'s', () => {
     const w = mountHub()
-    const tab = w.find('[data-lesson="tab-hero"]')
-    expect(tab.find('.t-label').text()).toBe('Flux')
-    expect(tab.attributes('aria-label')).toBe('Flux, your combat android')
-    expect(tab.findComponent(GameIcon).props('name')).toBe('android')
-    // The other tabs are named by their visible label alone.
-    for (const id of ['missions', 'circuits', 'workshop']) {
-      expect(w.find(`[data-lesson="tab-${id}"]`).attributes('aria-label')).toBeUndefined()
-    }
+    const m = w.get('[data-place="hero"]')
+    expect(m.find('.m-name').text()).toBe('Armory')
+    expect(m.find('.m-sub').text()).toBe('Flux')
+    expect(m.findComponent(GameIcon).props('name')).toBe('android')
   })
 
   it('opens on his name plate: his face, his name, what he is', async () => {
     const w = mountHub()
     expect(w.find('.plate').exists()).toBe(false)
-    await w.find('[data-lesson="tab-hero"]').trigger('click')
+    // Flux at the weapon rack: its panel.
+    hubTab.value = 'hero'
     await nextTick()
+    expect(w.get('.panel-head .ph-sub').text()).toBe('Flux')
     const plate = w.find('.hero .plate')
     expect(plate.exists()).toBe(true)
     expect(plate.find('.p-name').text()).toBe('Flux')
     expect(plate.find('.p-role').text()).toBe('Your combat android')
-    // One drawing for one character: the plate's face is the tab's glyph.
-    const tabGlyph = w.find('[data-lesson="tab-hero"]').findComponent(GameIcon).props('name')
-    expect(plate.findComponent(GameIcon).props('name')).toBe(tabGlyph)
+    // One drawing for one character: the plate's face is the label's glyph.
+    const glyph = w.get('[data-place="hero"]').findComponent(GameIcon).props('name')
+    expect(plate.findComponent(GameIcon).props('name')).toBe(glyph)
   })
 
   it('says the same in Japanese, with the transliterated name', async () => {
     const w = mountHub('ja', ja)
-    const tab = w.find('[data-lesson="tab-hero"]')
-    expect(tab.find('.t-label').text()).toBe('フラックス')
-    expect(tab.attributes('aria-label')).toBe('フラックス、あなたの戦闘アンドロイド')
-    await tab.trigger('click')
+    expect(w.get('[data-place="hero"] .m-sub').text()).toBe('フラックス')
+    hubTab.value = 'hero'
     await nextTick()
     expect(w.find('.plate .p-name').text()).toBe('フラックス')
     expect(w.find('.plate .p-role').text()).toBe('あなたの戦闘アンドロイド')

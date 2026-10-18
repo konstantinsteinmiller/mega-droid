@@ -16,7 +16,9 @@ const vueFiles = (dir: string): string[] =>
 
 describe('the rewarded-ad mark', () => {
   const files = vueFiles(ROOT)
-  const rewarded = files.filter(f => /\bclaimReward\b/.test(readFileSync(f, 'utf8')))
+  // A component claims a reward itself, or through the lab's shared offers
+  // (`hub/pipSupplies.ts`: Pip's dialog, the pedestal, the forge).
+  const rewarded = files.filter(f => /\b(claimReward|claimDrop|claimGift|claimUpgradeAd)\b/.test(readFileSync(f, 'utf8')))
 
   it('is found at all', () => {
     expect(rewarded.length).toBeGreaterThanOrEqual(4)

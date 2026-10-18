@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Restas {s} sekundoj, ankoraŭ {n} dronoj',
     'tink': 'TINK!',
     'perfect': 'PERFEKTE!',
     'parry': 'PARITE!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} detruita!',
     'objectiveDone': 'Celo plenumita!',
     'rescued': 'Laborroboto teleportita al sekureco!',
-    'bossDoor': 'La kurteno grince malfermiĝas…'
+    'bossDoor': 'La kurteno grince malfermiĝas…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Ĉielo klara! +{n} boltoj',
+    'skyFail': 'Tro malrapide! La dronoj revenis.'
   },
   'interact': {
     'chest': 'Malfermi',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Plenumu ankoraŭ {n} mision por malŝlosi | Plenumu ankoraŭ {n} misiojn por malŝlosi',
       'aria': '{name}, ŝlosita: plenumu ankoraŭ {n} mision | {name}, ŝlosita: plenumu ankoraŭ {n} misiojn'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Armilejo',
+      'workshop': 'Forĝejo',
+      'circuits': 'Ĉip-laboratorio',
+      'records': 'Halo de famo',
+      'table': 'Instrukcioj'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Malfermi',
+      'brief': 'Ripeti instrukciojn'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Sekva',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanĉo kontraŭ {boss}: SP, boltoj kaj predo. La rakonto restas kie ĝi estas.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Nova tasko aperos ĉi tie post via sekva misio.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Iri al {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Reen al la halo',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Provizoj de Pip',
+      'hello': 'Pst, Flux! Mi trovis kelkajn aĵojn por vi.',
+      'aria': 'Paroli kun Pip: provizoj'
     }
   },
   'hero': {

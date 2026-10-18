@@ -14,6 +14,8 @@ import { isAnyModalOpen } from '@/use/useModalState'
 import { sfx } from '@/game/audio/sfx'
 import { hubLesson, hubTab, tabOpen, circuitsFocus } from './hubLesson'
 import { hubSceneUi } from '@/game/story/hubSceneUi'
+import { hubUi } from '@/game/state/hubUi'
+import { currentHub } from '@/game/boot'
 
 /** `profile.tips` key: Pip has announced the Overload. */
 const OVERLOAD_TIP = 'pip:overload'
@@ -29,7 +31,7 @@ const due = computed(() =>
 )
 /** Anything else on top (a modal, the upgrade tour, a load, Vex's scene) goes first. */
 const visible = computed(() => due.value && flow.screen === 'hub' && !flow.modal &&
-  !isAnyModalOpen.value && !flow.loading && !hubLesson.step && !hubSceneUi.active)
+  !isAnyModalOpen.value && !flow.loading && !hubLesson.step && !hubSceneUi.active && !hubUi.cine)
 
 let timer: ReturnType<typeof setTimeout> | null = null
 const go = (): void => {
@@ -37,7 +39,10 @@ const go = (): void => {
   if (!due.value) return
   markTip(OVERLOAD_TIP)
   circuitsFocus.value = 'giga'
-  hubTab.value = 'circuits'
+  // Over to the chip lab, where the Circuits panel opens on it (#173).
+  const hub = currentHub()
+  if (hub) hub.goTo('circuits')
+  else hubTab.value = 'circuits'
   sfx('uiOpen')
 }
 watch(visible, (v) => {

@@ -36,6 +36,8 @@ export default {
   // ─── Combat call-outs (floating text in the 3D view) ─────────────────────
   // Short: they pop over enemies for under a second.
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} seconds left, {n} drones to go',
     'tink': 'TINK!',
     'perfect': 'PERFECT!',
     'parry': 'PARRY!',
@@ -256,7 +258,10 @@ export default {
     'bossDown': '{boss} destroyed!',
     'objectiveDone': 'Objective complete!',
     'rescued': 'Worker-bot beamed to safety!',
-    'bossDoor': 'The shutter grinds open…'
+    'bossDoor': 'The shutter grinds open…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Sky clear! +{n} bolts',
+    'skyFail': 'Too slow! The drones are back.'
   },
   'interact': {
     'chest': 'Open',
@@ -490,6 +495,36 @@ export default {
       'hint': 'Complete {n} more mission to unlock | Complete {n} more missions to unlock',
       // The locked menu's spoken name; `{name}` is its visible label.
       'aria': '{name}, locked: complete {n} more mission | {name}, locked: complete {n} more missions'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Armory',
+      'workshop': 'Forge',
+      'circuits': 'Chip Lab',
+      'records': 'Hall of Fame',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Open',
+      'brief': 'Replay briefing'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Next',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Rematch with {boss}: XP, bolts and loot. The story stays where it is.',
+    // A job pad with no job on it.
+    'jobEmpty': 'A new job is posted here after your next mission.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Walk to {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Back to the hall',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': "Pip's supplies",
+      'hello': 'Psst, Flux! I scrounged up a few things for you.',
+      'aria': "Talk to Pip: supplies"
     }
   },
   'hero': {

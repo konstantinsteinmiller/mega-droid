@@ -1,0 +1,81 @@
+Mega Droid Source-Available License (Non-Commercial, No Redistribution)
+Version 1.0, 2026
+
+Copyright (c) 2026 Konstantin Steinmiller (hyperg8 studio). All rights reserved
+except as expressly granted below.
+
+"The Software" means the Mega Droid game: its source code, build scripts and
+tools, and every asset in this repository (art, models, textures, music,
+sound effects, voice recordings, texts, translations, story, characters,
+names and logos), and any copy or modified version of any of it.
+
+1. WHAT YOU MAY DO
+
+   You may, free of charge, for non-commercial purposes only:
+   a. read, study and copy the Software;
+   b. build and run it on your own devices for your personal use;
+   c. modify it privately to learn from it or to experiment with it;
+   d. quote short excerpts of the source code (a function or a few dozen
+      lines) in non-commercial writing, teaching or discussion, with the
+      notice "From Mega Droid, (c) Konstantin Steinmiller" and a link to the
+      original repository.
+
+2. WHAT YOU MAY NOT DO
+
+   Without the copyright holder's prior written permission, you may not:
+   a. use the Software, or any part or modified version of it, for any
+      commercial purpose: selling it, licensing it, charging for access to
+      it, showing advertising in or around it, collecting payments,
+      donations or rewards through it, or using it in a product or service
+      that earns money;
+   b. publish, distribute, upload, host or make available the Software or
+      any modified version of it, built or as source, to anyone else: in
+      particular on game portals, app stores, websites, file-sharing
+      services or as part of another game or product;
+   c. use the Software, or substantial parts of its source code, its game
+      design, its levels or its assets, to build or publish a game, product
+      or service that competes with Mega Droid, including re-skins, clones,
+      "inspired by" copies and ports;
+   d. publish the Software, or anything made from it, under your own name or
+      any name other than the copyright holder's, or in any way that passes
+      it off as yours, misrepresents its origin, or could harm the
+      reputation, income or business opportunities of its creator;
+   e. use the names "Mega Droid", "Flux", "Pip", "Atlas", "Dr. Vex", the
+      Core Masters' names, the game's logo or its characters for anything
+      other than referring to the original game;
+   f. remove or change this license or any copyright notice;
+   g. use the Software, its assets or its source code to train, fine-tune or
+      evaluate machine-learning models.
+
+3. THIRD-PARTY COMPONENTS
+
+   Open-source libraries the Software depends on (for example three.js and
+   Vue) remain under their own licenses. This license covers only the work
+   of the copyright holder and does not restrict your rights in those
+   libraries.
+
+4. CONTRIBUTIONS
+
+   Anything you send to the copyright holder for inclusion in the Software
+   (code, assets, translations, fixes) may be used, changed and published by
+   the copyright holder, also commercially, without compensation.
+
+5. TERMINATION
+
+   Your rights under this license end automatically, without notice, if you
+   break any of its terms. You must then stop using the Software and delete
+   all copies you hold. The copyright holder may also take any legal action
+   available to protect the Software.
+
+6. NO WARRANTY, NO LIABILITY
+
+   The Software is provided "as is", without warranty of any kind, express
+   or implied. In no event shall the copyright holder be liable for any
+   claim, damages or other liability arising from, out of or in connection
+   with the Software or its use.
+
+7. PERMISSIONS
+
+   For any use not allowed above (commercial licensing, publishing,
+   partnerships), ask the copyright holder for written permission (hyperg8
+   studio, through the contact given on the game's official pages).

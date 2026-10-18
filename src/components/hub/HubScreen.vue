@@ -1,5 +1,5 @@
 <template lang="pug">
-  div.hub(ref="root")
+  div.hub(ref="root" :class="{ cine: hubUi.cine }")
     div.topbar
       //- The level and its pending pick. On a short landscape screen they move
       //- to the bottom-right corner, under Flux, and the panel takes the top.
@@ -14,13 +14,18 @@
           GameIcon.pi(name="star")
           span {{ t('hub.levelUpReady') }}
       div.spacer
+      //- Pip has supplies (a rewarded video is ready): his dialog, one tap away.
+      button.pill.pip(v-if="hubUi.pipReady" type="button" :aria-label="t('hub.pip.aria')" @click="openPip")
+        GameIcon.pi(name="gift")
+        span.pip-bang !
       div.pill.bolts(data-lesson="bolts" @pointerdown="registerQaAdTap()")
         GameIcon.pi(name="nut")
         span {{ fmt(profile.bolts) }}
       //- The top-100 list, on builds with a live board only (a baked board's
       //- rows would be invented players; there the results screen shows the
       //- rank badge alone). It opens after four finished missions; until then
-      //- it is a dimmed pill with a lock.
+      //- it is a dimmed pill with a lock. The Hall of Fame terminal in the
+      //- hall opens the same board.
       button.pill.ranks(
         v-if="leaderboardListEnabled"
         type="button"
@@ -38,36 +43,31 @@
       button.pill.cog(type="button" :aria-label="t('options.title')" @click="$emit('options')")
         GameIcon.pi(name="settings")
     LeaderboardModal(v-if="leaderboardListEnabled" v-model="showBoard" :score="lifetimeXp()")
-    div.panel(:class="`tab-${tab}`")
-      Transition(name="tab-fade" mode="out-in")
-        MissionsTab(v-if="tab === 'missions'" key="m")
-        HeroTab(v-else-if="tab === 'hero'" key="h")
-        CircuitsTab(v-else-if="tab === 'circuits'" key="c")
-        WorkshopTab(v-else key="w")
-    nav.tabs
-      button.tab(
-        v-for="tb in TABS"
-        :key="tb.id"
-        type="button"
-        :class="[{ on: tab === tb.id }, menuClass(tb.id)]"
-        :data-lesson="`tab-${tb.id}`"
-        :aria-label="tabAria(tb)"
-        :aria-disabled="locked(tb.id) || undefined"
-        @pointerenter="hoverLocked(tb.id, $event)"
-        @pointerleave="leaveLocked(tb.id, $event)"
-        @click="setTab(tb.id, $event)"
-      )
-        span.t-ico
-          GameIcon(:name="tb.icon")
-          span.lock(v-if="locked(tb.id)")
-            GameIcon(name="lock")
-          span.badge(v-else-if="tb.id === 'circuits' && !fresh(tb.id) && chipsAvailable() > 0") {{ chipsAvailable() }}
-          span.badge(v-if="tb.id === 'hero' && (profile.inv.fresh.length > 0 || profile.hero.pendingAttrs > 0)") !
-        span.t-label {{ t(`hub.tab.${tb.id}`) }}
-        span.new-chip(v-if="fresh(tb.id)") {{ t('gear.new') }}
-    //- The lock hint: one at a time, while the mouse is over a locked menu,
-    //- or for 3 s after a tap on one (the next tap takes it away sooner).
-    //- Placed inside the safe area once it has a size (`placeTip`).
+    //- The walk: labels over the places, the stick, and what Flux can do here.
+    HubMarkers(@locked="onLockedMark" @hover="onHoverMark" @leave="onLeaveMark")
+    div.joy-wrap(v-show="walking")
+      Joystick
+    HubPrompt
+    //- A station's panel (#173): opened at the weapon rack, the forge, the chip
+    //- lab. The camera frames Flux beside it, as the old lab did.
+    Transition(name="panel")
+      div.panel(v-if="tab !== 'missions'" :class="`tab-${tab}`")
+        div.panel-head
+          span.ph-ico
+            GameIcon(:name="STATION_ICON[tab]")
+          span.ph-text
+            span.ph-title {{ t(`hub.place.${tab}`) }}
+            span.ph-sub {{ t(`hub.tab.${tab}`) }}
+          button.ph-close(type="button" data-lesson="tab-missions" :aria-label="t('hub.back')" @click="closePanel")
+            GameIcon(name="close")
+        Transition(name="tab-fade" mode="out-in")
+          HeroTab(v-if="tab === 'hero'" key="h")
+          CircuitsTab(v-else-if="tab === 'circuits'" key="c")
+          WorkshopTab(v-else key="w")
+    PipDialog
+    //- The lock hint: one at a time, while the mouse is over a locked place's
+    //- label, or for 3 s after a tap on one (the next tap takes it away
+    //- sooner). Placed inside the safe area once it has a size (`placeTip`).
     div.lock-tip(
       v-if="hint"
       ref="tipEl"
@@ -83,62 +83,83 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import type { GameIconName } from '@/components/icons/iconNames'
-import MissionsTab from './MissionsTab.vue'
 import HeroTab from './HeroTab.vue'
 import CircuitsTab from './CircuitsTab.vue'
 import WorkshopTab from './WorkshopTab.vue'
 import HubLesson from './HubLesson.vue'
 import PipNotice from './PipNotice.vue'
+import HubMarkers from './HubMarkers.vue'
+import HubPrompt from './HubPrompt.vue'
+import PipDialog from './PipDialog.vue'
+import Joystick from '@/components/hud/Joystick.vue'
 import HubSceneLayer from '@/components/story/HubSceneLayer.vue'
-import { hubTab, type HubTab } from './hubLesson'
+import { hubTab } from './hubLesson'
 import {
   HUB_UNLOCKS, FLOOR_TIP, isFresh, isUnlocked, missionsLeft, needFor, openedTip, placeTip, toAnnounce,
   unlockCount, unlockFloor, unlockedTip, type HubMenu
 } from './hubUnlocks'
-import { profile, xp01, chipsAvailable, lifetimeXp, saveProfile, markTip } from '@/game/state/profile'
+import { usePipSupplies } from './pipSupplies'
+import { profile, xp01, lifetimeXp, saveProfile, markTip } from '@/game/state/profile'
 import LeaderboardModal from '@/components/organisms/LeaderboardModal.vue'
 import { leaderboardListEnabled } from '@/use/useLeaderboard'
+import { isAnyModalOpen } from '@/use/useModalState'
 import { flow } from '@/game/flow'
+import { currentHub } from '@/game/boot'
+import { hubUi, hubDialog } from '@/game/state/hubUi'
+import type { PlaceState } from '@/game/sim/hubPlaces'
 import { formatCount } from '@/utils/localeNumber'
 import { sfx } from '@/game/audio/sfx'
 import { registerQaAdTap } from '@/use/useQaAdTrigger'
 
 /**
- * The hub: Gauss's lab behind, the menus in front. Missions is the home tab
- * (deploying is always one tap away); Hero, Circuits and Workshop hold the
- * RPG layer. Portrait lays the panel out as a bottom sheet; landscape as a
- * left column, so Flux stays visible on the other side.
+ * The hub (#173): Gauss's lab and its Deployment Hall, on foot. The scene is
+ * the hub mode (`sim/hub.ts`); this is its UI — the status bar (level, Bolts,
+ * the board, Options), the labels over the places, the prompt for the place
+ * Flux stands at, a station's panel (Flux's gear at the weapon rack, the
+ * Workshop at the forge, Circuits at the chip lab) and Pip's supplies.
  *
- * The menus open one at a time as missions are finished (`hubUnlocks.ts`):
- * a locked one stays in place, dimmed, with a lock and a hint, and one that
- * has just opened wears a "new" badge until it is first opened.
+ * The stations open one at a time as missions are finished
+ * (`hubUnlocks.ts`): a locked one stands dark behind a lock, its label
+ * dimmed, and a press on it gives the "no" sound and a hint saying how many
+ * missions are left; one that has just opened wears a "new" chip until it is
+ * first used.
  */
 defineEmits<{ options: [] }>()
 const { t, locale } = useI18n()
-type Tab = HubTab
-/** `aria`: a spoken name for a tab whose visible label needs one. */
-const TABS: Array<{ id: Tab; icon: GameIconName; aria?: string }> = [
-  { id: 'missions', icon: 'play' },
-  // The hero's tab is labelled with his name, and a name alone can read as
-  // a plain word (his old name was taken for the metal). The face glyph, the
-  // name plate at the top of his panel and this spoken name say it is the
-  // player's android. (The face is `android`; `helmet` is the gear slot.)
-  { id: 'hero', icon: 'android', aria: 'hub.heroTabAria' },
-  { id: 'circuits', icon: 'chart' },
-  { id: 'workshop', icon: 'anvil' }
-]
-// Shared with the upgrade tour (it watches which tab is open). Every visit
-// to the lab opens on Missions: deploying is always one tap away. It never
-// holds a locked tab (`hubLesson.ts`).
+const STATION_ICON: Record<string, GameIconName> = { hero: 'android', circuits: 'chart', workshop: 'anvil' }
+// Shared with the upgrade tour (it watches which station is open): 'missions'
+// is the walk, no panel. Every visit opens on the walk.
 const tab = hubTab
 tab.value = 'missions'
-/** The leaderboard modal; it fetches the board when it opens, not before. */
-const showBoard = ref(false)
 const fmt = (n: number) => formatCount(Math.round(n), locale.value)
+
+/** The leaderboard modal (the pill, or the Hall of Fame terminal). It
+ *  fetches the board when it opens, not before. */
+const showBoard = computed({
+  get: () => hubDialog.board,
+  set: (v: boolean) => { hubDialog.board = v }
+})
+
+/** Walking (the stick shows): no panel, dialog or film. */
+const walking = computed(() => tab.value === 'missions' && !hubDialog.open && !hubUi.cine && !flow.modal)
+
+const closePanel = (): void => {
+  if (tab.value === 'missions') return
+  tab.value = 'missions'
+  sfx('uiClose')
+}
+
+// ── Pip's supplies ──
+const sup = usePipSupplies()
+watchEffect(() => { hubUi.pipReady = sup.anyOffer.value })
+const openPip = (): void => {
+  sfx('pipChirp')
+  hubDialog.open = true
+}
 
 // ── Unlocks ──
 const count = computed(() => unlockCount(profile))
@@ -152,8 +173,6 @@ const LATER = HUB_UNLOCKS
   .filter(id => needFor(id) > 0 && (id !== 'leaderboard' || leaderboardListEnabled))
 
 const lockedAria = (id: HubMenu, name: string) => t('hub.unlock.aria', { name, n: left(id) }, left(id))
-const tabAria = (tb: (typeof TABS)[number]) =>
-  locked(tb.id) ? lockedAria(tb.id, t(`hub.tab.${tb.id}`)) : tb.aria ? t(tb.aria) : undefined
 
 /**
  * The first lab visit under the unlock rules decides the floor, once. A save
@@ -174,8 +193,8 @@ const settleFloor = () => {
   saveProfile()
 }
 
-/** A menu that opened since the last visit: up goes its "new" badge (until
- *  it is opened), with a short fanfare. It waits for anything on top of the
+/** A station that opened since the last visit: up goes its "new" chip (until
+ *  it is used), with a short fanfare. It waits for anything on top of the
  *  lab (the level-up pick), so the moment is seen. */
 const announce = () => {
   if (flow.modal) return
@@ -185,19 +204,16 @@ const announce = () => {
   saveProfile()
   if (ids.some(id => !profile.tips[openedTip(id)])) sfx('objective')
 }
-/** Opened once: the badge is gone for good. */
+/** Used once: the chip is gone for good. */
 const seen = (id: HubMenu) => {
   if (needFor(id) > 0 && !profile.tips[openedTip(id)]) markTip(openedTip(id))
 }
+// A station's panel opened (or the board): it has been used.
+watch(tab, (id) => { if (id !== 'missions') seen(id) })
+watch(() => hubDialog.board, (on) => { if (on) seen('leaderboard') })
 
-const setTab = (id: Tab, e: MouseEvent) => {
-  if (locked(id)) { denyLocked(id, e); return }
-  if (tab.value !== id) sfx('uiClick')
-  tab.value = id
-  seen(id)
-}
 const openBoard = (e: MouseEvent) => {
-  if (locked('leaderboard')) { denyLocked('leaderboard', e); return }
+  if (locked('leaderboard')) { denyLocked('leaderboard', e.currentTarget as HTMLElement, e); return }
   showBoard.value = true
   seen('leaderboard')
 }
@@ -259,10 +275,16 @@ const leaveLocked = (id: HubMenu, e: PointerEvent) => {
 }
 /** A press on a locked menu: the "no" sound and its hint. A tap's (or a
  *  key's: `detail` 0) hint leaves by itself. */
-const denyLocked = (id: HubMenu, e: MouseEvent) => {
+const denyLocked = (id: HubMenu, el: HTMLElement, e: MouseEvent) => {
   sfx('denied')
-  showHint(id, e.currentTarget as HTMLElement, e.detail === 0 || pressedWith !== 'mouse')
+  showHint(id, el, e.detail === 0 || pressedWith !== 'mouse')
 }
+// The labels over the places speak for their stations.
+const onLockedMark = (menu: HubMenu, el: HTMLElement, e: MouseEvent) => denyLocked(menu, el, e)
+const onHoverMark = (menu: HubMenu | null, state: PlaceState, e: PointerEvent) => {
+  if (menu && state === 'locked') hoverLocked(menu, e)
+}
+const onLeaveMark = (menu: HubMenu | null, e: PointerEvent) => { if (menu) leaveLocked(menu, e) }
 /** Every press, before its target sees it: note the pointer, and take a
  *  tap's hint away (a press on a locked menu then shows its own). */
 const onAnyPress = (e: PointerEvent) => {
@@ -270,6 +292,24 @@ const onAnyPress = (e: PointerEvent) => {
   if (hint.value?.touch) hideHint()
 }
 const onResize = () => { if (hint.value) placeHint() }
+
+// ── Keys: Esc leaves a station's panel, Enter uses the place Flux stands at ──
+const typing = (e: KeyboardEvent): boolean => {
+  const tag = (e.target as HTMLElement | null)?.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+}
+const onKey = (e: KeyboardEvent) => {
+  if (flow.screen !== 'hub' || e.repeat || typing(e) || isAnyModalOpen.value || flow.modal) return
+  if (e.code === 'Escape' && tab.value !== 'missions') {
+    e.preventDefault()
+    closePanel()
+  } else if ((e.code === 'Enter' || e.code === 'NumpadEnter') && tab.value === 'missions' && !hubDialog.open) {
+    // A focused button takes its own Enter.
+    if ((e.target as HTMLElement | null)?.tagName === 'BUTTON') return
+    e.preventDefault()
+    currentHub()?.interact()
+  }
+}
 
 // A cloud save loaded on top brings its own tips (and maybe a new count).
 watch(() => profile.tips, () => { settleFloor(); announce() })
@@ -282,11 +322,13 @@ onMounted(() => {
   announce()
   window.addEventListener('pointerdown', onAnyPress, true)
   window.addEventListener('resize', onResize)
+  window.addEventListener('keydown', onKey)
 })
 onUnmounted(() => {
   clearHintTimer()
   window.removeEventListener('pointerdown', onAnyPress, true)
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('keydown', onKey)
 })
 </script>
 
@@ -294,13 +336,21 @@ onUnmounted(() => {
 .hub
   position: absolute
   inset: 0
-  display: flex
-  flex-direction: column
   pointer-events: none
   color: #fff
   font-family: var(--font-ui)
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)
+  // The resting joystick's centre (`Joystick.vue`), as on the mission HUD.
+  --joy-home-x: 104px
+  --joy-home-y: max(104px, 13vh)
+// A film moment (the landing, the turn from the briefing): the status bar
+// steps back with everything else.
+.hub.cine .topbar
+  opacity: 0
+  pointer-events: none
 .topbar
+  position: relative
+  z-index: 5
   pointer-events: auto
   // A small screen draws the Lab's blocks at a share of their size
   // (`use/useUiScale.ts`); the tour's overlay stays unscaled and measures them.
@@ -309,6 +359,7 @@ onUnmounted(() => {
   align-items: center
   gap: clamp(6px, 1.4vmin, 10px)
   padding: clamp(8px, 2vmin, 14px)
+  transition: opacity 0.3s
 .spacer
   flex: 1
 // Its children sit in the top bar's row as if it were not there.
@@ -388,75 +439,109 @@ onUnmounted(() => {
   position: relative
   .pi
     color: #ffd84a
-.panel
-  pointer-events: auto
-  zoom: var(--ui-scale, 1)
-  flex: 1
-  min-height: 0
-  margin: 0 clamp(8px, 2vmin, 14px)
-  display: flex
-  flex-direction: column
-.tabs
-  pointer-events: auto
-  zoom: var(--ui-scale, 1)
-  display: grid
-  grid-template-columns: repeat(4, 1fr)
-  gap: 6px
-  padding: clamp(6px, 1.6vmin, 10px) clamp(8px, 2vmin, 14px) clamp(8px, 2vmin, 14px)
-.tab
+// Pip's supplies: his purple, a "!" that pulses.
+.pip
   position: relative
+  padding: 6px 10px
+  border-color: #4a1f86
+  background: linear-gradient(#ffffff, #e6d6ff)
+  color: #4a1f86
+  box-shadow: 0 0 0 2px #b46cff
+  animation: pill-pulse 1.2s ease-in-out infinite
+.pip-bang
+  font-family: var(--font-pixel)
+  font-size: 12px
+@keyframes pill-pulse
+  50%
+    transform: scale(1.06)
+.joy-wrap
+  position: absolute
+  inset: 0
+  pointer-events: none
+
+// ── A station's panel ──
+.panel
+  position: absolute
+  z-index: 4
+  pointer-events: auto
+  zoom: var(--ui-scale, 1)
   display: flex
   flex-direction: column
+  min-height: 0
+.panel-head
+  display: flex
   align-items: center
-  gap: 2px
-  padding: clamp(6px, 1.4vmin, 9px) 4px
+  gap: 8px
+  padding: 6px 8px 6px 6px
+  margin-bottom: 6px
   border-radius: 14px
   border: 3px solid #141a33
   background: linear-gradient(#2f4580, #1c2a50)
-  color: #9fb8e6
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35)
-  &.on
-    background: linear-gradient(#4fd8ff, #1f7fd0)
-    color: #fff
-    transform: translateY(-3px)
-.t-ico
-  position: relative
-  width: clamp(22px, 5vmin, 30px)
-  height: clamp(22px, 5vmin, 30px)
-.badge
-  position: absolute
-  right: -12px
-  top: -8px
-  min-width: 18px
-  height: 18px
-  padding: 0 4px
-  border-radius: 9px
-  background: #ff4a5a
+.ph-ico
+  width: clamp(28px, 6vmin, 36px)
+  height: clamp(28px, 6vmin, 36px)
+  padding: 5px
+  border-radius: 50%
   border: 2px solid #141a33
-  color: #fff
-  font-family: var(--font-pixel)
-  font-size: 8px
-  line-height: 14px
-  text-align: center
-.t-label
-  font-size: clamp(10px, 2.2vmin, 13px)
-  white-space: nowrap
+  background: radial-gradient(circle at 40% 30%, #fff, #7ff4ff 45%, #1f7fd0)
+  color: #141a33
+.ph-text
+  flex: 1
+  display: flex
+  flex-direction: column
+  line-height: 1.1
+.ph-title
+  font-size: clamp(14px, 3vmin, 18px)
+  text-shadow: 0 2px 0 #141a33
+.ph-sub
+  font-size: clamp(10px, 2.2vmin, 12px)
+  color: #9fb8e6
+.ph-close
+  width: clamp(32px, 7vmin, 40px)
+  height: clamp(32px, 7vmin, 40px)
+  padding: 7px
+  border-radius: 50%
+  border: 3px solid #141a33
+  background: linear-gradient(#ffd23a, #e08a00)
+  color: #141a33
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35)
+  cursor: pointer
+  &:active
+    transform: translateY(2px)
+.panel-enter-active, .panel-leave-active
+  transition: opacity 0.2s, transform 0.2s
+.panel-enter-from, .panel-leave-to
+  opacity: 0
+  transform: translateY(14px)
 .tab-fade-enter-active, .tab-fade-leave-active
   transition: opacity 0.15s, transform 0.15s
 .tab-fade-enter-from, .tab-fade-leave-to
   opacity: 0
   transform: translateY(8px)
-@keyframes pill-pulse
-  50%
-    transform: scale(1.06)
+// Landscape: the panel is a left column, Flux stands on the right. The
+// blocks are zoomed by --ui-scale and a zoomed vw is a zoomed one too: divide
+// it back out, so the column keeps its share of the screen.
+@media (orientation: landscape)
+  .panel
+    left: calc(env(safe-area-inset-left, 0px) + clamp(8px, 2vmin, 14px))
+    top: calc((env(safe-area-inset-top, 0px) + clamp(56px, 11vmin, 76px)) / var(--ui-scale, 1))
+    bottom: calc((env(safe-area-inset-bottom, 0px) + clamp(8px, 2vmin, 14px)) / var(--ui-scale, 1))
+    width: min(calc(56vw / var(--ui-scale, 1)), 620px)
+// A phone on its side: the column takes a little more of a short screen.
+@media (orientation: landscape) and (max-height: 540px)
+  .panel
+    width: min(calc(62vw / var(--ui-scale, 1)), 620px)
+// Portrait: the panel is a bottom sheet under Flux.
+@media (orientation: portrait)
+  .panel
+    left: clamp(8px, 2vmin, 14px)
+    right: clamp(8px, 2vmin, 14px)
+    bottom: calc((env(safe-area-inset-bottom, 0px) + clamp(8px, 2vmin, 14px)) / var(--ui-scale, 1))
+    max-height: 66vh
+    justify-content: flex-end
 
 // ── Locked menus: in place, dimmed, with a lock ──
-.tab.locked
-  background: linear-gradient(#27355e, #172241)
-  color: #6f82ad
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35)
-  .t-ico > .game-icon, .t-label
-    opacity: 0.5
 .pill.locked .pi
   color: #8b98ba
   opacity: 0.45
@@ -480,7 +565,7 @@ onUnmounted(() => {
 .new-chip
   position: absolute
   left: 50%
-  top: -10px
+  bottom: -12px
   transform: translateX(-50%)
   padding: 1px 5px
   border-radius: 6px
@@ -492,10 +577,7 @@ onUnmounted(() => {
   line-height: 12px
   white-space: nowrap
   pointer-events: none
-.ranks .new-chip
-  top: auto
-  bottom: -12px
-.tab.fresh, .pill.fresh
+.pill.fresh
   animation: fresh-glow 1.3s ease-in-out infinite
 @keyframes fresh-glow
   0%, 100%
@@ -550,32 +632,16 @@ onUnmounted(() => {
     transform: translateY(4px)
 
 @media (prefers-reduced-motion: reduce)
-  .tab.fresh, .pill.fresh
+  .pill.fresh, .pip, .attr
     animation: none
+  .pill.fresh
     box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 0 3px #ffd84a
   .lock-tip.placed
     animation: none
 
-// Landscape: the panel is a left column, Flux stands on the right. The
-// blocks are zoomed by --ui-scale and a zoomed vw is a zoomed one too: divide
-// it back out, so the column keeps its share of the screen.
-@media (orientation: landscape)
-  .panel
-    width: min(calc(56vw / var(--ui-scale, 1)), 620px)
-  .tabs
-    width: min(calc(56vw / var(--ui-scale, 1)), 620px)
-// A phone on its side: every row of height goes to the panel. The top bar
-// leaves the flow (Bolts, the board and Options stay top-right, over the lab),
-// and the level goes to the bottom-right corner, beside the tab row.
-// The column takes a little more of a short screen (62 %): its text needs it more than Flux.
+// A phone on its side: the level goes to the bottom-right corner, out of the
+// panel's way.
 @media (orientation: landscape) and (max-height: 540px)
-  .panel, .tabs
-    width: min(calc(62vw / var(--ui-scale, 1)), 620px)
-  .topbar
-    position: absolute
-    top: env(safe-area-inset-top, 0px)
-    right: env(safe-area-inset-right, 0px)
-    left: calc((env(safe-area-inset-left, 0px) + min(62vw, 620px * var(--ui-scale, 1))) / var(--ui-scale, 1))
   .who
     position: fixed
     right: calc(env(safe-area-inset-right, 0px) + clamp(8px, 2vmin, 14px))
@@ -584,10 +650,4 @@ onUnmounted(() => {
     flex-direction: row-reverse
     align-items: center
     gap: clamp(6px, 1.4vmin, 10px)
-  .panel
-    margin-top: clamp(8px, 2vmin, 14px)
-// Portrait: the panel is a bottom sheet under Flux.
-@media (orientation: portrait)
-  .panel
-    justify-content: flex-end
 </style>

@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Απομένουν {s} δευτερόλεπτα, ακόμα {n} ντρόουν',
     'tink': 'ΝΤΙΝ!',
     'perfect': 'ΤΕΛΕΙΟ!',
     'parry': 'ΑΠΟΚΡΟΥΣΗ!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} – καταστράφηκε!',
     'objectiveDone': 'Ο στόχος ολοκληρώθηκε!',
     'rescued': 'Το εργατικό ρομπότ τηλεμεταφέρθηκε σε ασφαλές μέρος!',
-    'bossDoor': 'Το ρολό ανοίγει τρίζοντας…'
+    'bossDoor': 'Το ρολό ανοίγει τρίζοντας…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Καθαρός ουρανός! +{n} μπουλόνια',
+    'skyFail': 'Πολύ αργά! Τα ντρόουν γύρισαν.'
   },
   'interact': {
     'chest': 'Άνοιξε',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Ολοκλήρωσε {n} ακόμα αποστολή για ξεκλείδωμα | Ολοκλήρωσε {n} ακόμα αποστολές για ξεκλείδωμα',
       'aria': '{name}, κλειδωμένο: ολοκλήρωσε {n} ακόμα αποστολή | {name}, κλειδωμένο: ολοκλήρωσε {n} ακόμα αποστολές'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Οπλοθήκη',
+      'workshop': 'Σιδηρουργείο',
+      'circuits': 'Εργαστήριο τσιπ',
+      'records': 'Αίθουσα δόξας',
+      'table': 'Ενημέρωση'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Άνοιγμα',
+      'brief': 'Επανάληψη ενημέρωσης'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Επόμενη',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Ρεβάνς με {boss}: XP, μπουλόνια και λάφυρα. Η ιστορία μένει εκεί που είναι.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Μια νέα δουλειά εμφανίζεται εδώ μετά την επόμενη αποστολή σου.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Πήγαινε: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Πίσω στην αίθουσα',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Οι προμήθειες του Πιπ',
+      'hello': 'Ψιτ, Flux! Σου βρήκα μερικά πραγματάκια.',
+      'aria': 'Μίλα με τον Πιπ: προμήθειες'
     }
   },
   'hero': {

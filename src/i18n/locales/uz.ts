@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} soniya qoldi, yana {n} ta dron',
     'tink': 'JARANG!',
     'perfect': 'MUKAMMAL!',
     'parry': 'QAYTARILDI!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} yoʻq qilindi!',
     'objectiveDone': 'Maqsad bajarildi!',
     'rescued': 'Ishchi-bot xavfsiz joyga teleport qilindi!',
-    'bossDoor': 'Darvoza gʻichirlab ochilmoqda…'
+    'bossDoor': 'Darvoza gʻichirlab ochilmoqda…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Osmon toza! +{n} bolt',
+    'skyFail': 'Juda sekin! Dronlar qaytib keldi.'
   },
   'interact': {
     'chest': 'Ochish',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Ochish uchun yana {n} ta missiyani bajaring',
       'aria': '{name}, qulflangan: yana {n} ta missiyani bajaring'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Qurol-yarogʻ ombori',
+      'workshop': 'Temirchixona',
+      'circuits': 'Chip laboratoriyasi',
+      'records': 'Shon-sharaf zali',
+      'table': 'Brifing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Ochish',
+      'brief': 'Brifingni qayta koʻrish'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Keyingi',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revansh: {boss}. Tajriba, boltlar va oʻlja. Syujet joyida qoladi.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Keyingi missiyangizdan soʻng bu yerda yangi topshiriq paydo boʻladi.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Borish: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Zalga qaytish',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipning jihozlari',
+      'hello': 'Pss, Flux! Senga bir nechta narsa topib qoʻydim.',
+      'aria': 'Pip bilan gaplashish: jihozlar'
     }
   },
   'hero': {

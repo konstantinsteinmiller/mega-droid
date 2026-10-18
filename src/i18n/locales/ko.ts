@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s}초 남음, 드론 {n}대 남음',
     'tink': '팅!',
     'perfect': '퍼펙트!',
     'parry': '패링!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} 격파!',
     'objectiveDone': '목표 달성!',
     'rescued': '작업 로봇을 안전하게 전송했습니다!',
-    'bossDoor': '셔터가 삐걱거리며 열린다…'
+    'bossDoor': '셔터가 삐걱거리며 열린다…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': '하늘 정리 완료! +{n} 나사',
+    'skyFail': '너무 느려! 드론이 돌아왔다.'
   },
   'interact': {
     'chest': '열기',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': '미션을 {n}개 더 완료하면 열립니다',
       'aria': '{name}, 잠김: 미션 {n}개 더 완료'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': '무기고',
+      'workshop': '대장간',
+      'circuits': '칩 연구소',
+      'records': '명예의 전당',
+      'table': '브리핑'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': '열기',
+      'brief': '브리핑 다시 보기'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': '다음',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': '재대결: {boss}. 경험치, 나사, 전리품을 얻어. 스토리는 그대로야.',
+    // A job pad with no job on it.
+    'jobEmpty': '다음 미션을 마치면 여기에 새 의뢰가 올라와.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': '이동: {place}',
+    // A station's panel: back out to the hall.
+    'back': '홀로 돌아가기',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': '핍의 보급품',
+      'hello': '쉿, Flux! 너 주려고 이것저것 모아 왔어.',
+      'aria': '핍과 대화: 보급품'
     }
   },
   'hero': {

@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Atlicis sekunžu: {s}, dronu: {n}',
     'tink': 'DZINK!',
     'perfect': 'IDEĀLI!',
     'parry': 'ATVAIRĪTS!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} iznīcināts!',
     'objectiveDone': 'Mērķis sasniegts!',
     'rescued': 'Darba robots teleportēts drošībā!',
-    'bossDoor': 'Vārti čīkstot atveras…'
+    'bossDoor': 'Vārti čīkstot atveras…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Debesis tīras! +{n} skrūves',
+    'skyFail': 'Par lēnu! Droni ir atpakaļ.'
   },
   'interact': {
     'chest': 'Atvērt',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Pabeidz vēl {n} misijas, lai atbloķētu | Pabeidz vēl {n} misiju, lai atbloķētu | Pabeidz vēl {n} misijas, lai atbloķētu',
       'aria': '{name}, bloķēts: pabeidz vēl {n} misijas | {name}, bloķēts: pabeidz vēl {n} misiju | {name}, bloķēts: pabeidz vēl {n} misijas'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Ieroču noliktava',
+      'workshop': 'Kalve',
+      'circuits': 'Čipu laboratorija',
+      'records': 'Slavas zāle',
+      'table': 'Instruktāža'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Atvērt',
+      'brief': 'Atkārtot instruktāžu'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Nākamā',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanšs: {boss}. XP, skrūves un laupījums. Stāsts paliek, kur ir.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Pēc tavas nākamās misijas šeit parādīsies jauns darbs.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Iet uz: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Atpakaļ uz zāli',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Pipa krājumi',
+      'hello': 'Pst, Flux! Es tev sagādāju dažas lietas.',
+      'aria': 'Runāt ar Pipu: krājumi'
     }
   },
   'hero': {

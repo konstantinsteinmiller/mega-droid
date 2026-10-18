@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '{s} секунд қалды, тағы {n} дрон',
     'tink': 'ДЫҢ!',
     'perfect': 'МІНСІЗ!',
     'parry': 'ТОЙТАРЫС!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} жойылды!',
     'objectiveDone': 'Мақсат орындалды!',
     'rescued': 'Жұмысшы бот қауіпсіз жерге телепортталды!',
-    'bossDoor': 'Жапқыш сықырлап ашылып жатыр…'
+    'bossDoor': 'Жапқыш сықырлап ашылып жатыр…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Аспан таза! +{n} болт',
+    'skyFail': 'Тым баяу! Дрондар қайта оралды.'
   },
   'interact': {
     'chest': 'Ашу',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Ашу үшін тағы {n} миссияны орындаңыз',
       'aria': '{name}, құлыпталған: тағы {n} миссияны орындаңыз'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Қару қоймасы',
+      'workshop': 'Ұстахана',
+      'circuits': 'Чип зертханасы',
+      'records': 'Даңқ залы',
+      'table': 'Брифинг'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Ашу',
+      'brief': 'Брифингті қайталау'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Келесі',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Реванш: {boss}. Тәжірибе, болттар және олжа. Сюжет алға жылжымайды.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Келесі миссияңнан кейін мұнда жаңа тапсырма пайда болады.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Баратын жер: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Залға оралу',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Пиптің жабдықтары',
+      'hello': 'Псс, Flux! Саған бірнеше нәрсе тауып қойдым.',
+      'aria': 'Пиппен сөйлесу: жабдықтар'
     }
   },
   'hero': {

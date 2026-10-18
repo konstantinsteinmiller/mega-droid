@@ -586,7 +586,7 @@ composer.
 | A Master is beaten | Boss room | The orb-ring burst is the red chip breaking. The Master kneels in its own colours, then beams home (about 1.5 s) | Boss end state |
 | A Master is beaten | Results | The *New weapon* and *New sector* lines | None, these exist |
 | A sector opens | Hub, sector strip | The cleared sector's relay lights in its colour, a beam line runs to the next sector, and its lock pops (about 1.5 s). The first time, this plays as the upgrade tour (plan chunk 15) returns to Missions | Strip animation |
-| A story mission is picked | Missions tab, stage select | Each Master's portrait on a tile in its signature colour: beaten ones greyed with a tick, the next one pulsing, locked ones a silhouette. The story card wears its Master's face and colour | Built (#103) |
+| A story mission is picked | Deployment Hall, its beam pedestals (#173; was the Missions tab's stage select, #103) | Each Master stands as a hologram over its pedestal in its signature colour, its portal glowing behind it: beaten ones in the cleared blue (a rematch on them), the next one's beam burning with a "Next" label, locked ones dim red behind a laser fence. The pedestal's card wears its Master's face and colour | Built (#173) |
 | A story mission loads | Mission load overlay | A boss splash: the Master strikes in and its name types on, inside the load's own wait | Built (#103) |
 | Every hub visit until the ending | Hub backdrop | Gauss asleep in the frosted capsule behind Flux, with the heartbeat light | Capsule in frame |
 | After each Master | Hub backdrop | Vex's red face glitches on the lab screens, angrier each time | Screen swap |

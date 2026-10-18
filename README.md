@@ -115,3 +115,13 @@ reloads the page.
 
 Every character, enemy, level, name, tune and sound is original. The look is
 a homage to an era, not a copy of any game.
+
+---
+
+## License
+
+Source-available, not open source: see [LICENSE](LICENSE). You may read,
+copy and run the code for yourself, non-commercially. Publishing the game or
+anything made from it, commercial use, competing clones and re-skins, and
+using its names, characters or assets are not allowed without written
+permission. The open-source libraries it uses keep their own licenses.

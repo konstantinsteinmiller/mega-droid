@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Остават секунди: {s}, дронове: {n}',
     'tink': 'ДЗЪН!',
     'perfect': 'ПЕРФЕКТНО!',
     'parry': 'ПАРИРАНО!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} е унищожен!',
     'objectiveDone': 'Целта е изпълнена!',
     'rescued': 'Работният робот е телепортиран на безопасно място!',
-    'bossDoor': 'Щорът се отваря със скърцане…'
+    'bossDoor': 'Щорът се отваря със скърцане…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Небето е чисто! +{n} болта',
+    'skyFail': 'Твърде бавно! Дроновете се върнаха.'
   },
   'interact': {
     'chest': 'Отвори',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Завърши още {n} мисия, за да отключиш | Завърши още {n} мисии, за да отключиш',
       'aria': '{name}, заключено: завърши още {n} мисия | {name}, заключено: завърши още {n} мисии'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Оръжейна',
+      'workshop': 'Ковачница',
+      'circuits': 'Чип лаборатория',
+      'records': 'Зала на славата',
+      'table': 'Брифинг'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Отвори',
+      'brief': 'Повтори брифинга'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Следваща',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Реванш с {boss}: опит, болтове и плячка. Историята остава на място.',
+    // A job pad with no job on it.
+    'jobEmpty': 'След следващата ти мисия тук ще се появи нова задача.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Иди до {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Обратно в залата',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Запасите на Пип',
+      'hello': 'Псст, Flux! Намерих ти няколко неща.',
+      'aria': 'Говори с Пип: запаси'
     }
   },
   'hero': {

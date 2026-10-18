@@ -86,7 +86,8 @@ const TANGENT = 0.35
 const PROJECT_SPAN = 6
 const PATH_CAP = 64
 
-const VERT = /* glsl */`
+/** The chevron's shaders, shared with the walkable lab's trail (`sim/hub.ts`). */
+export const TRAIL_VERT = /* glsl */`
 attribute float aAlpha;
 varying vec2 vP;
 varying float vAlpha;
@@ -98,7 +99,7 @@ void main() {
 }
 `
 
-const FRAG = /* glsl */`
+export const TRAIL_FRAG = /* glsl */`
 uniform vec3 uColor;
 uniform vec3 uInk;
 uniform float uLift;
@@ -434,8 +435,8 @@ export class ObjectiveTrail {
     this.geo.setAttribute('aAlpha', this.alpha)
     this.mat = new ShaderMaterial({
       uniforms: { uColor: { value: new Color(TRAIL_COLOR) }, uInk: { value: new Color(TRAIL_INK) }, uLift: { value: 0.5 } },
-      vertexShader: VERT,
-      fragmentShader: FRAG,
+      vertexShader: TRAIL_VERT,
+      fragmentShader: TRAIL_FRAG,
       transparent: true,
       depthWrite: false,
       blending: CustomBlending,

@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Faltam {s} segundos, restam {n} drones',
     'tink': 'TINK!',
     'perfect': 'PERFEITO!',
     'parry': 'APARADO!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} destruído!',
     'objectiveDone': 'Objetivo concluído!',
     'rescued': 'Robô operário teleportado para um lugar seguro!',
-    'bossDoor': 'A comporta se abre rangendo…'
+    'bossDoor': 'A comporta se abre rangendo…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Céu limpo! +{n} parafusos',
+    'skyFail': 'Lento demais! Os drones voltaram.'
   },
   'interact': {
     'chest': 'Abrir',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Conclua mais {n} missão para desbloquear | Conclua mais {n} missões para desbloquear',
       'aria': '{name}, bloqueado: conclua mais {n} missão | {name}, bloqueado: conclua mais {n} missões'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Arsenal',
+      'workshop': 'Forja',
+      'circuits': 'Laboratório de chips',
+      'records': 'Hall da Fama',
+      'table': 'Briefing'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Abrir',
+      'brief': 'Rever o briefing'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Próxima',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revanche contra {boss}: XP, parafusos e saque. A história não avança.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Um novo contrato aparece aqui depois da sua próxima missão.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Ir até {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Voltar ao salão',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Suprimentos do Pip',
+      'hello': 'Psiu, Flux! Consegui umas coisas pra você.',
+      'aria': 'Falar com o Pip: suprimentos'
     }
   },
   'hero': {

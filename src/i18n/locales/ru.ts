@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Осталось секунд: {s}, дронов: {n}',
     'tink': 'ДЗЫНЬ!',
     'perfect': 'ИДЕАЛЬНО!',
     'parry': 'ОТБИТО!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} уничтожен!',
     'objectiveDone': 'Цель выполнена!',
     'rescued': 'Рабочий бот телепортирован в безопасное место!',
-    'bossDoor': 'Заслонка со скрежетом открывается…'
+    'bossDoor': 'Заслонка со скрежетом открывается…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Небо чисто! +{n} болтов',
+    'skyFail': 'Слишком медленно! Дроны вернулись.'
   },
   'interact': {
     'chest': 'Открыть',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'Выполните ещё {n} миссию, чтобы открыть | Выполните ещё {n} миссии, чтобы открыть | Выполните ещё {n} миссий, чтобы открыть',
       'aria': '{name}, закрыто: выполните ещё {n} миссию | {name}, закрыто: выполните ещё {n} миссии | {name}, закрыто: выполните ещё {n} миссий'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Оружейная',
+      'workshop': 'Кузница',
+      'circuits': 'Чип-лаборатория',
+      'records': 'Зал славы',
+      'table': 'Брифинг'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Открыть',
+      'brief': 'Повторить брифинг'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Следующая',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Реванш: {boss}. Опыт, болты и добыча. Сюжет остаётся на месте.',
+    // A job pad with no job on it.
+    'jobEmpty': 'После твоей следующей миссии здесь появится новое задание.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Идти к месту: {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Назад в зал',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Припасы Пипа',
+      'hello': 'Псст, Flux! Я раздобыл для тебя кое-что.',
+      'aria': 'Поговорить с Пипом: припасы'
     }
   },
   'hero': {

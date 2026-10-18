@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'الثواني المتبقية: {s}، المسيّرات المتبقية: {n}',
     'tink': 'طِنّ!',
     'perfect': 'مثالي!',
     'parry': 'صدّ!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': 'تم تدمير {boss}!',
     'objectiveDone': 'اكتمل الهدف!',
     'rescued': 'نُقل الروبوت العامل إلى برّ الأمان!',
-    'bossDoor': 'البوابة تنفتح بصرير…'
+    'bossDoor': 'البوابة تنفتح بصرير…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'السماء صافية! +{n} برغي',
+    'skyFail': 'أبطأت كثيرًا! عادت المسيّرات.'
   },
   'interact': {
     'chest': 'افتح',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'أكمل {n} مهمة أخرى لفتحه | أكمل مهمة واحدة أخرى لفتحه | أكمل مهمتين أخريين لفتحه | أكمل {n} مهام أخرى لفتحه | أكمل {n} مهمة أخرى لفتحه | أكمل {n} مهمة أخرى لفتحه',
       'aria': '{name}، مقفل: أكمل {n} مهمة أخرى | {name}، مقفل: أكمل مهمة واحدة أخرى | {name}، مقفل: أكمل مهمتين أخريين | {name}، مقفل: أكمل {n} مهام أخرى | {name}، مقفل: أكمل {n} مهمة أخرى | {name}، مقفل: أكمل {n} مهمة أخرى'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'مستودع الأسلحة',
+      'workshop': 'المسبك',
+      'circuits': 'مختبر الرقاقات',
+      'records': 'قاعة المشاهير',
+      'table': 'الإحاطة'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'فتح',
+      'brief': 'إعادة الإحاطة'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'التالي',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'نزال جديد مع {boss}: خبرة وبراغٍ وغنائم. القصة تبقى كما هي.',
+    // A job pad with no job on it.
+    'jobEmpty': 'تُنشر هنا مهمة جانبية جديدة بعد مهمتك القادمة.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'اذهب إلى {place}',
+    // A station's panel: back out to the hall.
+    'back': 'العودة إلى القاعة',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'إمدادات بيب',
+      'hello': 'بسس، Flux! جمعتُ لك بعض الأشياء.',
+      'aria': 'تحدّث إلى بيب: الإمدادات'
     }
   },
   'hero': {

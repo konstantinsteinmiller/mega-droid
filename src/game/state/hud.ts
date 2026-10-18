@@ -62,6 +62,12 @@ export const hud = shallowReactive({
    *  its cooldown has run, 0..1 (-1 = retired, nothing to show). */
   locatorOn: false,
   locatorCd01: -1,
+  /** The sky shoot's clock (#178): seconds left (−1: not running), and the
+   *  drones still up. */
+  skyT: -1,
+  skyLeft: 0,
+  /** …out of how many. */
+  skyN: 0,
   /** Contextual interact prompt (i18n key + params), empty when none. */
   interactKey: '',
   /** Objective tracker line (i18n key + params). */

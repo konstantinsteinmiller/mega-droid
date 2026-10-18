@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'Queden {s} segons, falten {n} drons',
     'tink': 'CLINC!',
     'perfect': 'PERFECTE!',
     'parry': 'PARADA!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss} destruït!',
     'objectiveDone': 'Objectiu complert!',
     'rescued': 'Robot obrer teletransportat a lloc segur!',
-    'bossDoor': 'La comporta s\'obre amb un grinyol…'
+    'bossDoor': 'La comporta s\'obre amb un grinyol…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'Cel net! +{n} cargols',
+    'skyFail': 'Massa lent! Els drons tornen.'
   },
   'interact': {
     'chest': 'Obre',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': 'Completa {n} missió més per desbloquejar-ho | Completa {n} missions més per desbloquejar-ho',
       'aria': '{name}, bloquejat: completa {n} missió més | {name}, bloquejat: completa {n} missions més'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'Armeria',
+      'workshop': 'Farga',
+      'circuits': 'Laboratori de xips',
+      'records': 'Saló de la fama',
+      'table': 'Informe de missió'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'Obrir',
+      'brief': 'Tornar a veure l\'informe'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'Següent',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'Revenja amb {boss}: XP, cargols i botí. La història no avança.',
+    // A job pad with no job on it.
+    'jobEmpty': 'Aquí apareixerà un encàrrec nou després de la teva propera missió.',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'Anar a {place}',
+    // A station's panel: back out to the hall.
+    'back': 'Tornar a la sala',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'Provisions de Pip',
+      'hello': 'Psst, Flux! T\'he aconseguit algunes coses.',
+      'aria': 'Parlar amb Pip: provisions'
     }
   },
   'hero': {

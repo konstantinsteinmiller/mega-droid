@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': 'เหลือเวลา {s} วินาที โดรนอีก {n} ลำ',
     'tink': 'เคร้ง!',
     'perfect': 'เพอร์เฟกต์!',
     'parry': 'ปัดป้อง!',
@@ -236,7 +238,10 @@ export default {
     'bossDown': 'ทำลาย {boss} แล้ว!',
     'objectiveDone': 'สำเร็จเป้าหมาย!',
     'rescued': 'วาร์ปหุ่นยนต์คนงานไปที่ปลอดภัยแล้ว!',
-    'bossDoor': 'ประตูเหล็กครูดเปิดออกช้าๆ…'
+    'bossDoor': 'ประตูเหล็กครูดเปิดออกช้าๆ…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': 'ท้องฟ้าโล่งแล้ว! +{n} โบลต์',
+    'skyFail': 'ช้าไป! โดรนกลับมาแล้ว'
   },
   'interact': {
     'chest': 'เปิด',
@@ -408,6 +413,36 @@ export default {
     'unlock': {
       'hint': 'ทำภารกิจให้สำเร็จอีก {n} ครั้งเพื่อปลดล็อก',
       'aria': '{name} ล็อกอยู่: ทำภารกิจให้สำเร็จอีก {n} ครั้ง'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': 'คลังอาวุธ',
+      'workshop': 'โรงตีเหล็ก',
+      'circuits': 'แล็บชิป',
+      'records': 'หอเกียรติยศ',
+      'table': 'บรีฟภารกิจ'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': 'เปิด',
+      'brief': 'ดูบรีฟอีกครั้ง'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': 'ถัดไป',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': 'ดวลอีกครั้งกับ {boss}: ค่าประสบการณ์ โบลต์ และของดี เนื้อเรื่องไม่เดินหน้า',
+    // A job pad with no job on it.
+    'jobEmpty': 'งานใหม่จะมาที่นี่หลังภารกิจถัดไปของคุณ',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': 'เดินไปที่ {place}',
+    // A station's panel: back out to the hall.
+    'back': 'กลับไปที่โถง',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': 'เสบียงของพิป',
+      'hello': 'ชู่ว์ Flux! ฉันหาของมาให้นายนิดหน่อย',
+      'aria': 'คุยกับพิป: เสบียง'
     }
   },
   'hero': {

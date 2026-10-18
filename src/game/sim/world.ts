@@ -152,6 +152,10 @@ export interface Enemy {
   /** Never steps from its spot (it still turns and fights): the tutorial's
    *  block teacher, which walked out of its lesson. */
   rooted?: boolean
+  /** A sky shoot's drone (#178, `sim/skyShoot.ts`): a target, not a machine.
+   *  It never wakes or attacks, its flight is the sky shoot's, a quick shot
+   *  does a third of its damage, and its fall drops nothing. */
+  sky?: boolean
   /** Fallen apart into its parts (`fx/shatter.ts`): its own model hides. */
   shattered?: boolean
 }

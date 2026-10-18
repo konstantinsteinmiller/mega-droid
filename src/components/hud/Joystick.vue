@@ -29,8 +29,9 @@ const root = ref<HTMLElement | null>(null)
 const home = ref<HTMLElement | null>(null)
 const base = ref<HTMLElement | null>(null)
 const knob = ref<HTMLElement | null>(null)
-/** The resting stick is part of the touch HUD, in play. */
-const resting = computed(() => hud.device === 'touch' && hud.phase === 'play')
+/** The resting stick is part of the touch HUD, in play and on the walk
+ *  through the lab (#173). */
+const resting = computed(() => hud.device === 'touch' && (hud.phase === 'play' || hud.phase === 'hub'))
 let off: (() => void) | null = null
 let shown: boolean | null = null
 

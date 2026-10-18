@@ -130,7 +130,7 @@ registerModeFactories(
     onProgress?.(1)
     return m
   },
-  () => new HubMode(),
+  (arrival) => new HubMode(input, arrival),
   // The intro on its own chunk (#121): only a first-timer (or a replay from
   // Options) ever plays it, so a returning player never downloads or parses it.
   async (opts) => new (await loadIntroModule()).IntroMode(opts),

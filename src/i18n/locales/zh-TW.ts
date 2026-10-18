@@ -29,6 +29,8 @@ export default {
   },
 
   'combat': {
+    // The sky shoot's clock, read out (#178): seconds left, drones to go.
+    'skyClock': '剩餘 {s} 秒，還有 {n} 架無人機',
     'tink': '叮！',
     'perfect': '完美！',
     'parry': '彈反！',
@@ -236,7 +238,10 @@ export default {
     'bossDown': '{boss}已被摧毀！',
     'objectiveDone': '目標完成！',
     'rescued': '工作機器人已傳送到安全地帶！',
-    'bossDoor': '閘門嘎吱作響地打開了…'
+    'bossDoor': '閘門嘎吱作響地打開了…',
+    // The sky shoot (#178): all eight drones down in time, and too slow.
+    'skyClear': '天空清空！+{n} 螺絲',
+    'skyFail': '太慢了！無人機又回來了。'
   },
   'interact': {
     'chest': '打開',
@@ -433,6 +438,36 @@ export default {
     'unlock': {
       'hint': '再完成{n}個任務即可解鎖 | 再完成{n}個任務即可解鎖',
       'aria': '{name}，已鎖定：再完成{n}個任務 | {name}，已鎖定：再完成{n}個任務'
+    },
+    // The walkable lab (#173): the stations of the Deployment Hall, on the
+    // labels that float over them.
+    'place': {
+      'hero': '軍械庫',
+      'workshop': '鍛造坊',
+      'circuits': '晶片實驗室',
+      'records': '名人堂',
+      'table': '任務簡報'
+    },
+    // What [E] (or the button) does at a station.
+    'act': {
+      'open': '開啟',
+      'brief': '重看簡報'
+    },
+    // The chip on the pedestal of the story's next mission.
+    'next': '下一關',
+    // A secured sector's pedestal: its mission again, for its rewards.
+    'replayHint': '與{boss}再戰：經驗、螺絲和寶貝。劇情不會推進。',
+    // A job pad with no job on it.
+    'jobEmpty': '完成下一個任務後，這裡會出現新的委託。',
+    // A label's spoken name: a tap walks Flux there.
+    'walkTo': '走到{place}',
+    // A station's panel: back out to the hall.
+    'back': '返回大廳',
+    // Pip's supplies: the rewarded offers, in Pip's own dialog.
+    'pip': {
+      'title': '皮普的補給',
+      'hello': '噓，Flux！我幫你搜羅了一些東西。',
+      'aria': '和皮普聊聊：補給'
     }
   },
   'hero': {

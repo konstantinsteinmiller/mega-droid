@@ -6,17 +6,17 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, onUnmounted, watch } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CheatModal from '@/components/modals/CheatModal.vue'
 import { cheatUi } from '@/use/useCheats'
 
 /**
  * The cheat UI (#Cheat1): the toast that confirms a typed "cmonc", and the
  * cheat panel on ctrl+shift+alt+F1. Mounted by App.vue only while cheats are
- * on (or the toast says they just went off); the panel, which reaches into
- * the game, loads the first time it opens.
+ * on (or the toast says they just went off). The panel is a static import:
+ * the obfuscator breaks dynamic imports (tests/meta/lazyImports.test.ts).
  */
-const CheatModal = defineAsyncComponent(() => import('@/components/modals/CheatModal.vue'))
 const { t } = useI18n()
 
 let timer: ReturnType<typeof setTimeout> | null = null

@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Minden történetküldetés feloldása',
     'bolts': '+{n} csavar',
     'chips': '+{n} képességchip',
-    'gear': 'Epikus blaster',
+    'gear': 'Epikus ágyú',
     'gels': 'Javítózselék feltöltése',
     'done': 'Kész!',
     'doors': 'Ugrás egy ajtóhoz',

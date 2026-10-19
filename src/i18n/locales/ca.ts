@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Desbloqueja totes les missions de la història',
     'bolts': '+{n} cargols',
     'chips': '+{n} xips d\'habilitat',
-    'gear': 'Desintegrador èpic',
+    'gear': 'Canó èpic',
     'gels': 'Omple els gels reparadors',
     'done': 'Fet!',
     'doors': 'Salta a una porta',

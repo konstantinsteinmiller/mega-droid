@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Atrakinti visas siužeto misijas',
     'bolts': '+{n} varžtų',
     'chips': '+{n} įgūdžių lustų',
-    'gear': 'Epinis blasteris',
+    'gear': 'Epinė patranka',
     'gels': 'Pripildyti remonto gelių',
     'done': 'Atlikta!',
     'doors': 'Peršokti prie durų',

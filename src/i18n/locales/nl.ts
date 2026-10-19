@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Alle verhaalmissies ontgrendelen',
     'bolts': '+{n} bouten',
     'chips': '+{n} vaardigheidschips',
-    'gear': 'Epische blaster',
+    'gear': 'Episch kanon',
     'gels': 'Reparatiegels bijvullen',
     'done': 'Klaar!',
     'doors': 'Spring naar een deur',

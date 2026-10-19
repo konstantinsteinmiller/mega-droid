@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Deblochează toate misiunile poveștii',
     'bolts': '+{n} șuruburi',
     'chips': '+{n} cipuri de abilitate',
-    'gear': 'Blaster epic',
+    'gear': 'Tun epic',
     'gels': 'Umple gelurile de reparare',
     'done': 'Gata!',
     'doors': 'Sari la o ușă',

@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Barcha syujet missiyalarini ochish',
     'bolts': '+{n} bolt',
     'chips': '+{n} mahorat chipi',
-    'gear': 'Epik blaster',
+    'gear': 'Epik toʻp',
     'gels': 'Ta’mir gellarini to‘ldirish',
     'done': 'Tayyor!',
     'doors': 'Eshikka sakrash',

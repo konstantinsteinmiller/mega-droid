@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Alle Story-Missionen freischalten',
     'bolts': '+{n} Bolzen',
     'chips': '+{n} Skill-Chips',
-    'gear': 'Epischer Blaster',
+    'gear': 'Epische Kanone',
     'gels': 'Reparaturgels auffüllen',
     'done': 'Erledigt!',
     'doors': 'Zu einer Tür springen',

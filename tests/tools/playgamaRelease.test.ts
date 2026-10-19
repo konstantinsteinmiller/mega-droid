@@ -23,7 +23,7 @@ const SCRATCH = join(ROOT, 'node_modules', '.tmp', `playgama-release-test-${proc
 const DIST = join(SCRATCH, 'game')
 const ZIP = join(SCRATCH, 'game.zip')
 
-const MARKERS = [{ text: '[CHEAT]', why: 'dev cheats, src/use/useCheats.ts' }]
+const MARKERS = [{ text: '[CHEAT]', why: 'dev cheats, src/use/devCheats.ts' }]
 
 const CLEAN_HTML = `<!DOCTYPE html>
 <html lang="">

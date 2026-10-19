@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Avaa kaikki tarinatehtävät',
     'bolts': '+{n} pulttia',
     'chips': '+{n} taitosirua',
-    'gear': 'Eeppinen blasteri',
+    'gear': 'Eeppinen tykki',
     'gels': 'Täytä korjausgeelit',
     'done': 'Valmis!',
     'doors': 'Hyppää ovelle',

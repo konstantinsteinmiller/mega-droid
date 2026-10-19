@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Otključaj sve misije priče',
     'bolts': '+{n} vijaka',
     'chips': '+{n} čipova vještina',
-    'gear': 'Epski blaster',
+    'gear': 'Epski top',
     'gels': 'Napuni gelove za popravak',
     'done': 'Gotovo!',
     'doors': 'Skoči do vrata',

@@ -190,7 +190,7 @@ export default {
     'unlockAll': 'Tüm hikâye görevlerinin kilidini aç',
     'bolts': '+{n} cıvata',
     'chips': '+{n} Yetenek Çipi',
-    'gear': 'Epik blaster',
+    'gear': 'Epik top',
     'gels': 'Onarım Jellerini doldur',
     'done': 'Tamam!',
     'doors': 'Bir kapıya atla',

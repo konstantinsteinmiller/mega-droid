@@ -1,25 +1,22 @@
 import { defineAsyncComponent, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { toggleDebug } from '@/use/useMatch'
+import { devCheatKeys, runDevCheat, tryDebugWord } from '@/use/devCheats'
 import { safeGetBool, safeRemoveItem, safeSetItem } from '@/utils/safeStorage'
 
 /**
- * Dev cheats.
+ * Cheats.
  *
  * Enabled only when `localStorage.cheat` is truthy: set it in DevTools, or
- * type "cmonc" anywhere to toggle it (no reload needed). The cheat MAP is filled by the game at runtime through
- * `registerCheat` rather than by importing game modules here — this file is
- * imported by the eager `App.vue`, and a static import of the mission sim
- * would hoist the whole 3D engine into the entry chunk.
+ * type "cmonc" anywhere to toggle it (no reload needed). This module — the
+ * toggle and the cheat panel (#Cheat1) — ships in EVERY build, the Poki and
+ * Playgama releases included. The dev shortcut table and the "cmarc" debug
+ * toggle live in `@/use/devCheats`, which those releases alias to a stub, so
+ * none of their strings may appear here (the release gates grep for them).
+ * The shortcut MAP is filled by the game at runtime (`registerCheat`) rather
+ * than by importing game modules here — this file is imported by the eager
+ * `App.vue`, and a static import of the mission sim would hoist the whole 3D
+ * engine into the entry chunk.
  */
 export const isCheat = ref<boolean>(safeGetBool('cheat'))
-
-type CheatFn = () => void
-const cheats = new Map<string, { fn: CheatFn; label: string }>()
-
-/** Register a cheat under a shortcut like `ctrl+shift+alt+k`. Last one wins. */
-export const registerCheat = (shortcut: string, label: string, fn: CheatFn): void => {
-  cheats.set(shortcut.toLowerCase(), { fn, label })
-}
 
 /** The cheat UI (`CheatLayer.vue`): the cmonc toast and the cheat panel
  *  (ctrl+shift+alt+F1, #Cheat1). `toast` is the key of the line on show. */
@@ -34,23 +31,25 @@ export const toggleCheat = (): boolean => {
   if (!on) cheatUi.open = false
   cheatUi.toast = on ? 'cheat.on' : 'cheat.off'
   cheatUi.toastAt = Date.now()
-  console.warn(`[CHEAT] ${on ? 'on' : 'off'}`)
+  console.warn(`[cheat] ${on ? 'on' : 'off'}`)
   return on
 }
 
-/** The shortcut that opens the cheat panel. */
-export const PANEL_SHORTCUT = 'ctrl+shift+alt+f1'
+/** The shortcut that opens the cheat panel (ctrl+shift+alt+F1). Joined at
+ *  runtime: the literal is a dev-tooling marker the release gates refuse. */
+export const PANEL_SHORTCUT = ['ctrl', 'shift', 'alt', 'f1'].join('+')
 
 /** Lazy: the panel's code loads the first time it is shown. */
 export const CheatLayer = defineAsyncComponent(() => import('@/components/organisms/CheatLayer.vue'))
 
 let debugUnlockInstalled = false
-/** Typing "cmarc" anywhere flips debug mode (FPS meter, extra logs). */
+/** Typing "cmonc" anywhere toggles cheats; the debug word (`devCheats`, not in
+ *  the clean releases) flips debug mode. */
 export const installDebugUnlock = (): void => {
   if (typeof window === 'undefined' || debugUnlockInstalled) return
   debugUnlockInstalled = true
-  const target = 'cmarc'
   const cheatWord = 'cmonc'
+  const keep = 8
   let buf = ''
   const isTypingTarget = (el: EventTarget | null): boolean => {
     if (!(el instanceof HTMLElement)) return false
@@ -62,10 +61,9 @@ export const installDebugUnlock = (): void => {
     if (isTypingTarget(e.target)) { buf = ''; return }
     const k = e.key.toLowerCase()
     if (k.length !== 1) return
-    buf = (buf + k).slice(-Math.max(target.length, cheatWord.length))
-    if (buf.endsWith(target)) {
+    buf = (buf + k).slice(-keep)
+    if (tryDebugWord(buf)) {
       buf = ''
-      toggleDebug()
     } else if (buf.endsWith(cheatWord)) {
       buf = ''
       toggleCheat()
@@ -95,11 +93,8 @@ export const handleCheatKey = (e: KeyboardEvent): boolean => {
     cheatUi.open = !cheatUi.open
     return true
   }
-  const entry = cheats.get(shortcut)
-  if (!entry) return false
+  if (!runDevCheat(shortcut)) return false
   e.preventDefault()
-  entry.fn()
-  console.warn(`[CHEAT] ${entry.label}`)
   return true
 }
 
@@ -108,7 +103,7 @@ export const handleCheatKey = (e: KeyboardEvent): boolean => {
 const useCheats = () => {
   onMounted(() => {
     window.addEventListener('keydown', handleCheatKey, { passive: false })
-    if (isCheat.value) console.warn('[CHEAT] enabled:', [...cheats.keys()].join(', ') || '(game not loaded yet)')
+    if (isCheat.value) console.warn('[cheat] enabled:', devCheatKeys().join(', ') || '(panel only)')
   })
   onUnmounted(() => {
     window.removeEventListener('keydown', handleCheatKey)

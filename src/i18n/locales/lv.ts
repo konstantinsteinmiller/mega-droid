@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Atbloķēt visas stāsta misijas',
     'bolts': '+{n} skrūves',
     'chips': '+{n} prasmju čipi',
-    'gear': 'Episks blasteris',
+    'gear': 'Episks lielgabals',
     'gels': 'Uzpildīt remonta gelus',
     'done': 'Gatavs!',
     'doors': 'Lēkt pie durvīm',

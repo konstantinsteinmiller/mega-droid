@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Malŝlosi ĉiujn rakontajn misiojn',
     'bolts': '+{n} boltoj',
     'chips': '+{n} lertaj ĉipoj',
-    'gear': 'Epopea blastilo',
+    'gear': 'Epopea kanono',
     'gels': 'Plenigi riparajn ĝelojn',
     'done': 'Farite!',
     'doors': 'Salti al pordo',

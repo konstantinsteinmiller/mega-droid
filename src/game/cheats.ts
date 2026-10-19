@@ -1,4 +1,4 @@
-import { registerCheat as register } from '@/use/useCheats'
+import { registerCheat as register } from '@/use/devCheats'
 import { currentMission } from './boot'
 import { profile, saveProfile, grantXp, markCheated } from './state/profile'
 import { xpToNext } from './data/progression'

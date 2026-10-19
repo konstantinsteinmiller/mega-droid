@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Sblocca tutte le missioni della storia',
     'bolts': '+{n} bulloni',
     'chips': '+{n} chip abilità',
-    'gear': 'Blaster epico',
+    'gear': 'Cannone epico',
     'gels': 'Riempi i gel di riparazione',
     'done': 'Fatto!',
     'doors': 'Salta a una porta',

@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Lås alle historiemissioner op',
     'bolts': '+{n} bolte',
     'chips': '+{n} færdighedschips',
-    'gear': 'Episk blaster',
+    'gear': 'Episk kanon',
     'gels': 'Fyld reparationsgel op',
     'done': 'Færdig!',
     'doors': 'Hop til en dør',

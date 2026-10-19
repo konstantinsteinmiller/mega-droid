@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Odblokuj wszystkie misje fabularne',
     'bolts': '+{n} śrub',
     'chips': '+{n} chipów umiejętności',
-    'gear': 'Epicki blaster',
+    'gear': 'Epickie działo',
     'gels': 'Uzupełnij żele naprawcze',
     'done': 'Gotowe!',
     'doors': 'Skocz do drzwi',

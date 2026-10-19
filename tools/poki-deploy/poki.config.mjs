@@ -45,9 +45,11 @@ export default {
    *  to stubs (src/platforms/policy.ts → vite.config.ts); a QA twin built with
    *  `VITE_POKI_QA_TOOLS=true` keeps it and is REFUSED here, by design. */
   forbidInBundle: [
-    { text: '[CHEAT]', why: 'dev cheats, src/use/useCheats.ts' },
+    { text: '[CHEAT]', why: 'dev cheats, src/use/devCheats.ts' },
     { text: 'ctrl+shift+alt+', why: 'cheat shortcuts, src/game/cheats.ts' },
-    { text: 'cmarc', why: 'typed debug-mode toggle, src/use/useCheats.ts' },
+    { text: 'cmarc', why: 'typed debug-mode toggle, src/use/devCheats.ts' },
+    // NOT "cmonc": the cheat panel (#Cheat1) and its typed toggle ship in the
+    // release on purpose (src/use/useCheats.ts).
     // NOT the hidden 30-tap interstitial (src/use/useQaAdTrigger.ts): it ships
     // in the release on purpose (src/platforms/policy.ts).
   ],

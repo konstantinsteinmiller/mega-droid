@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Mở khóa mọi nhiệm vụ cốt truyện',
     'bolts': '+{n} bu lông',
     'chips': '+{n} chip kỹ năng',
-    'gear': 'Blaster sử thi',
+    'gear': 'Pháo sử thi',
     'gels': 'Nạp đầy gel sửa chữa',
     'done': 'Xong!',
     'doors': 'Nhảy đến một cánh cửa',

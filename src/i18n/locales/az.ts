@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Bütün hekayə missiyalarını aç',
     'bolts': '+{n} bolt',
     'chips': '+{n} Bacarıq Çipi',
-    'gear': 'Epik blaster',
+    'gear': 'Epik top',
     'gels': 'Təmir Gellərini doldur',
     'done': 'Hazırdır!',
     'doors': 'Qapıya tullan',

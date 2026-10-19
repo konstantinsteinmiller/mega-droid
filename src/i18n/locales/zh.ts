@@ -188,7 +188,7 @@ export default {
     'unlockAll': '解锁所有剧情任务',
     'bolts': '+{n} 螺栓',
     'chips': '+{n} 技能芯片',
-    'gear': '史诗爆能枪',
+    'gear': '史诗臂炮',
     'gels': '补满修复凝胶',
     'done': '完成！',
     'doors': '跳到门前',

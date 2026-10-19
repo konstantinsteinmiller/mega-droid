@@ -188,7 +188,7 @@ export default {
     'unlockAll': '解鎖所有劇情任務',
     'bolts': '+{n} 螺栓',
     'chips': '+{n} 技能晶片',
-    'gear': '史詩爆能槍',
+    'gear': '史詩臂砲',
     'gels': '補滿修復凝膠',
     'done': '完成！',
     'doors': '跳到門前',

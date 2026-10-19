@@ -45,11 +45,25 @@ describe('resolvePlatformPolicy', () => {
 })
 
 describe('dev tooling is aliased out of the Poki release', () => {
-  it('Poki release: both cheat modules resolve to their stubs', () => {
+  it('Poki release: both dev-cheat modules resolve to their stubs', () => {
     expect(devToolAliases(resolvePlatformPolicy({ isPoki: true }))).toEqual({
-      '@/use/useCheats': 'src/use/useCheats.stub.ts',
+      '@/use/devCheats': 'src/use/devCheats.stub.ts',
       '@/game/cheats': 'src/game/cheats.stub.ts'
     })
+  })
+
+  it('the cheat panel and its "cmonc" toggle (#Cheat1) ship in the Poki and Playgama releases', async () => {
+    for (const policy of [resolvePlatformPolicy({ isPoki: true }), resolvePlatformPolicy({ isPoki: false, isPlaygama: true })]) {
+      expect(devToolAliases(policy)).not.toHaveProperty('@/use/useCheats')
+    }
+    expect(existsSync(resolve(ROOT, 'src/use/useCheats.stub.ts'))).toBe(false)
+    expect(DEV_TOOL_MARKERS.map((m) => m.text)).not.toContain('cmonc')
+    const poki = (await import(pathToFileURL(resolve(ROOT, 'tools/poki-deploy/poki.config.mjs')).href)).default
+    expect(poki.forbidInBundle.map((f: { text: string }) => f.text)).not.toContain('cmonc')
+    // The shipped module carries the toggle and none of the strings the gates refuse.
+    const src = read('src/use/useCheats.ts').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    expect(src).toContain("'cmonc'")
+    for (const { text } of DEV_TOOL_MARKERS) expect(src, text).not.toContain(text)
   })
 
   it('the hidden 30-tap interstitial ships in the Poki and Playgama releases', async () => {

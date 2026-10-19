@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Desbloquear todas as misións da historia',
     'bolts': '+{n} parafusos',
     'chips': '+{n} chips de habilidade',
-    'gear': 'Bláster épico',
+    'gear': 'Canón épico',
     'gels': 'Encher os xeles de reparación',
     'done': 'Feito!',
     'doors': 'Saltar a unha porta',

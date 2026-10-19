@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Odemknout všechny příběhové mise',
     'bolts': '+{n} šroubů',
     'chips': '+{n} čipů dovedností',
-    'gear': 'Epický blaster',
+    'gear': 'Epické dělo',
     'gels': 'Doplnit opravné gely',
     'done': 'Hotovo!',
     'doors': 'Skok ke dveřím',

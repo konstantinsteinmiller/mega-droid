@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Buka semua misi cerita',
     'bolts': '+{n} baut',
     'chips': '+{n} Chip Keahlian',
-    'gear': 'Blaster epik',
+    'gear': 'Meriam epik',
     'gels': 'Isi penuh Gel Perbaikan',
     'done': 'Selesai!',
     'doors': 'Lompat ke pintu',

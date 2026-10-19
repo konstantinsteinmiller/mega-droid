@@ -206,7 +206,7 @@ export default {
     'unlockAll': 'Unlock all story missions',
     'bolts': '+{n} bolts',
     'chips': '+{n} Skill Chips',
-    'gear': 'Epic blaster',
+    'gear': 'Epic cannon',
     'gels': 'Fill Repair Gels',
     'done': 'Done!',
     'doors': 'Jump to a door',

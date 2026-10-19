@@ -188,7 +188,7 @@ export default {
     'unlockAll': '모든 스토리 미션 해제',
     'bolts': '볼트 +{n}',
     'chips': '스킬 칩 +{n}',
-    'gear': '에픽 블래스터',
+    'gear': '에픽 캐논',
     'gels': '수리 젤 가득 채우기',
     'done': '완료!',
     'doors': '문으로 이동',

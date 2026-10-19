@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Débloquer toutes les missions de l\'histoire',
     'bolts': '+{n} boulons',
     'chips': '+{n} puces de compétence',
-    'gear': 'Blaster épique',
+    'gear': 'Canon épique',
     'gels': 'Remplir les gels de réparation',
     'done': 'Fait !',
     'doors': 'Aller à une porte',

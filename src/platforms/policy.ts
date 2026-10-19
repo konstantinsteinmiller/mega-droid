@@ -68,7 +68,7 @@ export const resolvePlatformPolicy = ({ isPoki, isPlaygama = false, qaTools = fa
  * module's exports, so every importer still resolves.
  */
 export const DEV_TOOL_STUBS = {
-  '@/use/useCheats': 'src/use/useCheats.stub.ts',
+  '@/use/devCheats': 'src/use/devCheats.stub.ts',
   '@/game/cheats': 'src/game/cheats.stub.ts'
 } as const
 
@@ -80,10 +80,11 @@ export const DEV_TOOL_STUBS = {
  * stubs — `tests/platforms/playgamaCleanBuild.test.ts` holds that pairing.
  */
 export const DEV_TOOL_MARKERS: ReadonlyArray<{ text: string; why: string }> = [
-  { text: '[CHEAT]', why: 'dev cheats, src/use/useCheats.ts' },
+  { text: '[CHEAT]', why: 'dev cheats, src/use/devCheats.ts' },
   { text: 'ctrl+shift+alt+', why: 'cheat shortcuts, src/game/cheats.ts' },
-  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/useCheats.ts' },
-  { text: 'cmonc', why: 'typed cheat toggle and cheat panel, src/use/useCheats.ts' }
+  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/devCheats.ts' }
+  // NOT "cmonc": the typed cheat toggle and the cheat panel (#Cheat1,
+  // src/use/useCheats.ts) ship in every build by the owner's decision.
 ]
 
 /** The `resolve.alias` entries a build with this policy needs for its dev

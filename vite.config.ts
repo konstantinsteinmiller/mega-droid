@@ -861,8 +861,9 @@ export default defineConfig(({ mode, command }) => {
         // Dev tooling OUT of builds whose platform policy forbids it — today the
         // Poki and Playgama releases: "no debug code, no dev artifacts" (see
         // `src/platforms/policy.ts`, the same resolver the app reads). The
-        // cheats and the typed "cmarc" debug toggle are swapped for no-op
-        // stubs, so their code and labels never enter the bundle. (The hidden
+        // dev cheat shortcuts and the typed "cmarc" debug toggle are swapped
+        // for no-op stubs, so their code and labels never enter the bundle.
+        // (The cheat panel and its "cmonc" toggle, #Cheat1, ship everywhere.) (The hidden
         // 30-tap interstitial is not dev tooling and ships everywhere.)
         // `VITE_QA_TOOLS=true` builds a QA twin that keeps them; the release
         // gates refuse that artifact.

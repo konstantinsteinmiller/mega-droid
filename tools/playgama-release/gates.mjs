@@ -11,7 +11,7 @@
 //     plugin chunk, a platform flag, a build script: "only the Playgama plugins
 //     in the release bundle". YouTube reads another portal's ad machinery as
 //     off-platform monetization (YT-MON) even when it never fires;
-//   • dev tooling (cheats, the "cmarc" toggle, the QA ad trigger) — the policy
+//   • dev tooling (dev cheat shortcuts, the "cmarc" toggle; the cheat panel ships) — the policy
 //     aliases it out, and a grep of the artifact is the only proof it worked;
 //   • an obfuscated bundle — every string check here is unfalsifiable on one,
 //     and Playgama / YouTube review by hand from stack traces;

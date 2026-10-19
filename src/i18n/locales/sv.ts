@@ -188,7 +188,7 @@ export default {
     'unlockAll': 'Lås upp alla berättelseuppdrag',
     'bolts': '+{n} bultar',
     'chips': '+{n} färdighetschip',
-    'gear': 'Episk blaster',
+    'gear': 'Episk kanon',
     'gels': 'Fyll på reparationsgel',
     'done': 'Klart!',
     'doors': 'Hoppa till en dörr',

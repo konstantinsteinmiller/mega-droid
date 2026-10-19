@@ -1602,8 +1602,9 @@ export class IntroMode implements GameMode {
     const pop = ramp(PIP_POP - 0.2, PIP_POP + 0.2, t)
     const back = ramp(LV_POP, HOLO_FROM, t)
     if (t < WAKE_FROM) {
-      // Behind the right console, only his eye over the top.
-      P.position.set(3.5, 1.2 + Math.sin(t * 3) * 0.03, -2.95)
+      // Behind the right console, only his eye over the top. (Measured clear
+      // of the redesigned console: the old spot put him inside its desk.)
+      P.position.set(3.5, 1.2 + Math.sin(t * 3) * 0.03, -3.55)
       P.rotation.y = -0.6
       P.scale.setScalar(1)
     } else if (t < STEP_FROM) {

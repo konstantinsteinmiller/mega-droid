@@ -9,14 +9,30 @@
 // same mechanism as `pokiPlugin.stub.ts`.
 //
 // Must mirror the real module's export surface (App.vue imports the default and
-// `installDebugUnlock`; `@/game/cheats` imports `registerCheat`).
+// `installDebugUnlock`, `cheatUi` and `CheatLayer`; `@/game/cheats` imports
+// `registerCheat`).
 
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 
 export const registerCheat = (_shortcut: string, _label: string, _fn: () => void): void => {}
 
 export const installDebugUnlock = (): void => {}
 
-const useCheats = () => ({ isCheat: ref(false) })
+export const isCheat = ref(false)
+
+export const cheatUi = reactive({ open: false, toast: '' as '' | 'cheat.on' | 'cheat.off', toastAt: 0 })
+
+export const toggleCheat = (): boolean => false
+
+export const handleCheatKey = (_e: KeyboardEvent): boolean => false
+
+export const PANEL_SHORTCUT = ''
+
+export const buildShortcut = (_e: KeyboardEvent): string => ''
+
+/** No cheat panel: App.vue renders nothing for it. */
+export const CheatLayer = null
+
+const useCheats = () => ({ isCheat })
 
 export default useCheats

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Group } from 'three'
-import { BossArena, BLOCKED_ENRAGE, BLIND_ENRAGE, CALM_AFTER, PILLAR_HP, type ArenaHost } from '@/game/sim/bossArena'
+import { Group, type BufferGeometry } from 'three'
+import { coplanarOverlaps } from './coplanar'
+import { BossArena, BLOCKED_ENRAGE, BLIND_ENRAGE, CALM_AFTER, PILLAR_HP, PILLAR_R, PLINTH_R, coverPillarParts, type ArenaHost } from '@/game/sim/bossArena'
 import { createNav } from '@/game/world/nav'
 import { generateMap } from '@/game/world/levelGen'
 import { THEMES } from '@/game/world/themes'
@@ -74,5 +75,31 @@ describe('boss arena kit', () => {
     arena.shotBlocked({ source: boss, x: -99, z: -99 } as unknown as Shot)
     expect(arena.update(0.1, boss)).toBe(false)
     expect(BLIND_ENRAGE).toBeGreaterThan(CALM_AFTER)
+  })
+})
+
+describe('cover pillar geometry', () => {
+  const parts = coverPillarParts(THEMES.scrapyard)
+  const box = (g: BufferGeometry) => { g.computeBoundingBox(); return g.boundingBox! }
+
+  it('its plinth stays inside a round footprint just wider than the shaft: no corners stick out', () => {
+    const [shaft, , plinth] = parts
+    const pos = plinth!.getAttribute('position')
+    let far = 0
+    for (let i = 0; i < pos.count; i++) far = Math.max(far, Math.hypot(pos.getX(i), pos.getZ(i)))
+    expect(far).toBeLessThanOrEqual(PLINTH_R + 1e-4)
+    // A collar, not a slab: at most 20 cm wider than the shaft all round.
+    expect(far - PILLAR_R).toBeLessThanOrEqual(0.2)
+    // The shaft stands on the plinth, its foot hidden inside it.
+    expect(box(shaft!).min.y).toBeLessThan(box(plinth!).max.y)
+    expect(box(shaft!).min.y).toBeGreaterThan(0)
+  })
+
+  it('has no coplanar overlapping faces', () => {
+    expect(coplanarOverlaps(parts)).toBe(0)
+  })
+
+  it('stands on the floor: its foot at y = 0', () => {
+    expect(Math.min(...parts.map(g => box(g).min.y))).toBeCloseTo(0, 3)
   })
 })

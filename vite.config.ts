@@ -269,7 +269,7 @@ import tailwindcss from '@tailwindcss/vite'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import javascriptObfuscator from 'vite-plugin-javascript-obfuscator'
 import { viteSingleFile } from 'vite-plugin-singlefile'
-import { buildCsp } from './src/platforms/csp'
+import { miniGamePlugin } from './vite.config.miniGame'
 import { buildPlaygamaBridgeConfig, playgamaLeaderboardEnv } from './src/platforms/playgama/bridgeConfig'
 import { PLAYGAMA_BRIDGE_CHUNK, PLAYGAMA_OUT_DIR } from './src/platforms/playgama/release'
 import { devToolAliases, resolvePlatformPolicy } from './src/platforms/policy'
@@ -570,19 +570,10 @@ export default defineConfig(({ mode, command }) => {
   // reviewer grepping the archive finds all of them there and nowhere else.
   // Dropping the tag takes those strings out with it.
   const skipCspMeta = isYandexBuild || isGamepixBuild || isPokiBuild || isPlaygamaBuild
-  const cspValue = buildCsp(env)
-
-  plugins.push({
-    name: 'inject-csp',
-    transformIndexHtml(html: string) {
-      return html.replace(
-        '<!-- CSP meta tag injected by vite.config.ts at build time -->',
-        skipCspMeta
-          ? ''
-          : `<meta http-equiv="Content-Security-Policy" content="${cspValue}" />`
-      )
-    }
-  })
+  // Writes the CSP meta tag and inlines the loading mini-game, whose hash it
+  // adds to script-src (vite.config.miniGame.ts). Not inlined on
+  // Playgama: Playables applies YouTube's own CSP, which our hash cannot open.
+  plugins.push(miniGamePlugin(env, { inline: !isPlaygamaBuild, skipCspMeta }))
 
   // Strip the CrazyGames SDK <script> tag from index.html for non-CrazyGames builds
   // so it doesn't block or error on other platforms (e.g. Wavedash).

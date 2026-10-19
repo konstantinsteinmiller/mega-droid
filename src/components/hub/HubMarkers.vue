@@ -32,7 +32,12 @@
         span.m-lock(v-if="v.state === 'locked'")
           GameIcon(name="lock")
       span.m-stem(aria-hidden="true")
+      //- Pinned to the edge: a bold arrow outside the label, pointing where
+      //- the place is (an inked shaft and head, nudging that way).
       span.m-arrow(aria-hidden="true")
+        svg(viewBox="0 0 40 28" width="46" height="32")
+          path.a-body(d="M3 10.5 H19 V3.5 L37 14 L19 24.5 V17.5 H3 Z")
+          path.a-shine(d="M6 12.5 H21 V8 L31 14")
     //- Pip with supplies: a "!" over him, a tap opens his dialog.
     button.pip-mark(
       ref="pipEl"
@@ -162,6 +167,8 @@ const openPip = (): void => {
 
 /** The edge arrow's angle for a label pinned to the screen's border. */
 const EDGE_PAD = 46
+/** The edge arrow's middle, this far out from the label's rim (px). */
+const ARROW_GAP = 26
 let off: (() => void) | null = null
 const place = (): void => {
   if (!shown.value) return
@@ -179,10 +186,15 @@ const place = (): void => {
     let y = m.y
     const edge = !m.onScreen
     if (edge) {
-      // Its whole width inside the screen (the label is centred on x).
-      const half = Math.max(EDGE_PAD, el.offsetWidth * 0.45 + 12)
+      // Its whole width inside the screen (the label is centred on x), and
+      // room for its arrow beyond it.
+      const half = Math.max(EDGE_PAD, el.offsetWidth * 0.45 + ARROW_GAP + 24)
       x = Math.min(vw - half, Math.max(half, x))
       y = Math.min(vh - EDGE_PAD - 40, Math.max(EDGE_PAD + 40, y))
+    } else {
+      // Over its place, but never cut by the screen's side (a narrow phone).
+      const half = el.offsetWidth * 0.5 + 6
+      x = Math.min(vw - half, Math.max(half, x))
     }
     el.style.visibility = 'visible'
     el.style.opacity = (edge ? 0.92 : Math.min(1, m.alpha)).toFixed(3)
@@ -190,7 +202,19 @@ const place = (): void => {
     const k = edge ? 0.9 : Math.max(0.72, Math.min(1.06, 1.2 - m.dist / 40))
     el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, ${edge ? '-50%' : '-100%'}) scale(${k.toFixed(3)})`
     el.classList.toggle('edge', edge)
-    if (edge) el.style.setProperty('--arrow', `${Math.atan2(m.y - vh / 2, m.x - vw / 2).toFixed(3)}rad`)
+    if (edge) {
+      // Outside the label's rim, on the side the place lies: never over its
+      // text or its chip.
+      const a = Math.atan2(m.y - vh / 2, m.x - vw / 2)
+      const hw = el.offsetWidth / 2
+      const hh = el.offsetHeight / 2
+      const c = Math.abs(Math.cos(a))
+      const s = Math.abs(Math.sin(a))
+      const r = Math.min(c > 1e-3 ? hw / c : Infinity, s > 1e-3 ? hh / s : Infinity) + ARROW_GAP
+      el.style.setProperty('--arrow', `${a.toFixed(3)}rad`)
+      el.style.setProperty('--ax', `${(Math.cos(a) * r).toFixed(1)}px`)
+      el.style.setProperty('--ay', `${(Math.sin(a) * r).toFixed(1)}px`)
+    }
     el.style.pointerEvents = m.alpha > 0.35 || edge ? 'auto' : 'none'
   }
   const pm = hubMarks.get('pip')
@@ -325,13 +349,26 @@ onUnmounted(() => off?.())
     position: absolute
     left: 50%
     top: 50%
-    width: 0
-    height: 0
-    border-left: 9px solid transparent
-    border-right: 9px solid transparent
-    border-bottom: 14px solid #ffd23a
-    transform: translate(-50%, -50%) rotate(calc(var(--arrow) + 90deg)) translateY(-34px)
-    filter: drop-shadow(0 2px 0 #141a33)
+    width: 46px
+    height: 32px
+    transform: translate(calc(var(--ax, 0px) - 50%), calc(var(--ay, 0px) - 50%)) rotate(var(--arrow))
+    svg
+      display: block
+      overflow: visible
+      filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45))
+      animation: arrow-nudge 0.9s ease-in-out infinite
+    .a-body
+      fill: #ffd23a
+      stroke: #141a33
+      stroke-width: 3
+      stroke-linejoin: round
+    .a-shine
+      fill: none
+      stroke: #fff6c4
+      stroke-width: 2
+      stroke-linecap: round
+      stroke-linejoin: round
+      opacity: 0.85
 .pip-mark
   position: absolute
   left: 0
@@ -356,10 +393,13 @@ onUnmounted(() => off?.())
 @keyframes fresh-glow
   50%
     box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35), 0 0 0 3px #ffd84a, 0 0 18px 6px rgba(255, 216, 74, 0.6)
+@keyframes arrow-nudge
+  50%
+    transform: translateX(5px)
 @keyframes pip-bob
   50%
     margin-top: -6px
 @media (prefers-reduced-motion: reduce)
-  .next .m-body, .fresh .m-body, .pip-mark
+  .next .m-body, .fresh .m-body, .pip-mark, .m-arrow svg
     animation: none
 </style>

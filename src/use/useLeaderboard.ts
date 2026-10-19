@@ -4,6 +4,7 @@ import { POSTED_NAME_KEY, SUBMITTED_SCORE_KEY } from '@/keys'
 import { resolveIdentity, type PlayerIdentity } from '@/use/usePlayerIdentity'
 import { boardSnapshot, rankFromDist } from '@/use/leaderboardSnapshot'
 import { LEGACY_KEYS, migrateLegacyKey } from '@/legacyKeys'
+import { portalBoardVisible } from '@/use/usePortalLeaderboard'
 
 /**
  * ─── The global board, client side ──────────────────────────────────────────
@@ -81,6 +82,17 @@ export const leaderboardEnabled: boolean = LIVE || boardSnapshot !== null
  * badge and no list at all, and the seed carries no rows to show.
  */
 export const leaderboardListEnabled: boolean = LIVE
+
+/**
+ * May the hub open the leaderboard MODAL (the pill, the Hall of Fame terminal)?
+ *
+ * Wherever our list may be shown, and also where the portal runs a live board
+ * of its own (Playgama's SaaS, `in_game`) that read back as a board: real
+ * players there, so the owner's call (2026-10-19) opens the modal on those
+ * builds with ONLY the portal's tab. Our baked list stays hidden — see
+ * `leaderboardListEnabled`. A failed portal read takes it away again.
+ */
+export const boardModalEnabled: ComputedRef<boolean> = computed(() => LIVE || portalBoardVisible.value)
 
 /**
  * 6 s, matching the worker's own budget note.

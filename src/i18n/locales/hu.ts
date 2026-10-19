@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Parázskopó',
+    'steelHound': 'Acélkopó',
     'icebreakerBrute': 'Jégtörő Behemót',
     'arcSpider': 'Ívpók',
     'stormHornetQueen': 'Viharlódarázs-királynő',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttorony',
     'gale': 'Égi dokkok',
     'fortress': 'Vex-erőd'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Csalás be: Shift+Ctrl+Alt+F1 megnyitja a panelt',
+    'off': 'Csalás ki',
+    'title': 'Csalópanel',
+    'note': 'A csalást használó mentés nem küld pontot a ranglistára.',
+    'unlockAll': 'Minden történetküldetés feloldása',
+    'bolts': '+{n} csavar',
+    'chips': '+{n} képességchip',
+    'gear': 'Epikus blaster',
+    'gels': 'Javítózselék feltöltése',
+    'done': 'Kész!',
+    'doors': 'Ugrás egy ajtóhoz',
+    'boss': 'Főellenség ajtaja',
+    'challenge': 'Kihívásajtó',
+    'challengeN': 'Kihívásajtó {n}',
+    'actLevelUp': 'Szintlépés-jelenet lejátszása',
+    'actObjective': 'Teljesített cél jelenet lejátszása'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Találtál egyet: {rarity} {item}!',
     'tank': 'Javítózselét találtál!',
     'giftTank': 'Ajándék: +1 Javítózselé!',
+    'skillChip': 'Képességcsip találva!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'a felszerelthez képest',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Csúszás',
       'block': 'Védés',
       'interact': 'Használat',
+      'pip': 'Pip készletei',
       'beam': 'Teleport',
       'tank': 'Javítózselé',
       'weapon1': '1. különleges fegyver',

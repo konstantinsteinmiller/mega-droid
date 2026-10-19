@@ -362,7 +362,7 @@ const terrainLinks = (map: MapData): Map<number, number[]> => {
 
 /** A straight walk from a to b a body could make on a terrain map: no pit
  *  under the way, nothing to climb but steps. */
-const walkableLine = (nav: Nav, ax: number, az: number, bx: number, bz: number): boolean => {
+export const walkableLine = (nav: Nav, ax: number, az: number, bx: number, bz: number): boolean => {
   const map = nav.map
   const len = Math.hypot(bx - ax, bz - az)
   const n = Math.max(1, Math.ceil(len / 0.4))

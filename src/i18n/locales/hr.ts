@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Žarni pas',
+    'steelHound': 'Čelični pas',
     'icebreakerBrute': 'Ledolomac grubijan',
     'arcSpider': 'Lučni pauk',
     'stormHornetQueen': 'Kraljica olujnih stršljena',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Toranj napona',
     'gale': 'Nebeski dokovi',
     'fortress': 'Tvrđava Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Varanje uključeno: Shift+Ctrl+Alt+F1 otvara ploču',
+    'off': 'Varanje isključeno',
+    'title': 'Ploča za varanje',
+    'note': 'Spremljena igra s varanjem ne šalje bodove na ljestvicu.',
+    'unlockAll': 'Otključaj sve misije priče',
+    'bolts': '+{n} vijaka',
+    'chips': '+{n} čipova vještina',
+    'gear': 'Epski blaster',
+    'gels': 'Napuni gelove za popravak',
+    'done': 'Gotovo!',
+    'doors': 'Skoči do vrata',
+    'boss': 'Vrata bosa',
+    'challenge': 'Vrata izazova',
+    'challengeN': 'Vrata izazova {n}',
+    'actLevelUp': 'Pokreni scenu novog nivoa',
+    'actObjective': 'Pokreni scenu ispunjenog cilja'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Pronađeno: {item} ({rarity})!',
     'tank': 'Pronađen gel za popravak!',
     'giftTank': 'Dar: +1 gel za popravak!',
+    'skillChip': 'Pronađen čip vještina!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'u odnosu na opremljeno',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Klizanje',
       'block': 'Blok',
       'interact': 'Radnja',
+      'pip': 'Pipove zalihe',
       'beam': 'Teleport',
       'tank': 'Gel za popravak',
       'weapon1': 'Posebno oružje 1',

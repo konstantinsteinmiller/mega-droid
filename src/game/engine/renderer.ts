@@ -2,7 +2,6 @@ import {
   WebGLRenderer, SRGBColorSpace, NoToneMapping, PerspectiveCamera
 } from 'three'
 import { deviceClass } from '@/use/deviceProfile'
-import { perfFlag } from '@/use/perfVariants'
 import { watchContextLoss } from './glContext'
 
 /**
@@ -18,19 +17,19 @@ import { watchContextLoss } from './glContext'
 let renderer: WebGLRenderer | null = null
 
 /**
- * The canvas's pixel ratio: 1 or 2, nothing between (#121) and never below 1.
- * A 3× phone rendering at 3× fills 9× the pixels of 1× for a picture that a
- * cel-shaded, outlined style barely benefits from, so 2 is the top. A weak
- * device (`deviceClass`) gets 1. Otherwise a screen of 1.5× and up gets 2
- * and one below gets 1: an in-between ratio (the old 1.5 on iOS, 1.6 on a
- * phone) resamples every pixel on its way to the screen, which softens the
- * outlines more than either whole number does.
+ * The canvas's pixel ratio: exactly the display's own ratio, on every device
+ * class. Drawing below it (the old 1-or-2 rule, #121) had the browser stretch
+ * a 780 px buffer over a 3× phone's 1170 device px, and every outline went
+ * soft. A weak device pays for its pixels elsewhere (no MSAA, no shadows),
+ * never with resolution; nothing here supersamples above native either, so
+ * there is no extra to trim. `weak` stays in the signature so a future
+ * supersampling tier can only ever ADD to the device ratio.
  */
-export const pixelRatioFor = (deviceRatio: number, weak: boolean): 1 | 2 =>
-  weak || deviceRatio < 1.5 ? 1 : 2
+export const pixelRatioFor = (deviceRatio: number, _weak: boolean): number =>
+  Math.max(1, deviceRatio || 1)
 
-export const dprCap = (): 1 | 2 =>
-  perfFlag('dpr1') ? 1 : pixelRatioFor(window.devicePixelRatio || 1, deviceClass() === 'weak')
+export const dprCap = (): number =>
+  pixelRatioFor(window.devicePixelRatio || 1, deviceClass() === 'weak')
 
 export const getRenderer = (): WebGLRenderer => {
   if (renderer) return renderer
@@ -88,6 +87,9 @@ export const resizeRenderer = (camera: PerspectiveCamera, w: number, h: number):
   const r = getRenderer()
   const width = Math.max(1, Math.floor(w))
   const height = Math.max(1, Math.floor(h))
+  // Browser zoom or a move to another screen changes the ratio after boot.
+  const dpr = dprCap()
+  if (r.getPixelRatio() !== dpr) r.setPixelRatio(dpr)
   r.setSize(width, height, false)
   camera.aspect = width / height
   camera.fov = fovForAspect(camera.aspect)

@@ -47,7 +47,44 @@ promise of the game) favours blaze by one point on that criterion, the first
 clicks favour neon two to one. The answer the research gives for a tie is a
 live test, not the rubric.
 
-## What ships
+## What ships now: blaze-clash (2026-10-18)
+
+After the community vote (#176) put **blaze** first, its picture was reworked into
+**blaze-clash**: Flux (cannon on his right arm) and the Blaze Master meet in mid-air
+over the furnace. Flux's cyan charge sits in front of the Blaze Master's flaming
+fist, and the impact is painted in the same style as the rest. Its 16:9 master is
+`art-sheets/promotion/painted/blaze-clash/cover-16x9.jpg`; the steps are in
+`tools/promotion/blaze-clash-collage.mjs`.
+
+The store set in `src/assets/promotion/` is that cover now, with **the same file
+names as before**, so nothing that points at them changes:
+
+| Family | Files | Made from |
+| --- | --- | --- |
+| 16:9 | 1920x1080, 800x450, 400x225 | the master |
+| 4:3 | 1360x850, 512x384, 512x340 | a 4:3 outpaint of the master (16:10 and 3:2 are trims of it) |
+| 1:1 | 800x800, 628x628, 512x512 | the duo band at full width (~95 %), the scene painted above and below it |
+| 9:16 | 1080x1920, 800x1200 | the duo band at full width, one tall furnace shaft painted around it: smoke and flames above, a fire pit and grate below (2:3 is a trim of it) |
+
+Every size is `.jpg` and `.webp`, bare and `-logo`, except 512x384, which is jpg
+only. `mega-droid-promotion_800x450-logo.webp` is a copy of `800x450-logo.webp`,
+kept under that name as before. Recomposed, not cropped: no format cuts a fighter
+or the clash. On the square and tall formats Gemini paints only the scene around
+the two fighters; the original duo band (Real-ESRGAN 4x) is laid back over it, so
+they stay full-width and readable at 140 px (checked at 140 and 200 px). The logo is the compact two-line "MEGA / DROID" without the head
+(`public/images/logo/mega-droid-compact.svg`; Flux is on the cover already), about
+60 % larger than the one-line wordmark it replaced, laid on by
+`tools/promotion/logoOverlay.mjs` (the default for every cover there) in the
+calmest corner, never top-left: top-right on the wide, 4:3 and tall formats, on the
+floor (bottom-left) on the squares. Every master went through Real-ESRGAN 4x (anime
+model) and every file passes blur-probe. Tool:
+`node tools/promotion/blaze-clash-formats.mjs plates|paint|cut`. The previous
+neon set is in `src/assets/promotion/old neon/`.
+
+Which to upload where is unchanged (below): bare files for Poki and Playgama,
+`-logo` files for CrazyGames, GamePix and Steam.
+
+## What shipped before: neon
 
 **neon**, repainted once with its two weak points fixed in the prompt: the
 Neon Master is a big robot boss behind Flux now, and the charge sits whole

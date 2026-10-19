@@ -23,7 +23,7 @@ export type SfxName =
   // The intro cutscene (`story/introScript.ts`)
   | 'synthPulse' | 'tapeRewind' | 'relayChime' | 'vexGlitch' | 'relayOut' | 'alarm' | 'capsule' | 'freeze'
   | 'heartbeat' | 'pipChirp' | 'bootUp' | 'uiClose'
-  // A challenge room (`sim/challenge.ts`): the name card's sting, the Cinder Hound's howl
+  // A challenge room (`sim/challenge.ts`): the name card's sting, the Steel Hound's howl
   | 'challenge' | 'howl'
 
 type Player = (name: SfxName, pan: number, gain: number, muffle: number) => void

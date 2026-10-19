@@ -119,6 +119,21 @@ export const onceEver = (l: AtlasLine): boolean =>
   l.startsWith('scan.') || l.startsWith('arc.') || l === 'hint.upgrade' || l === 'hint.locator' ||
   (HINT_SECTORS.test(l) && !EVERY_MISSION.has(l))
 
+/** A line that teaches the edge-leap: the gap lesson's intro and hint, a stage's leap tip. */
+const LEAP_LINE = /^(train|help)\.gap$|^hint\.[a-z]+\.leap$/
+/**
+ * May a leap line be said in this mission? The tutorial teaches the move
+ * (its lesson and its every-HELP_AFTER hint stay as they are); the Gale
+ * Master's stage, whose gaps are wider than walking carries, may remind
+ * once (its tip, once a mission like any line); every other level never
+ * repeats what the player already learned. Any other line passes.
+ */
+export const leapLineAllowed = (l: AtlasLine, tutorial: boolean, sector: string | undefined): boolean => {
+  if (!LEAP_LINE.test(l)) return true
+  if (l === 'train.gap' || l === 'help.gap') return tutorial
+  return !tutorial && sector === 'gale' && l === 'hint.gale.leap'
+}
+
 /** Seconds before the same line may come back (default: once a mission). */
 const COOLDOWN: Partial<Record<AtlasLine, number>> = {
   lowHp: 30, lowHpGel: 30, lowWe: 120, trap: 25, plate: 25, levelUp: 10,

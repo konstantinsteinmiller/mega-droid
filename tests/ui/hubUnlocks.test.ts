@@ -58,7 +58,10 @@ vi.mock('@/game/flow', async () => {
 })
 vi.mock('@/game/audio/sfx', () => ({ sfx: vi.fn() }))
 vi.mock('@/use/useQaAdTrigger', () => ({ registerQaAdTap: () => false }))
-vi.mock('@/use/useLeaderboard', () => ({ leaderboardListEnabled: true }))
+vi.mock('@/use/useLeaderboard', async () => {
+  const { ref } = await import('vue')
+  return { leaderboardListEnabled: true, boardModalEnabled: ref(true) }
+})
 vi.mock('@/use/useAdGate', async () => {
   const { ref } = await import('vue')
   return { canOfferReward: ref(false), adInFlight: ref(false), claimReward: vi.fn() }

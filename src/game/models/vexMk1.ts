@@ -3,6 +3,7 @@ import { RigBuilder, sph, ell, cap, torus, rcyl, rcone, rbox, dome, paintBy, xfo
 import { toonRamp } from './toon'
 import { frac, type EnemyMotion } from './motion'
 import type { BossAct } from './bosses'
+import type { VexBlend } from './bossAnim'
 
 /**
  * ─── Dr. Vex Mk-I ────────────────────────────────────────────────────────────
@@ -494,20 +495,25 @@ const HIDE = 0.001
  *  coming pattern's weapon winds up, and phase 2 shows the damage: a plate
  *  torn loose and swinging, sparks and smoke from the wound, a cracked face,
  *  sirens, Vex fuming. All in place, no allocations. */
-export const poseVex = (rig: Rig, t: number, act: BossAct, k: number, m?: EnemyMotion, cue?: VexCue): void => {
+export const poseVex = (rig: Rig, t: number, act: BossAct, k: number, m?: EnemyMotion, cue?: VexCue, blend?: VexBlend): void => {
   const fwd = m ? m.fwd * m.walk : 0
   const side = m ? m.side * m.walk : 0
   const turn = m ? Math.max(-3, Math.min(3, m.turn)) : 0
   const look = m ? m.look : 0
-  const tele = act === 'tele' ? k : 0
+  // In the game the weights come from the boss's springs (`blend`, #183):
+  // the telegraph builds and lets go, the release jolts the hull and it rocks
+  // back, the dive and the daze ease in and out. Without them, the act's own.
+  const tele = blend ? blend.tele : act === 'tele' ? k : 0
   // The kick right after the release, easing off over the strike's first beat
-  const kick = act === 'attack' ? 1 - k : 0
+  const kick = blend ? blend.kick : act === 'attack' ? 1 - k : 0
   // The guns raised to aim: up through the telegraph, down after the strike
-  const aim = act === 'tele' ? k : kick
-  const dive = act === 'air' ? 1 : 0
-  const daze = act === 'stun' ? 1 : 0
+  const aim = blend ? blend.aim : act === 'tele' ? k : kick
+  const dive = blend ? blend.dive : act === 'air' ? 1 : 0
+  const daze = blend ? blend.daze : act === 'stun' ? 1 : 0
   const p2 = cue?.phase2 ? 1 : 0
-  weigh(cue && (act === 'tele' || act === 'attack' || act === 'air') ? cue.attack : null)
+  // (With the springs the last pattern's weapon keeps its weight while its
+  // aim eases off after the attack; the act alone drops it at once.)
+  weigh(cue && (blend || act === 'tele' || act === 'attack' || act === 'air') ? cue.attack : null)
 
   // Hull: the hover bob, a slow sway, reared back while charging (further
   // before a dive), jolted by the shot, nose down into a dive, wobbling when

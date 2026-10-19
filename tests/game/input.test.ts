@@ -38,6 +38,18 @@ afterEach(() => {
 })
 
 describe('keys', () => {
+  it("F is Pip's key (his supplies in the lab), E interacts; consumed each step", () => {
+    key('keydown', 'KeyF')
+    key('keyup', 'KeyF')
+    expect(input.pipQueued).toBe(true)
+    expect(input.interactQueued).toBe(false)
+    consumeEdges(input)
+    expect(input.pipQueued).toBe(false)
+    key('keydown', 'KeyE')
+    expect(input.interactQueued).toBe(true)
+    expect(input.pipQueued).toBe(false)
+  })
+
   it('Space dodges (a slide), it no longer fires', () => {
     key('keydown', 'Space')
     expect(input.slideQueued).toBe(true)

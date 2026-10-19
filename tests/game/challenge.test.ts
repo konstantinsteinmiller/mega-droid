@@ -2,7 +2,7 @@
 // Challenge rooms (an optional mini-boss behind its own door): where they
 // hang (the Tower Run, supply runs), that the route never needs them, the
 // door shutting behind Flux and opening after the kill, the prize, the
-// mini-boss registry, the Cinder Hound's telegraphs, the new models' faces
+// mini-boss registry, the Steel Hound's telegraphs, the new models' faces
 // (no z-fighting) and the strings in every locale.
 
 import { describe, expect, it, vi } from 'vitest'
@@ -21,14 +21,14 @@ import { generateStage } from '@/game/world/stages'
 import { generateWakeUpCall } from '@/game/world/stages/tutorial'
 import { createNav, findPath, hasLineOfSight } from '@/game/world/nav'
 import { MINI_BOSSES, MINI_BOSS_IDS, miniBossFor } from '@/game/sim/miniBoss/registry'
-import { CINDER_HOUND, LUNGE_TELE, BREATH_TELE, HOWL_TELE, EMBER_FALL, type HoundMem } from '@/game/sim/miniBoss/cinderHound'
+import { STEEL_HOUND, LUNGE_TELE, BREATH_TELE, HOWL_TELE, EMBER_FALL, type HoundMem } from '@/game/sim/miniBoss/steelHound'
 import { createMiniBoss, startMiniBoss, updateMiniBoss, MINI_SHATTER_AT } from '@/game/sim/miniBosses'
 import { ChallengeRun, type ChallengeReward } from '@/game/sim/challenge'
 import {
   challengeBolts, challengeRarityOdds, rollChallengeRarity, challengeItemLevel, mastersBeaten, hasChallengeRoom
 } from '@/game/data/challenge'
 import { buildDoor, challengeFrameParts } from '@/game/models/props'
-import { cinderHoundParts } from '@/game/models/miniBoss/cinderHound'
+import { steelHoundParts } from '@/game/models/miniBoss/steelHound'
 import { weakSpotOf } from '@/game/data/weakspots'
 import { THEMES } from '@/game/world/themes'
 import { hud } from '@/game/state/hud'
@@ -291,8 +291,8 @@ describe('the mini-boss registry', () => {
       expect(typeof m.build).toBe('function')
       expect(typeof m.behaviour.fight).toBe('function')
     }
-    // Built for real: the Cinder Hound and those since; the rest are marked stand-ins.
-    expect(MINI_BOSSES.blaze.id).toBe('cinderHound')
+    // Built for real: the Steel Hound and those since; the rest are marked stand-ins.
+    expect(MINI_BOSSES.blaze.id).toBe('steelHound')
     expect(MINI_BOSSES.cryo.id).toBe('icebreakerBrute')
     expect(MINI_BOSSES.volt.id).toBe('arcSpider')
     expect(MINI_BOSSES.gale.id).toBe('stormHornetQueen')
@@ -306,18 +306,18 @@ describe('the mini-boss registry', () => {
     for (const s of SECTORS) expect(!!MINI_BOSSES[s].todo, s).toBe(!built.includes(s))
     // The Scrapyard has none.
     expect(miniBossFor('scrapyard')).toBeNull()
-    expect(miniBossFor('blaze')?.id).toBe('cinderHound')
+    expect(miniBossFor('blaze')?.id).toBe('steelHound')
   })
 
   it('builds a mini-boss offstage, its weak spot its own', () => {
     const map = generateMap({ seed: 77, rooms: 9, boss: false, challenge: true })
-    const e = createMiniBoss(CINDER_HOUND, 8, 30, 30, map.rooms[map.challenge!.room]!)
+    const e = createMiniBoss(STEEL_HOUND, 8, 30, 30, map.rooms[map.challenge!.room]!)
     expect(e.offstage).toBe(true)
     expect(e.state).toBe('idle')
     expect(e.kind).toBe('miniboss')
-    expect(e.nameKey).toBe('miniboss.cinderHound')
-    expect(e.maxHp).toBeGreaterThan(CINDER_HOUND.def.hp)
-    expect(weakSpotOf(e)).toBe(CINDER_HOUND.def.weak)
+    expect(e.nameKey).toBe('miniboss.steelHound')
+    expect(e.maxHp).toBeGreaterThan(STEEL_HOUND.def.hp)
+    expect(weakSpotOf(e)).toBe(STEEL_HOUND.def.weak)
   })
 })
 
@@ -358,7 +358,7 @@ const runner = () => {
   const map = generateMap({ seed: 4242, rooms: 9, boss: false, challenge: true })
   const ch = map.challenge!
   const room = map.rooms[ch.room]!
-  const foe = createMiniBoss(CINDER_HOUND, 8, cellCenter(ch.at[0]), cellCenter(ch.at[1]), room)
+  const foe = createMiniBoss(STEEL_HOUND, 8, cellCenter(ch.at[0]), cellCenter(ch.at[1]), room)
   const log = { shut: [] as number[], released: [] as number[], said: [] as AtlasLine[], paid: [] as ChallengeReward[], music: [] as boolean[] }
   const player = { x: map.start.x, z: map.start.z }
   const run = new ChallengeRun({
@@ -393,9 +393,9 @@ describe('the challenge door and the fight', () => {
     expect(run.state).toBe('fight')
     expect(foe.state).toBe('alert')
     expect(foe.offstage).toBe(false)
-    expect(hud.bossName).toBe('miniboss.cinderHound')
+    expect(hud.bossName).toBe('miniboss.steelHound')
     expect(hud.bossStyle).toBe('challenge')
-    expect(hud.titleKey).toBe('miniboss.cinderHound')
+    expect(hud.titleKey).toBe('miniboss.steelHound')
     expect(hud.titleStyle).toBe('challenge')
     expect(log.music).toEqual([true])
     // The kill: paid at once, the door opens when its death throes are over.
@@ -443,14 +443,14 @@ describe('the challenge door and the fight', () => {
   })
 })
 
-describe('the Cinder Hound', () => {
+describe('the Steel Hound', () => {
   /** Fight it for `secs` with Flux circling in its room; log every hit with
    *  the hound's state at that moment, and every wind-up. */
   const fight = (secs: number, hurt = 1) => {
     const map = generateMap({ seed: 4242, rooms: 9, boss: false, challenge: true })
     const ch = map.challenge!
     const room = map.rooms[ch.room]!
-    const e = createMiniBoss(CINDER_HOUND, 8, cellCenter(ch.at[0]), cellCenter(ch.at[1]), room)
+    const e = createMiniBoss(STEEL_HOUND, 8, cellCenter(ch.at[0]), cellCenter(ch.at[1]), room)
     const hits: Array<{ t: number; state: string; attack: string; hazard?: string }> = []
     const markers: number[] = []
     const cx = (room.x0 + room.w / 2) * CELL
@@ -550,8 +550,8 @@ describe('the new models', () => {
     expect(meshes).toBeLessThanOrEqual(8)
   })
 
-  it('the Cinder Hound: no two parts in one plane', () => {
-    const b = cinderHoundParts()
+  it('the Steel Hound: no two parts in one plane', () => {
+    const b = steelHoundParts()
     b.build()
     expect(coplanarOverlaps(b.partGeometries)).toBe(0)
   })

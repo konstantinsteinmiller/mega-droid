@@ -3,7 +3,7 @@
   //- (Atlas itself flies in the 3D loader, `story/debriefLoader.ts`).
   div.loader-veil(v-if="loaderUi.on" aria-live="polite")
     SplashBackdrop(:solid="false")
-    img.logo(src="/images/logo/logo_256x256.webp" :alt="t('gameName')")
+    img.logo(src="/images/logo/mega-droid-logo-512.webp" :alt="t('gameName')")
     Transition(name="card" mode="out-in")
       div.say(v-if="loaderUi.line" :key="loaderUi.line") {{ t(loaderUi.line) }}
   //- The debrief after a story mission (#119), over the film

@@ -37,8 +37,9 @@
 //   covers-logo/landscape-1920x1080.png  v=wide + the logo lockup on the left third
 //   covers-logo/portrait-1080x1920.png   v=tall + the lockup over the top third
 //   wrap/hero-1920x1080.png              v=wide, no text (the Wrap site sets the title as its heading)
-//   wrap/share-1280x670.png / .jpg       v=wide cut to 1.91:1 + the lockup (link previews)
-//   wrap/icon-1024.png                   public/icons/icon.svg full-bleed, badge in the maskable safe zone
+//   wrap/share-1280x670.png / .jpg       NOT made here: cut from the painted blaze-clash cover
+//                                        by tools/promotion/blaze-clash-formats.mjs (read for previews)
+//   wrap/icon-1024.png                   the icon tile full-bleed + the 2048 px emblem head (safe zone)
 //   wrap/icon-1024-rounded.png           the same icon as the rounded tile with clear corners
 //   previews/*.png                       the upload covers (and share, icon) at catalog size
 //   previews/sheet.png                   those previews + wrap/screens/*.png (the gameplay
@@ -61,6 +62,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { LOGO_WIDTH, withCoverLogo } from '../tools/promotion/logoOverlay.mjs'
 import { createServer } from 'node:net'
 
 const require = createRequire(import.meta.url)
@@ -114,6 +116,11 @@ process.on('exit', stopServer)
 process.on('SIGINT', () => { stopServer(); process.exit(130) })
 
 const SHEET_ONLY = SET === 'playgama' && argv.includes('--sheet')
+// `--set playgama --logo`: only the images that carry the logo or the app
+// icon (covers-logo/, the Wrap share image and icons), after a logo change.
+// The landscape and the share image reuse wrap/hero-1920x1080.png (the same
+// `wide` frame they were cut from); only the `tall` frame is rendered again.
+const LOGO_ONLY = SET === 'playgama' && argv.includes('--logo')
 let port = Number(arg('port', 0))
 if (SHEET_ONLY) {
   // Rebuilds previews/sheet.png from files on disk: no server needed
@@ -290,33 +297,10 @@ const runPoki = async () => {
 
 // ─── Playgama ───────────────────────────────────────────────────────────────
 
-const LOCKUP = join(ROOT, 'store-art', 'brand', 'logo-lockup.svg')
-
-/** The logo lockup `width` px wide, and a soft navy shadow for it (padded by `pad`, dropped by `drop`). */
-const lockup = async (width) => {
-  // The lockup's viewBox is 300 wide: rasterise at twice the size, then scale down
-  const logo = await sharp(readFileSync(LOCKUP), { density: Math.ceil((72 * width * 2) / 300) }).resize(width).png().toBuffer()
-  const { height } = await sharp(logo).metadata()
-  const blur = Math.max(2, Math.round(width * 0.014))
-  const pad = blur * 3
-  // Two pipelines: sharp runs extractChannel late, so in one pipeline the
-  // padding, blur and fade would land on the RGBA image, not on its alpha
-  const a0 = await sharp(logo).extractChannel(3).png().toBuffer()
-  const alpha = await sharp(a0)
-    .extend({ top: pad, bottom: pad, left: pad, right: pad, background: { r: 0, g: 0, b: 0, alpha: 1 } })
-    .blur(blur).linear(0.6, 0).toColourspace('b-w').png().toBuffer()
-  const shadow = await sharp({ create: { width: width + 2 * pad, height: height + 2 * pad, channels: 3, background: '#0b0e24' } })
-    .joinChannel(alpha).png().toBuffer()
-  return { logo, shadow, height, pad, drop: Math.round(width * 0.012) }
-}
-
-/** `base` with the lockup laid on, its top-left corner at (left, top). */
-const withLockup = async (base, width, left, top) => {
-  const L = await lockup(width)
-  return png9(sharp(base).composite([
-    { input: L.shadow, left: left - L.pad, top: top - L.pad + L.drop },
-    { input: L.logo, left, top }
-  ]))
+// The logo goes in the calmest corner, never the top-left (#185): tools/promotion/logoOverlay.mjs.
+const withLockup = async (base) => {
+  const { width, height } = await sharp(base).metadata()
+  return png9(sharp(await withCoverLogo(base, width, height, width / height > 1.85 ? LOGO_WIDTH.share : undefined)))
 }
 
 /**
@@ -326,25 +310,25 @@ const withLockup = async (base, width, left, top) => {
  * clear corners, and a full-bleed square with the badge inside the maskable
  * safe zone (the inner 80 % circle) for platforms that mask the icon.
  */
+// The app icon at `size`: the tile of public/icons/icon.svg (night-blue
+// gradient + amber glow, same stops) drawn natively, with the head laid on from
+// the 2048 px emblem render (public/images/logo/mega-droid-emblem-2048.png) by
+// a Lanczos downscale. The SVG embeds a small head that blurs when blown up to
+// 1024, so the store icons are not rendered from it. Rounded: the tile with
+// rx 112/512; square: full bleed, the head at 0.84 in the maskable safe zone.
 const renderIcon = async (size) => {
-  const svg = readFileSync(join(ROOT, 'public', 'icons', 'icon.svg'), 'utf8')
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true })
-  try {
-    const page = await (await browser.newContext({ deviceScaleFactor: 1, viewport: { width: size, height: size } })).newPage()
-    const uri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
-    await page.setContent(`<body style="margin:0;background:transparent"><img src="${uri}" width="${size}" height="${size}" style="display:block"></body>`)
-    await page.waitForFunction(() => document.images[0]?.complete)
-    const rounded = await page.screenshot({ clip: { x: 0, y: 0, width: size, height: size }, omitBackground: true })
-    const css = [
-      'body{margin:0}', `svg{display:block;width:${size}px;height:${size}px}`, 'svg .bg rect{rx:0;ry:0}',
-      'svg .d{transform:translate(256px,256px) scale(0.84) translate(-256px,-256px)}'
-    ].join('')
-    await page.setContent(`<style>${css}</style>${svg}`)
-    const square = await page.screenshot({ clip: { x: 0, y: 0, width: size, height: size } })
-    return { rounded, square }
-  } finally {
-    await browser.close()
+  const k = size / 512
+  const tile = (rx) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512"><defs><radialGradient id="b" cx="50%" cy="42%" r="64%"><stop offset="0" stop-color="#24397a"/><stop offset=".56" stop-color="#122150"/><stop offset="1" stop-color="#0a1224"/></radialGradient><radialGradient id="g" cx="50%" cy="52%" r="46%"><stop offset="0" stop-color="#ffa733" stop-opacity=".55"/><stop offset="1" stop-color="#ffa733" stop-opacity="0"/></radialGradient></defs><rect width="512" height="512" rx="${rx}" fill="url(#b)"/><rect width="512" height="512" rx="${rx}" fill="url(#g)"/></svg>`)
+  const emblem = join(ROOT, 'public', 'images', 'logo', 'mega-droid-emblem-2048.png')
+  const head = async (scale) => {
+    const w = Math.round(440 * k * scale)
+    const left = Math.round(size / 2 + (36 * k - size / 2) * scale)
+    const top = Math.round(size / 2 + (40 * k - size / 2) * scale)
+    return { input: await sharp(emblem).resize(w, w, { kernel: 'lanczos3' }).png().toBuffer(), left, top }
   }
+  const rounded = await sharp(tile(112)).composite([await head(1)]).png().toBuffer()
+  const square = await sharp(await sharp(tile(0)).flatten({ background: '#0a1224' }).png().toBuffer()).composite([await head(0.84)]).png().toBuffer()
+  return { rounded, square }
 }
 
 const runPlaygama = async () => {
@@ -380,22 +364,15 @@ const runPlaygama = async () => {
   const wide = await shoot('wide', 960, 540)
   const hero = await rendered('wide', await down(wide, 1920, 1080))
   await put('wrap/hero-1920x1080.png', hero, 1920, 1080)
-  await put('covers-logo/landscape-1920x1080.png', await withLockup(hero, 576, 72, 110), 1920, 1080)
-  // Share: the same frame cut to the 1.91:1 of link previews, at least 1280 wide
-  const cutH = Math.round((3840 * 670) / 1280)
-  const shareBase = await png9(sharp(wide).extract({ left: 0, top: Math.round((2160 - cutH) / 2), width: 3840, height: cutH })
-    .resize(1280, 670, { kernel: 'lanczos3' }))
-  const share = await withLockup(shareBase, 352, 48, 86)
-  await put('wrap/share-1280x670.png', share, 1280, 670)
-  const shareJpg = await bestJpeg(share)
-  if (shareJpg) {
-    writeFileSync(join(OUT, 'wrap', 'share-1280x670.jpg'), shareJpg.jpg)
-    console.log(`wrap/share-1280x670.jpg: ${kb(shareJpg.jpg)} (q${shareJpg.q}, SSIM ${shareJpg.ssim.toFixed(4)})`)
-  }
+  await put('covers-logo/landscape-1920x1080.png', await withLockup(hero), 1920, 1080)
+  // Share (wrap/share-1280x670.*): no longer made here. It is cut from the
+  // painted blaze-clash cover by tools/promotion/blaze-clash-formats.mjs (the
+  // render cut probed soft); only read here for the previews.
+  const share = readFileSync(join(OUT, 'wrap', 'share-1280x670.png'))
 
   // The logo portrait: Flux head to boots, the lockup over the top third
   const tall = await rendered('tall', await down(await shoot('tall', 540, 960), 1080, 1920))
-  await put('covers-logo/portrait-1080x1920.png', await withLockup(tall, 600, 240, 100), 1080, 1920)
+  await put('covers-logo/portrait-1080x1920.png', await withLockup(tall), 1080, 1920)
 
   // Icon (Wrap: the site's icon, favicon and PWA icon)
   const icon = await renderIcon(1024)
@@ -443,9 +420,31 @@ const previewSheet = async () => {
   console.log(`previews/sheet.png: the previews + ${shots.length} gameplay screenshots`)
 }
 
+const runPlaygamaLogo = async () => {
+  const put = async (rel, buf, w, h) => {
+    const meta = await sharp(buf).metadata()
+    if (meta.width !== w || meta.height !== h) throw new Error(`${rel}: ${meta.width}x${meta.height}, want ${w}x${h}`)
+    writeFileSync(join(OUT, rel), buf)
+    console.log(`${rel}: ${w}x${h}, ${kb(buf)}`)
+  }
+  const hero = readFileSync(join(OUT, 'wrap', 'hero-1920x1080.png'))
+  await put('covers-logo/landscape-1920x1080.png', await withLockup(hero), 1920, 1080)
+  // The share image comes from tools/promotion/blaze-clash-formats.mjs (see runPlaygama).
+  const share = readFileSync(join(OUT, 'wrap', 'share-1280x670.png'))
+  const tall = await down(await shoot('tall', 540, 960), 1080, 1920)
+  await put('covers-logo/portrait-1080x1920.png', await withLockup(tall), 1080, 1920)
+  const icon = await renderIcon(1024)
+  await put('wrap/icon-1024.png', await png9(sharp(icon.square)), 1024, 1024)
+  await put('wrap/icon-1024-rounded.png', await png9(sharp(icon.rounded)), 1024, 1024)
+  writeFileSync(join(OUT, 'previews', 'share-448x234.png'), await down(share, 448, 234))
+  writeFileSync(join(OUT, 'previews', 'icon-64.png'), await down(icon.square, 64, 64))
+  await previewSheet()
+}
+
 try {
   if (SET === 'poki') await runPoki()
   else if (SHEET_ONLY) await previewSheet()
+  else if (LOGO_ONLY) await runPlaygamaLogo()
   else await runPlaygama()
 } finally {
   stopServer()

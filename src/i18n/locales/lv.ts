@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Kvēļu dzinējsuns',
+    'steelHound': 'Tērauda dzinējsuns',
     'icebreakerBrute': 'Ledlauzis milzis',
     'arcSpider': 'Loka zirneklis',
     'stormHornetQueen': 'Vētras sirseņu karaliene',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Sprieguma tornis',
     'gale': 'Debesu doki',
     'fortress': 'Vex cietoksnis'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Krāpšanās ieslēgta: Shift+Ctrl+Alt+F1 atver paneli',
+    'off': 'Krāpšanās izslēgta',
+    'title': 'Krāpšanās panelis',
+    'note': 'Saglabājums ar krāpšanos nesūta punktus uz līderu sarakstu.',
+    'unlockAll': 'Atbloķēt visas stāsta misijas',
+    'bolts': '+{n} skrūves',
+    'chips': '+{n} prasmju čipi',
+    'gear': 'Episks blasteris',
+    'gels': 'Uzpildīt remonta gelus',
+    'done': 'Gatavs!',
+    'doors': 'Lēkt pie durvīm',
+    'boss': 'Bosa durvis',
+    'challenge': 'Izaicinājuma durvis',
+    'challengeN': 'Izaicinājuma durvis {n}',
+    'actLevelUp': 'Atskaņot līmeņa celšanas ainu',
+    'actObjective': 'Atskaņot mērķa izpildes ainu'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Atrasts: {item} ({rarity})!',
     'tank': 'Atrasts remonta gels!',
     'giftTank': 'Dāvana: +1 remonta gels!',
+    'skillChip': 'Atrasta prasmju mikroshēma!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'salīdzinot ar uzvilkto',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Slīdiens',
       'block': 'Bloks',
       'interact': 'Darbība',
+      'pip': 'Pipa krājumi',
       'beam': 'Teleports',
       'tank': 'Remonta gels',
       'weapon1': 'Speciālais ierocis 1',

@@ -26,13 +26,14 @@ import { reactive } from 'vue'
 export interface Rect { x: number; y: number; w: number; h: number }
 
 /** The zones a piece of the HUD marks itself with (`data-zone`). */
-export type ZoneId = 'vitals' | 'objective' | 'status' | 'compass' | 'boss' | 'loot' | 'toasts' | 'door' | 'title' | 'banner'
+export type ZoneId = 'vitals' | 'objective' | 'status' | 'compass' | 'boss' | 'loot' | 'toasts' | 'door' | 'title' | 'banner' | 'celebrate'
 
 /** The top-centre column, top to bottom. The first two never move. */
 export const COLUMN: readonly ZoneId[] = ['compass', 'boss', 'loot', 'toasts', 'door']
 /** What Atlas's bubble must never cover. The big banner ("ENEMY DEFEATED!")
- *  draws above it and cut a line in half: the bubble keeps off its band too. */
-export const BUBBLE_AVOID: readonly ZoneId[] = ['vitals', 'objective', 'status', 'compass', 'boss', 'loot', 'toasts', 'door', 'title', 'banner']
+ *  draws above it and cut a line in half: the bubble keeps off its band too,
+ *  and off the Hard Hat's level-up act under the compass. */
+export const BUBBLE_AVOID: readonly ZoneId[] = ['vitals', 'objective', 'status', 'compass', 'boss', 'loot', 'toasts', 'door', 'title', 'banner', 'celebrate']
 
 /** Space kept between two pieces, px. */
 export const ZONE_GAP = 8

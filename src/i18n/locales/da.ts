@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Gløhund',
+    'steelHound': 'Stålhund',
     'icebreakerBrute': 'Isbryder-Brute',
     'arcSpider': 'Buespinder',
     'stormHornetQueen': 'Stormgedehams-Dronning',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttårnet',
     'gale': 'Himmeldokkerne',
     'fortress': 'Fæstning Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Snyd til: Shift+Ctrl+Alt+F1 åbner snydepanelet',
+    'off': 'Snyd fra',
+    'title': 'Snydepanel',
+    'note': 'Et spil med snyd sender ingen point til ranglisten.',
+    'unlockAll': 'Lås alle historiemissioner op',
+    'bolts': '+{n} bolte',
+    'chips': '+{n} færdighedschips',
+    'gear': 'Episk blaster',
+    'gels': 'Fyld reparationsgel op',
+    'done': 'Færdig!',
+    'doors': 'Hop til en dør',
+    'boss': 'Bossdør',
+    'challenge': 'Udfordringsdør',
+    'challengeN': 'Udfordringsdør {n}',
+    'actLevelUp': 'Afspil niveau-op-scenen',
+    'actObjective': 'Afspil mål-nået-scenen'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) fundet!',
     'tank': 'Reparationsgel fundet!',
     'giftTank': 'Gave: +1 Reparationsgel!',
+    'skillChip': 'Færdighedschip fundet!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. udstyret',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Glid',
       'block': 'Bloker',
       'interact': 'Brug',
+      'pip': 'Pips forsyninger',
       'beam': 'Teleportér',
       'tank': 'Reparationsgel',
       'weapon1': 'Specialvåben 1',

@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { addHudTicker, hudEvents } from '@/game/state/hud'
 import { screenFx, pushToast, pushLoot } from '@/game/state/screenFx'
 import { currentMission } from '@/game/boot'
+import { pushCelebration, resetCelebrations } from '@/game/state/celebrate'
 import { KRANCK_LIFE, kranckTransform } from './kranck'
 import { CALLOUT_AVOID, callOutY, zones, type Rect } from './hudLayout'
 
@@ -95,6 +96,8 @@ onMounted(() => {
         pushToast(e.key, e.params ?? {}, e.color)
       } else if (e.t === 'loot') {
         pushLoot(e.item)
+      } else if (e.t === 'celebrate') {
+        pushCelebration(e.kind)
       }
     }
     const m = currentMission()
@@ -132,7 +135,10 @@ onMounted(() => {
     }
   })
 })
-onUnmounted(() => off?.())
+onUnmounted(() => {
+  off?.()
+  resetCelebrations()
+})
 </script>
 
 <style lang="sass">

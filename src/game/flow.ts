@@ -7,7 +7,8 @@ import { rollItem, type Item } from './data/items'
 import { WEAPONS, type WeaponId } from './data/weapons'
 import {
   profile, saveProfile, computeStats, grantXp, readSnapshot, writeSnapshot, type MissionSnapshot, lifetimeXp,
-  loadProfile, setSaveSandbox, markStorySeen, noteMissionIncome, startNewGamePlus
+  loadProfile, setSaveSandbox, markStorySeen, noteMissionIncome, startNewGamePlus,
+  isCheatedSave
 } from './state/profile'
 import { hud } from './state/hud'
 import { flushSaveNow, saveDataVersion } from '@/use/useSaveStatus'
@@ -364,7 +365,7 @@ export const createBootMode = async (onProgress?: (p01: number) => void): Promis
   // last row, a returning player at their lifetime XP. Once per player, never
   // awaited, a no-op on every build without a portal board. The save is
   // hydrated by now (main.ts awaits it before the App mounts).
-  void joinPortalBoard(lifetimeXp())
+  if (!isCheatedSave()) void joinPortalBoard(lifetimeXp())
   const t = (import.meta.env.DEV && await testBootTarget()) || bootTarget(INTRO_ENABLED && !!introFactory)
   if (t.kind === 'intro') {
     const m = await beginIntro(false)
@@ -717,6 +718,8 @@ export const finishMission = async (success: boolean, tally: MissionTally): Prom
   flow.modal = 'results'
   // A level-lab test run posts nowhere: its XP is thrown away on the way out.
   if (import.meta.env.DEV && testRun) return
+  // A save a dev cheat touched (`cheatPanel.ts`) posts no score anywhere.
+  if (isCheatedSave()) return
   // The leaderboard, AFTER the result screen is up and never awaited: it is a
   // decoration on a game that works without it, and a captive-portal wifi
   // login must not stand between the player and their rewards. Lifetime XP

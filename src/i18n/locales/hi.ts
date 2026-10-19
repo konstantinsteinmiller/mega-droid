@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'अंगारा शिकारी कुत्ता',
+    'steelHound': 'इस्पाती शिकारी कुत्ता',
     'icebreakerBrute': 'बर्फ़तोड़ दैत्य',
     'arcSpider': 'आर्क मकड़ी',
     'stormHornetQueen': 'तूफ़ानी ततैया रानी',
@@ -177,6 +177,26 @@ export default {
     'volt': 'वोल्ट टावर',
     'gale': 'आसमानी बंदरगाह',
     'fortress': 'Vex गढ़'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'चीट चालू: Shift+Ctrl+Alt+F1 चीट पैनल खोलता है',
+    'off': 'चीट बंद',
+    'title': 'चीट पैनल',
+    'note': 'चीट वाले सेव से लीडरबोर्ड पर स्कोर नहीं भेजा जाता।',
+    'unlockAll': 'सभी कहानी मिशन अनलॉक करें',
+    'bolts': '+{n} बोल्ट',
+    'chips': '+{n} स्किल चिप',
+    'gear': 'महाकाव्य ब्लास्टर',
+    'gels': 'रिपेयर जेल भरें',
+    'done': 'हो गया!',
+    'doors': 'किसी दरवाज़े पर जाएँ',
+    'boss': 'बॉस का दरवाज़ा',
+    'challenge': 'चुनौती का दरवाज़ा',
+    'challengeN': 'चुनौती का दरवाज़ा {n}',
+    'actLevelUp': 'लेवल-अप दृश्य चलाएँ',
+    'actObjective': 'लक्ष्य-पूर्ण दृश्य चलाएँ'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'लूट: {rarity} {item}!',
     'tank': 'रिपेयर जेल मिला!',
     'giftTank': 'तोहफ़ा: +1 रिपेयर जेल!',
+    'skillChip': 'स्किल चिप मिली!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'पहने हुए से तुलना',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'स्लाइड',
       'block': 'ब्लॉक',
       'interact': 'इंटरैक्ट',
+      'pip': 'पिप का सामान',
       'beam': 'बीम आउट',
       'tank': 'रिपेयर जेल',
       'weapon1': 'विशेष हथियार 1',

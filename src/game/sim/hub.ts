@@ -1,16 +1,17 @@
 import {
-  Scene, PerspectiveCamera, Color, HemisphereLight, DirectionalLight, Fog, Group, Mesh, MeshBasicMaterial,
+  Scene, PerspectiveCamera, Color, HemisphereLight, DirectionalLight, AmbientLight, Fog, Group, Mesh, MeshBasicMaterial,
   AdditiveBlending, CylinderGeometry, CircleGeometry, DoubleSide, FrontSide, Quaternion, Vector3, Matrix4, BufferGeometry,
   Float32BufferAttribute, PlaneGeometry, Points, PointsMaterial, InstancedMesh, InstancedBufferAttribute,
   ShaderMaterial, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, DynamicDrawUsage, type Material, type Side
 } from 'three'
 import type { GameMode } from '../engine/app'
-import { getRenderer } from '../engine/renderer'
+import { getRenderer, fovForAspect } from '../engine/renderer'
 import { sceneQuality } from '../engine/quality'
-import { consumeEdges, type Input } from '../engine/input'
-import { buildHero, animateHeroIdle, animateHeroVictory, animateHeroWalk } from '../models/hero'
+import { consumeEdges, isPointerLocked, releasePointerLock, requestPointerLock, type Input } from '../engine/input'
+import { buildHero, buildViewmodel, animateHeroIdle, animateHeroVictory, animateHeroWalk, type Viewmodel } from '../models/hero'
 import { buildPip, animatePip } from '../models/npc'
 import { buildTeleporter, type PadMesh } from '../models/props'
+import { buildLabConsole, tickLabScreens } from '../models/labConsole'
 import { rcyl, rbox, torus, sph, ell, cap, xform, paint, paintBy, merge, lathe, rcone } from '../models/kit'
 import { toonVC, glowVC, outlineMat } from '../models/toon'
 import { HERO_GAIT, newMotion, cycleLen, type GaitSpec, type EnemyMotion } from '../models/motion'
@@ -18,13 +19,14 @@ import type { BossId } from '../models/bosses'
 import type { Diorama } from '../models/diorama'
 import {
   buildHallShell, buildLabFront, buildSpire, newParts, padParts, padDisc, portalFrame, portalScreen, buildWeaponRack,
-  buildForge, forgeHammer, buildChipLab, buildRecords, buildTrophies, buildGate, gateLeaf, buildHoloTable, DOOR_CURTAIN, PAD_R, PAD_TOP,
+  buildForge, forgeHammer, forgeAnvil, forgePivot, buildChipLab, buildRecords, buildTrophies, buildGate, gateLeaf, buildHoloTable, DOOR_CURTAIN, doorCurtainGeometry, PAD_R, PAD_TOP,
   C, type Parts
 } from '../models/hubHall'
 import { THEMES, type SectorId } from '../world/themes'
 import type { Rig } from '../models/kit'
 import { heroColors, profile, saveProfile } from '../state/profile'
 import { buildGauss, poseGauss, newGaussPose, setGaussGlow, type GaussRig } from '../models/gauss'
+import { buildStasisCapsule, stasisBeat, type StasisCapsule } from '../models/stasis'
 import { Particles } from '../fx/particles'
 import { makeBlobShadow } from '../fx/markers'
 import { TRAIL_VERT, TRAIL_FRAG, TRAIL_MAX, TRAIL_STRIDE, createTrailPath, setTrailPath, layoutTrail } from '../fx/objectiveTrail'
@@ -32,13 +34,13 @@ import { tickHud, hud } from '../state/hud'
 import { HoloMaterial, setHoloTime } from '../fx/holoMaterial'
 import { hubUi, hubMarks, hubDialog, resetHubUi } from '../state/hubUi'
 import {
-  BRIEF_SPOT, GATE_LEAF_Z, GATE_PYLON_X, HALL_END, HALL_HALF, HOME_PAD, LAB_POSTS, NICHE_DEPTH, POI_BY_ID, POSTS, TABLE_Z,
+  BAY, BRIEF_SPOT, FLUX_CAP_AT, GAUSS_CAP_AT, GATE_LEAF_Z, GATE_PYLON_X, HALL_END, HALL_HALF, HOME_PAD, LAB_POSTS, LAB_R, NICHE_DEPTH, POI_BY_ID, POSTS, TABLE_Z,
   TROPHY_SPOT, WALLS, fenceOf, openGateWalls, poiAt, rayHit, rayHitPosts, routeTo, spawnOnPad, zoneAt,
   type Poi, type PoiId, type Seg, type Spawn
 } from '../world/hubLayout'
 import { newWalker, stepWalker, walkRoute, angDiff, type HubWalker } from './hubWalk'
 import { placeState, placesFor, nextSector, fenced, deployable, jobIndex, type PlaceState, type PlaceInputs } from './hubPlaces'
-import { LOOK_MOUSE, LOOK_TOUCH, TURN_RATE } from './constants'
+import { EYE_H, WALK_SPEED, LOOK_LOCK, LOOK_MOUSE, LOOK_TOUCH, PITCH_MAX, PITCH_MIN, TURN_RATE } from './constants'
 import { SECTORS, SECTOR_BY_ID } from '../data/regions'
 import { SECTOR_COLOR } from '../data/signature'
 import { WEAPONS, WEAPON_IDS } from '../data/weapons'
@@ -48,7 +50,7 @@ import { flow, jobsOpen, startDebrief, briefingToReplay, deployFromPad, padQuest
 import { hubTab, hubLesson, type HubTab } from '@/components/hub/hubLesson'
 import { isUnlocked, unlockCount } from '@/components/hub/hubUnlocks'
 import { isAnyModalOpen } from '@/use/useModalState'
-import { leaderboardListEnabled } from '@/use/useLeaderboard'
+import { boardModalEnabled } from '@/use/useLeaderboard'
 import { hubSceneUi } from '../story/hubSceneUi'
 import { sectorSelected, boardOpened, boardClosed } from '../story/hubAtlas'
 import { sfx } from '../audio/sfx'
@@ -135,17 +137,10 @@ export const buildLabSet = (): Group => {
     glow.push(xform(paint(cap(0.07, 3.2, 8, 2), k % 2 ? '#7ff4ff' : '#ffd84a'), [Math.cos(a) * 7.9, 3.2, Math.sin(a) * 7.9]))
     toon.push(xform(paint(rcyl(0.32, 6.4, 0.12, 12), '#5d6a82'), [Math.cos(a + 0.14) * 8.1, 3.2, Math.sin(a + 0.14) * 8.1]))
   }
-  // Consoles either side
-  for (const s of [-1, 1]) {
-    toon.push(xform(paint(rbox(1.6, 1.1, 0.9, 0.35), '#3b4458'), [s * 3.6, 0.55, -2.4], [0, -s * 0.5, 0]))
-    toon.push(xform(paint(rbox(1.4, 0.8, 0.12, 0.4), '#1d2438'), [s * 3.55, 1.45, -2.65], [-0.35, -s * 0.5, 0]))
-    glow.push(xform(paint(rbox(1.2, 0.6, 0.05, 0.5), s > 0 ? '#3cff9a' : '#3cc8ff'), [s * 3.55, 1.47, -2.58], [-0.35, -s * 0.5, 0]))
-    // Glass capsule tubes with glowing fluid
-    toon.push(xform(paint(rcyl(0.55, 0.35, 0.12, 20), '#5d6a82'), [s * 5.4, 0.18, -0.6]))
-    toon.push(xform(paint(rcyl(0.55, 0.35, 0.12, 20), '#5d6a82'), [s * 5.4, 3.3, -0.6]))
-    glow.push(xform(paint(lathe([[0, 0], [0.42, 0.05], [0.42, 2.6], [0, 2.65]], 20), s > 0 ? '#7fffc8' : '#8ab8ff'), [s * 5.4, 0.35, -0.6]))
-    toon.push(xform(paint(sph(0.35, 14, 10), '#9aa7bd'), [s * 5.4, 1.6, -0.6]))
-  }
+  // Workstations either side (`models/labConsole.ts`: desks, keyboards,
+  // monitors typing code and running a dashboard). The stasis capsules stand
+  // right of the right one (`BAY`), built by each scene (they animate).
+  for (const s of [-1, 1] as const) g.add(buildLabConsole(s, toon, glow))
   // Ceiling lamp ring, hung from its gantry
   const lamp = labLampParts()
   toon.push(...lamp.toon)
@@ -166,10 +161,31 @@ export const buildLabSet = (): Group => {
   return g
 }
 
+/** The lab's front wall and its door's light curtain, for the films (the hub
+ *  merges the wall into its hall's shell): the stasis bay's shots look
+ *  across the lab's side, not at an open stage. */
+export const buildLabFrontSet = (): Group => {
+  const g = new Group()
+  const front = buildLabFront()
+  const geo = merge(front.toon)
+  g.add(new Mesh(geo, toonVC()))
+  const ol = new Mesh(geo, outlineMat(0.03))
+  ol.renderOrder = -1
+  g.add(ol, new Mesh(merge(front.glow), glowVC()))
+  const mat = additive('#7ff4ff', 0.3, DoubleSide)
+  mat.vertexColors = true
+  const curtain = new Mesh(doorCurtainGeometry(), mat)
+  curtain.position.set(0, DOOR_CURTAIN.h / 2, DOOR_CURTAIN.z)
+  g.add(curtain)
+  return g
+}
+
 // ─── The walkable lab (#173) ─────────────────────────────────────────────────
 
 /** Flux's jog through the hall: a longer swing than the mission walk's. */
-const HUB_GAIT: GaitSpec = { ...HERO_GAIT, A: 0.66, beta: 0.44 }
+export const HUB_GAIT: GaitSpec = { ...HERO_GAIT, A: 0.66, beta: 0.44 }
+/** …with a level body: a quarter of the walk's hip rise and fall. */
+export const HUB_BOB = 0.25
 /** The chase camera: distance behind Flux, its tilt down, the pivot's height. */
 const CAM_DIST = 4.4
 const CAM_PITCH = -0.2
@@ -190,11 +206,22 @@ const LAND_FREE = 0.85
 const BRIEF_HOLD = 1.1
 const BRIEF_TURN = 1.3
 const BEAM_T = 0.95
+/** First person outside the lab: the switch's hysteresis round the lab's
+ *  wall ring (m: out past it, back in short of it), and how long the camera
+ *  takes to fly into his head or back out behind him (s). */
+const FP_OUT = 0.3
+const FP_IN = 0.6
+const FP_T = 0.55
+/** The forge hammer's lift (rad) and the moment in its 3.4 s beat it lands. */
+const HAMMER_LIFT = 0.5
+const HAMMER_HIT = 2.72
 /** A pedestal's hologram: its height and how high it floats over the pad. */
 const HOLO_H = 2.05
 const HOLO_LIFT = 0.16
 /** …standing behind the pad, toward the portal: Flux on the pad faces it. */
 const HOLO_BACK = 1.05
+/** Gauss's frost in the hub: a thin veil, her face and coat through it. */
+const GAUSS_VEIL = 0.4
 
 /** Where a pedestal's Master stands: behind its pad, on its emitter. */
 const holoSpot = (p: Poi): [number, number] =>
@@ -450,6 +477,9 @@ export class HubMode implements GameMode {
   private readonly pipRoot = new Group()
   private readonly pipAt = new Vector3()
   private gauss: GaussRig | null = null
+  /** Gauss's stasis capsule, and her in it (until the ending). */
+  private gaussCap: StasisCapsule | null = null
+  private gaussAsleep = false
   private readonly gaussPose = newGaussPose()
   private readonly fx = new Particles(600)
   private readonly trail: HubTrail
@@ -482,7 +512,23 @@ export class HubMode implements GameMode {
   private readonly fenceMat: MeshBasicMaterial
   private hammer: Group | null = null
   private hammerT = 0
-  private readonly hammerAt = new Vector3()
+  private readonly anvilAt = new Vector3()
+  // First person in the hall: 0 the chase camera, 1 his eyes, and his arm
+  // cannon drawn over the view (the missions' own viewmodel).
+  private fp = 0
+  private fpWant = false
+  /** The missions' walk sway in first person (`Mission`'s p.bob / p.bobAmp):
+   *  its phase runs by time and pace, not by the jog's quick leg cycle. */
+  private bob = 0
+  private bobAmp = 0
+  /** First person, free to walk: the mouse is the missions' captured look
+   *  (GameScene's `canLock` asks `wantsLock`). */
+  private lockWant = false
+  private fpPitch = 0
+  private readonly vm: Viewmodel
+  private readonly vmScene = new Scene()
+  private readonly vmCamera = new PerspectiveCamera(50, 1, 0.01, 10)
+  private readonly vmRoot = new Group()
   private chip: Mesh | null = null
   private cup: Mesh | null = null
   private valley: Diorama | null = null
@@ -532,13 +578,14 @@ export class HubMode implements GameMode {
     ;(this.homePad.ringMat as MeshBasicMaterial).opacity = 0.12
 
     this.doorMat = this.own(additive('#7ff4ff', 0.3, DoubleSide))
-    const curtain = new Mesh(this.ownGeo(this.curtainGeometry()), this.doorMat)
+    this.doorMat.vertexColors = true
+    const curtain = new Mesh(this.ownGeo(doorCurtainGeometry()), this.doorMat)
     curtain.position.set(0, DOOR_CURTAIN.h / 2, DOOR_CURTAIN.z)
     s.add(curtain)
     this.fenceMat = this.own(additive('#ff2d3f', 0.8))
 
     // The places and their state.
-    this.places = placesFor(leaderboardListEnabled)
+    this.places = placesFor(boardModalEnabled.value)
     const inputs = this.placeInputs()
     this.freed = new Set(SECTORS.filter(x => profile.world.bosses.includes(x.boss)).map(x => x.id))
     this.nextStory = nextSector(inputs)
@@ -559,20 +606,56 @@ export class HubMode implements GameMode {
     this.heroRoot.add(this.hero.root)
     this.shadow = makeBlobShadow(0.5)
     s.add(this.heroRoot, this.shadow)
+    // His arm cannon for the first-person view, lit as the missions light it.
+    this.vm = buildViewmodel(heroColors())
+    this.vmRoot.add(this.vm.root)
+    this.vmRoot.visible = false
+    const vmSun = new DirectionalLight(0xffffff, 1.1)
+    vmSun.position.set(-0.4, 1, 0.6)
+    this.vmScene.add(this.vmRoot, new HemisphereLight(0xffffff, 0x445066, 1.2), vmSun, new AmbientLight(0xffffff, 0.15))
     this.pip = buildPip()
     this.pipRoot.add(this.pip.root)
     this.pipRoot.scale.setScalar(0.78)
     s.add(this.pipRoot)
-    if (profile.world.seen.includes('ending')) {
-      // Dr. Gauss, awake in her lab once the ending has played (#102): by the briefing table.
-      this.gauss = buildGauss()
+    // The intro's stasis capsules, where and as it left them: Flux's open,
+    // its lever thrown; Gauss's sealed, Gauss asleep in it behind a thin frost
+    // (seen through it), her heartbeat pulsing in its base.
+    const awake = profile.world.seen.includes('ending')
+    const fluxCap = buildStasisCapsule()
+    fluxCap.root.position.set(FLUX_CAP_AT.x, 0, FLUX_CAP_AT.z)
+    // Turned as the intro turns them: Flux's lever toward the pad, Gauss's to the wall.
+    fluxCap.root.rotation.y = BAY.yaw - Math.PI / 2
+    fluxCap.setOpen(1)
+    fluxCap.setLever(1)
+    fluxCap.setFrost(0)
+    fluxCap.setHeart(0)
+    fluxCap.setInner('#dfe9ff', 0.06)
+    this.gaussCap = buildStasisCapsule()
+    this.gaussCap.root.position.set(GAUSS_CAP_AT.x, 0, GAUSS_CAP_AT.z)
+    this.gaussCap.root.rotation.y = BAY.yaw + Math.PI / 2
+    this.gaussCap.setOpen(awake ? 1 : 0)
+    this.gaussCap.setLever(1)
+    this.gaussCap.setFrost(awake ? 0 : 1, GAUSS_VEIL)
+    this.gaussCap.setHeart(0)
+    this.gaussCap.setInner('#5b8cff', awake ? 0 : 0.12)
+    s.add(fluxCap.root, this.gaussCap.root)
+    // Dr. Gauss: the intro's model, asleep in her capsule as the intro left
+    // her; awake by the briefing table once the ending has played (#102).
+    this.gauss = buildGauss()
+    if (awake) {
       this.gauss.root.position.set(2.5, 0, TABLE_Z + 0.6)
       this.gauss.root.rotation.y = -0.9
       setGaussGlow(this.gauss, 1)
       const sh = makeBlobShadow(0.5)
       sh.position.set(2.5, 0.01, TABLE_Z + 0.6)
-      s.add(this.gauss.root, sh)
+      s.add(sh)
+    } else {
+      this.gauss.root.position.set(GAUSS_CAP_AT.x, 0.34, GAUSS_CAP_AT.z)
+      this.gauss.root.rotation.y = BAY.yaw
+      Object.assign(this.gaussPose, { asleep: 1, look: 0.3 })
+      this.gaussAsleep = true
     }
+    s.add(this.gauss.root)
     s.add(this.fx.points)
     this.trail = new HubTrail(s)
 
@@ -623,25 +706,8 @@ export class HubMode implements GameMode {
         circuits: isUnlocked('circuits', n),
         leaderboard: isUnlocked('leaderboard', n)
       },
-      liveBoard: leaderboardListEnabled
+      liveBoard: boardModalEnabled.value
     }
-  }
-
-  private curtainGeometry(): BufferGeometry {
-    // A sheet of light, bright at its edges and its scan lines.
-    const g = new PlaneGeometry(DOOR_CURTAIN.w, DOOR_CURTAIN.h, 8, 24)
-    g.deleteAttribute('uv')
-    const pos = g.attributes.position!
-    const col = new Float32Array(pos.count * 3)
-    for (let i = 0; i < pos.count; i++) {
-      const x = Math.abs(pos.getX(i)) / (DOOR_CURTAIN.w / 2)
-      const y = (pos.getY(i) / DOOR_CURTAIN.h) + 0.5
-      const v = 0.25 + 0.75 * x ** 4 + (Math.round(y * 24) % 3 === 0 ? 0.25 : 0)
-      col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = Math.min(1, v)
-    }
-    g.setAttribute('color', new Float32BufferAttribute(col, 3))
-    this.doorMat.vertexColors = true
-    return g
   }
 
   private buildStars(): Points {
@@ -744,8 +810,10 @@ export class HubMode implements GameMode {
       const hol = new Mesh(hm.geometry, outlineMat(0.02))
       hol.renderOrder = -1
       this.hammer.add(hm, hol, new Mesh(this.ownGeo(merge(hp.glow)), glowVC()))
-      this.hammerAt.set(p.side * (HALL_HALF + NICHE_DEPTH - 1.75), 3.5, p.z + 0.55)
-      this.hammer.position.copy(this.hammerAt)
+      // On its axle by the niche's back, its beam out over the anvil.
+      this.hammer.position.set(...forgePivot(p.side as -1 | 1, p.z))
+      this.hammer.rotation.y = p.side > 0 ? Math.PI : 0
+      this.anvilAt.set(...forgeAnvil(p.side as -1 | 1, p.z))
       s.add(this.hammer)
     } else if (p.id === 'circuits') {
       add(buildChipLab(p.side as -1 | 1, p.z))
@@ -936,6 +1004,13 @@ export class HubMode implements GameMode {
     if (q && deployable(sl.state)) this.deploy(q)
   }
 
+  /** F: Pip's supplies, when he has something to hand out (his "!"). */
+  openPip(): void {
+    if (!hubUi.pipReady || hubDialog.open || hubDialog.board) return
+    sfx('pipChirp')
+    hubDialog.open = true
+  }
+
   /** A tap on a place's marker: walk there, and use it on arrival (`open`). */
   goTo(id: PoiId, open = true): void {
     const p = this.places.find(q => q.id === id)
@@ -1012,6 +1087,7 @@ export class HubMode implements GameMode {
     this.hero.mesh.geometry.dispose()
     this.hero = buildHero(heroColors())
     this.heroRoot.add(this.hero.root)
+    this.vm.setColors(heroColors())
     this.fx.riseRing(this.walker.x, 0.4, this.walker.z, '#7ff4ff', 0.8, 18)
   }
 
@@ -1022,6 +1098,8 @@ export class HubMode implements GameMode {
   }
 
   enter(): void {
+    // He lands in the lab (or on a pedestal): the cursor is free until he walks the hall.
+    releasePointerLock()
     boardOpened()
   }
 
@@ -1043,6 +1121,11 @@ export class HubMode implements GameMode {
       if (this.victoryT > 2.4) this.victoryT = -1
     }
     this.stepAct(dt)
+    // Out of the lab he sees through his own eyes (easier to walk the hall);
+    // back in, the chase camera (the lab is where he is shown).
+    const fromMid = Math.hypot(w.x, w.z)
+    if (fromMid > LAB_R + FP_OUT) this.fpWant = true
+    else if (fromMid < LAB_R - FP_IN) this.fpWant = false
     const panel = hubTab.value !== 'missions'
     if (this.wasPanel && !panel) this.panelClosed()
     this.wasPanel = panel
@@ -1086,7 +1169,8 @@ export class HubMode implements GameMode {
     }
     if (first) {
       if (this.act === 'walk' && !panel && !flow.modal && !hubDialog.open) {
-        if (inp.interactQueued) this.interact()
+        if (inp.pipQueued) this.openPip()
+        else if (inp.interactQueued) this.interact()
         else if (inp.beamQueued && this.slotOf(hubUi.near)?.poi.kind !== 'station') this.interact()
       }
       consumeEdges(inp)
@@ -1212,17 +1296,19 @@ export class HubMode implements GameMode {
     const dd = Math.hypot(w.x, w.z - DOOR_CURTAIN.z)
     this.doorMat.opacity = (0.06 + 0.3 * smooth(2.2, 4.6, dd)) * (0.9 + 0.1 * Math.sin(t * 17))
     this.fenceMat.opacity = 0.6 + 0.3 * Math.sin(t * 9)
-    // The forge: the hammer rises, holds, strikes; sparks and a ring.
+    // The forge: the lever is cranked up, held, let go — the head falls onto
+    // the plate from above (gravity: slow at the top, fast at the end),
+    // bounces once; sparks and a ring.
     if (this.hammer) {
       this.hammerT = (this.hammerT + dt) % 3.4
       const h = this.hammerT
-      const up = h < 1.6 ? smooth(0, 1.6, h) : h < 2.5 ? 1 : 1 - smooth(2.5, 2.66, h)
-      const side = this.hammerAt.x > 0 ? 1 : -1
-      this.hammer.rotation.z = -side * up * 1.0
-      if (h >= 2.66 && h - dt < 2.66) {
-        const ax = this.hammerAt.x
-        const az = this.hammerAt.z
-        this.fx.sparks(ax, 1.08, az, '#ffb04a', 14, 5, 0.12)
+      const up = h < 1.6 ? smooth(0, 1.6, h) : h < 2.5 ? 1 : h < HAMMER_HIT ? 1 - ((h - 2.5) / (HAMMER_HIT - 2.5)) ** 2
+        : h < HAMMER_HIT + 0.3 ? 0.08 * Math.sin(((h - HAMMER_HIT) / 0.3) * Math.PI) : 0
+      this.hammer.rotation.z = up * HAMMER_LIFT
+      if (h >= HAMMER_HIT && h - dt < HAMMER_HIT) {
+        const ax = this.anvilAt.x
+        const az = this.anvilAt.z
+        this.fx.sparks(ax, this.anvilAt.y + 0.04, az, '#ffb04a', 14, 5, 0.12)
         const d = Math.hypot(w.x - ax, w.z - az)
         if (d < 11 && hubTab.value === 'missions') sfx('tink', 0, Math.max(0.15, 1 - d / 11) * 0.7)
       }
@@ -1267,9 +1353,11 @@ export class HubMode implements GameMode {
     const inp = this.input
     if (inp.lookDX || inp.lookDY) {
       if (this.act === 'walk' && hubTab.value === 'missions' && !hubDialog.open) {
-        const s = inp.device === 'touch' ? LOOK_TOUCH : LOOK_MOUSE
+        const s = inp.device === 'touch' ? LOOK_TOUCH : inp.locked ? LOOK_LOCK : LOOK_MOUSE
         this.camYaw -= inp.lookDX * s
-        this.camPitch = Math.max(PITCH_LO, Math.min(PITCH_HI, this.camPitch + inp.lookDY * s * 0.6))
+        // His eyes tilt as the missions' do; the chase camera orbits.
+        if (this.fp > 0.5) this.fpPitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, this.fpPitch - inp.lookDY * s))
+        else this.camPitch = Math.max(PITCH_LO, Math.min(PITCH_HI, this.camPitch + inp.lookDY * s * 0.6))
         this.lastLook = this.t
         this.camAim = null
       }
@@ -1291,11 +1379,29 @@ export class HubMode implements GameMode {
     const yaw = this.prevYaw + angDiff(w.yaw, this.prevYaw) * alpha
     this.poseHero(x, z, yaw, dt)
     this.posePip(x, z, yaw, dt)
-    if (this.gauss) {
+    if (this.gauss && this.gaussAsleep) {
+      const hb = stasisBeat(this.t)
+      poseGauss(this.gauss, this.gaussPose, this.t)
+      setGaussGlow(this.gauss, 0, hb)
+      this.gaussCap?.setHeart(hb)
+      this.gaussCap?.setInner('#5b8cff', 0.1 + 0.1 * hb)
+    } else if (this.gauss) {
       this.gaussPose.look = Math.sin(this.t * 0.3) > 0.6 ? 0.5 : 0
       poseGauss(this.gauss, this.gaussPose, this.t)
     }
     this.homePad.ring.rotation.y += dt * 0.5
+    // Into his eyes once he walks the hall on his own; out behind him for
+    // the films (the landing's step off a pedestal, the beam-out) and while
+    // he stands on a pedestal (him on his pad, its Master over his shoulder,
+    // not the hologram filling the view).
+    const fpOn = this.fpWant && this.act === 'walk' && !this.stepping && !this.onPedestal(x, z)
+    if (fpOn && this.fp === 0) this.fpPitch = -0.04
+    this.fp = Math.max(0, Math.min(1, this.fp + (fpOn ? dt : -dt) / FP_T))
+    this.syncLock(fpOn)
+    const speed = Math.hypot(w.vx, w.vz)
+    this.bobAmp += ((speed > 0.4 ? Math.min(1, speed / WALK_SPEED) : 0) - this.bobAmp) * Math.min(1, dt * 8)
+    this.bob += dt * (4.2 + speed * 1.35)
+    tickLabScreens(this.t)
     this.frame(x, z, yaw, dt)
     this.trail.update(dt, this.act === 'walk' && hubTab.value === 'missions' && !hubDialog.open, x, z, this.trailTarget(), this.t)
     this.writeMarks(x, z)
@@ -1303,7 +1409,32 @@ export class HubMode implements GameMode {
     r.setRenderTarget(null)
     r.clear()
     r.render(this.scene, this.camera)
+    this.poseViewmodel()
+    if (this.vmRoot.visible) {
+      r.clearDepth()
+      r.render(this.vmScene, this.vmCamera)
+    }
     tickHud(dt)
+  }
+
+  /** The arm cannon in the corner of the first-person view (the missions'
+   *  place for it), rising in as the camera reaches his eyes, bobbing with
+   *  his stride; down out of view at a station's panel. */
+  private poseViewmodel(): void {
+    const k = smooth(0.35, 1, this.fp) * (1 - smooth(0, 0.6, this.panelK))
+    this.vmRoot.visible = k > 0.01
+    if (!this.vmRoot.visible) return
+    const portrait = this.vmCamera.aspect < 1
+    // The missions' arm sway, to the letter.
+    const amp = this.bobAmp
+    const bob = this.bob
+    this.vmRoot.position.set(
+      (portrait ? 0.15 : 0.25) + Math.cos(bob) * 0.012 * amp,
+      (portrait ? -0.3 : -0.27) + Math.abs(Math.sin(bob)) * 0.014 * amp - (1 - k) * 0.5,
+      -0.62
+    )
+    this.vmRoot.rotation.set(0.05 + Math.sin(this.t * 1.6) * 0.006, portrait ? 0.16 : 0.1, 0)
+    this.vmRoot.scale.setScalar(portrait ? 0.62 : 0.82)
   }
 
   /** Where the trail leads: the tour's station, else the next mission. */
@@ -1324,7 +1455,7 @@ export class HubMode implements GameMode {
     m.stride += (sp * dt * Math.PI * 2) / cycleLen(HUB_GAIT, HUB_GAIT.A * Math.min(1, w.stride / 0.35 + 0.001))
     m.phase = m.stride
     if (this.victoryT >= 0 && w.stride < 0.05) animateHeroVictory(R, this.victoryT)
-    else if (w.stride > 0.03) animateHeroWalk(R, m, this.t, HUB_GAIT)
+    else if (w.stride > 0.03) animateHeroWalk(R, m, this.t, HUB_GAIT, HUB_BOB)
     else animateHeroIdle(R, this.t)
     this.heroRoot.position.set(x, 0.0 + this.padLift(x, z), z)
     this.heroRoot.rotation.set(0.12 * w.stride, yaw, 0)
@@ -1356,29 +1487,65 @@ export class HubMode implements GameMode {
     this.shadow.visible = this.heroRoot.visible
   }
 
+  /** The mouse captured in first person, as in a mission; handed back for
+   *  the lab, a station's panel, a pedestal's card, a dialog. */
+  wantsLock(): boolean {
+    return this.lockWant
+  }
+
+  private syncLock(fpOn: boolean): void {
+    const want = fpOn && this.free && !hubDialog.board
+    if (want === this.lockWant) return
+    this.lockWant = want
+    if (!want) releasePointerLock()
+    // Taken back at once where the browser allows (a key or click just
+    // pressed); otherwise the next click on the view takes it.
+    else if (this.input.device === 'mouse' && !this.input.lockRefused && !isPointerLocked()) requestPointerLock(this.input)
+  }
+
+  /** Standing on a pedestal's plinth (a story, job or gate pad). */
+  private onPedestal(x: number, z: number): boolean {
+    for (const sl of this.slots) if (sl.disc && Math.hypot(x - sl.poi.x, z - sl.poi.z) < PAD_R) return true
+    return false
+  }
+
   /** On a pad he stands on its plinth. */
   private padLift(x: number, z: number): number {
     for (const sl of this.slots) {
       if (!sl.disc) continue
       if (Math.hypot(x - sl.poi.x, z - sl.poi.z) < PAD_R + 0.12) return PAD_TOP
     }
-    return Math.hypot(x, z) < 1.05 ? 0.3 : 0
+    // The teleporter: on its plate, stepping down over its rim.
+    return 0.3 * (1 - smooth(1.2, 1.6, Math.hypot(x, z)))
   }
 
   private posePip(x: number, z: number, yaw: number, dt: number): void {
     // Pip hovers by Flux's left shoulder (clear of the cannon), a little ahead
     // of him; at a station's panel, beside him in the shot instead.
-    const lx = Math.cos(yaw)
-    const lz = -Math.sin(yaw)
-    const ahead = hubTab.value !== 'missions' ? -0.25 : 0.55
-    const out = hubTab.value !== 'missions' ? 1.05 : 0.85
-    _v.set(x + lx * out + Math.sin(yaw) * ahead, 1.95 + Math.sin(this.t * 1.7) * 0.1, z + lz * out + Math.cos(yaw) * ahead)
+    // In first person he leads the way, a couple of metres ahead in the
+    // view's left (where Flux looks, not where his body last turned), drawn
+    // in short of a wall in front.
+    const fk = smooth(0, 1, this.fp) * (1 - smooth(0, 1, this.panelK))
+    const h = fk > 0.5 ? this.camYaw : yaw
+    const lx = Math.cos(h)
+    const lz = -Math.sin(h)
+    let ahead = hubTab.value !== 'missions' ? -0.25 : 0.55 + fk * 2.65
+    // (A tall screen is narrow: he keeps nearer the middle, further ahead.)
+    const tall = this.camera.aspect < 1
+    if (tall && hubTab.value === 'missions') ahead += fk * 0.6
+    const out = hubTab.value !== 'missions' ? 1.05 : 0.85 + fk * (tall ? 0 : 0.55)
+    if (fk > 0) {
+      const tx = x + lx * out + Math.sin(h) * ahead
+      const tz = z + lz * out + Math.cos(h) * ahead
+      ahead *= Math.max(0.3, rayHit(x, z, tx, tz, this.walls) - 0.12)
+    }
+    _v.set(x + lx * out + Math.sin(h) * ahead, 1.95 - fk * 0.15 + Math.sin(this.t * 1.7) * 0.1, z + lz * out + Math.cos(h) * ahead)
     if (this.act === 'beam') _v.y += 0.6
     this.pipAt.lerp(_v, Math.min(1, dt * 3.2))
     this.pipRoot.position.copy(this.pipAt)
     // He looks where Flux looks; at a panel or with supplies, at the camera.
     const atCam = hubTab.value !== 'missions' || hubUi.pipReady || hubDialog.open
-    const want = atCam ? Math.atan2(this.camPos.x - this.pipAt.x, this.camPos.z - this.pipAt.z) : yaw
+    const want = atCam ? Math.atan2(this.camPos.x - this.pipAt.x, this.camPos.z - this.pipAt.z) : h
     this.pipRoot.rotation.y += angDiff(want, this.pipRoot.rotation.y) * Math.min(1, dt * 4)
     animatePip(this.pip, this.t)
   }
@@ -1404,6 +1571,10 @@ export class HubMode implements GameMode {
       const d = angDiff(this.camAim, this.camYaw)
       this.camYaw += d * Math.min(1, dt * 2.4)
       if (Math.abs(d) < 0.02) this.camAim = null
+    } else if (this.fp > 0.5) {
+      // His eyes: the player looks where they like; a tap's walk (and its
+      // turn to the place at the end) turns the view with him.
+      if (!steering && !panel && (w.route.length > 0 || !Number.isNaN(w.endYaw))) this.camYaw += angDiff(yaw, this.camYaw) * Math.min(1, dt * 3)
     } else if (!steering && w.stride > 0.2 && !panel) {
       const d = angDiff(yaw, this.camYaw)
       if (Math.abs(d) < Math.PI * 0.6) this.camYaw += d * Math.min(1, dt * FOLLOW_RATE * w.stride)
@@ -1426,6 +1597,19 @@ export class HubMode implements GameMode {
     const d = Math.min(this.camDist, room)
     _v.set(px - fx * d, py - fy * d + 0.35, pz - fz * d)
     _w.set(px, py, pz)
+    // First person: the camera flies forward into his head, the view turning
+    // from his back to where he looks.
+    const fk = smooth(0, 1, this.fp)
+    if (fk > 0) {
+      // The missions' eye bob: up and down twice a sway, side to side once.
+      const eyeY = EYE_H + this.padLift(x, z) + Math.sin(this.bob * 2) * 0.042 * this.bobAmp
+      const side = Math.cos(this.bob) * 0.028 * this.bobAmp
+      const ex = x - Math.cos(this.camYaw) * side
+      const ez = z + Math.sin(this.camYaw) * side
+      const pc = Math.cos(this.fpPitch)
+      _v.lerp(_s3.set(ex, eyeY, ez), fk)
+      _w.lerp(_s3.set(ex + Math.sin(this.camYaw) * pc * 10, eyeY + Math.sin(this.fpPitch) * 10, ez + Math.cos(this.camYaw) * pc * 10), fk)
+    }
     // A station's panel: Flux framed beside it, as the old lab framed him.
     if (this.panelK > 0) {
       const k = smooth(0, 1, this.panelK)
@@ -1448,8 +1632,13 @@ export class HubMode implements GameMode {
     this.camLook.copy(_w)
     cam.position.copy(_v)
     cam.lookAt(_w)
+    // …and its roll.
+    if (fk > 0) cam.rotateZ(Math.cos(this.bob) * 0.006 * this.bobAmp * fk)
+    // His body out of the way of the eye (never the camera inside his head).
+    if (Math.hypot(_v.x - x, _v.y - (1.25 + this.padLift(x, z)), _v.z - z) < 0.95) this.heroRoot.visible = false
     const portrait = cam.aspect < 1
-    const walkFov = portrait ? Math.min(82, 56 / Math.max(0.55, cam.aspect)) : 55
+    const chaseFov = portrait ? Math.min(82, 56 / Math.max(0.55, cam.aspect)) : 55
+    const walkFov = chaseFov + (fovForAspect(cam.aspect) - chaseFov) * fk
     const panelFov = portrait ? 46 : 38
     cam.fov = walkFov + (panelFov - walkFov) * smooth(0, 1, this.panelK)
     cam.updateProjectionMatrix()
@@ -1508,11 +1697,15 @@ export class HubMode implements GameMode {
   }
 
   resize(w: number, h: number): void {
+    this.vmCamera.aspect = w / h
+    this.vmCamera.fov = w < h ? 58 : 50
+    this.vmCamera.updateProjectionMatrix()
     this.fx.setScale(h * getRenderer().getPixelRatio(), this.camera.fov)
   }
 
   dispose(): void {
     this.disposed = true
+    this.lockWant = false
     boardClosed()
     this.fx.dispose()
     this.trail.dispose()
@@ -1526,6 +1719,10 @@ export class HubMode implements GameMode {
       if (!m.geometry || m.geometry === shellCache?.plain || m.geometry === shellCache?.toon || m.geometry === shellCache?.glow ||
         m.geometry === shellCache?.spirePlain || m.geometry === shellCache?.spireGlow) return
       m.geometry.dispose()
+    })
+    this.vmScene.traverse((o) => {
+      const m = o as Mesh
+      if (m.geometry) m.geometry.dispose()
     })
     resetHubUi()
   }

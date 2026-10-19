@@ -1,11 +1,13 @@
 import { AdditiveBlending, CircleGeometry, Color, DoubleSide, Group, Mesh, MeshBasicMaterial } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { PLAYER_R } from '../constants'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildBurrowWyrm, poseBurrowWyrm, newWyrmPose, wyrmSegR, WYRM_COLORS, WYRM_SEGS, WYRM_NECK, WYRM_GAP, type WyrmPose
 } from '../../models/miniBoss/burrowWyrm'
-import { TAU, angDiff, faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease } from './kit'
+import { TAU, angDiff, faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, sprung, type PoseVel } from './kit'
 import { pushHud } from '../../state/hud'
 
 /**
@@ -68,6 +70,8 @@ const SEG_ARMOUR = 0.12
 type Attack = 'dive' | 'erupt' | 'spit'
 
 export interface WyrmMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: WyrmPose
   attack: Attack | ''
   /** 0 on the surface, negative under the floor (m). */
@@ -162,10 +166,19 @@ const fanOpacity = (m: WyrmMem, a: number): void => {
   for (const c of m.fan.children) ((c as Mesh).material as MeshBasicMaterial).opacity = a
 }
 
-const pick = (e: Enemy, m: WyrmMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const WYRM_REACH: Record<Attack, number> = {
+  // It tunnels after him for TRAVEL_T (faster from half health), then erupts.
+  dive: TRAVEL_SPEED * TRAVEL_T + ERUPT_R,
+  erupt: ERUPT_R + PLAYER_R,
+  // Its fan of spit, down the drawn lanes.
+  spit: SPIT_LANE + PLAYER_R
+}
+
+const pick = (e: Enemy, m: WyrmMem, d: number): Attack | null => {
   let a: Attack = Math.random() < (d > 7 ? 0.7 : d < 4 ? 0.35 : 0.5) ? 'dive' : 'spit'
   if (a === m.attack && e.step >= 1) a = a === 'dive' ? 'spit' : 'dive'
-  return a
+  return firstInReach(WYRM_REACH, d, a, a === 'dive' ? 'spit' : 'dive')
 }
 
 const begin = (w: World, e: Enemy, m: WyrmMem, a: Attack): void => {
@@ -185,7 +198,7 @@ const begin = (w: World, e: Enemy, m: WyrmMem, a: Attack): void => {
     e.teleRed = true
     m.ex = e.x
     m.ez = e.z
-    w.markers.spawn(e.x, e.z, ERUPT_R, e.teleDur + 0.15)
+    w.markers.spawn(e.x, e.z, ERUPT_R, e.teleDur + 0.15, e)
     w.sfx('alert', e.x, e.z)
   } else {
     e.teleDur = SPIT_TELE
@@ -280,7 +293,7 @@ export const BURROW_WYRM_AI: MiniBossBehaviour<WyrmMem> = {
     const path: number[] = []
     for (let k = 0; k < 60; k++) path.push(e.x ?? 0, -DIVE_DEPTH, (e.z ?? 0) - k * 0.15)
     return {
-      pose: newWyrmPose(), attack: '', depth: -DIVE_DEPTH, rear: 0, pitch: 0, path, ex: e.x ?? 0, ez: e.z ?? 0, crack: 0, volleys: 0,
+      pose: newWyrmPose(), vel: {}, attack: '', depth: -DIVE_DEPTH, rear: 0, pitch: 0, path, ex: e.x ?? 0, ez: e.z ?? 0, crack: 0, volleys: 0,
       phase2: false, side: 1, fan: null, fanOn: false, burst: false
     }
   },
@@ -356,7 +369,8 @@ export const BURROW_WYRM_AI: MiniBossBehaviour<WyrmMem> = {
         if (Math.random() < dt * 0.2) m.side = -m.side
         rear = 0.9 + 0.1 * Math.sin(e.anim * 2.4)
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d))
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a)
         break
       }
       case 'tele': {
@@ -489,7 +503,7 @@ export const BURROW_WYRM_AI: MiniBossBehaviour<WyrmMem> = {
     m.depth = ease(m.depth, depth, depth < m.depth ? 30 : 16, dt)
     m.rear = ease(m.rear, rear, 9, dt)
     m.pitch = ease(m.pitch, pitch, 9, dt)
-    p.jaw = ease(p.jaw, jaw, 12, dt)
+    p.jaw = sprung(p.jaw, m.vel, 'jaw', jaw, 12, dt)
     p.heat = ease(p.heat, heat, 8, dt)
     p.spin += spin * dt
     record(e, m)
@@ -546,8 +560,11 @@ export const BURROW_WYRM_AI: MiniBossBehaviour<WyrmMem> = {
       const dx = prevX - sg.x
       const dy = prevY - sg.y
       const dz = prevZ - sg.z
-      sg.ry = Math.atan2(dx, dz)
-      sg.rx = -Math.atan2(dy, Math.hypot(dx, dz))
+      // (Bunched on one spot, or rising nearly straight up, a segment keeps
+      // the heading it had: there atan2 flips half a turn between frames.)
+      const flat = Math.hypot(dx, dz)
+      if (flat > 0.04 && flat > 0.2 * Math.abs(dy)) sg.ry = Math.atan2(dx, dz)
+      if (flat + Math.abs(dy) > 0.04) sg.rx = -Math.atan2(dy, flat)
       prevX = sg.x
       prevY = sg.y
       prevZ = sg.z
@@ -586,6 +603,7 @@ export const BURROW_WYRM: MiniBossSpec<WyrmMem> = {
   id: 'burrowWyrm',
   sector: 'drill',
   nameKey: 'miniboss.burrowWyrm',
+  reach: WYRM_REACH,
   def: {
     kind: 'miniboss', hp: 525, dmg: 17, speed: 3.6, radius: 1.0, hitR: 1.25, aimY: 1.3, fly: 0,
     aggro: 30, range: [4.5, 7], xp: 175, bolts: [28, 42], cooldown: 1.5, tele: SPIT_TELE, unblockable: false, armor: 1,

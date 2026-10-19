@@ -1,6 +1,6 @@
 import type { SectorId } from '../../world/themes'
 import type { ChallengeSector, MiniBossId, MiniBossSpec } from './types'
-import { CINDER_HOUND } from './cinderHound'
+import { STEEL_HOUND } from './steelHound'
 import { ICEBREAKER_BRUTE } from './icebreakerBrute'
 import { ARC_SPIDER } from './arcSpider'
 import { STORM_HORNET_QUEEN } from './stormHornetQueen'
@@ -20,12 +20,12 @@ import { SENTINEL_PROTOTYPE } from './sentinelPrototype'
  *
  * ADDING ONE: a model file in `models/miniBoss/<id>.ts` (a rig and its pose),
  * a behaviour file in `sim/miniBoss/<id>.ts` (a `MiniBossBehaviour` and its
- * `MiniBossSpec`, the Cinder Hound's is the reference), then its line here;
+ * `MiniBossSpec`, the Steel Hound's is the reference), then its line here;
  * its name is `miniboss.<id>` in every locale.
  */
 
 export const MINI_BOSSES: Record<ChallengeSector, MiniBossSpec> = {
-  blaze: CINDER_HOUND as MiniBossSpec,
+  blaze: STEEL_HOUND as MiniBossSpec,
   cryo: ICEBREAKER_BRUTE as MiniBossSpec,
   volt: ARC_SPIDER as MiniBossSpec,
   gale: STORM_HORNET_QUEEN as MiniBossSpec,

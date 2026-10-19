@@ -50,7 +50,7 @@ const tapFight = (spec: MiniBossSpec, secs: number, o: { orbit: number; speed: n
     player: { x: cx + o.orbit, z: cz, y: 0, yaw: 0, pitch: 0 },
     combat: { iframes: 1e9, charging: false, charge: 0 }, enemies: [e],
     fx: { emit: stub, sparks: stub, orbBurst: stub, flash: stub, riseRing: stub },
-    markers: { spawn: stub }, shocks: { spawn: stub, spawnLinear: stub },
+    markers: { spawn: stub, release: stub }, shocks: { spawn: stub, spawnLinear: stub },
     stats: { critChance: 0, critMul: 1.5, piercing: false, boltMul: 1, magnetMul: 1, parryBonus: 0, busterDmg: 10, chargeTimeMul: 1 },
     hitStop: 0,
     onEnemyKilled: stub, onPickup: stub, onPlayerHurt: stub, onPlayerDown: stub,

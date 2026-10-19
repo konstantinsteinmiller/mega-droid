@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Köz Tazısı',
+    'steelHound': 'Polad Tazı',
     'icebreakerBrute': 'Buzqıran Nəhəng',
     'arcSpider': 'Qövs Hörümçəyi',
     'stormHornetQueen': 'Fırtına Eşşəkarısı Kraliçası',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volt Qülləsi',
     'gale': 'Səma Limanı',
     'fortress': 'Vex Qalası'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Hiylələr açıq: Shift+Ctrl+Alt+F1 hiylə panelini açır',
+    'off': 'Hiylələr bağlı',
+    'title': 'Hiylə paneli',
+    'note': 'Hiylə işlədilən yaddaş liderlər cədvəlinə xal göndərmir.',
+    'unlockAll': 'Bütün hekayə missiyalarını aç',
+    'bolts': '+{n} bolt',
+    'chips': '+{n} Bacarıq Çipi',
+    'gear': 'Epik blaster',
+    'gels': 'Təmir Gellərini doldur',
+    'done': 'Hazırdır!',
+    'doors': 'Qapıya tullan',
+    'boss': 'Boss qapısı',
+    'challenge': 'Sınaq qapısı',
+    'challengeN': 'Sınaq qapısı {n}',
+    'actLevelUp': 'Səviyyə artımı səhnəsini oynat',
+    'actObjective': 'Hədəf tamamlandı səhnəsini oynat'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{rarity} {item} tapıldı!',
     'tank': 'Təmir Geli tapıldı!',
     'giftTank': 'Hədiyyə: +1 Təmir Geli!',
+    'skillChip': 'Bacarıq Çipi tapıldı!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'taxılanla müqayisə',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Sürüşmə',
       'block': 'Blok',
       'interact': 'Qarşılıqlı əlaqə',
+      'pip': "Pip'in ehtiyatları",
       'beam': 'Teleport ol',
       'tank': 'Təmir Geli',
       'weapon1': 'Xüsusi silah 1',

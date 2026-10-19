@@ -15,7 +15,8 @@ import { isUnlocked, unlockCount, type HubTab } from './hubUnlocks'
  * through the one loop that matters: bolts in, gear up. It never runs while
  * the Workshop is locked.
  *
- *   workshop       → tap the Workshop tab
+ *   workshop       → walk to the forge and open it (the hall's golden trail
+ *                    leads there; no spotlight over a moving label)
  *   upgradeBuster  → upgrade the buster (weapon: damage)
  *   pickArmor      → select the chest armour (defence)
  *   upgradeArmor   → upgrade it

@@ -77,6 +77,8 @@ export interface Input {
   weaponQueued: 0 | 1 | 2 | 3
   tankQueued: boolean
   interactQueued: boolean
+  /** Pip's key (F): his supplies in the lab; interact in a mission. */
+  pipQueued: boolean
   beamQueued: boolean
   swipe: -1 | 0 | 1
   pauseQueued: boolean
@@ -144,7 +146,7 @@ export const createInput = (): Input => ({
   moveX: 0, moveY: 0, turn: 0, lookDX: 0, lookDY: 0, taps: [],
   fireHeld: false, firePressed: false, fireReleased: false, fireCancelled: false, fireX: 0, fireY: 0,
   blockHeld: false, blockPressed: false, slideQueued: false, weaponQueued: 0, tankQueued: false,
-  interactQueued: false, beamQueued: false, swipe: 0, pauseQueued: false, mapQueued: false, anyPressed: false,
+  interactQueued: false, pipQueued: false, beamQueued: false, swipe: 0, pauseQueued: false, mapQueued: false, anyPressed: false,
   joyActive: false, joyOriginX: 0, joyOriginY: 0, joyX: 0, joyY: 0, joyHomeX: 0, joyHomeY: 0, joyHomeR: 0,
   // A phone never captures the mouse: there, a mouse is a finger.
   touched: false, device: guessDevice(), locked: false, lockRefused: !lockSupported() || touchFirst()
@@ -168,6 +170,7 @@ export const consumeEdges = (i: Input): void => {
   i.weaponQueued = 0
   i.tankQueued = false
   i.interactQueued = false
+  i.pipQueued = false
   i.beamQueued = false
   i.swipe = 0
   i.pauseQueued = false
@@ -613,6 +616,9 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
         break
       case 'interact':
         input.interactQueued = true
+        break
+      case 'pip':
+        input.pipQueued = true
         break
       case 'beam':
         input.beamQueued = true

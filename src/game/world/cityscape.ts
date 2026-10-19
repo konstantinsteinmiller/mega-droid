@@ -1,5 +1,5 @@
 import {
-  BufferGeometry, Color, CylinderGeometry, DynamicDrawUsage, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh,
+  BufferGeometry, Color, CylinderGeometry, DynamicDrawUsage, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh,
   Quaternion, ShaderMaterial, Vector3, type Material
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
@@ -548,6 +548,13 @@ const MARK_BOUNDS: Record<string, { r: number; top: number; wall?: boolean }> = 
   spaceport: { r: 34, top: Infinity, wall: true }
 }
 
+/** A lane's room for the widest vehicle on it (a hauler, ~10 m long at its
+ *  scale) and a parcel drone's bob under it, plus its sway (m). */
+export const LANE_CLEAR = 11
+export const LANE_DIP = 2
+/** The freighter's reach round its centre (m). */
+export const FREIGHTER_CLEAR = 24
+
 const skyObstacles = (
   plots: Array<{ x: number; z: number; h: number; w: number; b: Builder }>,
   marks: Array<{ id: string; x: number; z: number }>
@@ -555,6 +562,174 @@ const skyObstacles = (
   ...plots.map(p => ({ x: p.x, z: p.z, ...plotBounds(p.b, p.h, p.w) })),
   ...marks.map(m => ({ x: m.x, z: m.z, ...MARK_BOUNDS[m.id]! }))
 ]
+
+/** Room a route keeps off every building, past its vehicles' reach (m). */
+export const ROUTE_MARGIN = 4
+/** A landmark or tower a route would have to climb more than this over (m)
+ *  it goes round instead: a taxi lifted 150 m over the halo is out of the
+ *  sky's play (and out of a shot's reach). */
+const LIFT_MAX = 60
+
+/**
+ * Any traffic lane made clear of the skyline (#181 follow-up): sampled every
+ * 2 m, each sample is pushed radially (in or out, never nearer the level
+ * than `minR`) round every `wall` and every tower it would
+ * have to climb more than LIFT_MAX over, then lifted over what is
+ * still under it, with gentle ramps either way (the route bends or rises
+ * before it reaches a tower, never through it). `clear` is the reach of the
+ * widest vehicle on the lane round its centre, `dip` how far below the lane
+ * one wobbles. The level's own sky is never flown over.
+ * Deterministic: it reads nothing but the lane and the obstacles.
+ */
+export const clearLane = (
+  src: Lane, closed: boolean, cx: number, cz: number, clear: number, dip: number, obstacles: SkyObstacle[], minR = 0
+): Lane => {
+  const N = Math.max(8, Math.ceil(src.length / 2))
+  const n = closed ? N : N + 1
+  const seg = src.length / N
+  const v = new Vector3()
+  const xs: number[] = []
+  const ys: number[] = []
+  const zs: number[] = []
+  for (let i = 0; i < n; i++) {
+    src.at(i * seg, v)
+    xs.push(v.x)
+    ys.push(v.y)
+    zs.push(v.z)
+  }
+  const ramp = (a: number[], perM: number): void => {
+    const d = perM * seg
+    for (let pass = 0; pass < 2; pass++) {
+      const m = closed ? n * 2 : n - 1
+      for (let i = 0; i < m; i++) a[(i + 1) % n] = Math.max(a[(i + 1) % n]!, a[i % n]! - d)
+      for (let i = m; i > 0; i--) a[(i - 1) % n] = Math.max(a[(i - 1) % n]!, a[i % n]! - d)
+    }
+  }
+  // Widened by a sample's spacing: the line between two samples is covered.
+  const keepOf = (o: SkyObstacle) => o.r + clear + ROUTE_MARGIN + seg
+  const climb = (o: SkyObstacle) => o.top + clear + dip + ROUTE_MARGIN
+  // 1. Round the walls and the tallest towers, radially, on the side of
+  //    each the route already runs: inside one farther out from the city
+  //    than the route (never nearer the level than `minR`), outside one
+  //    nearer in. What a bend cannot clear is climbed over in 2.
+  // A wall's bend (it cannot be climbed) wins over a tower's where both
+  // want a sample; the tower is then climbed over.
+  const bend = (wallsOnly: boolean): void => {
+    const pushIn = new Array<number>(n).fill(0)
+    const pushOut = new Array<number>(n).fill(0)
+    const wallIn = new Array<number>(n).fill(0)
+    const wallOut = new Array<number>(n).fill(0)
+    for (const o of obstacles) {
+      if (wallsOnly && !o.wall) continue
+      // A metre over: a bent sample lands past the edge, not on it.
+      const keep = keepOf(o) + 1
+      // One side per obstacle: inside it if the route is inside it where it
+      // passes nearest and can bend in far enough there, else outside.
+      let inward = true
+      let any = false
+      for (let i = 0; i < n; i++) {
+        if (!o.wall && climb(o) - ys[i]! <= LIFT_MAX) continue
+        const px = xs[i]! - cx, pz = zs[i]! - cz
+        const rho = Math.hypot(px, pz) || 1
+        const ux = px / rho, uz = pz / rho
+        const wx = o.x - xs[i]!, wz = o.z - zs[i]!
+        const a = wx * ux + wz * uz
+        const lat = Math.abs(wx * uz - wz * ux)
+        // Only where the route actually runs into it (the ramps bend it
+        // early); the radial line's far end means nothing.
+        if (lat >= keep || wx * wx + wz * wz >= keep * keep) continue
+        const h = Math.sqrt(keep * keep - lat * lat)
+        any = true
+        if (a <= 0 || rho - (h - a) < minR) inward = false
+      }
+      if (!any) continue
+      for (let i = 0; i < n; i++) {
+        if (!o.wall && climb(o) - ys[i]! <= LIFT_MAX) continue
+        const px = xs[i]! - cx, pz = zs[i]! - cz
+        const rho = Math.hypot(px, pz) || 1
+        const ux = px / rho, uz = pz / rho
+        const wx = o.x - xs[i]!, wz = o.z - zs[i]!
+        const a = wx * ux + wz * uz
+        const lat = Math.abs(wx * uz - wz * ux)
+        // Only where the route actually runs into it (the ramps bend it
+        // early); the radial line's far end means nothing.
+        if (lat >= keep || wx * wx + wz * wz >= keep * keep) continue
+        const h = Math.sqrt(keep * keep - lat * lat)
+        const pi = o.wall ? wallIn : pushIn
+        const po = o.wall ? wallOut : pushOut
+        if (inward) pi[i] = Math.max(pi[i]!, h - a)
+        else po[i] = Math.max(po[i]!, a + h)
+      }
+    }
+    for (const a of [pushIn, pushOut, wallIn, wallOut]) ramp(a, 0.6)
+    for (let i = 0; i < n; i++) {
+      const d = wallIn[i]! || wallOut[i]!
+        ? (wallOut[i]! >= wallIn[i]! ? wallOut[i]! : -wallIn[i]!)
+        : pushOut[i]! >= pushIn[i]! ? pushOut[i]! : -pushIn[i]!
+      if (!d) continue
+      const px = xs[i]! - cx, pz = zs[i]! - cz
+      const rho = Math.hypot(px, pz) || 1
+      xs[i] = xs[i]! + (px / rho) * d
+      zs[i] = zs[i]! + (pz / rho) * d
+    }
+  }
+  // Then the walls again (twice): a tower's bend ramping off beside one
+  // may have carried the route back into it.
+  bend(false)
+  bend(true)
+  bend(true)
+  // 2. Over every tower still under it, where it now runs.
+  const lift = new Array<number>(n).fill(0)
+  for (const o of obstacles) {
+    if (o.wall) continue
+    const keep = keepOf(o)
+    for (let i = 0; i < n; i++) {
+      if (Math.hypot(xs[i]! - o.x, zs[i]! - o.z) < keep) lift[i] = Math.max(lift[i]!, climb(o) - ys[i]!)
+    }
+  }
+  ramp(lift, 0.35)
+  for (let i = 0; i < n; i++) ys[i] = ys[i]! + Math.max(0, lift[i]!)
+  // Arc length along the cleared route.
+  const cum = new Array<number>(n + 1).fill(0)
+  const segs = closed ? n : n - 1
+  for (let i = 0; i < segs; i++) {
+    const j = (i + 1) % n
+    cum[i + 1] = cum[i]! + Math.hypot(xs[j]! - xs[i]!, zs[j]! - zs[i]!)
+  }
+  const length = cum[segs]!
+  let hint = 0
+  return {
+    length,
+    at: (s, out) => {
+      const u = closed ? ((s % length) + length) % length : Math.max(0, Math.min(length, s))
+      if (!(cum[hint]! <= u && cum[hint + 1]! >= u)) {
+        let lo = 0
+        let hi = segs
+        while (hi - lo > 1) {
+          const mid = (lo + hi) >> 1
+          if (cum[mid]! <= u) lo = mid
+          else hi = mid
+        }
+        hint = lo
+      }
+      const i = hint
+      const j = (i + 1) % n
+      const f = (u - cum[i]!) / Math.max(1e-6, cum[i + 1]! - cum[i]!)
+      out.set(xs[i]! + (xs[j]! - xs[i]!) * f, ys[i]! + (ys[j]! - ys[i]!) * f, zs[i]! + (zs[j]! - zs[i]!) * f)
+      return Math.atan2(xs[j]! - xs[i]!, zs[j]! - zs[i]!)
+    }
+  }
+}
+
+/** True if a vehicle centred at (x, y, z), `r` round, reaching `below` under
+ *  its centre, stands clear of every obstacle by `margin`. */
+export const skyClear = (obstacles: SkyObstacle[], x: number, y: number, z: number, r: number, below: number, margin: number): boolean => {
+  for (const o of obstacles) {
+    if (y - below >= o.top + margin) continue
+    if (Math.hypot(x - o.x, z - o.z) < o.r + r + margin) return false
+  }
+  return true
+}
 
 /**
  * The blimp's loop (#170): a ring round the level at radius `r0` and at
@@ -777,6 +952,91 @@ const plume = (): BufferGeometry[] => [prism(10, 3.4, 1.6, 1, '#eef0f6', 0, fals
 
 // ─── Assemble ────────────────────────────────────────────────────────────────
 
+// ─── The sea of clouds ───────────────────────────────────────────────────────
+
+/** Where cloud geometry may rise: the ground plane (`buildCityscape`) sits at
+ *  y = -0.6..-0.5. Every puff's underside sinks well below it, so no puff face
+ *  ever lies in the plane (no z-fighting at any distance). */
+export const CLOUD_SINK = -2.5
+
+/**
+ * One chunky puff: a 20-facet icosahedron, flattened and turned, each facet
+ * its own flat colour — lit white on top, shading into the fog's own tint
+ * underneath (the city's haze then fades it into the horizon). Indexed, with
+ * the city's attributes, so it merges into the skyline's body mesh: the whole
+ * cloud sea costs no draw call of its own.
+ */
+const puff = (r: () => number, fog: Color, p: V3, s: V3): BufferGeometry => {
+  const g = new IcosahedronGeometry(1, 0)
+  g.deleteAttribute('uv')
+  g.deleteAttribute('normal')
+  xform(g, p, [(r() - 0.5) * 0.5, r() * Math.PI * 2, (r() - 0.5) * 0.5], s)
+  g.computeVertexNormals()
+  const nor = g.attributes.normal!
+  const n = nor.count
+  const top = new Color('#ffffff')
+  const under = fog.clone().lerp(new Color('#7f8db0'), 0.45)
+  const cols = new Float32Array(n * 3)
+  const c = new Color()
+  for (let i = 0; i < n; i++) {
+    const up = nor.getY(i)
+    const sun = Math.max(0, nor.getX(i) * SUN.x + nor.getY(i) * SUN.y + nor.getZ(i) * SUN.z)
+    // Toon steps: sunlit top, a pale flank, a cool belly.
+    const k = up > 0.55 ? 0 : up > -0.1 ? 0.3 - 0.12 * sun : 0.75
+    c.copy(top).lerp(under, k)
+    cols.set([c.r, c.g, c.b], i * 3)
+  }
+  g.setAttribute('color', new Float32BufferAttribute(cols, 3))
+  g.setIndex([...Array(n).keys()])
+  return finish(g, false, 0, false)
+}
+
+/**
+ * The cloud sea the sky city rises out of (`Terrain.clouds` maps): a mound
+ * hugging every near tower's foot, so no tower ends in a cut-off edge on the
+ * flat plane; banks scattered out to the horizon; and a few cloud islands
+ * adrift above it. Purely visual (nothing collides with the city), kept out
+ * past the level's reach, and modest: ~60 vertices a puff.
+ */
+export const cloudSea = (
+  r: () => number, fog: Color, cx: number, cz: number, reach: number,
+  feet: Array<{ x: number; z: number; w: number }>, low: boolean
+): BufferGeometry[] => {
+  const out: BufferGeometry[] = []
+  const lift = (sy: number) => CLOUD_SINK + sy * 0.75
+  for (const f of feet) {
+    const sx = f.w * (1.2 + r() * 0.6)
+    const sy = 5 + r() * 3
+    out.push(puff(r, fog, [f.x + (r() - 0.5) * 3, lift(sy), f.z + (r() - 0.5) * 3], [sx, sy, sx * (0.8 + r() * 0.4)]))
+  }
+  const ring = (n: number, from: number, to: number, size: number, hy: number) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + r() * (Math.PI * 2 / n)
+      const d = from + r() * (to - from)
+      const sy = hy * (0.6 + r() * 0.6)
+      const sx = size * (0.6 + r() * 0.8)
+      out.push(puff(r, fog, [cx + Math.cos(a) * d, lift(sy), cz + Math.sin(a) * d], [sx, sy, sx * (0.6 + r() * 0.5)]))
+    }
+  }
+  // Banks: low swells near, broad ones far.
+  ring(low ? 8 : 18, reach + 32, reach + 90, 9, 5)
+  ring(low ? 6 : 16, reach + 90, 230, 22, 9)
+  // Islands adrift: a big puff with two smaller ones on its back.
+  const islands = low ? 2 : 5
+  for (let i = 0; i < islands; i++) {
+    const a = r() * Math.PI * 2
+    const d = reach + 60 + r() * 100
+    const x = cx + Math.cos(a) * d
+    const z = cz + Math.sin(a) * d
+    const y = 6 + r() * 8
+    const s = 5 + r() * 4
+    out.push(puff(r, fog, [x, y, z], [s * 1.6, s * 0.55, s * 1.2]))
+    out.push(puff(r, fog, [x + s * 0.5, y + s * 0.4, z], [s * 0.8, s * 0.5, s * 0.7]))
+    out.push(puff(r, fog, [x - s * 0.6, y + s * 0.25, z + s * 0.3], [s * 0.6, s * 0.4, s * 0.6]))
+  }
+  return out
+}
+
 export interface Cityscape {
   root: Group
   quality: SceneQuality
@@ -797,8 +1057,16 @@ export interface Cityscape {
    *  it struck a flying taxi or a parcel drone, which is shot down (it sinks
    *  out of the sky); its centre goes into `out`. */
   shotHits(x: number, y: number, z: number, r: number, out: Vector3): boolean
+  /** A charged shot entering the sky (#181): the vehicle nearest its line,
+   *  if close, steers to meet it. `range` its flight left (m). */
+  lure(x: number, y: number, z: number, vx: number, vy: number, vz: number, range: number): boolean
   /** Each downed vehicle still sinking, by its centre (for its smoke). */
   sinking(emit: (x: number, y: number, z: number) => void): void
+  /** The skyline's footprints every route keeps clear of. */
+  obstacles: SkyObstacle[]
+  /** Every flying traffic vehicle at `t` (a test's probe): its centre, its
+   *  reach round it and below it. Places them, so it moves the lure clock. */
+  probe(t: number, emit: (x: number, y: number, z: number, r: number, below: number, kind: string) => void): void
   dispose(): void
 }
 
@@ -892,7 +1160,8 @@ export const buildCityscape = async (
   const marks = low ? allMarks.filter(([id]) => id === 'halo' || id === 'arcology' || id === 'spaceport') : allMarks
   const markAt = marks.map(([id, make], i) => {
     const a = base + (i / marks.length) * Math.PI * 2 + (r() - 0.5) * 0.3
-    const d = Math.max(reach + 85, 150) + r() * 25
+    // Out past the inner traffic rings, so they need not bend round them.
+    const d = Math.max(reach + 105, 150) + r() * 25
     return { id, make, a, d, x: cx + Math.cos(a) * d, z: cz + Math.sin(a) * d }
   })
   const port = markAt.find(m => m.id === 'spaceport')!
@@ -923,6 +1192,10 @@ export const buildCityscape = async (
     }
   }
   const near = plots.filter(p => !p.far)
+  // Over open sky the towers rise out of a sea of clouds, merged into the
+  // near body mesh (no draw call of its own). Drawn from its own seed, so
+  // the rest of the city stays the same.
+  if (map.terrain?.clouds) kit.body.push(...cloudSea(lcg(map.seed ^ 0xc10d), fog, cx, cz, reach, near, low))
   for (let i = 0; i < near.length; i++) {
     const p = near[i]!
     p.b(kit, p.x, p.z, p.h, p.w)
@@ -973,15 +1246,21 @@ export const buildCityscape = async (
   let trafficFrom = -1
 
   // ── Traffic lanes: round the level and past it, never over it ──
+  // Every lane is cleared of the skyline once, here (no vehicle on it ever
+  // clips a tower): LANE_CLEAR covers the widest vehicle that flies the
+  // shared lanes (a hauler), LANE_DIP a parcel drone's bob below its lane.
+  const obstacles = skyObstacles(plots, markAt)
   const y0 = top + 26
+  const ring = (rr: number, y: number, dir: 1 | -1) => clearLane(ringLane(cx, cz, rr, y, dir), true, cx, cz, LANE_CLEAR, LANE_DIP, obstacles, reach + 32)
+  const chord = (d: number, phi: number, y: number, half: number) => clearLane(chordLane(cx, cz, d, phi, y, half), false, cx, cz, LANE_CLEAR, LANE_DIP, obstacles, reach + 32)
   const lanes: Lane[] = [
-    ringLane(cx, cz, reach + 42, y0, 1),
-    ringLane(cx, cz, reach + 46, y0 + 5, -1),
-    ringLane(cx, cz, reach + 78, y0 + 18, 1),
-    ringLane(cx, cz, reach + 84, y0 + 23, -1),
-    ringLane(cx, cz, reach + 120, y0 + 42, 1),
-    chordLane(cx, cz, reach + 60, base + 0.9, y0 + 12, 200),
-    chordLane(cx, cz, reach + 95, base + 2.6, y0 + 30, 200)
+    ring(reach + 42, y0, 1),
+    ring(reach + 46, y0 + 5, -1),
+    ring(reach + 78, y0 + 18, 1),
+    ring(reach + 84, y0 + 23, -1),
+    ring(reach + 120, y0 + 42, 1),
+    chord(reach + 60, base + 0.9, y0 + 12, 200),
+    chord(reach + 95, base + 2.6, y0 + 30, 200)
   ]
   const tmpQ = new Quaternion()
   const along = (lane: Lane, s: number, p: Vector3, q: Quaternion, bank = 0): void => {
@@ -993,9 +1272,16 @@ export const buildCityscape = async (
   }
 
   const fleets: Fleet[] = []
+  // Each traffic fleet's reach round its centre and below it (m), for the
+  // route-clearance probe (`Cityscape.probe`); the rockets are the
+  // spaceport's own and not in it.
+  const reachOf = new Map<Fleet, [number, number, string]>()
+  const reg = (f: Fleet, r: number, below: number, kind: string): Fleet => (reachOf.set(f, [r, below, kind]), f)
   // The taxis and the parcel drones can be shot down (#169).
-  const targets = new SkyTargets()
+  const targets = new SkyTargets((x, y, z, r) => skyClear(obstacles, x, y, z, r + LANE_DIP, LANE_DIP, ROUTE_MARGIN))
   const SINK_FLOOR = -6
+  // A parcel drone tips less into a detour's turn than a taxi banks (#181).
+  const QUAD_BANK = 0.2
   const seedOf = (i: number) => (Math.imul(i + 1, 2654435761) >>> 0) / 4294967296
   const n = (full: number) => (low ? Math.max(1, Math.ceil(full / 2)) : full)
 
@@ -1042,12 +1328,12 @@ export const buildCityscape = async (
   {
     const [b, g] = taxi()
     const taxiN = low ? 4 : 12
-    fleets.push(fleet(b, g, taxiN, vehMat, targets.wrap(taxiN, 4, SINK_FLOOR, (i, t, p, q, s) => {
+    fleets.push(reg(fleet(b, g, taxiN, vehMat, targets.wrap(taxiN, 4, SINK_FLOOR, (i, t, p, q, s) => {
       const lane = lanes[[0, 1, 2, 3, 5][i % 5]!]!
       along(lane, seedOf(i + 30) * lane.length + t * 17, p, q, 0.08)
       s.setScalar(1.5)
       return true
-    })))
+    })), 4.5, 1.5, 'taxi'))
   }
   // The low tier keeps the sky's showpieces (rockets, taxis, the blimp, the
   // freighter) and drops the swarms: fewer kinds is fewer draw calls, and
@@ -1057,25 +1343,25 @@ export const buildCityscape = async (
   if (!low) {
     const [b, g] = quadcopter()
     const quadN = n(16)
-    fleets.push(fleet(b, g, quadN, vehMat, targets.wrap(quadN, 3.2, SINK_FLOOR, (i, t, p, q, s) => {
+    fleets.push(reg(fleet(b, g, quadN, vehMat, targets.wrap(quadN, 3.2, SINK_FLOOR, (i, t, p, q, s) => {
       const lane = lanes[i % 2]!
       along(lane, seedOf(i) * lane.length + t * 9, p, q)
       p.y += Math.sin(t * 1.3 + i) * 2 + (i % 3) * 2.5
       p.x += Math.sin(t * 0.7 + i * 2) * 3
       s.setScalar(1.6)
       return true
-    })))
+    }, QUAD_BANK)), 3.2, 1.5, 'drone'))
   }
   // Police cruisers: fast, on the middle rings, lights flashing.
   const copN = low ? 0 : 3
   const cops = copN ? (() => {
     const [b, g] = cruiser()
-    return fleet(b, g, copN, vehMat, (i, t, p, q, s) => {
+    return reg(fleet(b, g, copN, vehMat, (i, t, p, q, s) => {
       const lane = lanes[2 + (i % 2)]!
       along(lane, seedOf(i + 60) * lane.length + t * 28, p, q, 0.15)
       s.setScalar(1.5)
       return true
-    })
+    }), 4.5, 1.5, 'cruiser')
   })() : null
   if (cops) fleets.push(cops)
   // Their light bars: two halves per car, recoloured every frame.
@@ -1087,13 +1373,13 @@ export const buildCityscape = async (
   // Cargo haulers on the straight lanes.
   if (!low) {
     const [b, g] = hauler()
-    fleets.push(fleet(b, g, n(4), vehMat, (i, t, p, q, s) => {
+    fleets.push(reg(fleet(b, g, n(4), vehMat, (i, t, p, q, s) => {
       const lane = lanes[5 + (i % 2)]!
       along(lane, seedOf(i + 90) * lane.length + t * 11 * (i % 2 ? 1 : -1), p, q)
       if (i % 2 === 0) q.multiply(tmpQ.setFromAxisAngle(YAXIS, Math.PI))
       s.setScalar(1.3)
       return true
-    }))
+    }), 10, 4, 'hauler'))
   }
   let route: ReturnType<typeof blimpLane>
   // An ad blimp, slow, on the outer ring: on its own route, bent round the
@@ -1101,25 +1387,25 @@ export const buildCityscape = async (
   // it never sails through one (#170).
   {
     const [b, g] = blimp()
-    route = blimpLane(cx, cz, reach + 120, y0 + 54, skyObstacles(plots, markAt))
+    route = blimpLane(cx, cz, reach + 120, y0 + 54, obstacles)
     const f = fleet(b, g, 1, vehMat, (_i, t, p, q, s) => {
       along(route, t * 4, p, q)
       s.setScalar(1)
       return true
     })
     f.body.name = 'blimp'
-    fleets.push(f)
+    fleets.push(reg(f, BLIMP_REACH, BLIMP_BELOW, 'blimp'))
   }
   // A freighter crossing high over the far city (and over the blimp, where
   // its route has climbed over a tall tower: they never meet).
   {
     const [b, g] = freighter()
-    const lane = chordLane(cx, cz, reach + 150, base + 4.2, Math.max(150, route.peak + BLIMP_BELOW + 14), 230)
-    fleets.push(fleet(b, g, n(2), vehMat, (i, t, p, q, s) => {
+    const lane = clearLane(chordLane(cx, cz, reach + 150, base + 4.2, Math.max(150, route.peak + BLIMP_BELOW + 14), 230), false, cx, cz, FREIGHTER_CLEAR, 0, obstacles)
+    fleets.push(reg(fleet(b, g, n(2), vehMat, (i, t, p, q, s) => {
       along(lane, i * 230 + t * 7, p, q)
       s.setScalar(1)
       return true
-    }))
+    }), FREIGHTER_CLEAR, 6, 'freighter'))
   }
 
   for (const f of fleets) root.add(f.body)
@@ -1217,7 +1503,17 @@ export const buildCityscape = async (
     // `look.lit` is the one colour every city material's `uLit` points at.
     setLight: (k01: number) => { look.lit.copy(litBase).multiplyScalar(Math.max(0, Math.min(1, k01))) },
     shotHits: (x, y, z, r, out) => targets.hit(x, y, z, r, lastT, out),
+    lure: (x, y, z, vx, vy, vz, range) => targets.lure(x, y, z, vx, vy, vz, range, lastT),
     sinking: (emit) => targets.sinking(lastT, emit),
+    obstacles,
+    probe: (t, emit) => {
+      for (const [f, [r, below, kind]] of reachOf) {
+        for (let i = 0; i < f.n; i++) {
+          // Downed ones are falling out of the sky, not flying a route.
+          if (f.place(i, t, p, q, s) && !targets.isDown(f.place, i)) emit(p.x, p.y, p.z, r, below, kind)
+        }
+      }
+    },
     dispose: () => {
       root.traverse((o) => {
         const mesh = o as Mesh

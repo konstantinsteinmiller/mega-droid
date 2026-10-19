@@ -15,7 +15,7 @@ import AdsBlockedModal from '@/components/atoms/AdsBlockedModal.vue'
 import VConsoleHideButton from '@/components/atoms/VConsoleHideButton.vue'
 import GlLostVeil from '@/components/atoms/GlLostVeil.vue'
 import { useCrazyMuteSync } from '@/use/useCrazyMuteSync'
-import useCheats, { installDebugUnlock } from '@/use/useCheats'
+import useCheats, { installDebugUnlock, CheatLayer, cheatUi } from '@/use/useCheats'
 import { orientation } from '@/use/useUser'
 import { installUiScale } from '@/use/useUiScale'
 import { useRenderGate } from '@/platforms/renderGate'
@@ -40,7 +40,7 @@ installDebugUnlock()
 // returns inert when cheats are off, so this is a no-op for normal players —
 // but without CALLING it the keydown listeners were never attached at all
 // (it was previously only imported for `installDebugUnlock`, never invoked).
-useCheats()
+const { isCheat } = useCheats()
 
 initMusic()
 
@@ -164,6 +164,9 @@ const VConsoleHide = import.meta.env.VITE_APP_NATIVE === 'true' || import.meta.e
     GlLostVeil
     component(v-if="VConsoleHide" :is="VConsoleHide")
     RouterView
+    //- The cmonc toast and the cheat panel (#Cheat1): loaded only once cheats
+    //- are on (or the toast says they just went off); absent from clean builds.
+    component(v-if="CheatLayer && (isCheat || cheatUi.toast)" :is="CheatLayer")
 
   div.relative.w-full.h-full(v-else-if="isLicenseDenied")
     h1.absolute.text-red-500(class="left-1/2 -translate-x-[50%] top-1/2 -translate-y-[50%] text-3xl") {{ t('license.denied') }}

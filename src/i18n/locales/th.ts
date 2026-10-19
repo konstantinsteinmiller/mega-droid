@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'หมาล่าถ่านเพลิง',
+    'steelHound': 'หมาล่าเหล็กกล้า',
     'icebreakerBrute': 'ยักษ์ทุบน้ำแข็ง',
     'arcSpider': 'แมงมุมสายฟ้าโค้ง',
     'stormHornetQueen': 'ราชินีแตนพายุ',
@@ -177,6 +177,26 @@ export default {
     'volt': 'หอคอยสายฟ้า',
     'gale': 'ท่าเรือเวหา',
     'fortress': 'ป้อมปราการ Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'เปิดสูตรโกง: Shift+Ctrl+Alt+F1 เปิดแผงสูตรโกง',
+    'off': 'ปิดสูตรโกง',
+    'title': 'แผงสูตรโกง',
+    'note': 'เซฟที่ใช้สูตรโกงจะไม่ส่งคะแนนไปยังกระดานผู้นำ',
+    'unlockAll': 'ปลดล็อกภารกิจเนื้อเรื่องทั้งหมด',
+    'bolts': '+{n} สลัก',
+    'chips': '+{n} ชิปทักษะ',
+    'gear': 'บลาสเตอร์ระดับเอพิก',
+    'gels': 'เติมเจลซ่อมให้เต็ม',
+    'done': 'เสร็จแล้ว!',
+    'doors': 'วาร์ปไปที่ประตู',
+    'boss': 'ประตูบอส',
+    'challenge': 'ประตูท้าทาย',
+    'challengeN': 'ประตูท้าทาย {n}',
+    'actLevelUp': 'เล่นฉากเลเวลอัป',
+    'actObjective': 'เล่นฉากทำเป้าหมายสำเร็จ'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'พบ {item} ระดับ {rarity}!',
     'tank': 'พบเจลซ่อม!',
     'giftTank': 'ของขวัญ: +1 เจลซ่อม!',
+    'skillChip': 'พบชิปสกิล!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'เทียบกับที่สวมอยู่',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'สไลด์',
       'block': 'ป้องกัน',
       'interact': 'โต้ตอบ',
+      'pip': 'เสบียงของพิป',
       'beam': 'วาร์ปออก',
       'tank': 'เจลซ่อมแซม',
       'weapon1': 'อาวุธพิเศษ 1',

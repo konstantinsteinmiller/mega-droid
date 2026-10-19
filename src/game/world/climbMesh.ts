@@ -7,7 +7,7 @@ import { rcyl, rcone, cap, rbox, xform, paint, paintBy, merge, sph, torus } from
 import { mulberry32 } from './rng'
 import { noSlice, type Slice } from '../engine/slicer'
 import {
-  QuadBatch, cellOwners, doorFramePos, buildSky, outerWall, outerEnd, FLOOR_UV, WALL_UV, PLAIN_UV, type LevelMeshes, type UV8
+  QuadBatch, cellOwners, doorFramePos, doorStripe, baseboardGeo, DOOR_POST_R, DOOR_POST_BEVEL, buildSky, outerWall, outerEnd, FLOOR_UV, WALL_UV, PLAIN_UV, type LevelMeshes, type UV8
 } from './levelMesh'
 import { BALL_R } from './climbGen'
 import { lavaCell, lavaMaterial } from '../models/lava'
@@ -393,7 +393,7 @@ export const buildClimbLevel = async (
           }
           if (!t.pit[k]) {
             const fy = t.floor[k]!
-            if (!ramp) decor[o]!.push(xform(piece('baseboard', () => paint(cap(0.13, CELL - 0.3, 8, 2), theme.wallLow)), [mx + e.n[0] * 0.06, fy + 0.14, mz + e.n[2] * 0.06], rotAlong))
+            if (!ramp) decor[o]!.push(xform(piece('baseboard', () => paint(baseboardGeo(), theme.wallLow)), [mx + e.n[0] * 0.06, fy + 0.14, mz + e.n[2] * 0.06], rotAlong))
             if (busy.has(`${k}:${e.di},${e.dj}`) || propFaces.has(`${k}:${e.di},${e.dj}`)) {
               // A secret's wall: kept bare for its button / hint (or a prop's).
             } else if (c === Cell.Room && rng() < 0.45) {
@@ -822,13 +822,7 @@ const doorFrame = (d: Door, y: number, theme: Theme, out: BufferGeometry[], batc
   for (const s of [-1, 1]) {
     const px = along === 'x' ? fx + s * (CELL / 2) : fx
     const pz = along === 'z' ? fz + s * (CELL / 2) : fz
-    out.push(xform(paint(rcyl(0.4, WALL_H, 0.15, 16), d.boss ? theme.trim : theme.pilaster), [px, y + WALL_H / 2, pz]))
+    out.push(xform(paint(rcyl(DOOR_POST_R, WALL_H, DOOR_POST_BEVEL, 16), d.boss ? theme.trim : theme.pilaster), [px, y + WALL_H / 2, pz]))
   }
-  const hw = 0.5
-  const yy = y + 0.012
-  if (d.axis === 'x') {
-    batch.quad([fx - hw, yy, fz - CELL / 2], [fx - hw, yy, fz + CELL / 2], [fx + hw, yy, fz + CELL / 2], [fx + hw, yy, fz - CELL / 2], [0, 1, 0], PLAIN_UV, cHaz, cHaz, cHaz, cHaz)
-  } else {
-    batch.quad([fx - CELL / 2, yy, fz - hw], [fx - CELL / 2, yy, fz + hw], [fx + CELL / 2, yy, fz + hw], [fx + CELL / 2, yy, fz - hw], [0, 1, 0], PLAIN_UV, cHaz, cHaz, cHaz, cHaz)
-  }
+  doorStripe(batch, d, fx, fz, y, cHaz)
 }

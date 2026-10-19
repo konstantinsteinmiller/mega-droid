@@ -16,7 +16,7 @@ vi.mock('@/game/world/textures', async (orig) => {
 
 import { Scene } from 'three'
 import {
-  BOSS_WEAK, ENEMY_WEAK, WEAK_SPOT_MUL, raySphere, weakSpotAt, weakSpotFacing, weakSpotOf, weakSpotUnderRay,
+  BOSS_WEAK, ENEMY_WEAK, ENEMY_WEAK_MORE, WEAK_SPOT_MUL, weakSpotCount, raySphere, weakSpotAt, weakSpotFacing, weakSpotOf, weakSpotUnderRay,
   type WeakBody
 } from '@/game/data/weakspots'
 import { createEnemy } from '@/game/sim/enemies'
@@ -118,9 +118,9 @@ const openMap = (): MapData => {
 }
 
 /** A turret (it never moves, its core on its back) at (30, 30), a real CombatSystem. */
-const setup = (): { sys: CombatSystem; e: Enemy } => {
+const setup = (kind: EnemyKind = 'turret'): { sys: CombatSystem; e: Enemy } => {
   const map = openMap()
-  const e = createEnemy('turret', 1, 30, 30, 0, { theme: THEMES.scrapyard })
+  const e = createEnemy(kind, 1, 30, 30, 0, { theme: THEMES.scrapyard })
   e.hp = e.maxHp = 1e6
   const w = {
     scene: new Scene(), map, nav: createNav(map), time: 0,
@@ -143,10 +143,10 @@ const fly = (sys: CombatSystem, s: Shot): void => {
 }
 
 /** A pellet from behind the turret (z = 38) straight at a point. */
-const shootAt = (sys: CombatSystem, x: number, y: number, z: number, target: Enemy | null, weakOf: Enemy | null): Shot => {
+const shootAt = (sys: CombatSystem, x: number, y: number, z: number, target: Enemy | null, weakOf: Enemy | null, weakIdx = 0): Shot => {
   const oy = y
   const d = Math.hypot(x - 30, y - oy, z - 38)
-  return sys.spawnPlayerShot('pellet', 30, oy, 38, (x - 30) / d, (y - oy) / d, (z - 38) / d, 10, false, target, weakOf)
+  return sys.spawnPlayerShot('pellet', 30, oy, 38, (x - 30) / d, (y - oy) / d, (z - 38) / d, 10, false, target, weakOf, weakIdx)
 }
 
 const kranks = (): number => hudEvents.filter(h => h.t === 'kranck').length
@@ -176,5 +176,78 @@ describe('Weak spots: in combat', () => {
     sys.damageEnemy(e, 20, { crit: false, charge: 1, fromX: 30, fromZ: 38, x: 30, y: 1, z: 30, color: '#fff', weakSpot: true })
     expect(hp0 - e.hp).toBe(Math.round(20 * e.def.armor * 1.5))
     expect(kranks()).toBe(1)
+  })
+})
+
+// The Gear Roller shows a head (its driver's cyclops eye on top of the
+// wheel) besides its exhaust: two spots. The head is small and follows the
+// head through the wind-up lean and the lunge's hop; the exhaust is only open
+// from behind. Each crits once; the wheel takes normal damage.
+const HEAD = 1
+const head = (e: WeakBody): { x: number; y: number; z: number; r: number } => weakSpotAt(e, { x: 0, y: 0, z: 0, r: 0 }, HEAD)
+
+describe("Weak spots: the Gear Roller's two", () => {
+  it('keeps its exhaust, and adds a small driver head on top', () => {
+    expect(ENEMY_WEAK.roller).toEqual({ part: 'back', up: 0.95, fwd: -0.72, side: 0, r: 0.26 })
+    const w = ENEMY_WEAK_MORE.roller![0]!
+    expect(w.part).toBe('head')
+    expect(w.up).toBeGreaterThan(1.5)
+    expect(w.r).toBeLessThanOrEqual(ENEMY_WEAK.trooper.r)
+    expect(weakSpotCount(body({ kind: 'roller' }))).toBe(2)
+    // A boss or a mini-boss with its own spot keeps just that one
+    expect(weakSpotCount(body({ kind: 'roller', def: { aimY: 1, weak: ENEMY_WEAK.heli } }))).toBe(1)
+  })
+
+  it('the exhaust is open only from behind, the head from anywhere', () => {
+    const e = body({ kind: 'roller' })
+    expect(weakSpotFacing(e, 0, -8)).toBe(true)
+    expect(weakSpotFacing(e, 0, 8)).toBe(false)
+    expect(weakSpotFacing(e, 0, 8, HEAD)).toBe(true)
+  })
+
+  it('the crosshair picks the spot it is on, the nearer of the two', () => {
+    const e = body({ kind: 'roller' })
+    const h = head(e)
+    // From the front, level with the head: the head
+    expect(weakSpotUnderRay(0, h.y, 8, 0, 0, -1, [e], () => true, () => true)?.i).toBe(HEAD)
+    // From behind, level with the exhaust: the exhaust
+    const b = weakSpotAt(e, { x: 0, y: 0, z: 0, r: 0 })
+    expect(weakSpotUnderRay(0, b.y, -8, 0, 0, 1, [e], () => true, () => true)?.i).toBe(0)
+  })
+
+  it('a back hit crits, a head hit crits, a wheel hit is normal — one crit per hit', () => {
+    const shot = (kind: 'back' | 'head' | 'wheel'): number => {
+      const { sys, e } = setup('roller')
+      e.yaw = Math.PI // its back to the shooter at z = 38
+      hudEvents.length = 0
+      // The wheel's lower rim: the crosshair there is on no spot
+      const p = kind === 'wheel' ? { x: e.x, y: 0.4, z: e.z } : weakSpotAt(e, { x: 0, y: 0, z: 0, r: 0 }, kind === 'head' ? HEAD : 0)
+      const on = weakSpotUnderRay(30, p.y, 38, 0, 0, -1, [e], () => true, () => true)
+      expect(on?.i ?? null, kind).toBe(kind === 'wheel' ? null : kind === 'head' ? HEAD : 0)
+      const hp0 = e.hp
+      fly(sys, shootAt(sys, p.x, p.y, p.z, on ? null : e, on?.e ?? null, on?.i ?? 0))
+      expect(kranks(), kind).toBe(kind === 'wheel' ? 0 : 1)
+      return hp0 - e.hp
+    }
+    const { e } = setup('roller')
+    const crit = Math.round(10 * e.def.armor * WEAK_SPOT_MUL)
+    expect(shot('back')).toBe(crit)
+    expect(shot('head')).toBe(crit)
+    expect(shot('wheel')).toBe(Math.round(10 * e.def.armor))
+  })
+
+  it('the head spot rides the lunge hop and leans with the wind-up', () => {
+    const e = createEnemy('roller', 1, 0, 0, 0, { theme: THEMES.scrapyard })
+    e.yaw = 0
+    e.mo.tilt = 0
+    const ground = { ...head(e) }
+    e.y = 0.45
+    expect(head(e).y - ground.y).toBeCloseTo(0.45, 6)
+    // The lunge leans the head forward (+z at yaw 0), the wind-up back
+    e.y = 0
+    e.mo.tilt = 1
+    expect(head(e).z).toBeGreaterThan(ground.z)
+    e.mo.tilt = -0.5
+    expect(head(e).z).toBeLessThan(ground.z)
   })
 })

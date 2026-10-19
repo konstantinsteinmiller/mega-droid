@@ -21,8 +21,11 @@
           | +{{ quest.reward.bolts }}
           GameIcon.mini(name="nut")
     div.q-actions
+      //- On a keyboard the key that deploys ("[E] Deploy", as the stations'
+      //- "[E] Open"); on touch the play sign.
       button.deploy(type="button" @click="$emit('deploy')")
-        GameIcon.mini(name="play")
+        KeyCap.k(v-if="keyHint" code="KeyE")
+        GameIcon.mini(v-else name="play")
         span {{ t('hub.deploy') }}
       button.reroll(v-if="!story" type="button" :aria-label="t('hub.reroll')" @click="$emit('reroll')")
         GameIcon(name="replay")
@@ -32,6 +35,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
+import KeyCap from '@/components/hud/KeyCap.vue'
 import type { Quest } from '@/game/data/quests'
 import { QUEST_ICON, questTitle } from './questFormat'
 import { SECTOR_COLOR } from '@/game/data/signature'
@@ -39,7 +43,7 @@ import { SECTOR_BY_ID } from '@/game/data/regions'
 import MasterPortrait from '@/components/atoms/MasterPortrait.vue'
 import type { BossId } from '@/game/models/bosses'
 
-const props = defineProps<{ quest: Quest; story?: boolean }>()
+const props = defineProps<{ quest: Quest; story?: boolean; keyHint?: boolean }>()
 defineEmits<{ deploy: []; reroll: [] }>()
 const { t } = useI18n()
 const ICON = QUEST_ICON
@@ -140,6 +144,8 @@ const params = computed(() => ({
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35)
   &:active
     transform: translateY(2px)
+.k
+  font-size: 0.9em
 .reroll
   align-self: center
   width: 30px

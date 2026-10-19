@@ -5,6 +5,7 @@ import { moveCircle } from '../../world/nav'
 import { setTeleRing } from '../../fx/markers'
 import { PARRY_WINDOW, keepOffPlayer } from '../enemies'
 import { PLAYER_R, EYE_H } from '../constants'
+import { springTo, type Spring } from '../../models/spring'
 
 /**
  * ─── The mini-boss modules' toolkit ──────────────────────────────────────────
@@ -86,6 +87,27 @@ export const near = (w: World, x: number, z: number, r: number): boolean =>
 
 /** Ease `v` toward `to` at `rate` per second (exponential). */
 export const ease = (v: number, to: number, rate: number, dt: number): number => v + (to - v) * Math.min(1, rate * dt)
+
+/** The velocities of a module's sprung pose channels, by channel name. */
+export type PoseVel = Record<string, number>
+
+const _sp: Spring = { x: 0, v: 0 }
+
+/**
+ * `ease`'s second-order cousin for a pose channel (#183): a damped spring, so
+ * a channel whose target snaps (a wind-up starting, a strike, a recovery)
+ * starts gently instead of at full speed, crosses in a few frames, swings a
+ * little past and settles: anticipation and follow-through instead of a
+ * mechanical glide. `rate` means what it means to `ease` (about the same
+ * time to arrive); the channel's velocity is kept in `vel[key]`.
+ */
+export const sprung = (v: number, vel: PoseVel, key: string, to: number, rate: number, dt: number, zeta = 0.6): number => {
+  _sp.x = v
+  _sp.v = vel[key] ?? 0
+  springTo(_sp, to, rate * 0.3, zeta, dt)
+  vel[key] = _sp.v
+  return _sp.x
+}
 
 /** Keep Flux out of its body (a ground mini-boss is solid to him): to the
  *  rim even from dead centre, through the wall test (`keepOffPlayer`). */

@@ -37,7 +37,7 @@
       div.lid.bottom(ref="lidBottomEl")
     div.black(ref="blackEl" aria-hidden="true")
     div.flash(ref="flashEl" aria-hidden="true")
-      div.logo(ref="logoEl" v-html="LOGO_SVG")
+      div.logo(ref="logoEl" v-html="LOGO_HTML")
     //- Skip: a labelled button, bottom corner (thumb reach on a phone); with a
     //- keyboard, also "hold Space", its ring filling as it is held.
     Transition(name="skip")
@@ -69,7 +69,7 @@
         @pointerdown.stop
       )
         span.gate-glow(aria-hidden="true")
-        span.gate-logo(v-html="LOGO_SVG" aria-hidden="true")
+        span.gate-logo(v-html="LOGO_HTML" aria-hidden="true")
         span.gate-cta
           span.gate-icon(aria-hidden="true")
             GameIcon(name="play")
@@ -86,7 +86,7 @@ import { chargeInfo } from '@/game/sim/stats'
 import { initChargeRing, paintChargeRing } from '@/components/hud/chargeRing'
 import { KRANCK_LIFE, kranckTransform } from '@/components/hud/kranck'
 import GameIcon from '@/components/icons/GameIcon.vue'
-import { LOGO_SVG } from './logoLockup'
+import { LOGO_HTML } from './logoLockup'
 
 /**
  * ─── The intro's screen layer ────────────────────────────────────────────────
@@ -300,8 +300,13 @@ onUnmounted(() => {
   pointer-events: none
   animation: gate-breathe 2.4s ease-in-out infinite
 .gate-logo
+  display: block
   position: relative
   width: min(56vmin, 340px)
+  :deep(img)
+    display: block
+    width: 46%
+    margin: 0 auto -12%
   filter: drop-shadow(0 6px 0 rgba(8, 10, 24, 0.55))
   :deep(svg)
     display: block
@@ -374,6 +379,10 @@ onUnmounted(() => {
 .logo
   width: min(62vw, 46vh, 420px)
   opacity: 0
+  :deep(img)
+    display: block
+    width: 46%
+    margin: 0 auto -12%
   :deep(svg)
     display: block
     width: 100%

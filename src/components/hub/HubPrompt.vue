@@ -11,6 +11,7 @@
           v-if="quest"
           :quest="quest"
           :story="quest.kind === 'story'"
+          :key-hint="!touch"
           data-hub="deploy"
           @deploy="deploy"
           @reroll="reroll"

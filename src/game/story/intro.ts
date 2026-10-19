@@ -5,13 +5,13 @@ import {
 } from 'three'
 import type { GameMode } from '../engine/app'
 import { getRenderer } from '../engine/renderer'
-import { buildHero, animateHeroIdle, type HeroColors } from '../models/hero'
+import { buildHero, animateHeroIdle, HERO_MUZZLE_X, HERO_MUZZLE_Y, type HeroColors } from '../models/hero'
 import { buildPip, animatePip } from '../models/npc'
 import { buildTeleporter, type PadMesh } from '../models/props'
 import { buildTrooper, poseTrooper, buildHeli, poseHeli, buildBrute, poseBrute } from '../models/enemies'
 import { buildBlazeMaster, poseBoss } from '../models/bosses'
 import { buildGauss, poseGauss, newGaussPose, setGaussGlow, type GaussRig } from '../models/gauss'
-import { buildStasisCapsule, type StasisCapsule } from '../models/stasis'
+import { buildStasisCapsule, stasisBeat, type StasisCapsule } from '../models/stasis'
 import { buildDiorama, type Diorama } from '../models/diorama'
 import { buildStreet, vexFaceTexture, STREET_HAZE, type Street } from '../models/street'
 import { newMotion } from '../models/motion'
@@ -24,7 +24,10 @@ import { ENEMY_WEAK } from '../data/weakspots'
 import { baseStats, chargeInfo, type ChargeInfo } from '../sim/stats'
 import { glowTexture } from '../world/textures'
 import { THEMES } from '../world/themes'
-import { buildLabSet } from '../sim/hub'
+import { buildLabSet, buildLabFrontSet } from '../sim/hub'
+import { BAY, CAP_TO_PAD, FLUX_CAP_AT, GAUSS_CAP_AT, bayDir, bayPoint } from '../world/hubLayout'
+import { LAB_FRONT_ANGLES } from '../models/hubHall'
+import { tickLabScreens } from '../models/labConsole'
 import { Particles } from '../fx/particles'
 import { tickHud } from '../state/hud'
 import { sfx } from '../audio/sfx'
@@ -39,7 +42,7 @@ import {
   SHOW_GEL, SHOW_GEL_BURST, SHOW_BIG_DROP, SHOW_BIG_LAND, SHOW_BIG_STEPS, SHOW_FLEE_FROM, SHOW_FLEE_TO, SHOW_OVER_FIRE,
   SHOW_OVER_HIT, OVER_SHOT, OVER_STATS, overCharge, bigOn, SPIRE_FLASH, VEX_ON, CUTIN_FROM, CUTIN_TO, LAB_FROM, ALARM_TO, GAUSS_TURN,
   DISC_FROM, DISC_TO, STAGGER_AT, LEVER_AT, SAFE_FROM, SEAL_AT, FROST_FROM, FROST_TO, HEART_FROM, WAKE_FROM,
-  PIP_POP, GLYPH_ON, LV_POP, HOLO_FROM, SCRAP_BLINK, TURN_FROM, HOLO_FOLD_FROM, HOLO_FOLD_TO, STEP_FROM, STEP_TO, BEAM_RISE,
+  PIP_POP, GLYPH_ON, LV_POP, HOLO_FROM, SCRAP_BLINK, TURN_FROM, HOLO_FOLD_FROM, HOLO_FOLD_TO, STEP_FROM, STEP_TO, WALK_FROM, BEAM_RISE,
   FLASH_FROM, FLASH_FULL
 } from './introScript'
 import { cine, cineLive, resetCine, setGateHandler, setSkipHandler, skipHold } from './cine'
@@ -120,18 +123,40 @@ const _muzzle = new Vector3()
 const VALLEY_AT = new Vector3(300, 0, 0)
 const CUTIN_AT = new Vector3(0, 0, 300)
 
+/**
+ * The capsule scene is staged in the lab's stasis bay (`hubLayout.ts`, the
+ * hub stands the same capsules there): `bay(x, y, z)` is a point in its
+ * frame (x toward Flux's capsule, z toward the teleporter, 0 between the two
+ * capsules) and `bayVec` a direction in it.
+ */
+const bayXYZ = (x: number, y: number, z: number): [number, number, number] => {
+  const [wx, wz] = bayPoint(x, z)
+  return [wx, y, wz]
+}
+const bay = (x: number, y: number, z: number): Vector3 => new Vector3(...bayXYZ(x, y, z))
+const bayVec = (x: number, y: number, z: number, out: Vector3): Vector3 => {
+  const [wx, wz] = bayDir(x, z)
+  return out.set(wx, y, wz)
+}
+
 /** The lab's layout: Flux's capsule, Gauss's, where she stands, the hologram. */
-const FLUX_CAP = new Vector3(1.45, 0, -3.1)
-const GAUSS_CAP = new Vector3(-1.45, 0, -3.1)
-const GAUSS_AT = new Vector3(0.05, 0, -2.3)
-const HOLO_AT = new Vector3(0.7, 1.12, -1.75)
-/** Flux's eye as he wakes: at the front of his capsule, the glass down. */
-const EYE = new Vector3(FLUX_CAP.x, 0.34 + 1.06, FLUX_CAP.z + 0.45)
-const PAD_EYE = new Vector3(0, 0.3 + 1.06, 0)
+const FLUX_CAP = new Vector3(FLUX_CAP_AT.x, 0, FLUX_CAP_AT.z)
+const GAUSS_CAP = new Vector3(GAUSS_CAP_AT.x, 0, GAUSS_CAP_AT.z)
+const GAUSS_AT = bay(0.05, 0, 0.8)
+const HOLO_AT = bay(0.7, 1.12, 1.35)
+/** Flux's eye as he wakes: at the front of his capsule, the glass down;
+ *  then his walk onto the pad, in through the gap in its rim (`CAP_TO_PAD`). */
+const EYE = new Vector3(CAP_TO_PAD[0]![0], 0.34 + 1.06, CAP_TO_PAD[0]![1])
+const PAD_EYE = new Vector3(CAP_TO_PAD[2]![0], 0.3 + 1.06, CAP_TO_PAD[2]![1])
+const PAD_GAP = new Vector3(CAP_TO_PAD[1]![0], PAD_EYE.y, CAP_TO_PAD[1]![1])
+const WALK_LEG = EYE.distanceTo(PAD_GAP)
+const WALK_LEN = WALK_LEG + PAD_GAP.distanceTo(PAD_EYE)
+/** Footfalls over the walk (a stride of about 0.75 m). */
+const WALK_STEPS = Math.round(WALK_LEN / 0.75)
 /** The hologram's scale: the valley (r 14 m) as a table-top a metre across. */
 const HOLO_SCALE = 0.052
 /** Where Pip hovers while projecting: up and aside, clear of the hologram. */
-const PIP_PROJECT = new Vector3(1.35, 1.9, -1.65)
+const PIP_PROJECT = bay(1.35, 1.9, 1.45)
 /** …and on the pad's edge, spinning the ring up. */
 const PIP_PAD = new Vector3(-1.1, 1.5, 0.95)
 
@@ -238,29 +263,30 @@ const VALLEY_CAM: readonly CamKey[] = [
 // Low and wide from beside the pad, on the right: Gauss three-quarter on,
 // Flux's capsule beyond her, Pip peeking over the console at the edge. A slow
 // push-in across the whole shot; the disc's close-up is the one cut away.
+// (The lab's shots are keyed in the bay's frame.)
 const LAB_CAM: readonly CamKey[] = [
-  { t: LAB_FROM, pos: [2.9, 0.7, 1.9], look: [0.3, 1.35, -2.7], hfov: 80 },
-  { t: DISC_FROM, pos: [2.5, 0.75, 1.4], look: [0.45, 1.35, -2.75], hfov: 78 },
-  { t: DISC_TO, pos: [2.3, 0.85, 1.1], look: [0.55, 1.3, -2.8], hfov: 76 },
-  { t: SAFE_FROM, pos: [1.9, 0.95, 0.6], look: [0.7, 1.25, -2.9], hfov: 76 }
+  { t: LAB_FROM, pos: bayXYZ(2.9, 0.7, 5.0), look: bayXYZ(0.3, 1.35, 0.4), hfov: 80 },
+  { t: DISC_FROM, pos: bayXYZ(2.5, 0.75, 4.5), look: bayXYZ(0.45, 1.35, 0.35), hfov: 78 },
+  { t: DISC_TO, pos: bayXYZ(2.3, 0.85, 4.2), look: bayXYZ(0.55, 1.3, 0.3), hfov: 76 },
+  { t: SAFE_FROM, pos: bayXYZ(1.9, 0.95, 3.7), look: bayXYZ(0.7, 1.25, 0.2), hfov: 76 }
 ]
 
 /** The Atlas disc: held long enough to see it slide into his chest port. */
 const DISC_CAM: readonly CamKey[] = [
-  { t: DISC_FROM, pos: [1.9, 1.45, -1.55], look: [1.45, 1.2, -2.9], hfov: 56 },
-  { t: DISC_TO, pos: [1.8, 1.4, -1.8], look: [1.45, 1.2, -2.9], hfov: 50 }
+  { t: DISC_FROM, pos: bayXYZ(1.9, 1.45, 1.55), look: bayXYZ(1.45, 1.2, 0.2), hfov: 56 },
+  { t: DISC_TO, pos: bayXYZ(1.8, 1.4, 1.3), look: bayXYZ(1.45, 1.2, 0.2), hfov: 50 }
 ]
 
 const SAFE_CAM: readonly CamKey[] = [
-  { t: SAFE_FROM, pos: [-0.1, 1.5, -0.5], look: [-1.3, 1.3, -3.1], hfov: 64 },
-  { t: WAKE_FROM, pos: [-0.5, 1.5, -1.0], look: [-1.45, 1.35, -3.1], hfov: 58 }
+  { t: SAFE_FROM, pos: bayXYZ(-0.1, 1.5, 2.6), look: bayXYZ(-1.3, 1.3, 0), hfov: 64 },
+  { t: WAKE_FROM, pos: bayXYZ(-0.5, 1.5, 2.1), look: bayXYZ(-1.45, 1.35, 0), hfov: 58 }
 ]
 
 /** Where Flux looks in first person (world). */
 const FP_LOOK: ReadonlyArray<readonly [number, number, number, number]> = [
   // t, x, y, z
-  [WAKE_FROM, GAUSS_CAP.x, 1.3, GAUSS_CAP.z + 0.2],
-  [43.2 + AFTER, GAUSS_CAP.x, 1.35, GAUSS_CAP.z],
+  [WAKE_FROM, ...bayXYZ(-1.45, 1.3, 0.2)],
+  [43.2 + AFTER, ...bayXYZ(-1.45, 1.35, 0)],
   [44.4 + AFTER, HOLO_AT.x, HOLO_AT.y + 0.2, HOLO_AT.z],
   [TURN_FROM, HOLO_AT.x, HOLO_AT.y + 0.2, HOLO_AT.z],
   [STEP_FROM, 0, 1.0, 0],
@@ -279,12 +305,8 @@ const fpLookAt = (t: number, out: Vector3): Vector3 => {
   return out.set(k0[1] + (k1[1] - k0[1]) * u, k0[2] + (k1[2] - k0[2]) * u, k0[3] + (k1[3] - k0[3]) * u)
 }
 
-/** The stasis heartbeat: a beat every 1.3 s once the frost has set, 0..1. */
-const heartbeat = (t: number): number => {
-  if (t < HEART_FROM) return 0
-  const p = (t - HEART_FROM) % 1.3
-  return Math.exp(-p * 7) + 0.6 * Math.exp(-Math.max(0, p - 0.2) * 9) * (p > 0.2 ? 1 : 0)
-}
+/** The stasis heartbeat once the frost has set, 0..1. */
+const heartbeat = (t: number): number => stasisBeat(t - HEART_FROM)
 
 /** A zig-zag of red lightning between two points, re-rolled every call. */
 const crackle = (line: LineSegments, from: Vector3, to: Vector3, jag: number): void => {
@@ -583,13 +605,14 @@ export class IntroMode implements GameMode {
   }
 
   private buildLab(): Group {
-    this.labSet.add(buildLabSet())
+    this.labSet.add(buildLabSet(), buildLabFrontSet())
     this.pad = buildTeleporter(THEMES.scrapyard)
     ;(this.pad.ringMat as MeshBasicMaterial).opacity = 0.12
     this.labSet.add(this.pad.root)
-    // The alarm: a red strip over each of the dome's glow strips.
-    for (let k = 0; k < 11; k++) {
-      const a = Math.PI + (k / 10) * Math.PI
+    // The alarm: a red strip over each of the dome's glow strips (the back
+    // ring's, then the front's).
+    const strips = [...Array.from({ length: 11 }, (_, k) => Math.PI + (k / 10) * Math.PI), ...LAB_FRONT_ANGLES]
+    for (const a of strips) {
       const m = additive('#ff2036', 0)
       const strip = new Mesh(cap(0.1, 3.3, 8, 2), m)
       strip.position.set(Math.cos(a) * 7.85, 3.2, Math.sin(a) * 7.85)
@@ -606,15 +629,16 @@ export class IntroMode implements GameMode {
     this.fluxCap = buildStasisCapsule()
     this.fluxCap.root.position.copy(FLUX_CAP)
     // Its lever to the front, where Gauss stands (and out of his view).
-    this.fluxCap.root.rotation.y = -Math.PI / 2
+    this.fluxCap.root.rotation.y = BAY.yaw - Math.PI / 2
     this.gaussCap = buildStasisCapsule()
     this.gaussCap.root.position.copy(GAUSS_CAP)
     // Its lever to the back, its heartbeat light toward Flux as he wakes.
-    this.gaussCap.root.rotation.y = Math.PI / 2
+    this.gaussCap.root.rotation.y = BAY.yaw + Math.PI / 2
     this.labSet.add(this.fluxCap.root, this.gaussCap.root)
     this.sleeper = buildHero(opts.colors)
     this.sleeperRoot.add(this.sleeper.root)
     this.sleeperRoot.position.set(FLUX_CAP.x, 0.34, FLUX_CAP.z)
+    this.sleeperRoot.rotation.y = BAY.yaw
     this.labSet.add(this.sleeperRoot)
     this.gauss = buildGauss()
     this.gaussRoot.add(this.gauss.root)
@@ -623,6 +647,7 @@ export class IntroMode implements GameMode {
     this.pipRoot.add(this.pip.root)
     this.labSet.add(this.pipRoot)
     this.disc = new Mesh(paint(rcyl(0.07, 0.02, 0.008, 16), '#ffffff'), additive(PAL.glowCyan, 1))
+    this.disc.rotation.order = 'YXZ'
     this.labSet.add(this.disc)
     this.beamGlow = new Mesh(new CylinderGeometry(0.95, 0.95, 4, 28, 1, true), additive(PAL.glowCyan, 0))
     this.beamGlow.position.y = 2.3
@@ -852,6 +877,7 @@ export class IntroMode implements GameMode {
       this.cutinSet.visible = cutin
       this.labSet.visible = shot !== 'coldOpen' && shot !== 'valley'
     }
+    if (this.labSet.visible) tickLabScreens(t)
     const cam = this.camera
     const pos = this.camPos
     const look = this.camLook
@@ -930,7 +956,7 @@ export class IntroMode implements GameMode {
     this.dashOn = this.flux.dashOn
     // The charge ring at the muzzle, then the shot a hand's width off the shield.
     this.streetSet.updateMatrixWorld(true)
-    const muzzle = _muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
+    const muzzle = _muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(HERO_MUZZLE_X, HERO_MUZZLE_Y - 0.026, 0))).sub(this.streetSet.position)
     // As the arm cannon charges in play: green through the first level, then
     // the full charge's cyan, flickering (the game's clock: full at 2.25).
     this.paintCharge(st > 1.9 && st < 2.62 ? chargeInfo(2.2 * clamp01((st - 1.9) / 0.65), FIRST_STATS) : null, t, muzzle)
@@ -1011,7 +1037,7 @@ export class IntroMode implements GameMode {
     // The muzzle where he stands now: the slide carried him forward and the
     // poses above moved the arm (it was a step behind him at the finish).
     this.streetSet.updateMatrixWorld(true)
-    muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(0, -0.34, 0))).sub(this.streetSet.position)
+    muzzle.copy(R.bones.elbowR!.localToWorld(_a.set(HERO_MUZZLE_X, HERO_MUZZLE_Y - 0.026, 0))).sub(this.streetSet.position)
     // The Overload's charge at the muzzle, the game's green, cyan, violet;
     // then the violet shot into the weak spot.
     const over = overCharge(st)
@@ -1308,8 +1334,9 @@ export class IntroMode implements GameMode {
     const panels = 11 * ramp(LAB_FROM, ALARM_TO, t)
     const calm = ramp(HEART_FROM, HEART_FROM + 2, t)
     const pulse = 0.5 + 0.5 * Math.sin(t * 6)
+    // (The front's strips light with the back ring's last one.)
     this.alarm.forEach((m, k) => {
-      m.opacity = (k < panels ? 0.75 : 0) * (1 - 0.65 * calm) * (0.7 + 0.3 * pulse)
+      m.opacity = (Math.min(k, 10) < panels ? 0.75 : 0) * (1 - 0.65 * calm) * (0.7 + 0.3 * pulse)
     })
     if (calm < 1) {
       this.light('#1c0a14', '#2a0c18', 0.9 + 0.2 * pulse, '#ff6a78', 0.9, '#7fd6ff', 0.45, 16, 44)
@@ -1321,13 +1348,20 @@ export class IntroMode implements GameMode {
     animateHeroIdle(this.sleeper, t * 0.3)
     pose(this.sleeper, 'head', 0.3, 0, 0)
     this.sleeper.glowMaterial.color.setScalar(0.1)
+    // Under the red alarm his pearl must still read white: his material
+    // takes the alarm's red out of the light it receives (the room stays red)
+    // and adds a soft neutral self-light; both fade out once the lab calms.
+    const alarmK = 1 - calm
+    this.sleeper.material.color.setRGB(1 - 0.5 * alarmK, 1, 1 - 0.08 * alarmK)
+    this.sleeper.material.emissive.setRGB(0.2, 0.2, 0.22).multiplyScalar(alarmK)
     this.sleeperRoot.visible = !fp
     // His capsule: the lever, the glass sliding down.
     const lever = ramp(LEVER_AT - 0.4, LEVER_AT, t)
     this.fluxCap.setLever(lever)
     this.fluxCap.setOpen(ramp(LEVER_AT + 0.2, LEVER_AT + 1.6, t))
     // (In first person the camera stands inside it: no wash over the view.)
-    this.fluxCap.setInner('#ff4050', fp ? 0 : 0.12)
+    // A pale stasis glow, not a red one: the alarm already reds the room.
+    this.fluxCap.setInner('#dfe9ff', fp ? 0 : 0.08)
     this.fluxCap.setFrost(0)
     this.fluxCap.setHeart(0)
     // Gauss's capsule: open until she steps in, then sealed and frosting.
@@ -1346,7 +1380,7 @@ export class IntroMode implements GameMode {
     this.gaussRoot.position.set(
       from.x + (GAUSS_CAP.x - from.x) * walk, 0.34 * ramp(SAFE_FROM + 0.75, SAFE_FROM + 1.0, t) + bob, from.z + (GAUSS_CAP.z - from.z) * walk
     )
-    this.gaussRoot.rotation.y = 2.1 * (1 - walk)
+    this.gaussRoot.rotation.y = BAY.yaw + 2.1 * (1 - walk)
     gp.disc = t < DISC_TO + 0.2 ? ramp(GAUSS_TURN, DISC_FROM + 0.1, t) : 1 - ramp(DISC_TO + 0.2, DISC_TO + 0.8, t)
     gp.stagger = t > STAGGER_AT && t < SAFE_FROM ? ramp(STAGGER_AT, STAGGER_AT + 0.4, t) * (1 - ramp(STAGGER_AT + 1.0, STAGGER_AT + 1.8, t)) : 0
     gp.look = t < GAUSS_TURN ? -0.2 : t < STAGGER_AT + 0.1 ? 0.4 : t < STAGGER_AT + 0.8 ? -0.7 : 0.3
@@ -1360,12 +1394,12 @@ export class IntroMode implements GameMode {
     this.gauss.bones.elbowL!.getWorldPosition(_a)
     _a.y -= 0.25
     this.sleeper.bones.chest!.getWorldPosition(_b)
-    _b.add(_d.set(0, 0.07, 0.19))
+    _b.add(bayVec(0, 0.07, 0.19, _d))
     // It slides home in the close-up, and clicks in (`energy`) at DISC_TO − 0.5.
     const into = ramp(DISC_FROM + 0.3, DISC_TO - 0.5, t)
     this.disc.visible = t > GAUSS_TURN - 0.1 && !fp
     this.disc.position.copy(_a).lerp(_b, into)
-    this.disc.rotation.set(Math.PI / 2, 0, 0)
+    this.disc.rotation.set(Math.PI / 2, BAY.yaw, 0)
     ;(this.disc.material as MeshBasicMaterial).opacity = 0.7 + 0.3 * Math.sin(t * 12)
     // The red crackle: up her arm, then at the frost, where it dies.
     const arm = t > GAUSS_TURN + 0.6 && t < LEVER_AT + 0.2
@@ -1379,8 +1413,8 @@ export class IntroMode implements GameMode {
     this.glassCrackle.visible = glass && Math.random() < 0.8 * (1 - ramp(FROST_TO - 0.5, FROST_TO, t)) + 0.1
     if (glass) {
       const top = 0.4 + 2.2 * ramp(FROST_FROM, FROST_TO, t)
-      _a.set(GAUSS_CAP.x + 0.25, 0.1, GAUSS_CAP.z + 0.75)
-      _b.set(GAUSS_CAP.x + 0.1, Math.max(0.5, top - 0.1), GAUSS_CAP.z + 0.68)
+      _a.copy(GAUSS_CAP).add(bayVec(0.25, 0.1, 0.75, _c))
+      _b.copy(GAUSS_CAP).add(bayVec(0.1, Math.max(0.5, top - 0.1), 0.68, _c))
       crackle(this.glassCrackle, _a, _b, 0.18)
     }
     // Pip: hiding behind the console, then in Flux's face, then the hologram.
@@ -1416,10 +1450,13 @@ export class IntroMode implements GameMode {
       }
       return camAt(SAFE_CAM, t, pos, look)
     }
-    // First person: his eye, then three steps onto the pad.
-    const walkK = ramp(STEP_FROM, STEP_TO, t)
-    pos.copy(EYE).lerp(PAD_EYE, walkK)
-    pos.y -= Math.abs(Math.sin(walkK * Math.PI * 3)) * 0.03
+    // First person: his eye, then out of the bay and onto the pad, through
+    // the gap between its rim's posts.
+    const walkK = ramp(WALK_FROM, STEP_TO, t)
+    const d = walkK * WALK_LEN
+    if (d < WALK_LEG) pos.copy(EYE).lerp(PAD_GAP, d / WALK_LEG)
+    else pos.copy(PAD_GAP).lerp(PAD_EYE, (d - WALK_LEG) / (WALK_LEN - WALK_LEG))
+    pos.y -= Math.abs(Math.sin(walkK * Math.PI * WALK_STEPS)) * 0.03
     // The wake-up: a small dip and rise as the eyes open.
     pos.y += -0.05 * (1 - ramp(37.8 + AFTER, 40.0 + AFTER, t))
     fpLookAt(t, look)

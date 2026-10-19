@@ -114,6 +114,38 @@ export const TABLE_Z = -4.9
 export const TABLE_R = 1.45
 /** Where Flux stands to be briefed: in front of the table, facing it. */
 export const BRIEF_SPOT = { x: 0, z: TABLE_Z + TABLE_R + 1.2, yaw: Math.PI }
+/**
+ * The stasis bay: the two capsules (`models/stasis.ts`) side by side on the
+ * right of the right workstation, facing the teleporter, out of every path
+ * (to the table, the door, the pad). The intro, the ending and the hub all
+ * stand them here, so the lab is one place; the films' lab shots are laid
+ * out in the bay's frame (`bayPoint`), so they turn with it.
+ */
+const BAY_R = 5.8
+const BAY_A = -0.09
+export const BAY = {
+  x: Math.cos(BAY_A) * BAY_R,
+  z: Math.sin(BAY_A) * BAY_R,
+  /** Its turn (a `rotation.y`): the bay's +z faces the teleporter. */
+  yaw: Math.atan2(-Math.cos(BAY_A), -Math.sin(BAY_A))
+}
+/** A direction in the bay's frame (x toward Flux's capsule, z toward the
+ *  teleporter) in the lab's. */
+export const bayDir = (lx: number, lz: number): [number, number] => {
+  const c = Math.cos(BAY.yaw)
+  const s = Math.sin(BAY.yaw)
+  return [lx * c + lz * s, -lx * s + lz * c]
+}
+/** A point in the bay's frame (0 between the two capsules) in the lab's. */
+export const bayPoint = (lx: number, lz: number): [number, number] => {
+  const [dx, dz] = bayDir(lx, lz)
+  return [BAY.x + dx, BAY.z + dz]
+}
+/** Flux woke in the capsule nearer the door; Gauss sleeps in the one by the
+ *  workstation until the ending wakes her. */
+const CAP_HALF = 1.45
+export const FLUX_CAP_AT = { x: bayPoint(CAP_HALF, 0)[0], z: bayPoint(CAP_HALF, 0)[1] }
+export const GAUSS_CAP_AT = { x: bayPoint(-CAP_HALF, 0)[0], z: bayPoint(-CAP_HALF, 0)[1] }
 
 /** The trophy case (the Masters' cores): a thing to look at, not a station. */
 export const TROPHY_SPOT = { side: 1 as const, row: 3, z: rowZ(3) }
@@ -212,13 +244,33 @@ const buildWalls = (): Seg[] => {
 
 export const WALLS: readonly Seg[] = buildWalls()
 
-/** The lab's consoles and fluid capsules (`buildLabSet`), and the table. */
+/** The lab's consoles (`buildLabSet`), the stasis capsules (their bases)
+ *  and the table. */
 export const LAB_POSTS: readonly Post[] = [
   { x: -3.6, z: -2.4, r: 0.95 },
   { x: 3.6, z: -2.4, r: 0.95 },
-  { x: -5.4, z: -0.6, r: 0.62 },
-  { x: 5.4, z: -0.6, r: 0.62 },
+  { x: FLUX_CAP_AT.x, z: FLUX_CAP_AT.z, r: 0.85 },
+  { x: GAUSS_CAP_AT.x, z: GAUSS_CAP_AT.z, r: 0.85 },
   { x: 0, z: TABLE_Z, r: TABLE_R }
+]
+
+/** The teleporter's six posts round its rim (`buildTeleporter`): Flux steps
+ *  off the pad between them, never through one. The gaps face the door and
+ *  the table. */
+export const PAD_POST_R = 1.35
+export const PAD_POSTS: readonly Post[] = Array.from({ length: 6 }, (_, k) => {
+  const a = (k / 6) * Math.PI * 2
+  return { x: Math.cos(a) * PAD_POST_R, z: Math.sin(a) * PAD_POST_R, r: 0.15 }
+})
+
+/** Flux's walk from his capsule onto the teleporter (the intro's last shot,
+ *  in first person): from where he stood in it, out of the bay, and in
+ *  through the gap between the rim's posts at 30° (they stand every 60°), to
+ *  the pad's centre. */
+export const CAP_TO_PAD: ReadonlyArray<readonly [number, number]> = [
+  bayPoint(CAP_HALF, 0.45),
+  [Math.cos(Math.PI / 6) * (PAD_POST_R + 0.55), Math.sin(Math.PI / 6) * (PAD_POST_R + 0.55)],
+  [0, 0]
 ]
 
 /** Each station's body in its niche (Flux walks up to it, not into it). */
@@ -230,6 +282,7 @@ export const GATE_POSTS: readonly Post[] = [-1, 1].map(s => ({ x: s * GATE_PYLON
 
 export const POSTS: readonly Post[] = [
   ...LAB_POSTS,
+  ...PAD_POSTS,
   ...GATE_POSTS,
   ...POIS.filter(p => p.kind === 'station' && p.id !== 'table').map(stationPost),
   { x: TROPHY_SPOT.side * (HALL_HALF + NICHE_DEPTH - 0.85), z: TROPHY_SPOT.z, r: 1.45 }
@@ -415,8 +468,11 @@ export const routeTo = (x: number, z: number, to: Poi): Array<[number, number]> 
     return pts
   }
   if (inLab) {
-    // Round the table and the consoles to the door.
-    if (z < -1.2) pts.push([x < 0 ? -2 : 2, 0.2])
+    // Round the table and the consoles to the door: from in front of the
+    // table straight over the teleporter (between its posts), from beside it
+    // round the pad's rim.
+    if (z < -1.2 && Math.abs(x) < 1) pts.push([0, Math.max(z, BRIEF_SPOT.z)])
+    else if (z < -1.2) pts.push([x < 0 ? -2.4 : 2.4, 0.4])
     pts.push([0, LAB_R - 2.2])
     pts.push([0, LAB_R + 1])
     pts.push([0, AIRLOCK_END + 1])

@@ -185,6 +185,8 @@ export interface Shot {
   /** Aimed at this machine's weak spot (`data/weakspots.ts`): the crosshair
    *  was on it when fired. Only such a shot can land one; the auto-aim's never. */
   weakOf?: Enemy | null
+  /** Which of its weak spots (`weakSpotAt`'s `i`). */
+  weakIdx?: number
   /** How close it has come to that spot so far (m): once it is past it, it
    *  is an ordinary shot. */
   weakBest?: number
@@ -244,6 +246,11 @@ export interface Pickup {
   t: number
   root: Group
   magnet: boolean
+  /** Its planned landing spot and floor height (`sim/pickupToss.ts`); a
+   *  NaN `ref` is a free toss (a bolt shed over a pit). */
+  hx: number
+  hz: number
+  ref: number
 }
 
 export interface CombatPlayer {

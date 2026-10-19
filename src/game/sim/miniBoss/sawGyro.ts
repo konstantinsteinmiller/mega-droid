@@ -2,11 +2,12 @@ import type { Group } from 'three'
 import type { Enemy, World } from '../world'
 import type { Rig } from '../../models/kit'
 import type { Room } from '../../world/levelGen'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildSawGyro, poseSawGyro, newGyroPose, buildSawBlade, poseSawBlade, GYRO_COLORS, GYRO_SCALE, GYRO_CORE_Y, type GyroPose
 } from '../../models/miniBoss/sawGyro'
-import { faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, near, ease, TAU } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, near, ease, TAU, sprung, type PoseVel } from './kit'
 import { fxLayer, alignFx, FloorStrip } from './worldFx'
 import { pushHud } from '../../state/hud'
 
@@ -69,6 +70,8 @@ export interface SawBlade {
 }
 
 export interface GyroMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: GyroPose
   attack: Attack | ''
   /** The ricochet's heading (unit) and the walls it has struck. */
@@ -128,11 +131,17 @@ const hidePath = (m: GyroMem): void => {
   for (const s of m.path) s.hide()
 }
 
-const pick = (e: Enemy, m: GyroMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const GYRO_REACH: Record<Attack, number> = {
+  // It ricochets at him wall to wall; the blades fly till they hit something.
+  ricochet: ANYWHERE, blades: ANYWHERE
+}
+
+const pick = (e: Enemy, m: GyroMem, d: number): Attack | null => {
   const wantRico = d > 7 ? 0.7 : d < 4 ? 0.35 : 0.5
   let a: Attack = Math.random() < wantRico ? 'ricochet' : 'blades'
   if (a === m.attack && e.step >= 1) a = a === 'ricochet' ? 'blades' : 'ricochet'
-  return a
+  return firstInReach(GYRO_REACH, d, a, a === 'ricochet' ? 'blades' : 'ricochet')
 }
 
 const begin = (w: World, e: Enemy, m: GyroMem, a: Attack, room: Room): void => {
@@ -212,7 +221,7 @@ const tickBlades = (w: World, e: Enemy, m: GyroMem, dt: number): boolean => {
 
 export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
   init: () => ({
-    pose: newGyroPose(), attack: '', vx: 0, vz: 1, bounces: 0, blades: [], path: [], phase2: false, side: 1, spin: 4,
+    pose: newGyroPose(), vel: {}, attack: '', vx: 0, vz: 1, bounces: 0, blades: [], path: [], phase2: false, side: 1, spin: 4,
     layer: null, burst: false
   }),
 
@@ -234,7 +243,7 @@ export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
     }
     // …then it spins up where it landed, sparks off its skirt.
     const rev = e.st > INTRO_DROP + 0.2 && e.st < INTRO_T - 0.5 ? 1 : 0
-    p.spinUp = ease(p.spinUp, rev * 0.6, 6, dt)
+    p.spinUp = sprung(p.spinUp, m.vel, 'spinUp', rev * 0.6, 6, dt)
     p.heat = ease(p.heat, 1 + rev, 6, dt)
     if (rev && Math.random() < 0.6) {
       const a = Math.random() * TAU
@@ -274,7 +283,8 @@ export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
         if (moveBody(w, e, (mx / ml) * e.def.speed * dt, (mz / ml) * e.def.speed * dt) < 0.3) m.side = -m.side
         if (Math.random() < dt * 0.25) m.side = -m.side
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -373,9 +383,9 @@ export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
     if (e.state !== 'tele' && !(e.state === 'act' && m.attack === 'ricochet')) hidePath(m)
     keepInRoom(e, room)
     m.spin = ease(m.spin, spin, 4, dt)
-    p.spinUp = ease(p.spinUp, spinUp, 10, dt)
-    p.flare = ease(p.flare, flare, 12, dt)
-    p.rush = ease(p.rush, rush, 10, dt)
+    p.spinUp = sprung(p.spinUp, m.vel, 'spinUp', spinUp, 10, dt)
+    p.flare = sprung(p.flare, m.vel, 'flare', flare, 12, dt)
+    p.rush = sprung(p.rush, m.vel, 'rush', rush, 10, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -401,7 +411,9 @@ export const SAW_GYRO_AI: MiniBossBehaviour<GyroMem> = {
     // The spin (and its dizzy run-down, a stun the framework runs).
     const dizzy = e.state === 'stun' ? 1 : 0
     p.dizzy = e.state === 'dead' ? p.dizzy : ease(p.dizzy, dizzy, dizzy ? 6 : 3, dt)
-    const rate = e.state === 'stun' ? 3 : m.spin
+    // (Out of the dizzy run-down it spins back up, not at once.)
+    p.spinRate = ease(p.spinRate, e.state === 'stun' ? 3 : m.spin, 5, dt)
+    const rate = p.spinRate
     p.spinA = (p.spinA + rate * dt) % TAU
     p.sawA = (p.sawA + rate * 1.6 * dt) % TAU
     poseSawGyro(e.rig, p)
@@ -439,6 +451,7 @@ export const SAW_GYRO: MiniBossSpec<GyroMem> = {
   sector: 'rotor',
   nameKey: 'miniboss.sawGyro',
   guardHint: 'miniboss.guard.sawGyro',
+  reach: GYRO_REACH,
   def: {
     kind: 'miniboss', hp: 590, dmg: 18, speed: 3, radius: 1.2, hitR: 1.3, aimY: 1.0, fly: 0,
     aggro: 30, range: [4.5, 7.5], xp: 175, bolts: [26, 40], cooldown: 1.5, tele: RICO_TELE, unblockable: true, armor: 1,

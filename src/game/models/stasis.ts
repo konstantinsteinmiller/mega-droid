@@ -12,8 +12,9 @@ import { PAL } from './palette'
  * Gauss's lab for the intro (`story-arc.md` § 1): Flux sleeps in one until
  * Gauss throws its lever and the glass slides down into the base; Gauss seals
  * herself into the other, and frost races up over its glass while a heartbeat
- * light in the base pulses slow and blue. The frosted one stays in the hub
- * from then on (a state, not a beat).
+ * light in the base pulses slow and blue. Both stay in the hub's lab from
+ * then on (a state, not a beat): Flux's open, Gauss asleep behind a thin
+ * frost until the ending (`sim/hub.ts`).
  *
  * Everything animates through the setters, pure functions of their inputs, so
  * the cutscene can scrub them.
@@ -25,8 +26,9 @@ export interface StasisCapsule {
   lever: Group
   /** 0 = glass up and closed … 1 = slid down into the base. */
   setOpen(k: number): void
-  /** 0 = clear … 1 = frosted over (grows from the bottom up). */
-  setFrost(k: number): void
+  /** 0 = clear … 1 = frosted over (grows from the bottom up); `thick`
+   *  thins it (the hub's veil, Gauss seen through it). */
+  setFrost(k: number, thick?: number): void
   /** The heartbeat light, 0 = off … 1 = a full beat. */
   setHeart(k: number): void
   /** The lever, 0 = up … 1 = thrown. */
@@ -38,6 +40,8 @@ export interface StasisCapsule {
 const GLASS_R = 0.62
 const GLASS_H = 2.25
 const BASE_H = 0.34
+/** The lever housing's centre: its inner face 3 cm off the glass (clear of its rim as it slides). */
+export const LEVER_X = GLASS_R + 0.03 + 0.11
 
 let frostTex: CanvasTexture | null = null
 /** Frost: white fern-ish streaks on transparency, drawn once. */
@@ -74,6 +78,13 @@ const frostTexture = (): CanvasTexture => {
   return frostTex
 }
 
+/** The stasis heartbeat, `s` seconds after it starts: a beat every 1.3 s, 0..1. */
+export const stasisBeat = (s: number): number => {
+  if (s < 0) return 0
+  const p = s % 1.3
+  return Math.exp(-p * 7) + 0.6 * Math.exp(-Math.max(0, p - 0.2) * 9) * (p > 0.2 ? 1 : 0)
+}
+
 export const buildStasisCapsule = (): StasisCapsule => {
   const root = new Group()
   const toon = [
@@ -84,8 +95,8 @@ export const buildStasisCapsule = (): StasisCapsule => {
     // Pipes up the back
     xform(paint(rcyl(0.07, GLASS_H, 0.03, 10), '#9aa7bd'), [0.55, BASE_H + GLASS_H / 2, -0.55]),
     xform(paint(rcyl(0.07, GLASS_H, 0.03, 10), '#9aa7bd'), [-0.55, BASE_H + GLASS_H / 2, -0.55]),
-    // The lever's housing on the right
-    xform(paint(rbox(0.22, 0.4, 0.2, 0.3), '#3b4458'), [0.9, 0.95, 0.1])
+    // The lever's housing on the right, against the glass
+    xform(paint(rbox(0.22, 0.4, 0.2, 0.3), '#3b4458'), [LEVER_X, 0.95, 0.1])
   ]
   const glowParts = [
     xform(paint(torus(0.8, 0.035, 6, 28), PAL.glowCyan), [0, BASE_H + GLASS_H + 0.02, 0], [Math.PI / 2, 0, 0])
@@ -135,7 +146,7 @@ export const buildStasisCapsule = (): StasisCapsule => {
 
   // The lever, pivoting at the housing.
   const lever = new Group()
-  lever.position.set(0.98, 1.05, 0.1)
+  lever.position.set(LEVER_X + 0.08, 1.05, 0.1)
   const arm = new Mesh(paint(rcyl(0.04, 0.46, 0.02, 8), '#c3cad4'), toonVC())
   arm.position.y = 0.23
   const knob = new Mesh(paint(sph(0.08, 10, 8), '#ff4050'), toonVC())
@@ -149,11 +160,11 @@ export const buildStasisCapsule = (): StasisCapsule => {
     setOpen: (k) => {
       glass.position.y = BASE_H - GLASS_H * 0.96 * Math.max(0, Math.min(1, k))
     },
-    setFrost: (k) => {
+    setFrost: (k, thick = 1) => {
       const f = Math.max(0, Math.min(1, k))
       frost.visible = f > 0.001
       frost.scale.y = Math.max(0.001, f)
-      frostMat.opacity = 0.35 + 0.55 * f
+      frostMat.opacity = (0.35 + 0.55 * f) * thick
       frostTexture().offset.y = 1 - f
     },
     setHeart: (k) => {

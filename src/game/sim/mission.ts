@@ -1,6 +1,6 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
 import { planDecor } from '../world/decor'
-import { decorTargets, decorHit, DECOR_BOLTS, type DecorTarget } from './decorBreak'
+import { breakDecor, decorTargets, decorHit, DECOR_BOLTS, type DecorDrop, type DecorTarget } from './decorBreak'
 import { RoomCrane, CRANE_G } from './roomCrane'
 import { SQUASH_HAZARDS, SQUASH_DUR, SQUASH_LIFT, SQUASH_SPRING, SQUASH_FLAT_W, SQUASH_FLAT_Y, squashY } from './squash'
 import {
@@ -12,7 +12,7 @@ import type { GameMode } from '../engine/app'
 import { buildCityscape, type Cityscape } from '../world/cityscape'
 import { buildMoltenCore, type MoltenCore } from '../models/moltenCore'
 import { weakSpotUnderRay } from '../data/weakspots'
-import { AtlasDirector, atlasKey, type AtlasTick, type AtlasLine, type AtlasMemory } from './atlas'
+import { AtlasDirector, atlasKey, leapLineAllowed, type AtlasTick, type AtlasLine, type AtlasMemory } from './atlas'
 import { buildAtlas, animateAtlas } from '../models/atlas'
 import { playVoice, playVoiceSoon, prefetchVoice } from '../audio/voice'
 import { bark, barkFor, preloadBarks } from '../audio/barks'
@@ -53,7 +53,7 @@ import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, blockCut, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, keepClear, spotWarning, drowse, keepBigOffPlayer } from './enemies'
+import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, keepClear, spotWarning, drowse, keepBigOffPlayer, markerOwnerGone, hopperLeapTime } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
@@ -77,7 +77,7 @@ import { miniBossFor } from './miniBoss/registry'
 import { SECTOR_BY_ID } from '../data/regions'
 import { MissionObjects, CHEST_DY, type Chest, type Crate, type Core, type ObjectiveHost } from './objectives'
 import {
-  profile, grantXp, saveProfile, claimGiftTank, computeStats, writeSnapshot, retryPointOf, xp01, heroColors, markTip, type MissionSnapshot
+  profile, grantXp, saveProfile, claimGiftTank, grantSkillChip, computeStats, writeSnapshot, retryPointOf, xp01, heroColors, markTip, type MissionSnapshot
 } from '../state/profile'
 import { rollItem, type Item } from '../data/items'
 import { flow, finishMission, retryFromSnapshot, copyBossWeapon } from '../flow'
@@ -177,9 +177,9 @@ export const FLAT_FOR = 1
 /** The flattened eye height (m). */
 const FLAT_EYE = 0.45
 
-/** The slide lesson's Stomper holds at the top of its leap (s into its 0.7 s
- *  arc) until the player slides. */
-const SLIDE_CUE_AT = 0.33
+/** The slide lesson's Stomper holds at the top of its leap (this share of
+ *  its time in the air, `hopperLeapTime`) until the player slides. */
+const SLIDE_CUE_AT = 0.47
 /** The slide lesson's Stomper down before its leap was ever held: this long
  *  after (s, the death burst first) the slide input is pointed at anyway. */
 const SLIDE_MISS_AFTER = 0.8
@@ -417,6 +417,10 @@ export const flatEye = (left: number): number => {
   return FLAT_EYE + (EYE_H - FLAT_EYE) * (k + Math.sin(k * Math.PI) * 0.35)
 }
 
+/** A rail cart's bumps at rattle phase `t`: quick jolts, two rates beating
+ *  so the track never reads as a clean sine. */
+const rideBump = (t: number): number => Math.abs(Math.sin(t)) * 0.7 + Math.abs(Math.sin(t * 1.618 + 1)) * 0.3
+
 export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, TrainHost, ArenaHost {
   scene = new Scene()
   camera = new PerspectiveCamera(70, 1, 0.05, SKY_FAR)
@@ -571,6 +575,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private marker!: Mesh
   private markerT = 0
   private shakeAmt = 0
+  /** A rail cart's ride (0..1 by its speed) and its rattle's phase: the
+   *  track's quick bumps in the view and the arm, instead of the walk's sway. */
+  private rideRattle = 0
+  private rattleT = 0
   /** A boss's pull on Flux (`World.pull`): toward (pullX, pullZ) at pullS m/s for pullT s. */
   private pullX = 0
   private pullZ = 0
@@ -1233,6 +1241,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   lobShell(e: Enemy, tx: number, tz: number, dur: number, dmg: number): void {
     this.system.lobShell(e, tx, tz, dur, dmg)
+    // The shell is in the air: its marker stays to the landing, whatever
+    // becomes of the machine that fired it.
+    this.markers.release(e, tx, tz)
   }
 
   spawnWave(e: Enemy, x: number, z: number, dx: number, dz: number, speed: number, halfWidth: number, range: number, dmg: number, color: string): void {
@@ -1911,7 +1922,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.fx.riseRing(p.x, p.y + 0.1, p.z, '#ffd84a', 1.1, 26)
       pushHud({ t: 'flash', color: '#ffd84a', strength: 0.45 })
       pushHud({ t: 'toast', key: 'progress.levelUp', params: { n: profile.level }, color: '#ffd84a' })
-      sfx('levelUp')
+      // The Hard Hat's level-up act; it plays the sting as it starts.
+      pushHud({ t: 'celebrate', kind: 'levelUp' })
     }
   }
 
@@ -1992,7 +2004,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     hud.objectiveDone = true
     pushHud({ t: 'toast', key: 'mission.objectiveDone', color: '#8dff7a' })
     pushHud({ t: 'flash', color: '#8dff7a', strength: 0.3 })
-    sfx('objective')
+    // Atlas's checkmark act; it plays the sting as it starts.
+    pushHud({ t: 'celebrate', kind: 'objective' })
     this.dirty = true
   }
 
@@ -2049,7 +2062,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (!this.decorTargets.length) return false
     const d = decorHit(this.decorTargets, ax, ay, az, bx, by, bz, r)
     if (!d) return false
-    d.broken = true
+    const c = this.combat
+    const { broke, drop } = breakDecor(d, Math.random, c.hp / c.maxHp, c.we / c.maxWe)
+    if (!broke) return false
     this.level.breakDecor?.(d.n)
     if (d.navIdx >= 0) this.nav.props[d.navIdx]!.active = false
     const x = (d.x0 + d.x1) / 2
@@ -2059,8 +2074,43 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.fx.sparks(x, y, z, '#ffb04a', 8, 4, 0.16)
     this.fx.emit({ x, y, z, color: '#ffffff', size: 1.1, sizeEnd: 1.8, life: 0.18 })
     this.sfx('bonk', x, z)
-    this.system.spawnPickup('bolt', DECOR_BOLTS, x, Math.max(y, d.y0 + 0.6), z)
+    const py = Math.max(y, d.y0 + 0.6)
+    this.system.spawnPickup('bolt', DECOR_BOLTS, x, py, z)
+    if (drop) this.decorFind(drop, d.n, x, py, z)
     return true
+  }
+
+  /** A broken prop's rare find (`decorDrop`): a capsule drops where it stood
+   *  (on its own floor, its body gone from the nav), a Repair Gel goes to the
+   *  pack as the arena's do (a capsule when the pack is full), a Skill Chip to
+   *  the Circuits' free chips, a chip item to the inventory with its loot
+   *  card, as a chest's item. */
+  private decorFind(drop: DecorDrop, n: number, x: number, y: number, z: number): void {
+    if (drop === 'hp' || drop === 'we') {
+      this.system.spawnPickup(drop, 0, x, y, z)
+    } else if (drop === 'gel') {
+      if (profile.inv.tanks < this.stats.tanksMax) this.giftGel()
+      else this.system.spawnPickup('hp', 0, x, y, z)
+    } else if (drop === 'skillChip') {
+      grantSkillChip()
+      pushHud({ t: 'toast', key: 'loot.skillChip', color: '#3cff9a' })
+      sfx('loot')
+      this.dirty = true
+    } else {
+      const seed = (this.map.seed ^ (0x5bd1 * (n + 1)) ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0
+      const it = rollItem(seed, this.setup.enemyLevel, { slot: 'chip' })
+      profile.inv.items.push(it)
+      profile.inv.fresh.push(it.id)
+      this.itemsFound.push(it)
+      pushHud({ t: 'loot', item: it })
+      sfx('loot')
+      this.dirty = true
+    }
+  }
+
+  /** A charged shot into the sky (#181): a nearby taxi or drone meets it. */
+  lureSky(s: Shot): void {
+    this.city?.lure(s.x, s.y, s.z, s.vx, s.vy, s.vz, s.life * Math.hypot(s.vx, s.vy, s.vz))
   }
 
   /** A player shot over the walls on the city's traffic (#169): a downed
@@ -2255,6 +2305,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   say(line: AtlasLine): void {
     const a = this.atlas
     if (!a) return
+    // The edge-leap is taught once: the tutorial's lesson, one reminder on
+    // the Gale Master's stage, nowhere else (`leapLineAllowed`).
+    if (!leapLineAllowed(line, !!this.setup.tutorial, this.setup.sector)) return
     // The story's first-time warnings from the stage itself (a crusher, a ladder, a lift over
     // a pit): once ever. Not in Meltdown Descent, whose hammers have their own tip, nor on the
     // Sky Docks, where the shuttles over the gaps are plain to see (#122).
@@ -3181,6 +3234,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.stepShatter(dt)
     if (first) this.stepLava()
     this.fx.update(dt)
+    // A wind-up's marker goes with a machine that will never strike now.
+    this.markers.cancelIf(markerOwnerGone)
     this.markers.update(dt, this.time)
     this.shocks.update(dt)
     this.updateDoors(dt)
@@ -3225,7 +3280,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const near = this.objects.nearestInteractable(p.x, p.z, p.yaw, p.y)
       const door = this.bossStarted ? undefined : this.doors.find(d => d.locked && !d.held && Math.hypot(d.x - p.x, d.z - p.z) < 3.4)
       this.interact = near ?? (door ? { kind: 'door', ref: door } : null)
-      if (first && this.input.interactQueued) this.doInteract()
+      // F (Pip's key in the lab) still interacts here, as it always did.
+      if (first && (this.input.interactQueued || this.input.pipQueued)) this.doInteract()
       // Playtesters stood at the sealed shutter pressing shoot and block:
       // either one opens it too, when Flux faces it.
       else if (first && door && this.interact?.ref === door && (this.input.firePressed || this.input.blockPressed) &&
@@ -3420,7 +3476,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    */
   private stepSlideCue(e: Enemy): void {
     if (this.slideCued && this.slideCued.state !== 'act') this.slideCued = null
-    if (e.state !== 'act' || e.st < SLIDE_CUE_AT || this.slideCued === e || this.training.done.has('slide')) return
+    if (e.state !== 'act' || e.st < SLIDE_CUE_AT * hopperLeapTime(Math.hypot(e.tx - e.sx, e.tz - e.sz)) || this.slideCued === e || this.training.done.has('slide')) return
     this.slideCued = e
     this.slideCue = e
     hud.slideCue = true
@@ -3529,9 +3585,23 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * stayed shut. Its own shots, parried back at it, finish it after.
    */
   lessonShield(e: Enemy): boolean {
-    if (e.kind !== 'trooper' || !this.walk?.active || this.training.done.has('block')) return false
+    if (!this.walk?.active) return false
     const g = this.walk.current
+    if (e.kind === 'hopper') return this.slideShield(e)
+    if (e.kind !== 'trooper' || this.training.done.has('block')) return false
     return !!g && g.steps.includes('block') && e.room === g.room
+  }
+
+  /**
+   * The slide room's Stomper takes nothing from Flux until its first leap
+   * has been held over him (#182): shot down before it ever jumped, there
+   * was no leap to slide out of. Once the held leap is answered (or the
+   * slide is learned some other way) it falls like any other.
+   */
+  private slideShield(e: Enemy): boolean {
+    if (this.slideCueDone || this.training.done.has('slide')) return false
+    const g = this.walk?.current
+    return !!g && g.steps.includes('slide') && e.room === g.room
   }
 
   /** The block came: the shield up and fresh, the shot set on its last
@@ -4972,11 +5042,16 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     if (this.climb) this.stepClimb(out, fwdX, fwdZ, rightX, rightZ, dt, c.slideT > 0)
     else moveCircle(this.nav, p.x, p.z, (p.vx + pvx) * dt, (p.vz + pvz) * dt, PLAYER_R, out)
     if (p.path && Math.hypot(out[0] - p.x, out[1] - p.z) < 0.002 && Math.hypot(tx, tz) > 1) p.path = null
+    // How fast the ground carried him (a cart's ride: the stick's own
+    // velocity stays at rest while it does).
+    const carried = Math.hypot(out[0] - p.x, out[1] - p.z) / Math.max(dt, 1e-4)
     p.x = out[0]
     p.z = out[1]
     const speed = Math.hypot(p.vx, p.vz)
-    p.bobAmp += ((speed > 0.4 && c.slideT <= 0 ? Math.min(1, speed / WALK_SPEED) : 0) - p.bobAmp) * Math.min(1, dt * 8)
+    p.bobAmp += ((speed > 0.4 && c.slideT <= 0 && !riding ? Math.min(1, speed / WALK_SPEED) : 0) - p.bobAmp) * Math.min(1, dt * 8)
     p.bob += dt * (4.2 + speed * 1.35)
+    this.rideRattle += ((riding && carried > 0.4 ? Math.min(1, carried / WALK_SPEED) : 0) - this.rideRattle) * Math.min(1, dt * 6)
+    this.rattleT += dt * 30
   }
 
   private activePellets(): number {
@@ -5048,7 +5123,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    * the ordinary aim (`aimDir`, with its assist), which never can. The test
    * is the view ray as it is when fired: no assist, no snapping.
    */
-  private aimShot(from: [number, number, number]): [number, number, number, Enemy | null, Enemy | null] {
+  private aimShot(from: [number, number, number]): [number, number, number, Enemy | null, Enemy | null, number] {
     const p = this.player
     const cam = this.camera.position
     _v3.set(0, 0, -1).applyQuaternion(this.camera.quaternion)
@@ -5064,10 +5139,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const dy = w.y - from[1]
       const dz = w.z - from[2]
       const l = Math.hypot(dx, dy, dz) || 1
-      return [dx / l, dy / l, dz / l, null, w.e]
+      return [dx / l, dy / l, dz / l, null, w.e, w.i]
     }
     const [dx, dy, dz, tgt] = this.aimDir(from)
-    return [dx, dy, dz, tgt, null]
+    return [dx, dy, dz, tgt, null, 0]
   }
 
   /** The machine nearest the crosshair, within `cone` radians widened by its
@@ -5128,10 +5203,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const c = this.combat
     const st = this.stats
     const m = this.muzzle()
-    const [dx, dy, dz, tgt, weak] = stray ? [stray[0], stray[1], stray[2], null, null] : this.aimShot(m)
+    const [dx, dy, dz, tgt, weak, weakIdx] = stray ? [stray[0], stray[1], stray[2], null, null, 0] : this.aimShot(m)
     const crit = Math.random() < st.critChance
     const dmg = Math.round(st.busterDmg * st.pelletMul * (crit ? st.critMul : 1))
-    this.system.spawnPlayerShot('pellet', m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak)
+    this.system.spawnPlayerShot('pellet', m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak, weakIdx)
     this.shotOpensDoor(dx, dz)
     c.fireCd = 0.2
     c.recoil = Math.min(1, c.recoil + 0.45)
@@ -5158,12 +5233,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const c = this.combat
     const st = this.stats
     const m = this.muzzle()
-    const [dx, dy, dz, tgt, weak] = stray ? [stray[0], stray[1], stray[2], null, null] : this.aimShot(m)
+    const [dx, dy, dz, tgt, weak, weakIdx] = stray ? [stray[0], stray[1], stray[2], null, null, 0] : this.aimShot(m)
     const mul = level === 3 ? 7 : level === 2 ? 4 : 2.2
     const crit = perfect || Math.random() < st.critChance
     const dmg = Math.round(st.busterDmg * mul * st.chargeDmgMul * (crit ? st.critMul : 1))
     const kind = level === 3 ? 'charge3' : level === 2 ? 'charge2' : 'charge1'
-    this.system.spawnPlayerShot(kind, m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak)
+    this.system.spawnPlayerShot(kind, m[0], m[1], m[2], dx, dy, dz, dmg, crit, tgt, weak, weakIdx)
     this.shotOpensDoor(dx, dz)
     c.fireCd = 0.25
     c.recoil = 1
@@ -5809,8 +5884,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       p.pitch += (wantPitch - p.pitch) * Math.min(1, dt * 4)
     }
 
-    const bobY = Math.sin(p.bob * 2) * 0.042 * p.bobAmp
-    const bobX = Math.cos(p.bob) * 0.028 * p.bobAmp
+    const rr = this.rideRattle
+    const bobY = Math.sin(p.bob * 2) * 0.042 * p.bobAmp + rideBump(this.rattleT) * 0.014 * rr
+    const bobX = Math.cos(p.bob) * 0.028 * p.bobAmp + Math.sin(this.rattleT * 0.53) * 0.006 * rr
     let y = fy + EYE_H + bobY
     if (hud.phase === 'dead') {
       y = fy + EYE_H - Math.min(1, this.deathT * 1.5) * 0.9
@@ -6250,8 +6326,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const tt = this.time
     const fl = Math.min(1, this.fumble.panicT / (FUMBLE_PANIC * 0.4))
     vm.position.set(
-      ax + Math.cos(p.bob) * 0.012 * p.bobAmp - block * 0.05 + fl * (Math.sin(tt * 47) * 0.05 + Math.sin(tt * 29 + 1) * 0.03),
-      ay + Math.abs(Math.sin(p.bob)) * 0.014 * p.bobAmp - beam * 0.5 - block * 0.04 + fl * (Math.sin(tt * 39 + 2) * 0.045 + Math.abs(Math.sin(tt * 23)) * 0.03),
+      ax + Math.cos(p.bob) * 0.012 * p.bobAmp + Math.cos(this.rattleT) * 0.019 * this.rideRattle - block * 0.05 + fl * (Math.sin(tt * 47) * 0.05 + Math.sin(tt * 29 + 1) * 0.03),
+      ay + Math.abs(Math.sin(p.bob)) * 0.014 * p.bobAmp + rideBump(this.rattleT) * 0.022 * this.rideRattle - beam * 0.5 - block * 0.04 + fl * (Math.sin(tt * 39 + 2) * 0.045 + Math.abs(Math.sin(tt * 23)) * 0.03),
       -0.62 + c.recoil * 0.07 + fl * Math.sin(tt * 33) * 0.04
     )
     vm.rotation.set(

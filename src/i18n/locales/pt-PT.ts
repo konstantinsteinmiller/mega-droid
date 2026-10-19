@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Cão de Brasa',
+    'steelHound': 'Cão de Aço',
     'icebreakerBrute': 'Bruto Quebra-Gelo',
     'arcSpider': 'Aranha de Arco',
     'stormHornetQueen': 'Rainha Vespa da Tempestade',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Torre Volt',
     'gale': 'Docas Celestes',
     'fortress': 'Fortaleza Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Batotas ativas: Shift+Ctrl+Alt+F1 abre o painel',
+    'off': 'Batotas desativadas',
+    'title': 'Painel de batotas',
+    'note': 'Um jogo guardado com batotas não envia pontuações para a classificação.',
+    'unlockAll': 'Desbloquear todas as missões da história',
+    'bolts': '+{n} parafusos',
+    'chips': '+{n} chips de perícia',
+    'gear': 'Blaster épico',
+    'gels': 'Encher os géis de reparação',
+    'done': 'Feito!',
+    'doors': 'Saltar para uma porta',
+    'boss': 'Porta do chefe',
+    'challenge': 'Porta do desafio',
+    'challengeN': 'Porta do desafio {n}',
+    'actLevelUp': 'Reproduzir cena de subida de nível',
+    'actObjective': 'Reproduzir cena de objetivo cumprido'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Encontraste {item} ({rarity})!',
     'tank': 'Gel de Reparação encontrado!',
     'giftTank': 'Presente: +1 Gel de Reparação!',
+    'skillChip': 'Chip de perícia encontrado!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. equipado',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Deslizar',
       'block': 'Bloquear',
       'interact': 'Interagir',
+      'pip': 'Provisões do Pip',
       'beam': 'Teletransportar',
       'tank': 'Gel de Reparação',
       'weapon1': 'Arma especial 1',

@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Glödhund',
+    'steelHound': 'Stålhund',
     'icebreakerBrute': 'Isbrytar-Brute',
     'arcSpider': 'Bågspindel',
     'stormHornetQueen': 'Stormgetings-Drottning',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttornet',
     'gale': 'Himmelsdockorna',
     'fortress': 'Fästning Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Fusk på: Shift+Ctrl+Alt+F1 öppnar fuskpanelen',
+    'off': 'Fusk av',
+    'title': 'Fuskpanel',
+    'note': 'Ett sparat spel med fusk skickar inga poäng till topplistan.',
+    'unlockAll': 'Lås upp alla berättelseuppdrag',
+    'bolts': '+{n} bultar',
+    'chips': '+{n} färdighetschip',
+    'gear': 'Episk blaster',
+    'gels': 'Fyll på reparationsgel',
+    'done': 'Klart!',
+    'doors': 'Hoppa till en dörr',
+    'boss': 'Bossdörr',
+    'challenge': 'Utmaningsdörr',
+    'challengeN': 'Utmaningsdörr {n}',
+    'actLevelUp': 'Spela nivå-upp-scenen',
+    'actObjective': 'Spela mål-klart-scenen'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) hittad!',
     'tank': 'Reparationsgel hittad!',
     'giftTank': 'Gåva: +1 Reparationsgel!',
+    'skillChip': 'Färdighetschip hittat!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'mot utrustat',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Glid',
       'block': 'Blockera',
       'interact': 'Använd',
+      'pip': 'Pips förnödenheter',
       'beam': 'Teleportera',
       'tank': 'Reparationsgel',
       'weapon1': 'Specialvapen 1',

@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Anjing Bara',
+    'steelHound': 'Anjing Baja',
     'icebreakerBrute': 'Brute Pemecah Es',
     'arcSpider': 'Laba-laba Busur',
     'stormHornetQueen': 'Ratu Tawon Badai',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Menara Volt',
     'gale': 'Dermaga Langit',
     'fortress': 'Benteng Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Cheat aktif: Shift+Ctrl+Alt+F1 membuka panel cheat',
+    'off': 'Cheat nonaktif',
+    'title': 'Panel cheat',
+    'note': 'Simpanan yang memakai cheat tidak mengirim skor ke papan peringkat.',
+    'unlockAll': 'Buka semua misi cerita',
+    'bolts': '+{n} baut',
+    'chips': '+{n} Chip Keahlian',
+    'gear': 'Blaster epik',
+    'gels': 'Isi penuh Gel Perbaikan',
+    'done': 'Selesai!',
+    'doors': 'Lompat ke pintu',
+    'boss': 'Pintu bos',
+    'challenge': 'Pintu tantangan',
+    'challengeN': 'Pintu tantangan {n}',
+    'actLevelUp': 'Putar adegan naik level',
+    'actObjective': 'Putar adegan tujuan selesai'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} {rarity} ditemukan!',
     'tank': 'Gel Perbaikan ditemukan!',
     'giftTank': 'Hadiah: +1 Gel Perbaikan!',
+    'skillChip': 'Chip Skill ditemukan!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. terpasang',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Meluncur',
       'block': 'Tangkis',
       'interact': 'Interaksi',
+      'pip': 'Perbekalan Pip',
       'beam': 'Teleportasi keluar',
       'tank': 'Gel perbaikan',
       'weapon1': 'Senjata khusus 1',

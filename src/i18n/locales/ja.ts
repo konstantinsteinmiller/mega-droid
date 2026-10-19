@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'シンダーハウンド',
+    'steelHound': 'スチールハウンド',
     'icebreakerBrute': 'アイスブレイカー・ブルート',
     'arcSpider': 'アークスパイダー',
     'stormHornetQueen': 'ストームホーネット・クイーン',
@@ -177,6 +177,26 @@ export default {
     'volt': 'ボルトタワー',
     'gale': '天空ドック',
     'fortress': 'Vex要塞'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'チート有効：Shift+Ctrl+Alt+F1でチートパネルを開く',
+    'off': 'チート無効',
+    'title': 'チートパネル',
+    'note': 'チートを使ったセーブはランキングにスコアを送信しません。',
+    'unlockAll': 'すべてのストーリーミッションを解放',
+    'bolts': 'ボルト+{n}',
+    'chips': 'スキルチップ+{n}',
+    'gear': 'エピックブラスター',
+    'gels': 'リペアジェルを満タンにする',
+    'done': '完了！',
+    'doors': '扉へジャンプ',
+    'boss': 'ボスの扉',
+    'challenge': 'チャレンジの扉',
+    'challengeN': 'チャレンジの扉 {n}',
+    'actLevelUp': 'レベルアップ演出を再生',
+    'actObjective': '目標達成演出を再生'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item}（{rarity}）を入手！',
     'tank': 'リペアジェルを入手！',
     'giftTank': 'プレゼント：リペアジェル+1！',
+    'skillChip': 'スキルチップを発見！',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': '装備中と比較',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'スライディング',
       'block': 'ガード',
       'interact': '調べる',
+      'pip': 'ピップの補給品',
       'beam': '転送で帰還',
       'tank': '修理ジェル',
       'weapon1': '特殊武器1',

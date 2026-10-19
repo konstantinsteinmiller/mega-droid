@@ -1,6 +1,7 @@
 import { Color } from 'three'
 import { RigBuilder, ell, torus, rcone, sph, paintBy, pose, nudge, scaleBone, type Rig } from '../kit'
 import { hornetParts } from '../enemies'
+import { newPhase, phaseAt, type Phase } from '../spring'
 
 /**
  * ─── The Storm Hornet Queen (the Gale Spire's challenge mini-boss) ───────────
@@ -37,6 +38,10 @@ export const QUEEN_COLORS = {
 export const QUEEN_SCALE = 2.1
 
 export interface QueenPose {
+  /** The rotors' turn and the wings' beat (integrated: their rates change
+   *  with every tell, their angles never jump). */
+  rotor: Phase
+  beat: Phase
   /** How fast it is flying (0..1): the body tilts into it. */
   fly: number
   /** The summons: abdomen pumping, crown glowing. */
@@ -54,7 +59,7 @@ export interface QueenPose {
   time: number
 }
 
-export const newQueenPose = (): QueenPose => ({ fly: 0, summon: 0, fan: 0, gust: 0, aim: 0, dive: 0, stuck: 0, heat: 1, dying: 0, time: 0 })
+export const newQueenPose = (): QueenPose => ({ rotor: newPhase(), beat: newPhase(), fly: 0, summon: 0, fan: 0, gust: 0, aim: 0, dive: 0, stuck: 0, heat: 1, dying: 0, time: 0 })
 
 export const buildStormHornetQueen = (c = QUEEN_COLORS): Rig => {
   const rig = stormHornetQueenParts(c).build({ outline: 0.012, height: 0.75 * QUEEN_SCALE })
@@ -113,13 +118,13 @@ export const poseStormHornetQueen = (rig: Rig, p: QueenPose): void => {
   scaleBone(rig, 'tail', pump, pump, 1 + 0.08 * p.summon)
   pose(rig, 'tail', 0.9 * p.aim + 0.4 * p.dive - 0.3 * p.stuck + 0.12 * Math.sin(T * 2.2), 0, 0)
   // Rotors: faster at every tell.
-  const r = T * (24 + 40 * Math.max(p.fan, p.aim, p.summon, p.gust))
+  const r = phaseAt(p.rotor, T, 24 + 40 * Math.max(p.fan, p.aim, p.summon, p.gust))
   pose(rig, 'rotorL', 0, r, 0)
   pose(rig, 'rotorR', 0, -r, 0)
   // Wings: a blur of a beat; spread wide and slow for the gust, folded back to dive.
   const rate = 30 - 22 * p.fan
   const amp = 0.45 + 0.3 * p.fan + 0.2 * p.gust
-  const beat = Math.sin(T * rate) * amp * (1 - p.dying * 0.8) * (1 - p.stuck)
+  const beat = Math.sin(phaseAt(p.beat, T, rate)) * amp * (1 - p.dying * 0.8) * (1 - p.stuck)
   const spread = 0.5 * p.fan - 0.7 * p.dive
   pose(rig, 'wingL', 0, -spread, -beat - 0.2 * p.dying)
   pose(rig, 'wingR', 0, spread, beat + 0.2 * p.dying)

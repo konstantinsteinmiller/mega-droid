@@ -1,9 +1,11 @@
 import { AdditiveBlending, CircleGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { PLAYER_R } from '../constants'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import { buildStormHornetQueen, poseStormHornetQueen, newQueenPose, QUEEN_COLORS, QUEEN_SCALE, type QueenPose } from '../../models/miniBoss/stormHornetQueen'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, inCone, near, ease, floorLayer } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, inCone, near, ease, floorLayer, sprung, type PoseVel } from './kit'
 import { createEnemy, wake } from '../enemies'
 import { pushHud } from '../../state/hud'
 
@@ -66,6 +68,8 @@ const STUCK_Y = 1.1
 type Attack = 'summon' | 'gust' | 'dive'
 
 export interface QueenMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: QueenPose
   attack: Attack | ''
   /** The dive's ring and where it set off from; the drones' spots. */
@@ -107,11 +111,19 @@ const makeCone = (m: QueenMem, e: Enemy): Mesh => {
 
 const alive = (m: QueenMem): number => m.drones.filter(d => d.state !== 'dead' && d.hp > 0).length
 
-const pick = (e: Enemy, m: QueenMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const QUEEN_REACH: Record<Attack, number> = {
+  // Drones hunt him; the dive comes down on the ring where he stands.
+  summon: ANYWHERE, dive: ANYWHERE,
+  // The gale's cone.
+  gust: GUST_RANGE + PLAYER_R
+}
+
+const pick = (e: Enemy, m: QueenMem, d: number): Attack | null => {
   if (m.sinceSummon >= (m.phase2 ? 2 : 3) && alive(m) < 2) return 'summon'
   let a: Attack = Math.random() < (d < 7 ? 0.6 : 0.3) ? 'gust' : 'dive'
   if (a === m.attack && e.step >= 1) a = a === 'gust' ? 'dive' : 'gust'
-  return a
+  return firstInReach(QUEEN_REACH, d, a, a === 'gust' ? 'dive' : 'gust')
 }
 
 const begin = (w: World, e: Enemy, m: QueenMem, a: Attack, room: Room): void => {
@@ -136,7 +148,7 @@ const begin = (w: World, e: Enemy, m: QueenMem, a: Attack, room: Room): void => 
       const a2 = toward + (k - (n - 1) / 2) * 1.1
       const at = inRoom(room, e.x + Math.sin(a2) * 2.2, e.z + Math.cos(a2) * 2.2, 0.8)
       m.spots.push(at)
-      w.markers.spawn(at[0], at[1], 0.6, e.teleDur + 0.1)
+      w.markers.spawn(at[0], at[1], 0.6, e.teleDur + 0.1, e)
     }
     w.sfx('droneHumHi', e.x, e.z)
   } else if (a === 'gust') {
@@ -150,7 +162,7 @@ const begin = (w: World, e: Enemy, m: QueenMem, a: Attack, room: Room): void => 
     m.tx = x
     m.tz = z
     const flight = Math.hypot(x - e.x, z - e.z, DIVE_TOP - STUCK_Y) / DIVE_SPEED
-    w.markers.spawn(x, z, DIVE_R, e.teleDur + flight + 0.1)
+    w.markers.spawn(x, z, DIVE_R, e.teleDur + flight + 0.1, e)
     w.sfx('alert', e.x, e.z)
   }
 }
@@ -221,7 +233,7 @@ const dropDrones = (w: World, e: Enemy, m: QueenMem): void => {
 
 export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
   init: () => ({
-    pose: newQueenPose(), attack: '', tx: 0, tz: 0, sx: 0, sy: 0, sz: 0, spots: [], drones: [], struck: false, stuck: false,
+    pose: newQueenPose(), vel: {}, attack: '', tx: 0, tz: 0, sx: 0, sy: 0, sz: 0, spots: [], drones: [], struck: false, stuck: false,
     sinceSummon: 2, side: 1, phase2: false, downed: false, cone: null, layer: null
   }),
 
@@ -239,7 +251,7 @@ export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
       w.sfx('droneArrive', e.x, e.z)
       w.shocks.spawn(e.x, fy(e) + 0.06, e.z, 3.2, QUEEN_COLORS.main, 0.5)
     }
-    p.fan = ease(p.fan, spread, 8, dt)
+    p.fan = sprung(p.fan, m.vel, 'fan', spread, 8, dt)
     p.heat = ease(p.heat, 1 + spread * 1.2, 6, dt)
     if (e.st >= INTRO_T) {
       e.y = HOVER
@@ -280,7 +292,8 @@ export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
         if (Math.random() < dt * 0.2) m.side = -m.side
         fly = 0.5
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -393,12 +406,12 @@ export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
     keepInRoom(e, room)
     const moved = Math.hypot(e.x - e.px, e.z - e.pz)
     p.fly = ease(p.fly, Math.max(fly, Math.min(1, moved / Math.max(1e-4, dt) / 6)), 6, dt)
-    p.summon = ease(p.summon, summon, 10, dt)
-    p.fan = ease(p.fan, fan, 10, dt)
-    p.gust = ease(p.gust, gust, 12, dt)
-    p.aim = ease(p.aim, aim, 10, dt)
-    p.dive = ease(p.dive, dive, 14, dt)
-    p.stuck = ease(p.stuck, stuck, 14, dt)
+    p.summon = sprung(p.summon, m.vel, 'summon', summon, 10, dt)
+    p.fan = sprung(p.fan, m.vel, 'fan', fan, 10, dt)
+    p.gust = sprung(p.gust, m.vel, 'gust', gust, 12, dt)
+    p.aim = sprung(p.aim, m.vel, 'aim', aim, 10, dt)
+    p.dive = sprung(p.dive, m.vel, 'dive', dive, 14, dt)
+    p.stuck = sprung(p.stuck, m.vel, 'stuck', stuck, 14, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -407,9 +420,9 @@ export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
     if (m.cone) m.cone.visible = false
     dropDrones(w, e, m)
     p.dying = Math.min(1, e.deathT / 1.1)
-    p.fan = ease(p.fan, 0, 8, dt)
-    p.aim = ease(p.aim, 0, 8, dt)
-    p.dive = ease(p.dive, 0, 8, dt)
+    p.fan = sprung(p.fan, m.vel, 'fan', 0, 8, dt)
+    p.aim = sprung(p.aim, m.vel, 'aim', 0, 8, dt)
+    p.dive = sprung(p.dive, m.vel, 'dive', 0, 8, dt)
     p.heat = ease(p.heat, 2.4, 6, dt)
     // It spins down out of the air, sparking.
     e.y = ease(e.y, 0.6, 3, dt)
@@ -438,6 +451,7 @@ export const STORM_HORNET_QUEEN: MiniBossSpec<QueenMem> = {
   id: 'stormHornetQueen',
   sector: 'gale',
   nameKey: 'miniboss.stormHornetQueen',
+  reach: QUEEN_REACH,
   def: {
     kind: 'miniboss', hp: 480, dmg: 17, speed: 4, radius: 1.1, hitR: 1.25, aimY: 0, fly: HOVER,
     aggro: 30, range: [5, 9], xp: 170, bolts: [28, 40], cooldown: 1.6, tele: DIVE_TELE, unblockable: true, armor: 1,

@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Chó Săn Than Hồng',
+    'steelHound': 'Chó Săn Thép',
     'icebreakerBrute': 'Gã Khổng Lồ Phá Băng',
     'arcSpider': 'Nhện Hồ Quang',
     'stormHornetQueen': 'Nữ Hoàng Ong Bão',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Tháp Điện',
     'gale': 'Cảng Trời',
     'fortress': 'Pháo Đài Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Bật gian lận: Shift+Ctrl+Alt+F1 mở bảng gian lận',
+    'off': 'Tắt gian lận',
+    'title': 'Bảng gian lận',
+    'note': 'Bản lưu đã dùng gian lận sẽ không gửi điểm lên bảng xếp hạng.',
+    'unlockAll': 'Mở khóa mọi nhiệm vụ cốt truyện',
+    'bolts': '+{n} bu lông',
+    'chips': '+{n} chip kỹ năng',
+    'gear': 'Blaster sử thi',
+    'gels': 'Nạp đầy gel sửa chữa',
+    'done': 'Xong!',
+    'doors': 'Nhảy đến một cánh cửa',
+    'boss': 'Cửa trùm',
+    'challenge': 'Cửa thử thách',
+    'challengeN': 'Cửa thử thách {n}',
+    'actLevelUp': 'Phát cảnh lên cấp',
+    'actObjective': 'Phát cảnh hoàn thành mục tiêu'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Tìm thấy {item} {rarity}!',
     'tank': 'Tìm thấy Gel Sửa Chữa!',
     'giftTank': 'Quà: +1 Gel Sửa Chữa!',
+    'skillChip': 'Tìm thấy Chip Kỹ năng!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'so với đang trang bị',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Trượt',
       'block': 'Đỡ',
       'interact': 'Tương tác',
+      'pip': 'Đồ tiếp tế của Pip',
       'beam': 'Dịch chuyển về',
       'tank': 'Gel sửa chữa',
       'weapon1': 'Vũ khí đặc biệt 1',

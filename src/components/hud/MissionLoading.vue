@@ -24,6 +24,7 @@
           div.cells(aria-hidden="true")
           div.lit(aria-hidden="true")
             div.fill(:style="{ transform: `scaleX(${Math.max(0.04, flow.loadProgress).toFixed(4)})` }")
+        LoaderMiniGame
 </template>
 
 <script setup lang="ts">
@@ -32,6 +33,7 @@ import { useI18n } from 'vue-i18n'
 import { flow } from '@/game/flow'
 import MasterPortrait from '@/components/atoms/MasterPortrait.vue'
 import SplashBackdrop from '@/components/atoms/SplashBackdrop.vue'
+import LoaderMiniGame from '@/components/atoms/LoaderMiniGame.vue'
 import type { BossId } from '@/game/models/bosses'
 
 /**
@@ -140,6 +142,14 @@ const loadingBoss = computed(() => flow.loadingBoss as BossId)
   transition: opacity 0.3s ease-in
 .beam-enter-from, .beam-leave-to
   opacity: 0
+// A short screen (landscape phone): the column starts higher, so the
+// mini-game under the bar still fits.
+@media (max-height: 600px)
+  .card
+    padding-top: 22vh
+    gap: 8px
+    &:has(.splash)
+      padding-top: 4vh
 @media (prefers-reduced-motion: reduce)
   .beam, .face, .name
     animation: none

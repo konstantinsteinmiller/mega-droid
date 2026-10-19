@@ -1,12 +1,13 @@
 import { AdditiveBlending, Color, CylinderGeometry, Mesh, MeshBasicMaterial, type Group } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildSentinelPrototype, poseSentinel, newSentinelPose, SENTINEL_COLORS, SENTINEL_SCALE, RING_R, RING_Y, EYE_Y, EYE_FWD,
   type SentinelPose
 } from '../../models/miniBoss/sentinelPrototype'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, ease, angDiff, TAU } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, ease, angDiff, TAU, sprung, type PoseVel } from './kit'
 import { fxLayer, alignFx, FloorArc, FloorStrip } from './worldFx'
 import { toWall } from './sawGyro'
 import { PLAYER_R } from '../constants'
@@ -66,6 +67,10 @@ const BEAM_HALF = 0.35
 type Attack = 'mortar' | 'beam'
 
 export interface SentinelMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
+  /** s left of a volley's push on the hull's kick. */
+  kickT: number
   pose: SentinelPose
   attack: Attack | ''
   /** The drones' ring's turn (world yaw of drone 0), each drone's hits left
@@ -114,11 +119,18 @@ const droneAt = (e: Enemy, m: SentinelMem, k: number): [number, number] => {
   return [e.x + Math.sin(a) * RING_R * S, e.z + Math.cos(a) * RING_R * S]
 }
 
-const pick = (e: Enemy, m: SentinelMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const SENTINEL_REACH: Record<Attack, number> = {
+  // Shells onto his spot; the beam sweeps out to BEAM_RANGE.
+  mortar: ANYWHERE,
+  beam: BEAM_RANGE + PLAYER_R
+}
+
+const pick = (e: Enemy, m: SentinelMem, d: number): Attack | null => {
   const wantMortar = d > 7 ? 0.65 : d < 4.5 ? 0.3 : 0.5
   let a: Attack = Math.random() < wantMortar ? 'mortar' : 'beam'
   if (a === m.attack && e.step >= 1) a = a === 'mortar' ? 'beam' : 'mortar'
-  return a
+  return firstInReach(SENTINEL_REACH, d, a, a === 'mortar' ? 'beam' : 'mortar')
 }
 
 const begin = (w: World, e: Enemy, m: SentinelMem, a: Attack, room: Room): void => {
@@ -147,7 +159,7 @@ const begin = (w: World, e: Enemy, m: SentinelMem, a: Attack, room: Room): void 
       for (const off of [-2.6, 0, 2.6]) {
         const [x, z] = inRoom(room, e.x + ux * along - uz * off, e.z + uz * along + ux * off, 0.9)
         m.shells.push({ x, z, v, fired: false })
-        w.markers.spawn(x, z, MORTAR_R, e.teleDur + v * MORTAR_GAP + MORTAR_FLIGHT)
+        w.markers.spawn(x, z, MORTAR_R, e.teleDur + v * MORTAR_GAP + MORTAR_FLIGHT, e)
       }
     }
     w.sfx('alert', e.x, e.z)
@@ -222,7 +234,7 @@ const hideTele = (m: SentinelMem): void => {
 
 export const SENTINEL_AI: MiniBossBehaviour<SentinelMem> = {
   init: () => ({
-    pose: newSentinelPose(), attack: '', ringA: 0, droneHp: [DRONE_HP, DRONE_HP, DRONE_HP], droneBack: [0, 0, 0], aim: 0,
+    pose: newSentinelPose(), vel: {}, kickT: 0, attack: '', ringA: 0, droneHp: [DRONE_HP, DRONE_HP, DRONE_HP], droneBack: [0, 0, 0], aim: 0,
     shells: [], a0: 0, a1: 0, beamA: 0, beamLen: BEAM_RANGE, phase2: false, side: 1, layer: null, arc: null, edge: null, beam: null, boot: 0
   }),
 
@@ -286,7 +298,8 @@ export const SENTINEL_AI: MiniBossBehaviour<SentinelMem> = {
         const sp = e.def.speed * want * dt
         if (sp !== 0) moveBody(w, e, fx * sp, fz * sp)
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -336,8 +349,8 @@ export const SENTINEL_AI: MiniBossBehaviour<SentinelMem> = {
             w.lobShell(e, s.x, s.z, MORTAR_FLIGHT, Math.round(e.dmg * 0.75))
           }
           if (volley) {
-            // Each volley bucks the hull.
-            p.kick = 1
+            // Each volley bucks the hull (a short push on its spring).
+            m.kickT = 0.07
             w.sfx('lob', e.x, e.z)
           }
           const last = m.shells.reduce((t, s) => Math.max(t, s.v), 0)
@@ -381,10 +394,11 @@ export const SENTINEL_AI: MiniBossBehaviour<SentinelMem> = {
     const moved = Math.hypot(e.x - e.px, e.z - e.pz)
     p.roll += moved / 0.22
     for (let k = 0; k < 3; k++) p.drones[k] = ease(p.drones[k]!, m.droneHp[k]! > 0 ? 1 : 0, 8, dt)
-    p.mortar = ease(p.mortar, mortar, 8, dt)
-    p.kick = ease(p.kick, 0, 6, dt)
-    p.charge = ease(p.charge, charge, 10, dt)
-    p.beam = ease(p.beam, beam, 14, dt)
+    p.mortar = sprung(p.mortar, m.vel, 'mortar', mortar, 8, dt)
+    m.kickT -= dt
+    p.kick = sprung(p.kick, m.vel, 'kick', m.kickT > 0 ? 1.2 : 0, 20, dt, 0.45)
+    p.charge = sprung(p.charge, m.vel, 'charge', charge, 10, dt)
+    p.beam = sprung(p.beam, m.vel, 'beam', beam, 14, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -469,6 +483,7 @@ export const SENTINEL_PROTOTYPE: MiniBossSpec<SentinelMem> = {
   id: 'sentinelPrototype',
   sector: 'fortress',
   nameKey: 'miniboss.sentinelPrototype',
+  reach: SENTINEL_REACH,
   def: {
     kind: 'miniboss', hp: 630, dmg: 19, speed: 1.8, radius: 1.3, hitR: 1.35, aimY: 1.25, fly: 0,
     aggro: 30, range: [5.5, 9], xp: 190, bolts: [28, 44], cooldown: 1.7, tele: BEAM_TELE, unblockable: true, armor: 1,

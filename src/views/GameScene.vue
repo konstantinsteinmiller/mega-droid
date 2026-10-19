@@ -23,6 +23,7 @@
       DoorPrompt
       HudBars
       ObjectiveTracker
+      LevelUpPop
       TopStatus(@pause="openPause")
       Joystick
       ContextButtons
@@ -77,7 +78,7 @@ import {
 } from '@/game/engine/input'
 import { loadKeyboardLayout } from '@/game/engine/keyLabels'
 import { actionForCode } from '@/game/engine/keyBindings'
-import { input, adoptBootMode, currentMission } from '@/game/boot'
+import { input, adoptBootMode, currentMission, currentHub } from '@/game/boot'
 import { flow, startMission, storyFor, goHub, replayIntro, INTRO_ENABLED } from '@/game/flow'
 import { toggleHelp } from '@/game/help'
 import { hud } from '@/game/state/hud'
@@ -103,6 +104,7 @@ import DamageMarkers from '@/components/hud/DamageMarkers.vue'
 import ActionButtons from '@/components/hud/ActionButtons.vue'
 import TopStatus from '@/components/hud/TopStatus.vue'
 import ObjectiveTracker from '@/components/hud/ObjectiveTracker.vue'
+import LevelUpPop from '@/components/hud/LevelUpPop.vue'
 import Compass from '@/components/hud/Compass.vue'
 import ObjectiveLocator from '@/components/hud/ObjectiveLocator.vue'
 import ContextButtons from '@/components/hud/ContextButtons.vue'
@@ -236,8 +238,10 @@ onMounted(async () => {
   detachInput = attachInput(surface.value, input, {
     fireMode: () => currentMission()?.wantsFire() ?? false,
     // Capture the mouse only over live play: never under a modal or an ad.
-    canLock: () => flow.screen === 'mission' && (hud.phase === 'play' || hud.phase === 'beamIn') &&
-      !flow.modal && !isGamePaused.value,
+    // The lab's hall in first person captures it too, as a mission does.
+    canLock: () => !flow.modal && !isGamePaused.value && (
+      (flow.screen === 'mission' && (hud.phase === 'play' || hud.phase === 'beamIn')) ||
+      (flow.screen === 'hub' && !!currentHub()?.wantsLock())),
     // Esc, alt-tab or a system dialog took the mouse back: pause, like
     // every desktop shooter.
     onLockLost: () => openPause(),
@@ -286,7 +290,7 @@ onMounted(async () => {
 // click is the gesture a capture needs; Esc is not one, so after an Esc the
 // click glyph asks for a click on the scene).
 watch(() => [isGamePaused.value, flow.screen] as const, ([paused, screen]) => {
-  if (paused || screen !== 'mission') releasePointerLock()
+  if (paused || (screen !== 'mission' && screen !== 'hub')) releasePointerLock()
 })
 watch(() => flow.modal, (m, prev) => {
   if (flow.abandoning) { flow.abandoning = false; return }

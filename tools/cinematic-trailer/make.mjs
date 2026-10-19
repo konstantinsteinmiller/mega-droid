@@ -228,12 +228,13 @@ timeline.forEach((s, k) => {
 })
 // End card: the boot loader's night blue and grid, the logo fading in.
 const cardS = (cardFrames / FPS).toFixed(4)
-const logoPx = Math.round(512 * H / 1080)
+// The lockup is 5:4 (public/images/logo/, store-art/brand/logo.mjs).
+const logoPx = Math.round(560 * H / 1080)
 inputs.push('-f', 'lavfi', '-i', `color=c=0x0b1426:s=${W}x${H}:r=${FPS}:d=${cardS}`)
-inputs.push('-loop', '1', '-framerate', String(FPS), '-t', cardS, '-i', join(ROOT, 'public/images/logo/logo_512x512.png'))
+inputs.push('-loop', '1', '-framerate', String(FPS), '-t', cardS, '-i', join(ROOT, 'public/images/logo/mega-droid-logo-1024.webp'))
 const ci = timeline.length
 chains.push(`[${ci}:v]drawgrid=w=${Math.round(96 * H / 1080)}:h=${Math.round(96 * H / 1080)}:t=${DRAFT ? 1 : 2}:c=0x22355c@0.55,format=yuv444p[bg]`)
-chains.push(`[${ci + 1}:v]scale=${logoPx}:${logoPx},format=rgba,fade=t=in:st=0:d=0.5:alpha=1[logo]`)
+chains.push(`[${ci + 1}:v]scale=${logoPx}:-2,format=rgba,fade=t=in:st=0:d=0.5:alpha=1[logo]`)
 chains.push(`[bg][logo]overlay=(W-w)/2:(H-h)/2:shortest=1,fade=t=in:st=0:d=0.12:color=white,fade=t=out:st=${(cardFrames / FPS - 0.6).toFixed(3)}:d=0.6,format=yuv444p[card]`)
 const vlist = timeline.map((_, k) => `[v${k}]`).join('') + '[card]'
 chains.push(`${vlist}concat=n=${timeline.length + 1}:v=1:a=0,format=yuv420p[v]`)

@@ -552,14 +552,26 @@ const _pt = new Quaternion()
  * joint jumps from the layer below; this one starts from where it is.
  */
 export const poseToward = (rig: Rig, name: string, rx: number, ry: number, rz: number, w: number): void => {
-  if (w <= 0) return
+  if (w === 0) return
   const b = rig.bones[name]
   const r = rig.rest[name]
   if (!b || !r) return
   _pe.set(rx, ry, rz)
   _pt.copy(r.q).multiply(_pq.setFromEuler(_pe))
-  if (w >= 1) b.quaternion.copy(_pt)
+  // A weight past 1 (a spring overshooting) carries the joint past its target
+  // along the same arc, one below 0 back past where it started (#183).
+  if (w === 1) b.quaternion.copy(_pt)
   else b.quaternion.slerp(_pt, w)
+}
+
+/** Turn a bone by an extra euler rotation in its own frame, on top of what
+ *  the layers before set: a recoil, a flinch, a glance (#183). */
+export const poseAdd = (rig: Rig, name: string, rx: number, ry: number, rz: number): void => {
+  if (rx === 0 && ry === 0 && rz === 0) return
+  const b = rig.bones[name]
+  if (!b) return
+  _pe.set(rx, ry, rz)
+  b.quaternion.multiply(_pq.setFromEuler(_pe))
 }
 
 /** Offset a bone from its rest position (units, bone-parent space). */

@@ -246,12 +246,40 @@ describe('the tour on screen', () => {
     vi.useRealTimers()
   })
 
-  it('shows the hand on its first frame, already on the target', async () => {
+  const BTN: Box = { left: 120, top: 460, width: 160, height: 44 }
+  /** The Workshop's upgrade block, its button inside. */
+  const upgradeBlock = (): void => {
+    const block = anchor('upgrade', { left: 100, top: 380, width: 200, height: 140 }, 'div')
+    block.append(place(document.createElement('button'), BTN))
+  }
+  /** The forge's panel open (Flux walked there and opened it). */
+  const openForge = async (): Promise<void> => {
+    hubTab.value = 'workshop'
+    await nextTick()
+    await nextTick()
+  }
+
+  it("the walk to the forge is not dimmed: no blockers, no hand (the hall's golden trail leads)", async () => {
+    // A playtest: the spotlight followed the forge's label as it moved with
+    // every step and flickered. The walk is guided in the world instead.
     const w = await startTour()
     expect(hubLesson.step).toBe('workshop')
+    frame()
+    await nextTick()
+    expect(w.find('.block').exists()).toBe(false)
+    expect(w.find('.hole').exists()).toBe(false)
+    expect(w.find('.guide').exists()).toBe(false)
+    expect(w.find('.skip').exists()).toBe(false)
+  })
+
+  it("at the forge's panel: the hand on its first frame, already on the target", async () => {
+    const w = await startTour()
+    upgradeBlock()
+    await openForge()
+    expect(hubLesson.step).toBe('upgradeBuster')
     expect(w.find('.guide').exists()).toBe(true)
     const [x, y] = handAt(w)
-    const [tx, ty] = tapPoint(TAB)
+    const [tx, ty] = tapPoint(BTN)
     expect(x).toBeCloseTo(tx)
     expect(y).toBeCloseTo(ty)
     // The hole is open around the target, everything else fenced off.
@@ -261,11 +289,13 @@ describe('the tour on screen', () => {
 
   it('answers a press on the dimmed screen by pulsing the live step, and nothing else', async () => {
     const w = await startTour()
+    upgradeBlock()
+    await openForge()
     await w.find('.block').trigger('pointerdown')
     expect(w.find('.hole').classes()).toContain('pulse-a')
     expect(w.find('.kick').classes()).toContain('pulse-a')
-    expect(hubLesson.step).toBe('workshop')
-    expect(hubTab.value).toBe('missions')
+    expect(hubLesson.step).toBe('upgradeBuster')
+    expect(hubTab.value).toBe('workshop')
     // Every press restarts it: the class swaps to a copy of the animation.
     await w.findAll('.block')[2]!.trigger('pointerdown')
     expect(w.find('.hole').classes()).toContain('pulse-b')
@@ -276,22 +306,15 @@ describe('the tour on screen', () => {
     expect(w.find('.hole').classes()).not.toContain('pulse-b')
   })
 
-  it('keeps the hand on screen while the next target slides in', async () => {
+  it('dims the panel while its target is still sliding in, then opens the hole on it', async () => {
     const w = await startTour()
-    const onTab = handAt(w)
-    // The Workshop tab's own click; its panel is still on the way in.
-    hubTab.value = 'workshop'
-    await nextTick()
-    await nextTick()
+    await openForge()
     expect(hubLesson.step).toBe('upgradeBuster')
     expect(w.find('.hole').exists()).toBe(false)
     expect(w.findAll('.block')).toHaveLength(1)
-    expect(handAt(w)).toEqual(onTab)
     // It arrives: the next frame opens the hole there, and the hand goes to
     // the upgrade button inside the lit block.
-    const BTN: Box = { left: 120, top: 460, width: 160, height: 44 }
-    const block = anchor('upgrade', { left: 100, top: 380, width: 200, height: 140 }, 'div')
-    block.append(place(document.createElement('button'), BTN))
+    upgradeBlock()
     frame()
     await nextTick()
     expect(w.find('.hole').exists()).toBe(true)
@@ -312,6 +335,8 @@ describe('the tour on screen', () => {
 
   it('takes the hand away with the tour', async () => {
     const w = await startTour()
+    upgradeBlock()
+    await openForge()
     await w.find('.skip').trigger('click')
     expect(w.find('.guide').exists()).toBe(false)
     expect(w.find('.block').exists()).toBe(false)

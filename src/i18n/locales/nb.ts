@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Gløhund',
+    'steelHound': 'Stålhund',
     'icebreakerBrute': 'Isbryter-Brute',
     'arcSpider': 'Buespinn',
     'stormHornetQueen': 'Stormveps-Dronning',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttårnet',
     'gale': 'Himmeldokkene',
     'fortress': 'Festning Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Juks på: Shift+Ctrl+Alt+F1 åpner jukspanelet',
+    'off': 'Juks av',
+    'title': 'Jukspanel',
+    'note': 'Et lagret spill med juks sender ingen poeng til poenglisten.',
+    'unlockAll': 'Lås opp alle historieoppdrag',
+    'bolts': '+{n} bolter',
+    'chips': '+{n} ferdighetsbrikker',
+    'gear': 'Episk blaster',
+    'gels': 'Fyll opp reparasjonsgel',
+    'done': 'Ferdig!',
+    'doors': 'Hopp til en dør',
+    'boss': 'Bossdør',
+    'challenge': 'Utfordringsdør',
+    'challengeN': 'Utfordringsdør {n}',
+    'actLevelUp': 'Spill av nivå-opp-scenen',
+    'actObjective': 'Spill av mål-nådd-scenen'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) funnet!',
     'tank': 'Reparasjonsgel funnet!',
     'giftTank': 'Gave: +1 Reparasjonsgel!',
+    'skillChip': 'Ferdighetsbrikke funnet!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'mot utstyrt',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Skli',
       'block': 'Blokker',
       'interact': 'Bruk',
+      'pip': 'Pips forsyninger',
       'beam': 'Teleporter',
       'tank': 'Reparasjonsgel',
       'weapon1': 'Spesialvåpen 1',

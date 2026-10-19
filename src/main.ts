@@ -23,6 +23,7 @@ import { hasState, reloadGameState, flushPersist, STATE_KEY, STATE_FIELD_PREFIX 
 import { LEGACY_KEYS } from '@/legacyKeys'
 import { LANGUAGE_KEY } from '@/keys'
 import { setSdkNameSource } from '@/use/usePlayerIdentity'
+import { ensurePortalBoard } from '@/use/usePortalLeaderboard'
 import { SaveManager } from '@/utils/save/SaveManager'
 import { resolveSaveStrategy } from '@/platforms/resolveSaveStrategy'
 import { installSaveStatus } from '@/use/useSaveStatus'
@@ -204,6 +205,10 @@ const bootstrap = async () => {
     pgLocale = playgamaLocale.value
     // Playgama's own leaderboard, beside ours — see `usePortalLeaderboard`.
     registerPlaygamaLeaderboard()
+    // Read it once now, not on first open: this build bakes our list, so the
+    // hub offers the leaderboard only while the portal's board reads back
+    // (`boardModalEnabled`). Never awaited — a slow read never holds the boot.
+    void ensurePortalBoard()
   } else if (isPoki) {
     // **Parallel** init — deliberately NOT awaited, unlike the GamePix / Yandex
     // arms above. Poki has NO cloud-save API (its wrapper mirrors the iframe's

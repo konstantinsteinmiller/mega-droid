@@ -7,7 +7,7 @@ import FModal from '@/components/molecules/FModal.vue'
 import { playerDisplayName } from '@/use/usePlayerIdentity'
 import {
   ensureBoard, leaderboard, leaderboardFailed,
-  leaderboardPending, playerTotal, rankFor, rankTotalFor
+  leaderboardListEnabled, leaderboardPending, playerTotal, rankFor, rankTotalFor
 } from '@/use/useLeaderboard'
 import { formatCount } from '@/utils/localeNumber'
 import {
@@ -111,20 +111,32 @@ const showEmpty = computed(() =>
  * renders them in place of the title ribbon). A shell without tabs needs its
  * own two-button row with `role="tablist"` / `role="tab"` / `aria-selected`.
  */
-const activeTab = ref<'global' | 'portal'>('global')
+/**
+ * A build whose own list is BAKED (Playgama) opens this modal only for the
+ * portal's board (`boardModalEnabled`): one tab, the portal's, and never our
+ * modelled rows — they would be invented people. The footer goes with our list.
+ */
+const portalOnly = !leaderboardListEnabled
+
+const activeTab = ref<'global' | 'portal'>(portalOnly ? 'portal' : 'global')
 
 const tabs = computed(() => portalBoardVisible.value && portalBoardLabel.value
-  ? [
+  ? portalOnly
+    // A brand name, deliberately untranslated.
+    ? [{ label: portalBoardLabel.value, value: 'portal' }]
+    : [
     { label: t('leaderboard.tabGlobal'), value: 'global' },
     // A brand name, deliberately untranslated.
     { label: portalBoardLabel.value, value: 'portal' }
   ]
   : [])
 
-const showPortal = computed(() => portalBoardVisible.value && activeTab.value === 'portal')
+const showPortal = computed(() => portalOnly || (portalBoardVisible.value && activeTab.value === 'portal'))
 const showPortalLoading = computed(() => portalBoardPending.value && portalEntries.value.length === 0)
 const showPortalEmpty = computed(() =>
   !portalBoardPending.value && portalBoardLoaded.value && portalEntries.value.length === 0)
+/** Portal-only, and its read failed: the plain "couldn't reach" line, never our list. */
+const showPortalFailed = computed(() => portalOnly && !portalBoardPending.value && !portalBoardVisible.value)
 
 // Fetched on OPEN, not on mount: the modal is mounted for the whole session and
 // most sessions never open it. `ensureBoard` is idempotent and cached, so a
@@ -155,6 +167,7 @@ watch(model, (open) => {
         span.board__col.is-score {{ t('leaderboard.score') }}
 
       div.board__state(v-if="showPortalLoading") {{ t('leaderboard.loading') }}
+      div.board__state.is-failed(v-else-if="showPortalFailed") {{ t('leaderboard.failed') }}
       div.board__state(v-else-if="showPortalEmpty") {{ t('leaderboard.empty') }}
 
       div.board__list(v-else)

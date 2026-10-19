@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Gluthund',
+    'steelHound': 'Stahlhund',
     'icebreakerBrute': 'Eisbrecher-Brocken',
     'arcSpider': 'Lichtbogenspinne',
     'stormHornetQueen': 'Sturmhornissen-Königin',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Voltturm',
     'gale': 'Himmelsdocks',
     'fortress': 'Festung Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Cheats an: Umschalt+Strg+Alt+F1 öffnet das Cheat-Menü',
+    'off': 'Cheats aus',
+    'title': 'Cheat-Menü',
+    'note': 'Ein Spielstand mit Cheats sendet keine Bestenlisten-Punkte.',
+    'unlockAll': 'Alle Story-Missionen freischalten',
+    'bolts': '+{n} Bolzen',
+    'chips': '+{n} Skill-Chips',
+    'gear': 'Epischer Blaster',
+    'gels': 'Reparaturgels auffüllen',
+    'done': 'Erledigt!',
+    'doors': 'Zu einer Tür springen',
+    'boss': 'Bosstür',
+    'challenge': 'Herausforderungstür',
+    'challengeN': 'Herausforderungstür {n}',
+    'actLevelUp': 'Level-up-Szene abspielen',
+    'actObjective': 'Ziel-erreicht-Szene abspielen'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) gefunden!',
     'tank': 'Reparaturgel gefunden!',
     'giftTank': 'Geschenk: +1 Reparaturgel!',
+    'skillChip': 'Skill-Chip gefunden!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. ausgerüstet',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Rutschen',
       'block': 'Blocken',
       'interact': 'Interagieren',
+      'pip': 'Pips Vorräte',
       'beam': 'Rausbeamen',
       'tank': 'Reparaturgel',
       'weapon1': 'Spezialwaffe 1',

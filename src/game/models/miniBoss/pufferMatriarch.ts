@@ -1,6 +1,7 @@
 import { Color } from 'three'
 import { RigBuilder, sph, ell, torus, rcone, pose, nudge, scaleBone, type Rig } from '../kit'
 import { buildPuffer, type EnemyColors } from '../enemies'
+import { newPhase, phaseAt, type Phase } from '../spring'
 
 /**
  * ─── The Puffer Matriarch (the Tidewater Locks' challenge mini-boss) ─────────
@@ -45,6 +46,8 @@ export interface EscortPose { x: number; y: number; z: number; s: number; yaw: n
 
 /** What the AI tells the pose (0..1 unless said). */
 export interface PufferPose {
+  /** The fins' beat (its rate rises with the swell: integrated, so it never jumps). */
+  fin: Phase
   /** Inflated: the body swells, the spines stand out (the bounce's tell). */
   swell: number
   /** Cheeks in, lips puckered to a point (the jet's tell). */
@@ -63,7 +66,7 @@ export interface PufferPose {
 }
 
 export const newPufferPose = (): PufferPose => ({
-  swell: 0, pucker: 0, jet: 0, cough: 0, roll: 0, heat: 1, dying: 0, time: 0,
+  fin: newPhase(), swell: 0, pucker: 0, jet: 0, cough: 0, roll: 0, heat: 1, dying: 0, time: 0,
   escorts: Array.from({ length: MATRIARCH_ESCORTS }, () => ({ x: 0, y: 0, z: 0, s: 1, yaw: 0 }))
 })
 
@@ -190,7 +193,7 @@ export const posePufferMatriarch = (rig: Rig, p: PufferPose): void => {
   nudge(rig, 'lips', 0, 0, 0.12 * p.pucker)
   // The crown tips back with the cough and rides the swell.
   pose(rig, 'crown', -0.2 * p.cough + 0.05 * Math.sin(T * 2.1), 0, 0)
-  const flap = Math.sin(T * (7 + 6 * p.swell)) * (0.5 + 0.3 * p.swell)
+  const flap = Math.sin(phaseAt(p.fin, T, 7 + 6 * p.swell)) * (0.5 + 0.3 * p.swell)
   pose(rig, 'finL', 0, 0.3 + flap, 0)
   pose(rig, 'finR', 0, -0.3 - flap, 0)
   pose(rig, 'tail', 0, Math.sin(T * 4.5) * 0.35, 0)

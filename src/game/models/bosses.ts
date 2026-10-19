@@ -3,6 +3,7 @@ import { PAL } from './palette'
 import { BOSS_GAIT, BOSS_FIDGET_LEN, TAU, bump, frac, fidgetEnv, fidgetPIn, gaitAmp, type EnemyMotion } from './motion'
 import { legL, legR, gaitDir, gaitLegs, stanceDrop } from './gait'
 import { buildVex, poseVex, type VexCue } from './vexMk1'
+import { poseMasterAnim, vexBlend, type ArmRest, type Taunt } from './bossAnim'
 
 /**
  * ─── Core Masters ────────────────────────────────────────────────────────────
@@ -335,8 +336,6 @@ export type BossAct = 'idle' | 'walk' | 'tele' | 'attack' | 'stun' | 'air'
 // (the end of a telegraph, the first frame of a strike, airborne, dizzy) the
 // boss holds exactly the pose it always did. The look (the rigs) is unchanged.
 
-/** An arm's rest: shoulder [rx, ry, rz] + elbow rx for the L arm (R mirrors ry, rz). */
-interface ArmRest { x: number; y: number; z: number; elbow: number }
 /** The Masters' arms at rest: a ready stance, the weapon forearms held
  *  forward (≈6° out, ≈33° forward). Chosen with the legs WALKING — forward,
  *  sideways, diagonal — so a swinging thigh never meets a forearm cannon. */
@@ -347,19 +346,10 @@ export const SCRAPPER_REST: Readonly<ArmRest> = { x: -0.6, y: -0.25, z: -0.08, e
 
 const mix = (a: number, b: number, k: number): number => a + (b - a) * k
 
-const animateHumanoidBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number, m: EnemyMotion): void => {
-  const g = BOSS_GAIT[id]!
-  const R = id === 'scrapper' ? SCRAPPER_REST : MASTER_REST
-  const T = t * m.tempo
-  const wk = gaitAmp(m.walk)
-  const still = 1 - wk
-  gaitLegs(g, m, wk)
-  const u = frac(m.phase / TAU)
-  const f = gaitDir.f
-  const s = gaitDir.s
-  // ── Taunt (only ever scheduled in `recover`, faded by m.calm) ──
+/** The taunt's offsets for this frame (only ever scheduled in `recover`,
+ *  faded by m.calm): `fe` its envelope, the rest at full strength. */
+const tauntInto = (out: Taunt, id: BossId, m: EnemyMotion): Taunt => {
   const p = fidgetPIn(m, BOSS_FIDGET_LEN[id])
-  const fe = m.fid ? fidgetEnv(p) * m.calm : 0
   let lX = 0
   let lY = 0
   let lE = 0
@@ -453,6 +443,36 @@ const animateHumanoidBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: n
       cY = 0.12 * sw
     }
   }
+  out.fe = m.fid ? fidgetEnv(p) * m.calm : 0
+  out.lX = lX
+  out.lY = lY
+  out.lE = lE
+  out.rX = rX
+  out.rY = rY
+  out.rE = rE
+  out.hX = hX
+  out.hY = hY
+  out.hZ = hZ
+  out.cY = cY
+  out.cZ = cZ
+  out.buzz = buzz
+  return out
+}
+
+const _taunt: Taunt = { fe: 0, lX: 0, lY: 0, lE: 0, rX: 0, rY: 0, rE: 0, hX: 0, hY: 0, hZ: 0, cY: 0, cZ: 0, buzz: 0 }
+
+const animateHumanoidBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number, m: EnemyMotion): void => {
+  const g = BOSS_GAIT[id]!
+  const R = id === 'scrapper' ? SCRAPPER_REST : MASTER_REST
+  const T = t * m.tempo
+  const wk = gaitAmp(m.walk)
+  const still = 1 - wk
+  gaitLegs(g, m, wk)
+  const u = frac(m.phase / TAU)
+  const f = gaitDir.f
+  const s = gaitDir.s
+  // ── Taunt (only ever scheduled in `recover`, faded by m.calm) ──
+  const { fe, lX, lY, lE, rX, rY, rE, hX, hY, hZ, cY, cZ, buzz } = tauntInto(_taunt, id, m)
   // ── Act weights: each blends toward its OLD pose ──
   const bob = Math.sin(t * 2.2) * 0.012
   const wT = act === 'tele' ? k : 0
@@ -571,15 +591,19 @@ const animateHumanoidBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: n
 
 /** Generic boss animation driven by the AI's current action. With `m`, the
  *  motion layer (humanoid bosses; Dr. Vex keeps his own hover, tilted by his
- *  travel). `cue` (the boss itself will do): Dr. Vex winds up the coming
+ *  travel); with its springs too (`m.boss`, the game's bosses), the v2
+ *  layer. `cue` (the boss itself will do): Dr. Vex winds up the coming
  *  pattern's own weapon and shows his phase-2 damage. */
 export const poseBoss = (rig: Rig, id: BossId, t: number, act: BossAct, k: number, m?: EnemyMotion, cue?: VexCue): void => {
   if (m && id !== 'vexMk1') {
-    animateHumanoidBoss(rig, id, t, act, k, m)
+    // A boss in the game carries its v2 layer's springs (`models/bossAnim.ts`);
+    // a Fortress echo, posed from a machine's channels, keeps the first layer.
+    if (m.boss) poseMasterAnim(rig, id, t, m, m.boss, id === 'scrapper' ? SCRAPPER_REST : MASTER_REST, tauntInto(_taunt, id, m))
+    else animateHumanoidBoss(rig, id, t, act, k, m)
     return
   }
   if (id === 'vexMk1') {
-    poseVex(rig, t, act, k, m, cue)
+    poseVex(rig, t, act, k, m, cue, m?.boss ? vexBlend(m.boss) : undefined)
     return
   }
   const walk = act === 'walk' ? 1 : 0

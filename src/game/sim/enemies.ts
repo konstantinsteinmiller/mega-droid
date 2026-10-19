@@ -8,7 +8,7 @@ import {
 } from '../models/enemies'
 import { makeTeleRing, setTeleRing, makeBlobShadow } from '../fx/markers'
 import { makeSearchBeam, aimSearchBeam, type SearchBeam } from '../fx/searchBeam'
-import { hasLineOfSight, findPath, moveCircle, resolveCircle, smoothPath, floorAt, groundAt, STEP_UP } from '../world/nav'
+import { hasLineOfSight, findPath, moveCircle, resolveCircle, smoothPath, floorAt, groundAt, isSolidAt, STEP_UP } from '../world/nav'
 import { CELL, type MapData } from '../world/levelGen'
 import { PLAYER_R, EYE_H, FREEZE_SLOW, FREEZE_SLOW_BOSS } from './constants'
 import { CHARGE_L2 } from './stats'
@@ -131,6 +131,14 @@ export const SPOT_TRACK = 1.2
  *  the light. With the pool creeping at SPOT_TRACK, a Flux caught dead in its
  *  middle walks out in ≈ 0.45 s, inside the lock. */
 export const SPOT_SLIP = SPOT_R
+/** A wind-up's floor marker (`FloorMarkers.cancelIf`): its machine will
+ *  never strike now — down, dying or stunned out of the wind-up. A strike
+ *  already launched was released from it and keeps its marker. */
+export const markerOwnerGone = (owner: object): boolean => {
+  const e = owner as Enemy
+  return e.hp <= 0 || e.state === 'dead' || e.state === 'stun'
+}
+
 /** The called strike: its marker's time (s) and its reach (m). */
 export const SPOT_FUSE = 0.9
 export const SPOT_STRIKE_R = 2
@@ -698,6 +706,96 @@ export const BRUTE_STOMP_DMG = 0.8
 const BRUTE_STOMP_T = 0.8
 const BRUTE_STOMP_H = 3.2
 const BRUTE_STOMP_R = 2.6
+
+/** The Stomper's leap (#182): it used to land at most 7 m off and wind up
+ *  from 8 m, so it had to hop right up to Flux before it was any threat, and
+ *  the slide lesson's Stomper was shot down before it ever leapt. Now it
+ *  winds up from this far (m)… */
+export const HOPPER_LEAP_R = 26
+/** …and lands at most this far from where it took off (m), its ring (2.6 m)
+ *  still over Flux at the edge of the wind-up range. */
+export const HOPPER_LEAP_MAX = 24
+/** The landing ring's radius (m). */
+export const HOPPER_LEAP_RING = 2.6
+/** Time in the air (s) for a leap of `dist` m: a long one hangs a little, so
+ *  its ring is readable and a slide out of it is fair. */
+export const hopperLeapTime = (dist: number): number => 0.6 + Math.min(HOPPER_LEAP_MAX, dist) * 0.035
+/** Its arc's top (m): higher the further it goes (no roofs: open sky). */
+export const hopperLeapApex = (dist: number): number => Math.min(4.4, 2.2 + dist * 0.09)
+/** The crouch before a long leap is a beat longer (s, on top of its tele)… */
+const hopperWindup = (dist: number): number => Math.min(0.45, dist * 0.02)
+/** …and the landing leaves it open a beat longer too (s). */
+const hopperRecover = (dist: number): number => 0.9 + Math.min(HOPPER_LEAP_MAX, dist) * 0.02
+
+/**
+ * Where a leap from the Stomper at (e.x, e.z) toward Flux at (px, pz) can
+ * land: his spot clamped to HOPPER_LEAP_MAX, pulled back toward the Stomper
+ * until the arc's line is clear of walls, the spot is free for its body and
+ * no ledge or pit lies between its ground and the take-off's. Null: nowhere
+ * worth a leap (a wall right in front). Writes `out`.
+ */
+export const hopperLanding = (w: World, e: Enemy, px: number, pz: number, out: [number, number]): [number, number] | null => {
+  const dx = px - e.x
+  const dz = pz - e.z
+  const dd = Math.hypot(dx, dz) || 1
+  const ux = dx / dd
+  const uz = dz / dd
+  const g0 = groundAt(w.map, e.x, e.z)
+  const r = e.def.radius
+  for (let reach = Math.min(dd, HOPPER_LEAP_MAX); reach >= 1.5; reach -= 0.5) {
+    const x = e.x + ux * reach
+    const z = e.z + uz * reach
+    if (isSolidAt(w.nav, x, z) || !hasLineOfSight(w.nav, e.x, e.z, x, z)) continue
+    const [cx, cz] = resolveCircle(w.nav, x, z, r)
+    if (Math.hypot(cx - x, cz - z) > 0.05) continue // a wall too close for its body
+    if (Math.abs(groundAt(w.map, x, z) - g0) > STEP_UP) continue // a ledge or a pit
+    out[0] = x
+    out[1] = z
+    return out
+  }
+  return null
+}
+const _land: [number, number] = [0, 0]
+
+/** The Gear Roller's lunge: from this far (m)… */
+export const ROLLER_LUNGE_MIN = 2.2
+/** …to this far (m); its wind-up (s), burst (s), top speed (m/s), hop (m)
+ *  and the off-balance beat after it lands (s). */
+export const ROLLER_LUNGE_MAX = 6.5
+export const ROLLER_LUNGE_TELE = 0.5
+export const ROLLER_LUNGE_TIME = 0.5
+export const ROLLER_LUNGE_SPEED = 15
+export const ROLLER_LUNGE_HOP = 0.45
+export const ROLLER_LUNGE_RECOVER = 0.85
+
+/**
+ * One tick of the lunge: the speed ramps from a roll to a burst (most of
+ * the reach comes late, so the start reads slow), the body on a low hop
+ * arc. Through the wall test like a step, and never onto a block or off a
+ * ledge the body could not walk to: such a move is undone (the hop only
+ * looks airborne, it climbs nothing). Returns the fraction moved.
+ */
+const rollerLunge = (w: World, e: Enemy, dt: number): number => {
+  const k = Math.min(1, e.st / ROLLER_LUNGE_TIME)
+  const sp = ROLLER_LUNGE_SPEED * (0.25 + 0.75 * Math.min(1, k * 2.2))
+  const ox = e.x
+  const oz = e.z
+  const frac = step(w, e, e.tx * sp * dt, e.tz * sp * dt)
+  if (w.map.terrain) {
+    const y = e.y
+    e.y = 0
+    const f = e.floor ?? 0
+    const blocked = tooTallFor(w.map, e, e.x, e.z) || groundAt(w.map, e.x, e.z) < f - STEP_UP
+    e.y = y
+    if (blocked) {
+      e.x = ox
+      e.z = oz
+      return 0
+    }
+  }
+  e.y = ROLLER_LUNGE_HOP * Math.sin(Math.PI * k)
+  return frac
+}
 
 const startTele = (e: Enemy, attack: string, dur: number, red: boolean): void => {
   e.attack = attack
@@ -1314,16 +1412,27 @@ const stepMachineMotion = (e: Enemy, dt: number, ds: number, fd: number, sd: num
   const m = e.mo
   if (e.kind === 'roller') {
     // The wheel steers into the travel (the driver keeps facing the player)
-    // and rolls by distance; backing off, it rolls backward.
+    // and rolls by distance; backing off, it rolls backward. Only a real
+    // roll steers it: standing (a wind-up, the pack's spacing nudging it a
+    // few mm a tick) the wheel holds straight under the body, else that
+    // jitter's direction flipped the steer ±90° and the roll back and forth
+    // every frame. Of the two ways to roll a line (forward, or backward with
+    // the wheel turned round) it keeps the one nearer its present steer, so
+    // a strafe straight across never flips between them either.
     let psi = 0
     let dir = 1
-    if (ds > 1e-4) {
+    const rolling = e.state !== 'tele' && dt > 1e-6 && ds / dt > e.def.speed * WALK_DEAD
+    if (rolling) {
       psi = Math.atan2(sd, fd)
-      if (psi > Math.PI / 2) { psi -= Math.PI; dir = -1 } else if (psi < -Math.PI / 2) { psi += Math.PI; dir = -1 }
+      const back = psi > 0 ? psi - Math.PI : psi + Math.PI
+      if (Math.abs(back - m.heading) < Math.abs(psi - m.heading)) {
+        psi = back
+        dir = -1
+      }
     }
-    const head = ds > 1e-4 ? psi * Math.min(1, m.walk / 0.2) : 0
+    const head = rolling ? psi * Math.min(1, m.walk / 0.2) : 0
     m.heading += (head - m.heading) * Math.min(1, dt * 6)
-    m.roll += (dir * ds) / (ROLLER_R * scale)
+    if (rolling) m.roll += (dir * ds) / (ROLLER_R * scale)
   } else if (e.kind === 'heli') {
     m.roll += dt * 14 * m.walk // the rotor spins up with airspeed
   } else if (e.kind === 'hopper') {
@@ -1675,16 +1784,18 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           if (phase < 0.45) seek(w, e, px, pz, def.speed * 2.2, dt)
           e.b = phase
         } else e.b = 1
-        if (canAttack && d < 8) {
-          startTele(e, 'leap', def.tele, true)
-          // Where it will land: the player's spot, clamped to 7 m
-          const dx = px - e.x
-          const dz = pz - e.z
-          const dd = Math.hypot(dx, dz) || 1
-          const reach = Math.min(dd, 7)
-          e.tx = e.x + (dx / dd) * reach
-          e.tz = e.z + (dz / dd) * reach
-          w.markers.spawn(e.tx, e.tz, 2.6, def.tele + 0.7)
+        if (canAttack && d < HOPPER_LEAP_R) {
+          // Where it will land: Flux's spot, as far as the leap reaches and
+          // the room lets it (never through a wall, off a ledge or into a pit)
+          const at = hopperLanding(w, e, px, pz, _land)
+          if (at) {
+            e.tx = at[0]
+            e.tz = at[1]
+            const dist = Math.hypot(e.tx - e.x, e.tz - e.z)
+            const tele = def.tele + hopperWindup(dist)
+            startTele(e, 'leap', tele, true)
+            w.markers.spawn(e.tx, e.tz, HOPPER_LEAP_RING, tele + hopperLeapTime(dist), e)
+          } else e.cd = 0.5 // boxed in: look again shortly
         }
       } else if (e.state === 'tele') {
         faceTo(e, e.tx, e.tz, 6, dt)
@@ -1695,25 +1806,26 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           w.sfx('jump', e.x, e.z)
         }
       } else if (e.state === 'act') {
-        const dur = 0.7
+        const dist = Math.hypot(e.tx - e.sx, e.tz - e.sz)
+        const dur = hopperLeapTime(dist)
         const k = Math.min(1, e.st / dur)
         const nx = e.sx + (e.tx - e.sx) * k
         const nz = e.sz + (e.tz - e.sz) * k
         step(w, e, nx - e.x, nz - e.z)
-        e.y = Math.sin(k * Math.PI) * 2.8
+        e.y = Math.sin(k * Math.PI) * hopperLeapApex(dist)
         if (k >= 1) {
           e.y = 0
-          w.shocks.spawn(e.x, 0.05, e.z, 2.8, '#ff5a3a', 0.45)
+          w.shocks.spawn(e.x, 0.05, e.z, HOPPER_LEAP_RING + 0.2, '#ff5a3a', 0.45)
           w.fx.sparks(e.x, 0.3, e.z, '#ffd9a0', 18, 7, 0.22)
           w.shake(0.45)
           w.sfx('stomp', e.x, e.z)
-          if (Math.hypot(w.player.x - e.x, w.player.z - e.z) < 2.6 + PLAYER_R) {
+          if (Math.hypot(w.player.x - e.x, w.player.z - e.z) < HOPPER_LEAP_RING + PLAYER_R) {
             w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'aoe' })
           }
           enterState(e, 'recover')
         }
       } else if (e.state === 'recover') {
-        if (e.st > 1.0) {
+        if (e.st > hopperRecover(Math.hypot(e.tx - e.sx, e.tz - e.sz))) {
           e.cd = cooldown()
           enterState(e, 'engage')
         }
@@ -1721,15 +1833,22 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
       break
     }
 
-    // ── Gear roller: rev (red), charge in a line, dizzy on a wall ────────
+    // ── Gear roller: rev (red), charge in a line, dizzy on a wall; up close
+    // a LUNGE (red): a short back-rev, then a hop-launched burst at Flux ──
     case 'roller': {
+      // Knocked out of a lunge mid-hop (a stun, a parry): back onto the floor
+      if (e.state !== 'act' && e.y > 0) e.y = Math.max(0, e.y - dt * 4)
       if (e.state === 'engage') {
         faceTo(e, px, pz, 3.5, dt)
         keepRange(w, e, dt, 0.4)
-        if (canAttack && d < 14 && d > 3) startTele(e, 'charge', def.tele, true)
+        if (canAttack && d > ROLLER_LUNGE_MIN && d < ROLLER_LUNGE_MAX && Math.random() < 0.55) {
+          startTele(e, 'lunge', ROLLER_LUNGE_TELE, true)
+        } else if (canAttack && d < 14 && d > 3) startTele(e, 'charge', def.tele, true)
       } else if (e.state === 'tele') {
         faceTo(e, px, pz, 6, dt)
-        e.a += dt * 30 // wheel revs
+        const k = Math.min(1, e.st / e.teleDur)
+        // The charge revs up smoothly; the lunge rocks back on a slow back-rev
+        e.a += e.attack === 'lunge' ? -dt * 3 : dt * 30 * k
         if (e.st >= e.teleDur) {
           const dx = px - e.x
           const dz = pz - e.z
@@ -1739,6 +1858,24 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           e.hitPlayer = false
           enterState(e, 'act')
           w.sfx('dash', e.x, e.z)
+        }
+      } else if (e.state === 'act' && e.attack === 'lunge') {
+        const frac = rollerLunge(w, e, dt)
+        e.a += dt * 40
+        if (!e.hitPlayer && Math.hypot(w.player.x - e.x, w.player.z - e.z) < e.def.radius + PLAYER_R + 0.2) {
+          e.hitPlayer = true
+          w.hitPlayer(e, e.dmg, { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+        }
+        if (frac < 0.4 && e.st > 0.06) {
+          // Into a wall or a ledge: it drops short and shakes it off
+          w.sfx('bonk', e.x, e.z)
+          e.y = 0
+          e.stunT = 0.8
+          enterState(e, 'stun')
+        } else if (e.st >= ROLLER_LUNGE_TIME) {
+          e.y = 0
+          w.fx.sparks(e.x, 0.1, e.z, '#ffd9a0', 8, 4, 0.18)
+          enterState(e, 'recover')
         }
       } else if (e.state === 'act') {
         const sp = 12
@@ -1759,7 +1896,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           enterState(e, 'recover')
         }
       } else if (e.state === 'recover') {
-        if (e.st > 0.5) {
+        // A lunge lands it off balance a beat longer: the punish window
+        if (e.st > (e.attack === 'lunge' ? ROLLER_LUNGE_RECOVER : 0.5)) {
           e.cd = cooldown()
           enterState(e, 'engage')
         }
@@ -1788,7 +1926,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             e.tx = px
             e.tz = pz
             startTele(e, 'stomp', 0.8, true)
-            w.markers.spawn(px, pz, BRUTE_STOMP_R, 0.8 + BRUTE_STOMP_T)
+            w.markers.spawn(px, pz, BRUTE_STOMP_R, 0.8 + BRUTE_STOMP_T, e)
           } else if (d > BRUTE_RUSH_MIN && d < BRUTE_RUSH_MAX && Math.random() < (e.elite ? 0.45 : 0.5)) {
             startTele(e, 'rush', e.elite ? 0.6 : 0.8, true)
           } else if (d > BRUTE_RUSH_MIN && d < BRUTE_TOSS_MAX && (!e.elite || Math.random() < 0.5)) {
@@ -1937,7 +2075,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           startTele(e, 'lob', def.tele, true)
           e.tx = px
           e.tz = pz
-          w.markers.spawn(px, pz, 1.9, def.tele + 1.1)
+          w.markers.spawn(px, pz, 1.9, def.tele + 1.1, e)
         }
       } else if (e.state === 'tele') {
         faceTo(e, e.tx, e.tz, 4, dt)
@@ -2036,9 +2174,10 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         if (d > hi) seek(w, e, px, pz, def.speed, dt)
         else if (d < lo) seek(w, e, e.x + (e.x - px), e.z + (e.z - pz), def.speed * 0.6, dt)
         if (canAttack) {
-          const move = d < 4.5 ? 'stomp' : e.step % 2 === 0 ? 'barrage' : 'cannon'
+          // The stomp only where its ring lands on him (#180); else the guns.
+          const move = d < GATE_STOMP_R + PLAYER_R ? 'stomp' : e.step % 2 === 0 ? 'barrage' : 'cannon'
           startTele(e, move, move === 'stomp' ? 0.8 : def.tele, move !== 'cannon')
-          if (move === 'stomp') w.markers.spawn(e.x, e.z, GATE_STOMP_R, 1.0)
+          if (move === 'stomp') w.markers.spawn(e.x, e.z, GATE_STOMP_R, 1.0, e)
         }
       } else if (e.state === 'tele') {
         faceTo(e, px, pz, 2, dt)
@@ -2318,7 +2457,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           startTele(e, 'erupt', def.tele, true)
           e.tx = px
           e.tz = pz
-          w.markers.spawn(px, pz, MOLE_REACH, def.tele + 0.25)
+          w.markers.spawn(px, pz, MOLE_REACH, def.tele + 0.25, e)
           w.sfx('alert', e.x, e.z)
         }
       } else if (e.state === 'tele') {
@@ -2365,7 +2504,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           e.tz = (pz - e.z) / dd
           startTele(e, 'ram', GOLEM_RAM_TELE, true)
           const reach = GOLEM_RAM_SPEED * GOLEM_RAM_TIME
-          for (let s = 1; s <= 5; s++) w.markers.spawn(e.x + e.tx * reach * s / 5, e.z + e.tz * reach * s / 5, 0.5, GOLEM_RAM_TELE + 0.1)
+          for (let s = 1; s <= 5; s++) w.markers.spawn(e.x + e.tx * reach * s / 5, e.z + e.tz * reach * s / 5, 0.5, GOLEM_RAM_TELE + 0.1, e)
         } else if (canAttack && inReach(w, e, d, 16)) {
           if (g.throws >= 2) {
             // The boulder, at where Flux stands now (red: step out)
@@ -2373,7 +2512,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
             startTele(e, 'lob', GOLEM_LOB_TELE, true)
             e.tx = px
             e.tz = pz
-            w.markers.spawn(px, pz, 1.9, GOLEM_LOB_TELE + GOLEM_LOB_DUR)
+            w.markers.spawn(px, pz, 1.9, GOLEM_LOB_TELE + GOLEM_LOB_DUR, e)
           } else {
             g.throws++
             startTele(e, 'throw', def.tele, false)

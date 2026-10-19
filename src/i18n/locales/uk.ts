@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Попелястий гончак',
+    'steelHound': 'Сталевий гончак',
     'icebreakerBrute': 'Криголам-громило',
     'arcSpider': 'Дуговий павук',
     'stormHornetQueen': 'Королева грозових шершнів',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Вольт-вежа',
     'gale': 'Небесні доки',
     'fortress': 'Фортеця Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Чити ввімкнено: Shift+Ctrl+Alt+F1 відкриває панель',
+    'off': 'Чити вимкнено',
+    'title': 'Панель читів',
+    'note': 'Збереження з читами не надсилає очки до таблиці лідерів.',
+    'unlockAll': 'Відкрити всі сюжетні місії',
+    'bolts': '+{n} болтів',
+    'chips': '+{n} чипів навичок',
+    'gear': 'Епічний бластер',
+    'gels': 'Поповнити ремонтні гелі',
+    'done': 'Готово!',
+    'doors': 'Перейти до дверей',
+    'boss': 'Двері боса',
+    'challenge': 'Двері випробування',
+    'challengeN': 'Двері випробування {n}',
+    'actLevelUp': 'Показати сцену нового рівня',
+    'actObjective': 'Показати сцену виконаної цілі'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Знахідка: {item} ({rarity})!',
     'tank': 'Знайдено ремонтний гель!',
     'giftTank': 'Подарунок: +1 ремонтний гель!',
+    'skillChip': 'Знайдено чип навичок!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'порівняно з одягненим',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Підкат',
       'block': 'Блок',
       'interact': 'Дія',
+      'pip': 'Припаси Піпа',
       'beam': 'Телепорт',
       'tank': 'Ремонтний гель',
       'weapon1': 'Спецзброя 1',

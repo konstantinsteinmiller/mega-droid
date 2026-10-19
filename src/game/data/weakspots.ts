@@ -4,10 +4,10 @@ import type { BossId } from '../models/bosses'
 /**
  * ─── Weak spots ──────────────────────────────────────────────────────────────
  *
- * Every machine and every Core Master has one weak spot: a small sphere on
- * its body. The androids' is the head; the other machines' is somewhere
+ * Every machine and every Core Master has a weak spot (a few have two): a
+ * small sphere on its body. The androids' is the head; the other machines' is somewhere
  * their build leaves open — a rotor drone's tail, a stomper's back, a gear
- * roller's exhaust, a wall cannon's power core, a crate golem's back. A
+ * roller's exhaust (and its driver's head), a wall cannon's power core, a crate golem's back. A
  * shot that lands on it hits ×1.5 (`WEAK_SPOT_MUL`) with the amber "KRANCK!".
  *
  * It rewards AIM, never the aim assist: a shot only goes for a weak spot when
@@ -29,6 +29,9 @@ export interface WeakSpot {
   fwd: number
   side: number
   r: number
+  /** A spot on a part that pitches about a pivot `arm` m below it, by
+   *  `k` × the machine's lean (`mo.tilt`): the Gear Roller's driver head. */
+  pitch?: { arm: number; k: number }
 }
 
 export const WEAK_SPOT_MUL = 1.5
@@ -69,6 +72,18 @@ export const ENEMY_WEAK: Record<EnemyKind, WeakSpot> = {
   miniboss: spot('back', 1.4, -0.4, 0.3)
 }
 
+/**
+ * A machine with more than one open place carries the rest here, after its
+ * `ENEMY_WEAK` spot (index 0). The crosshair picks the nearest one it is on;
+ * a shot goes for that one only, and lands at most one weak hit.
+ */
+export const ENEMY_WEAK_MORE: Partial<Record<EnemyKind, readonly WeakSpot[]>> = {
+  // The Gear Roller's driver: its cyclops head on top of the wheel (the
+  // driver bone sits 1.6 m up; the head 0.1 above it). Small, as the head
+  // is; it leans with the wind-up and the lunge, and rides the hop (e.y).
+  roller: [{ ...spot('head', 1.7, 0.05, 0.19), pitch: { arm: 0.1, k: 0.35 } }]
+}
+
 export const BOSS_WEAK: Record<BossId, WeakSpot> = {
   // The Masters are androids: the head. The Scrapper's engine sits on its
   // back; Vex's Mk-I is a skull under a glass dome.
@@ -95,6 +110,8 @@ export interface WeakBody {
   elite: boolean
   boss: boolean
   kind: EnemyKind
+  /** Its motion state: the lean a pitching spot follows. */
+  mo?: { tilt: number }
   /** `weak`: a challenge mini-boss's own spot (its registry entry's). */
   def: { aimY: number; id?: string; weak?: WeakSpot }
 }
@@ -102,15 +119,32 @@ export interface WeakBody {
 export const weakSpotOf = (e: WeakBody): WeakSpot =>
   e.boss && e.def.id && e.def.id in BOSS_WEAK ? BOSS_WEAK[e.def.id as BossId] : e.def.weak ?? ENEMY_WEAK[e.kind]
 
+/** How many weak spots it has: its own one, plus its kind's extra ones (a
+ *  boss or a mini-boss with its own spot has just that). */
+export const weakSpotCount = (e: WeakBody): number =>
+  (e.boss && e.def.id && e.def.id in BOSS_WEAK) || e.def.weak ? 1 : 1 + (ENEMY_WEAK_MORE[e.kind]?.length ?? 0)
+
+/** Its weak spot number `i` (0: `weakSpotOf`). */
+export const weakSpotN = (e: WeakBody, i: number): WeakSpot =>
+  i > 0 && i < weakSpotCount(e) ? ENEMY_WEAK_MORE[e.kind]![i - 1]! : weakSpotOf(e)
+
 /** The weak spot's centre in the world, and its radius. */
-export const weakSpotAt = (e: WeakBody, out: { x: number; y: number; z: number; r: number }): typeof out => {
-  const w = weakSpotOf(e)
+export const weakSpotAt = (e: WeakBody, out: { x: number; y: number; z: number; r: number }, i = 0): typeof out => {
+  const w = weakSpotN(e, i)
   const s = e.elite ? 1.18 : 1
   const sy = Math.sin(e.yaw)
   const cy = Math.cos(e.yaw)
-  out.x = e.x + (sy * w.fwd + cy * w.side) * s
-  out.z = e.z + (cy * w.fwd - sy * w.side) * s
-  out.y = e.y + (e.floor ?? 0) + w.up * s
+  let fwd = w.fwd
+  let up = w.up
+  if (w.pitch && e.mo) {
+    // Swing the spot about its pivot, as the model's bone pitches
+    const a = e.mo.tilt * w.pitch.k
+    fwd += w.pitch.arm * Math.sin(a)
+    up += w.pitch.arm * (Math.cos(a) - 1)
+  }
+  out.x = e.x + (sy * fwd + cy * w.side) * s
+  out.z = e.z + (cy * fwd - sy * w.side) * s
+  out.y = e.y + (e.floor ?? 0) + up * s
   out.r = w.r * s
   return out
 }
@@ -138,8 +172,8 @@ export const raySphere = (
  * on top shows from anywhere; a back, a tail or a core only from behind (or
  * well to the side) — from the front, the body is in the way.
  */
-export const weakSpotFacing = (e: WeakBody, ex: number, ez: number): boolean => {
-  const w = weakSpotOf(e)
+export const weakSpotFacing = (e: WeakBody, ex: number, ez: number, i = 0): boolean => {
+  const w = weakSpotN(e, i)
   if (w.part === 'head' || w.part === 'dome') return true
   const sy = Math.sin(e.yaw)
   const cy = Math.cos(e.yaw)
@@ -151,23 +185,26 @@ export const weakSpotFacing = (e: WeakBody, ex: number, ez: number): boolean => 
 
 /**
  * The weak spot the crosshair is on, if any: the nearest one the view ray
- * meets, on a machine that can be hit and seen, on the side facing the eye.
+ * meets (`i`: which of the machine's spots), on a machine that can be hit and seen, on the side facing the eye.
  * `sees(e)`: a wall does not stand between the eye and the machine.
  */
 export const weakSpotUnderRay = <E extends WeakBody>(
   ox: number, oy: number, oz: number, dx: number, dy: number, dz: number,
   enemies: readonly E[], canHit: (e: E) => boolean, sees: (e: E) => boolean,
   reach = 40
-): { e: E; x: number; y: number; z: number; r: number; dist: number } | null => {
-  let best: { e: E; x: number; y: number; z: number; r: number; dist: number } | null = null
+): { e: E; i: number; x: number; y: number; z: number; r: number; dist: number } | null => {
+  let best: { e: E; i: number; x: number; y: number; z: number; r: number; dist: number } | null = null
   const p = { x: 0, y: 0, z: 0, r: 0 }
   for (const e of enemies) {
     if (!canHit(e)) continue
-    weakSpotAt(e, p)
-    const t = raySphere(ox, oy, oz, dx, dy, dz, p.x, p.y, p.z, p.r)
-    if (t < 0 || t > reach || (best && t >= best.dist)) continue
-    if (!weakSpotFacing(e, ox, oz) || !sees(e)) continue
-    best = { e, x: p.x, y: p.y, z: p.z, r: p.r, dist: t }
+    const n = weakSpotCount(e)
+    for (let i = 0; i < n; i++) {
+      weakSpotAt(e, p, i)
+      const t = raySphere(ox, oy, oz, dx, dy, dz, p.x, p.y, p.z, p.r)
+      if (t < 0 || t > reach || (best && t >= best.dist)) continue
+      if (!weakSpotFacing(e, ox, oz, i) || !sees(e)) continue
+      best = { e, i, x: p.x, y: p.y, z: p.z, r: p.r, dist: t }
+    }
   }
   return best
 }

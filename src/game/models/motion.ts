@@ -1,5 +1,7 @@
 import type { EnemyKind } from './enemies'
 import type { BossId } from './bosses'
+import type { BossAnim } from './bossAnim'
+import type { BodyDyn } from './bodyDyn'
 
 /**
  * ─── Enemy motion channels ───────────────────────────────────────────────────
@@ -101,6 +103,13 @@ export interface EnemyMotion {
   grip: number
   /** 0..1: the boulder it hauls out of itself for the lob (gone at the release). */
   boulder: number
+  // ── Bosses ──
+  /** A boss in the game: its motion layer's springs (`models/bossAnim.ts`,
+   *  stepped by `updateBoss`). Absent, a boss rig keeps the first layer. */
+  boss?: BossAnim
+  /** A challenge mini-boss: its whole-body secondary layer (`models/bodyDyn.ts`,
+   *  stepped by `updateMiniBoss`). */
+  body?: BodyDyn
 }
 
 /** Next pseudo-random number in [0, 1) from the enemy's own stream. */
@@ -186,7 +195,7 @@ export const BOSS_GAIT: Partial<Record<BossId, GaitSpec>> = {
  * cutscene, `sim/exitRun.ts`): hip → knee 0.19, knee → sole 0.36 on his rig
  * (`models/hero.ts`).
  */
-export const HERO_GAIT: GaitSpec = { L: 0.55, A: 0.42, beta: 0.5, knee: 0.95, hipW: 0.125 }
+export const HERO_GAIT: GaitSpec = { L: 0.46, A: 0.42, beta: 0.5, knee: 0.95, hipW: 0.125 }
 
 /** Gait amplitude 0..1: ramps in over the first 35 % of `walk`. */
 export const gaitAmp = (walk: number): number => Math.min(1, walk / 0.35)

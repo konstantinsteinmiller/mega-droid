@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Copoiul de Jar',
+    'steelHound': 'Copoiul de Oțel',
     'icebreakerBrute': 'Brutul Spărgător de Gheață',
     'arcSpider': 'Păianjenul de Arc',
     'stormHornetQueen': 'Regina Viespilor de Furtună',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Turnul Volt',
     'gale': 'Docurile Cerului',
     'fortress': 'Fortăreața lui Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trișări activate: Shift+Ctrl+Alt+F1 deschide panoul',
+    'off': 'Trișări dezactivate',
+    'title': 'Panou de trișări',
+    'note': 'O salvare cu trișări nu trimite scoruri în clasament.',
+    'unlockAll': 'Deblochează toate misiunile poveștii',
+    'bolts': '+{n} șuruburi',
+    'chips': '+{n} cipuri de abilitate',
+    'gear': 'Blaster epic',
+    'gels': 'Umple gelurile de reparare',
+    'done': 'Gata!',
+    'doors': 'Sari la o ușă',
+    'boss': 'Ușa șefului',
+    'challenge': 'Ușa provocării',
+    'challengeN': 'Ușa provocării {n}',
+    'actLevelUp': 'Redă scena de avansare în nivel',
+    'actObjective': 'Redă scena de obiectiv îndeplinit'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Ai găsit: {item} ({rarity})!',
     'tank': 'Ai găsit un Gel Reparator!',
     'giftTank': 'Cadou: +1 Gel Reparator!',
+    'skillChip': 'Cip de abilitate găsit!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'față de echipat',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Alunecare',
       'block': 'Blocare',
       'interact': 'Interacțiune',
+      'pip': 'Proviziile lui Pip',
       'beam': 'Teleportare',
       'tank': 'Gel Reparator',
       'weapon1': 'Armă specială 1',

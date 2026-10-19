@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Cho‘g‘ tozi',
+    'steelHound': 'Po‘lat tozi',
     'icebreakerBrute': 'Muzyorar Bahaybat',
     'arcSpider': 'Yoy o‘rgimchagi',
     'stormHornetQueen': 'Bo‘ron arisi malikasi',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volt minorasi',
     'gale': 'Osmon doklari',
     'fortress': 'Vex qalʼasi'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Chitlar yoqilgan: Shift+Ctrl+Alt+F1 chit panelini ochadi',
+    'off': 'Chitlar o‘chirilgan',
+    'title': 'Chit paneli',
+    'note': 'Chit ishlatilgan saqlanma reyting jadvaliga ochko yubormaydi.',
+    'unlockAll': 'Barcha syujet missiyalarini ochish',
+    'bolts': '+{n} bolt',
+    'chips': '+{n} mahorat chipi',
+    'gear': 'Epik blaster',
+    'gels': 'Ta’mir gellarini to‘ldirish',
+    'done': 'Tayyor!',
+    'doors': 'Eshikka sakrash',
+    'boss': 'Boss eshigi',
+    'challenge': 'Sinov eshigi',
+    'challengeN': 'Sinov eshigi {n}',
+    'actLevelUp': 'Daraja oshishi sahnasini qo‘yish',
+    'actObjective': 'Maqsad bajarildi sahnasini qo‘yish'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{rarity} {item} topildi!',
     'tank': 'Taʼmir geli topildi!',
     'giftTank': 'Sovg‘a: +1 taʼmir geli!',
+    'skillChip': "Ko'nikma chipi topildi!",
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'kiyilgani bilan solishtirish',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Sirpanish',
       'block': 'Himoya',
       'interact': 'Harakat',
+      'pip': 'Pipning jihozlari',
       'beam': 'Teleport',
       'tank': 'Taʼmir geli',
       'weapon1': 'Maxsus qurol 1',

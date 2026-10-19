@@ -2,7 +2,7 @@ import {
   AdditiveBlending, BoxGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial,
   RingGeometry, SphereGeometry, Vector3, type Object3D
 } from 'three'
-import { buildHero, buildViewmodel, animateHeroIdle, animateHeroWalk, animateHeroHop, type HeroColors } from '../models/hero'
+import { buildHero, buildViewmodel, animateHeroIdle, animateHeroWalk, animateHeroHop, HERO_MUZZLE_X, HERO_MUZZLE_Y, type HeroColors } from '../models/hero'
 import { buildEnemyRig, poseHeli, poseTrooper, poseHopper } from '../models/enemies'
 import { pose, type Rig } from '../models/kit'
 import { newMotion } from '../models/motion'
@@ -102,7 +102,7 @@ const smooth = (k: number): number => {
 const span = (u: number, a: number, b: number): number => Math.min(1, Math.max(0, (u - a) / (b - a)))
 
 /** The buster's muzzle in the right forearm's space (`models/hero.ts`). */
-const MUZZLE = new Vector3(0, -0.34, 0)
+const MUZZLE = new Vector3(HERO_MUZZLE_X, HERO_MUZZLE_Y - 0.026, 0)
 const _m = new Vector3()
 const _look = new Vector3()
 

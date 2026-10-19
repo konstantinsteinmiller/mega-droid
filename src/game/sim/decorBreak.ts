@@ -21,6 +21,39 @@ export const UNBREAKABLE: ReadonlySet<DecorKind> = new Set<DecorKind>()
 /** Bolts a broken prop drops. */
 export const DECOR_BOLTS = 1
 
+/** A broken prop's rare extra find, rolled once as it breaks (one roll, the
+ *  outcomes exclusive): a health or energy capsule, a Repair Gel, a chip. */
+export const DECOR_CAPSULE_CHANCE = 0.09
+export const DECOR_GEL_CHANCE = 0.02
+/** A chip: half a Skill Chip, half the equipment chip item. */
+export const DECOR_SKILL_CHIP_CHANCE = 0.005
+export const DECOR_ITEM_CHIP_CHANCE = 0.005
+export const DECOR_CHIP_CHANCE = DECOR_SKILL_CHIP_CHANCE + DECOR_ITEM_CHIP_CHANCE
+
+export type DecorDrop = 'hp' | 'we' | 'gel' | 'skillChip' | 'chip'
+
+/** The find for a roll in [0, 1): a capsule of whichever the player is
+ *  shorter of (`hpFrac`, `weFrac`: health and energy as a share of full;
+ *  health on a tie), else a gel, else a Skill Chip, else a chip item, else
+ *  nothing. */
+export const decorDrop = (roll: number, hpFrac: number, weFrac: number): DecorDrop | null => {
+  if (roll < DECOR_CAPSULE_CHANCE) return weFrac < hpFrac ? 'we' : 'hp'
+  if (roll < DECOR_CAPSULE_CHANCE + DECOR_GEL_CHANCE) return 'gel'
+  if (roll < DECOR_CAPSULE_CHANCE + DECOR_GEL_CHANCE + DECOR_SKILL_CHIP_CHANCE) return 'skillChip'
+  if (roll < DECOR_CAPSULE_CHANCE + DECOR_GEL_CHANCE + DECOR_CHIP_CHANCE) return 'chip'
+  return null
+}
+
+/** Breaks a target and rolls its find — once: a broken one neither breaks
+ *  again nor rolls (`rng` is not called), so a prop pays once a mission. */
+export const breakDecor = (
+  d: DecorTarget, rng: () => number, hpFrac: number, weFrac: number
+): { broke: boolean; drop: DecorDrop | null } => {
+  if (d.broken) return { broke: false, drop: null }
+  d.broken = true
+  return { broke: true, drop: decorDrop(rng(), hpFrac, weFrac) }
+}
+
 export interface DecorTarget {
   /** Index into `planDecor(...).props` (`LevelMeshes.breakDecor`). */
   n: number

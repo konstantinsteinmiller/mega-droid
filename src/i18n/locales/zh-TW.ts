@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': '餘燼獵犬',
+    'steelHound': '鋼鐵獵犬',
     'icebreakerBrute': '破冰蠻兵',
     'arcSpider': '電弧蜘蛛',
     'stormHornetQueen': '風暴黃蜂女王',
@@ -177,6 +177,26 @@ export default {
     'volt': '伏特塔',
     'gale': '天空碼頭',
     'fortress': 'Vex要塞'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': '作弊已開啟：Shift+Ctrl+Alt+F1 開啟作弊面板',
+    'off': '作弊已關閉',
+    'title': '作弊面板',
+    'note': '使用過作弊的存檔不會上傳排行榜分數。',
+    'unlockAll': '解鎖所有劇情任務',
+    'bolts': '+{n} 螺栓',
+    'chips': '+{n} 技能晶片',
+    'gear': '史詩爆能槍',
+    'gels': '補滿修復凝膠',
+    'done': '完成！',
+    'doors': '跳到門前',
+    'boss': '頭目之門',
+    'challenge': '挑戰之門',
+    'challengeN': '挑戰之門 {n}',
+    'actLevelUp': '播放升級動畫',
+    'actObjective': '播放目標完成動畫'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '發現{item}（{rarity}）！',
     'tank': '發現修理凝膠！',
     'giftTank': '禮物：+1 修理凝膠！',
+    'skillChip': '發現技能晶片！',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': '與已裝備比較',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': '滑鏟',
       'block': '格擋',
       'interact': '互動',
+      'pip': '皮普的補給',
       'beam': '傳送撤離',
       'tank': '修理凝膠',
       'weapon1': '特殊武器 1',

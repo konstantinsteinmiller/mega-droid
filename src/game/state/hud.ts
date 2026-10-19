@@ -206,6 +206,8 @@ export type HudEvent =
   | { t: 'kranck'; x: number; y: number; z: number; key?: string }
   /** An item found in the mission: its card (`LootCard.vue`). */
   | { t: 'loot'; item: Item }
+  /** A HUD celebration (`state/celebrate.ts`): it plays its own sting. */
+  | { t: 'celebrate'; kind: 'levelUp' | 'objective' }
 
 export const hudEvents: HudEvent[] = []
 export const pushHud = (e: HudEvent): void => {

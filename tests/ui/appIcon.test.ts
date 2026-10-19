@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 // ─── One icon source, every raster rendered from it ────────────────────────
 //
-// public/icons/icon.svg is the app icon (Flux's head in the hex reactor
-// badge). scripts/render-icons.mjs renders every PNG and favicon.ico from it,
+// public/icons/icon.svg is the app icon (Flux's helmet in its charged
+// ring, written by store-art/brand/logo.mjs). scripts/render-icons.mjs renders every PNG and favicon.ico from it,
 // in Chrome, because the SVG switches to a bold small-size mark through a
 // media query that only a browser evaluates. These pin the contracts that
 // script and the page rely on, so a hand-edited PNG or a dropped favicon
@@ -38,9 +38,12 @@ describe('icon.svg', () => {
     expect(svg).toContain('.s{display:none}@media (max-width:40px){.d{display:none}.s{display:inline}}')
   })
 
-  it('references nothing outside itself', () => {
+  it('references nothing outside itself (the rendered head is inlined as a data URI)', () => {
     const body = svg.replace('xmlns="http://www.w3.org/2000/svg"', '')
-    expect(body).not.toMatch(/https?:|<image\b|@import|font-family/)
+    expect(body).not.toMatch(/https?:|@import|font-family/)
+    const images = [...body.matchAll(/<image\b[^>]*href="([^"]{0,16})/g)]
+    expect(images.length).toBeGreaterThan(0)
+    for (const m of images) expect(m[1]).toMatch(/^data:image\//)
   })
 })
 

@@ -97,7 +97,7 @@
   },
   "de/atlas_help_blockMiss": {
     "engine": "elevenlabs",
-    "at": "2026-10-07"
+    "at": "2026-10-18"
   },
   "de/atlas_help_charge": {
     "engine": "elevenlabs",
@@ -241,7 +241,7 @@
   },
   "de/atlas_hint_gm_feet": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/atlas_hint_gm_head": {
     "engine": "elevenlabs",
@@ -893,7 +893,7 @@
   },
   "de/pip_debrief_blaze_tip": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/pip_debrief_blaze_weapon": {
     "engine": "elevenlabs",
@@ -953,7 +953,7 @@
   },
   "de/pip_debrief_gale_tip": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/pip_debrief_gale_weapon": {
     "engine": "elevenlabs",
@@ -1041,7 +1041,7 @@
   },
   "de/pip_debrief_scrapyard_tip": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/pip_debrief_scrapyard_weapon": {
     "engine": "elevenlabs",
@@ -1081,7 +1081,7 @@
   },
   "de/pip_debrief_volt_tip": {
     "engine": "elevenlabs",
-    "at": "2026-10-03"
+    "at": "2026-10-18"
   },
   "de/pip_debrief_volt_weapon": {
     "engine": "elevenlabs",

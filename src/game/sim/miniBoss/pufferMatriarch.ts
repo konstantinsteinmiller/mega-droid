@@ -2,13 +2,14 @@ import { AdditiveBlending, Color, DoubleSide, Group, Mesh, MeshBasicMaterial, Ri
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
 import type { Rig } from '../../models/kit'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildPufferMatriarch, posePufferMatriarch, newPufferPose, buildMatriarchMine, MATRIARCH_COLORS, MATRIARCH_ESCORTS,
   MATRIARCH_R, MATRIARCH_SCALE, type PufferPose
 } from '../../models/miniBoss/pufferMatriarch'
 import { posePuffer } from '../../models/enemies'
-import { TAU, faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, inCone, near, ease } from './kit'
+import { TAU, faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, inCone, near, ease, sprung, type PoseVel } from './kit'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
 
@@ -82,6 +83,8 @@ type Attack = 'bounce' | 'mines' | 'jet'
 interface Mine { x: number; z: number; yaw: number; t: number; armed: number; slot: number; rig: Rig }
 
 export interface PufferMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: PufferPose
   attack: Attack | ''
   /** The bounce's route (x, z pairs) and how far along it she is (m). */
@@ -173,7 +176,7 @@ const plan = (w: World, e: Enemy, m: PufferMem, room: Room): void => {
   // The route on the floor: a red mark every 1.5 m, each gone as she passes it.
   for (let s = 1.2; s < total; s += 1.5) {
     const [px, pz] = at(m, s)
-    w.markers.spawn(px, pz, 1.0, BOUNCE_TELE + s / BOUNCE_SPEED + 0.1)
+    w.markers.spawn(px, pz, 1.0, BOUNCE_TELE + s / BOUNCE_SPEED + 0.1, e)
   }
 }
 
@@ -202,6 +205,14 @@ const at = (m: PufferMem, s: number): [number, number, number] => {
   return _at
 }
 
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const PUFFER_REACH: Record<Attack, number> = {
+  // Her route bounces off the walls through where he stands.
+  bounce: ANYWHERE,
+  mines: ANYWHERE,
+  jet: JET_RANGE + PLAYER_R
+}
+
 const pick = (e: Enemy, m: PufferMem, d: number): Attack => {
   const r = Math.random()
   let a: Attack = d < 5
@@ -212,6 +223,8 @@ const pick = (e: Enemy, m: PufferMem, d: number): Attack => {
   const owed = (['jet', 'bounce', 'mines'] as const).find(x => m.since[x] >= 3 && (x !== 'mines' || releasable(m) > 0))
   if (owed) a = owed
   if (a === 'mines' && releasable(m) === 0) a = d < 5 ? 'jet' : 'bounce'
+  // The jet only where it reaches him (#180); else she bounces at him.
+  if (d > PUFFER_REACH[a]) a = 'bounce'
   for (const x of ['jet', 'bounce', 'mines'] as const) m.since[x] = x === a ? 0 : m.since[x] + 1
   return a
 }
@@ -237,7 +250,7 @@ const begin = (w: World, e: Enemy, m: PufferMem, a: Attack, room: Room): void =>
     // Where each will come out: in front of her lips.
     m.queued.forEach((_, i) => {
       const [x, z] = minePoint(e, i, m.queued.length)
-      w.markers.spawn(x, z, 0.8, MINE_TELE + 0.3)
+      w.markers.spawn(x, z, 0.8, MINE_TELE + 0.3, e)
     })
     w.sfx('trapClick', e.x, e.z)
   } else {
@@ -338,7 +351,7 @@ const release = (w: World, e: Enemy, m: PufferMem): void => {
 
 export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
   init: () => ({
-    pose: newPufferPose(), attack: '', route: [], run: 0, routeLen: 0,
+    pose: newPufferPose(), vel: {}, attack: '', route: [], run: 0, routeLen: 0,
     escorts: Array.from({ length: MATRIARCH_ESCORTS }, () => ({ st: 'swim' as const, t: 0 })),
     mines: [], spare: [], queued: [], a0: 0, dir: 1, arc: null, arcOn: false, phase2: false, side: 1, surfaced: false,
     since: { bounce: 0, mines: 0, jet: 0 }
@@ -400,7 +413,8 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
         if (moveBody(w, e, (mx / ml) * sp * dt, (mz / ml) * sp * dt) < 0.3) m.side = -m.side
         if (Math.random() < dt * 0.2) m.side = -m.side
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -508,9 +522,9 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
     e.y = e.state === 'act' && m.attack === 'bounce' ? y : ease(e.y, y, 8, dt)
     if (!(e.state === 'act' && m.attack === 'bounce')) p.roll = ease(p.roll, Math.round(p.roll / TAU) * TAU, 4, dt)
     p.swell = ease(p.swell, swell, e.state === 'recover' ? 3 : 8, dt)
-    p.pucker = ease(p.pucker, pucker, 10, dt)
-    p.jet = ease(p.jet, jet, 12, dt)
-    p.cough = ease(p.cough, cough, 10, dt)
+    p.pucker = sprung(p.pucker, m.vel, 'pucker', pucker, 10, dt)
+    p.jet = sprung(p.jet, m.vel, 'jet', jet, 12, dt)
+    p.cough = sprung(p.cough, m.vel, 'cough', cough, 10, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -552,7 +566,8 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
         x += ((q - (n - 1) / 2) * 0.6 - x) * f
         y += (-0.15 - y) * f
         z += (1.35 - z) * f
-        yaw += (0 - yaw) * f
+        // (The short way round: its swim angle has wound up many turns.)
+        yaw += Math.atan2(Math.sin(-yaw), Math.cos(-yaw)) * f
         q++
       }
       sp.s = (s.st === 'swim' ? 1 : s.st === 'gone' ? Math.max(0, Math.min(1, (s.t - (ESCORT_REGROW - 0.6)) / 0.6)) : 0) * wake
@@ -621,6 +636,7 @@ export const PUFFER_MATRIARCH: MiniBossSpec<PufferMem> = {
   id: 'pufferMatriarch',
   sector: 'tide',
   nameKey: 'miniboss.pufferMatriarch',
+  reach: PUFFER_REACH,
   def: {
     // `fly` 0: she is solid to Flux, and a magnet pull must not stun-lock a flyer
     // this size; her hover is her own (`HOVER`, `e.y`).

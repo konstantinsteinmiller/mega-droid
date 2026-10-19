@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'كلب الجمر',
+    'steelHound': 'كلب الفولاذ',
     'icebreakerBrute': 'العملاق كاسر الجليد',
     'arcSpider': 'عنكبوت القوس',
     'stormHornetQueen': 'ملكة دبابير العاصفة',
@@ -177,6 +177,26 @@ export default {
     'volt': 'برج البرق',
     'gale': 'مرفأ السماء',
     'fortress': 'قلعة Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'الغش مفعّل: Shift+Ctrl+Alt+F1 يفتح لوحة الغش',
+    'off': 'الغش متوقف',
+    'title': 'لوحة الغش',
+    'note': 'الحفظ الذي استُخدم فيه غش لا يرسل نقاطًا إلى لوحة الصدارة.',
+    'unlockAll': 'افتح كل مهمات القصة',
+    'bolts': '+{n} مسامير',
+    'chips': '+{n} رقاقات مهارة',
+    'gear': 'مدفع ملحمي',
+    'gels': 'املأ جل الإصلاح',
+    'done': 'تم!',
+    'doors': 'انتقل إلى باب',
+    'boss': 'باب الزعيم',
+    'challenge': 'باب التحدي',
+    'challengeN': 'باب التحدي {n}',
+    'actLevelUp': 'شغّل مشهد رفع المستوى',
+    'actObjective': 'شغّل مشهد إنجاز الهدف'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'عُثر على {item} (طراز {rarity})!',
     'tank': 'عُثر على جل إصلاح!',
     'giftTank': 'هدية: +1 جل إصلاح!',
+    'skillChip': 'تم العثور على شريحة مهارة!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'مقارنة بالمجهَّز',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'انزلاق',
       'block': 'صدّ',
       'interact': 'تفاعل',
+      'pip': 'إمدادات بيب',
       'beam': 'انتقال خارجًا',
       'tank': 'جل الإصلاح',
       'weapon1': 'سلاح خاص 1',

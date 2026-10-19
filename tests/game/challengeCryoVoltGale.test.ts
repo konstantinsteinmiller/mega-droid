@@ -64,7 +64,7 @@ const fight = (spec: MiniBossSpec, secs: number, o: { hurt?: number; orbit?: num
     player: { x: cx + 3, z: cz, yaw: 0, pitch: 0 },
     combat: {}, enemies: [e],
     fx: { emit: stub, sparks: stub, orbBurst: stub, flash: stub, riseRing: stub },
-    markers: { spawn: () => floor.push(t) },
+    markers: { spawn: () => floor.push(t), release: () => {} },
     shocks: { spawn: stub, spawnLinear: stub },
     hitPlayer: (_s: Enemy | null, _d: number, h: { blockable: boolean }) => {
       hits.push({ t, state: e.state, attack: e.attack, blockable: h.blockable })

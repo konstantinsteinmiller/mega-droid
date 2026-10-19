@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Żarowy Ogar',
+    'steelHound': 'Stalowy Ogar',
     'icebreakerBrute': 'Lodołamacz Osiłek',
     'arcSpider': 'Łukowy Pająk',
     'stormHornetQueen': 'Królowa Burzowych Szerszeni',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Wieża Napięcia',
     'gale': 'Podniebne Doki',
     'fortress': 'Twierdza Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Kody włączone: Shift+Ctrl+Alt+F1 otwiera panel kodów',
+    'off': 'Kody wyłączone',
+    'title': 'Panel kodów',
+    'note': 'Zapis z użytym kodem nie wysyła wyników do rankingu.',
+    'unlockAll': 'Odblokuj wszystkie misje fabularne',
+    'bolts': '+{n} śrub',
+    'chips': '+{n} chipów umiejętności',
+    'gear': 'Epicki blaster',
+    'gels': 'Uzupełnij żele naprawcze',
+    'done': 'Gotowe!',
+    'doors': 'Skocz do drzwi',
+    'boss': 'Drzwi bossa',
+    'challenge': 'Drzwi wyzwania',
+    'challengeN': 'Drzwi wyzwania {n}',
+    'actLevelUp': 'Odtwórz scenę awansu',
+    'actObjective': 'Odtwórz scenę wykonanego celu'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Znaleziono: {item} ({rarity})!',
     'tank': 'Znaleziono żel naprawczy!',
     'giftTank': 'Prezent: +1 żel naprawczy!',
+    'skillChip': 'Znaleziono chip umiejętności!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'w porównaniu z założonym',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Wślizg',
       'block': 'Blok',
       'interact': 'Interakcja',
+      'pip': 'Zapasy Pipa',
       'beam': 'Teleportacja',
       'tank': 'Żel naprawczy',
       'weapon1': 'Broń specjalna 1',

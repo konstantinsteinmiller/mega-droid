@@ -40,6 +40,8 @@ export interface HeroSave {
   weapons: WeaponId[]
   slots: [WeaponId | '', WeaponId | '']
   weaponXp: Partial<Record<WeaponId, number>>
+  /** Skill Chips found beyond the one a level (a broken prop's rare find). */
+  bonusChips: number
 }
 
 export interface InventorySave {
@@ -105,7 +107,7 @@ export interface Profile {
 }
 
 const defaultHero = (): HeroSave => ({
-  xp: 0, attrs: { hp: 0, we: 0, power: 0 }, skills: {}, pendingAttrs: 0, weapons: [], slots: ['', ''], weaponXp: {}
+  xp: 0, attrs: { hp: 0, we: 0, power: 0 }, skills: {}, pendingAttrs: 0, weapons: [], slots: ['', ''], weaponXp: {}, bonusChips: 0
 })
 
 const defaultInv = (): InventorySave => {
@@ -167,6 +169,7 @@ export const loadProfile = (): void => {
   hero.attrs = obj(hero.attrs, d.hero.attrs)
   hero.skills = obj(hero.skills, {})
   hero.weaponXp = obj(hero.weaponXp, {})
+  hero.bonusChips = Math.max(0, Math.round(num(hero.bonusChips, 0)))
   if (!Array.isArray(hero.weapons)) hero.weapons = []
   if (!Array.isArray(hero.slots) || hero.slots.length !== 2) hero.slots = ['', '']
   profile.hero = hero
@@ -340,7 +343,20 @@ export const initProfile = (): void => {
 export const chipsAvailable = (): number => {
   // Mods are bought with bolts: a save that installed the old Overcharge with
   // a chip gets that chip back.
-  return Math.max(0, profile.level - 1 - chipsSpent(profile.hero.skills))
+  return Math.max(0, profile.level - 1 + profile.hero.bonusChips - chipsSpent(profile.hero.skills))
+}
+
+/** A dev cheat was used on this save (`game/cheatPanel.ts`): from then on it
+ *  posts no leaderboard score, ours or the portal's (`flow.finishMission`). */
+export const markCheated = (): void => {
+  profile.tips.cheated = true
+}
+
+export const isCheatedSave = (): boolean => profile.tips.cheated === true
+
+/** One Skill Chip found (not earned by a level): free to socket like those. */
+export const grantSkillChip = (): void => {
+  profile.hero.bonusChips++
 }
 
 export const xp01 = (): number => profile.hero.xp / Math.max(1, xpToNext(profile.level))

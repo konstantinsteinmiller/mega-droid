@@ -11,7 +11,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  AtlasDirector, ATLAS_LINES, ATLAS_GAP, CHATTER_GAP, VOICE_WAIT, atlasKey, isChatter, lineSeconds, onceEver,
+  AtlasDirector, ATLAS_LINES, ATLAS_GAP, CHATTER_GAP, VOICE_WAIT, atlasKey, isChatter, leapLineAllowed, lineSeconds, onceEver,
   type AtlasLine, type AtlasMemory, type AtlasMissionInfo, type AtlasTick
 } from '@/game/sim/atlas'
 import { voiceLangFor, voiceUrl, playVoice, preloadVoices, __resetVoices, englishVoiceAllowed } from '@/game/audio/voice'
@@ -409,5 +409,29 @@ describe('Atlas: the voice loads on demand, just before its bubble', () => {
     a.event('exit')
     run(a, 1 / 60)
     expect(a.line?.id).toBe('exit')
+  })
+})
+
+describe('Atlas: the edge-leap is taught once', () => {
+  it('the gap lesson and its repeating hint only in the tutorial', () => {
+    for (const l of ['train.gap', 'help.gap'] as AtlasLine[]) {
+      expect(leapLineAllowed(l, true, undefined)).toBe(true)
+      for (const s of ['gale', 'blaze', 'cryo', undefined]) expect(leapLineAllowed(l, false, s)).toBe(false)
+    }
+  })
+  it('a stage leap tip only on the Gale Master stage, never in other levels', () => {
+    expect(leapLineAllowed('hint.gale.leap', false, 'gale')).toBe(true)
+    expect(leapLineAllowed('hint.blaze.leap', false, 'blaze')).toBe(false)
+    expect(leapLineAllowed('hint.gale.leap', true, 'gale')).toBe(false)
+  })
+  it('other lines and helps pass untouched', () => {
+    for (const l of ['help.block', 'help.blockMiss', 'hint.gale.wind', 'hint.blaze.lava', 'train.charge'] as AtlasLine[]) {
+      expect(leapLineAllowed(l, false, 'blaze')).toBe(true)
+    }
+  })
+  it('the gale tip is said at most once a mission, even asked again', () => {
+    const a = director()
+    expect(a.say('hint.gale.leap')).toBe(true)
+    expect(a.say('hint.gale.leap')).toBe(false)
   })
 })

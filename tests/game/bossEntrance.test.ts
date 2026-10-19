@@ -18,7 +18,8 @@ const fakeWorld = (enemies: World['enemies']): World => ({
   enemies,
   player: { x: 0, z: 0 },
   shocks: { spawn: () => {} },
-  fx: { sparks: () => {}, orbBurst: () => {} },
+  // (`emit`: the landing's dust ring, #183.)
+  fx: { sparks: () => {}, orbBurst: () => {}, emit: () => {} },
   shake: () => {},
   sfx: () => {}
 }) as unknown as World

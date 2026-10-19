@@ -160,7 +160,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Cinder Hound',
+    'steelHound': 'Steel Hound',
     'icebreakerBrute': 'Icebreaker Brute',
     'arcSpider': 'Arc Spider',
     'stormHornetQueen': 'Storm Hornet Queen',
@@ -195,6 +195,26 @@ export default {
     'volt': 'Volt Tower',
     'gale': 'Sky Docks',
     'fortress': 'Vex Fortress'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Cheats on: Shift+Ctrl+Alt+F1 opens the cheat panel',
+    'off': 'Cheats off',
+    'title': 'Cheat panel',
+    'note': 'A save that used a cheat posts no leaderboard scores.',
+    'unlockAll': 'Unlock all story missions',
+    'bolts': '+{n} bolts',
+    'chips': '+{n} Skill Chips',
+    'gear': 'Epic blaster',
+    'gels': 'Fill Repair Gels',
+    'done': 'Done!',
+    'doors': 'Jump to a door',
+    'boss': 'Boss door',
+    'challenge': 'Challenge door',
+    'challengeN': 'Challenge door {n}',
+    'actLevelUp': 'Play level-up act',
+    'actObjective': 'Play objective-done act'
   },
 
   // ─── Missions ─────────────────────────────────────────────────────────────
@@ -329,6 +349,7 @@ export default {
     'found': '{rarity} {item} found!',
     'tank': 'Repair Gel found!',
     'giftTank': 'Gift: +1 Repair Gel!',
+    'skillChip': 'Skill Chip found!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs equipped',
     // The last chip when more stats change than the card shows.
@@ -732,6 +753,7 @@ export default {
       'slide': 'Slide',
       'block': 'Block',
       'interact': 'Interact',
+      'pip': "Pip's supplies",
       'beam': 'Beam out',
       'tank': 'Repair Gel',
       'weapon1': 'Special weapon 1',

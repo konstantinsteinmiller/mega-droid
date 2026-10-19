@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Can de Brasa',
+    'steelHound': 'Can de Aceiro',
     'icebreakerBrute': 'Bruto Rompexeo',
     'arcSpider': 'Araña de Arco',
     'stormHornetQueen': 'Raíña Avespa da Tormenta',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Torre Voltio',
     'gale': 'Peiraos do Ceo',
     'fortress': 'Fortaleza de Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trucos activados: Maiús+Ctrl+Alt+F1 abre o panel',
+    'off': 'Trucos desactivados',
+    'title': 'Panel de trucos',
+    'note': 'Unha partida con trucos non envía puntuacións á clasificación.',
+    'unlockAll': 'Desbloquear todas as misións da historia',
+    'bolts': '+{n} parafusos',
+    'chips': '+{n} chips de habilidade',
+    'gear': 'Bláster épico',
+    'gels': 'Encher os xeles de reparación',
+    'done': 'Feito!',
+    'doors': 'Saltar a unha porta',
+    'boss': 'Porta do xefe',
+    'challenge': 'Porta do desafío',
+    'challengeN': 'Porta do desafío {n}',
+    'actLevelUp': 'Reproducir a escena de subida de nivel',
+    'actObjective': 'Reproducir a escena de obxectivo cumprido'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Botín: {item} ({rarity})!',
     'tank': 'Xel reparador atopado!',
     'giftTank': 'Agasallo: +1 xel reparador!',
+    'skillChip': 'Chip de habilidade atopado!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. equipado',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Esvarar',
       'block': 'Bloquear',
       'interact': 'Interactuar',
+      'pip': 'Provisións de Pip',
       'beam': 'Teletransportarse',
       'tank': 'Xel reparador',
       'weapon1': 'Arma especial 1',

@@ -49,7 +49,7 @@ const openWorld = (enemies: Enemy[], wallAt = -1): World & { hits: string[] } =>
     combat: { iframes: 1e9 } as World['combat'],
     enemies,
     fx: { sparks: noop, emit: noop, orbBurst: noop, riseRing: noop } as unknown as World['fx'],
-    markers: { spawn: noop } as unknown as World['markers'],
+    markers: { spawn: noop, release: noop } as unknown as World['markers'],
     shocks: { spawn: noop } as unknown as World['shocks'],
     fireEnemyShot: noop, lobShell: noop, spawnWave: noop, spawnRing: noop, fireOrb: noop,
     hitPlayer: (e: Enemy | null) => { hits.push(e?.attack ?? ''); return 'hit' as const },

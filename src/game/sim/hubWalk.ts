@@ -26,6 +26,9 @@ const ARRIVE = 0.32
  *  something: it gives up rather than push forever (m/s). */
 const STUCK_SPEED = 0.35
 const STUCK_FOR = 0.6
+/** A post this slim (m) is stepped round when walked into head-on (the
+ *  teleporter's rim posts), instead of stopping him dead. */
+const SLIM_POST = 0.3
 
 export interface HubWalker {
   x: number
@@ -91,6 +94,29 @@ export interface Funnel { x: number; z0: number; z1: number; reach: number }
 /** How hard a funnel steers (share of the walk speed per metre off-centre). */
 const FUNNEL_PULL = 0.55
 
+/** Walked head-on into a slim post (barely moving for the push): round it,
+ *  on the side his heading already leans to. */
+const sidestep = (w: HubWalker, ox: number, oz: number, dt: number, walls: readonly Seg[], posts: readonly Post[]): void => {
+  const want = Math.hypot(w.vx, w.vz) * dt
+  if (want < 1e-4 || Math.hypot(w.x - ox, w.z - oz) > want * 0.35) return
+  for (const p of posts) {
+    if (p.r > SLIM_POST) continue
+    const dx = w.x - p.x
+    const dz = w.z - p.z
+    const d = Math.hypot(dx, dz)
+    if (d > p.r + HERO_R + 0.02) continue
+    // Along the post's rim, on the side he already stands (one way when dead on).
+    const cross = w.vx * dz - w.vz * dx
+    const s = cross >= 0 ? -1 : 1
+    const tx = (-dz / d) * s
+    const tz = (dx / d) * s
+    moveCircleIn(w.x, w.z, tx * want * 0.8, tz * want * 0.8, HERO_R, walls, posts, scratch)
+    w.x = scratch[0]
+    w.z = scratch[1]
+    return
+  }
+}
+
 /**
  * One fixed step. The stick wins over a route (a push cancels the walk); a
  * route steers waypoint to waypoint; either way the body slides along the
@@ -144,6 +170,7 @@ export const stepWalker = (w: HubWalker, inp: WalkInput, dt: number, walls: read
   moveCircleIn(w.x, w.z, w.vx * dt, w.vz * dt, HERO_R, walls, posts, scratch)
   w.x = scratch[0]
   w.z = scratch[1]
+  sidestep(w, ox, oz, dt, walls, posts)
   const moved = Math.hypot(w.x - ox, w.z - oz)
   // Blocked: the speed is what he actually covered (no moonwalking at a wall).
   const speed = dt > 0 ? moved / dt : 0

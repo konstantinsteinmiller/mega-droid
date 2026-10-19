@@ -728,13 +728,17 @@ export class LessonDirector {
       // cast does, `sim/climbSpawn.ts`), in a band that keeps it there. For a
       // weapon that fires level along the floor it skims low: at its usual
       // height the Flame Wave rolled under every drone and the lesson could
-      // never be finished.
+      // never be finished. It flies low by its own height over the true
+      // floor: a floor sunk below the ground (the old way) was lifted back
+      // onto the ground by the climb's hover band (`climb.ts`, never under
+      // the deck), and on a stage the drones hung at 2.1 m again, out of the
+      // Flame Wave's reach (playtest 2026-10-18, Blaze stage).
       const f = h.map.terrain ? groundAt(h.map, x, z) : 0
-      const low = LOW_SHOT.has(w.id) ? LOW_DRONE_Y - e.def.fly : 0
-      if (h.map.terrain || low) {
-        e.floor = f + low
-        e.hover = [f + low, f + low]
+      if (h.map.terrain) {
+        e.floor = f
+        e.hover = [f, f]
       }
+      if (LOW_SHOT.has(w.id)) e.y = e.py = LOW_DRONE_Y
       h.addEnemy(e)
       h.fx.riseRing(x, f + 0.1, z, WEAPONS[w.id].color, 0.7, 16)
       return e

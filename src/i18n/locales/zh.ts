@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': '余烬猎犬',
+    'steelHound': '钢铁猎犬',
     'icebreakerBrute': '破冰蛮兵',
     'arcSpider': '电弧蜘蛛',
     'stormHornetQueen': '风暴黄蜂女王',
@@ -177,6 +177,26 @@ export default {
     'volt': '伏特塔',
     'gale': '天空码头',
     'fortress': 'Vex要塞'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': '作弊已开启：Shift+Ctrl+Alt+F1 打开作弊面板',
+    'off': '作弊已关闭',
+    'title': '作弊面板',
+    'note': '使用过作弊的存档不会上传排行榜分数。',
+    'unlockAll': '解锁所有剧情任务',
+    'bolts': '+{n} 螺栓',
+    'chips': '+{n} 技能芯片',
+    'gear': '史诗爆能枪',
+    'gels': '补满修复凝胶',
+    'done': '完成！',
+    'doors': '跳到门前',
+    'boss': '首领之门',
+    'challenge': '挑战之门',
+    'challengeN': '挑战之门 {n}',
+    'actLevelUp': '播放升级动画',
+    'actObjective': '播放目标完成动画'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '发现{item}（{rarity}）！',
     'tank': '发现修理凝胶！',
     'giftTank': '礼物：+1 修理凝胶！',
+    'skillChip': '发现技能芯片！',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': '与已装备对比',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': '滑铲',
       'block': '格挡',
       'interact': '互动',
+      'pip': '皮普的补给',
       'beam': '传送离开',
       'tank': '修复凝胶',
       'weapon1': '特殊武器 1',

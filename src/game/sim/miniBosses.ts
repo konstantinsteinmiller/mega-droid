@@ -6,6 +6,7 @@ import { scaleDmg, scaleHp } from '../data/enemies'
 import { newMotion } from '../models/motion'
 import { makeTeleRing, makeBlobShadow } from '../fx/markers'
 import { keepInRoom, shoulderPlayer } from './miniBoss/kit'
+import { newBodyDyn, stepBodyDyn, WALKER, FLYER } from '../models/bodyDyn'
 
 /**
  * ─── Challenge mini-bosses: the shared state machine ─────────────────────────
@@ -74,10 +75,13 @@ export const updateMiniBoss = (w: World, e: Enemy, dt: number): void => {
   e.st += dt
   e.anim += dt
   e.flash = Math.max(0, e.flash - dt * 8)
+  // Its whole body's lean, bank, flinch and landing (view only, #183)
+  const body = (e.mo.body ??= newBodyDyn(e.rig.root.scale.x))
   if (e.state === 'dead') {
     e.deathT += dt
     e.ring.visible = false
     if (e.deathT < MINI_SHATTER_AT + 0.5) ai.dying(w, e, c.mem, dt)
+    stepBodyDyn(body, e, e.def.fly > 0 ? FLYER : WALKER, dt)
     return
   }
   if (e.offstage || e.state === 'idle') return
@@ -87,6 +91,7 @@ export const updateMiniBoss = (w: World, e: Enemy, dt: number): void => {
       e.st = 0
       e.cd = 0.9
     }
+    stepBodyDyn(body, e, e.def.fly > 0 ? FLYER : WALKER, dt)
     return
   }
   e.stunAge += dt
@@ -104,6 +109,7 @@ export const updateMiniBoss = (w: World, e: Enemy, dt: number): void => {
   if (e.state !== 'tele') e.ring.visible = false
   keepInRoom(e, c.room)
   if (e.def.fly === 0) shoulderPlayer(w, e)
+  stepBodyDyn(body, e, e.def.fly > 0 ? FLYER : WALKER, dt)
 }
 
 /** Its death: whatever it drew in the world goes (the trail it left burns out). */
@@ -130,6 +136,15 @@ export const syncMiniBoss = (e: Enemy, alpha: number, time: number): void => {
   e.shadow.visible = e.root.visible
   e.rig.material.emissive.setScalar(e.flash * 0.85)
   c.spec.behaviour.pose(e, c.mem, time)
+  // The secondary layer, on the rig's own root (about its feet): the module's
+  // pose, the hit volume and the weak spot stay where they are
+  const b = e.mo.body
+  if (b) {
+    const r = e.rig.root
+    r.rotation.x = b.pitch
+    r.rotation.z = b.roll
+    r.scale.set(b.base * (1 - 0.5 * b.sq), b.base * (1 + b.sq), b.base * (1 - 0.5 * b.sq))
+  }
   if (e.state === 'stun') {
     const k = Math.min(1, e.st / 0.1) * Math.min(1, Math.max(0, e.stunT) / 0.1)
     e.root.rotation.z = Math.sin(time * 18) * 0.06 * k

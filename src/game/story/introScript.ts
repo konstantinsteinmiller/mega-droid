@@ -248,6 +248,9 @@ export const TURN_FROM = BEAM_FROM
 export const HOLO_FOLD_FROM = TURN_FROM + 0.4
 export const HOLO_FOLD_TO = TURN_FROM + 1.1
 export const STEP_FROM = 50.4 + AFTER
+/** He sets off from his capsule as the hologram folds (the bay stands by the
+ *  lab's wall, a few metres from the pad), and steps onto it at STEP_TO. */
+export const WALK_FROM = HOLO_FOLD_TO - 0.3
 export const STEP_TO = 51.9 + AFTER
 export const BEAM_RISE = 52.2 + AFTER
 export const FLASH_FROM = 54.5 + AFTER

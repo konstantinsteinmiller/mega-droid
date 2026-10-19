@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Κυνηγόσκυλο της Χόβολης',
+    'steelHound': 'Ατσάλινο Κυνηγόσκυλο',
     'icebreakerBrute': 'Παγοθραύστης Γίγαντας',
     'arcSpider': 'Τοξωτή Αράχνη',
     'stormHornetQueen': 'Βασίλισσα των Σφηκών της Καταιγίδας',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Πύργος Βολτ',
     'gale': 'Ουράνιες Αποβάθρες',
     'fortress': 'Φρούριο Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Κόλπα ενεργά: Shift+Ctrl+Alt+F1 ανοίγει τον πίνακα',
+    'off': 'Κόλπα ανενεργά',
+    'title': 'Πίνακας κόλπων',
+    'note': 'Ένα σωσμένο παιχνίδι με κόλπα δεν στέλνει σκορ στην κατάταξη.',
+    'unlockAll': 'Ξεκλείδωσε όλες τις αποστολές ιστορίας',
+    'bolts': '+{n} μπουλόνια',
+    'chips': '+{n} τσιπ δεξιοτήτων',
+    'gear': 'Επικός εκτοξευτής',
+    'gels': 'Γέμισε τα τζελ επισκευής',
+    'done': 'Έγινε!',
+    'doors': 'Μετάβαση σε πόρτα',
+    'boss': 'Πόρτα αρχηγού',
+    'challenge': 'Πόρτα πρόκλησης',
+    'challengeN': 'Πόρτα πρόκλησης {n}',
+    'actLevelUp': 'Παίξε τη σκηνή ανόδου επιπέδου',
+    'actObjective': 'Παίξε τη σκηνή ολοκλήρωσης στόχου'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Βρέθηκε: {item} ({rarity})!',
     'tank': 'Βρέθηκε τζελ επισκευής!',
     'giftTank': 'Δώρο: +1 τζελ επισκευής!',
+    'skillChip': 'Βρέθηκε τσιπ δεξιοτήτων!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'σε σχέση με τον εξοπλισμό',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Γλίστρημα',
       'block': 'Μπλοκ',
       'interact': 'Χρήση',
+      'pip': 'Οι προμήθειες του Πιπ',
       'beam': 'Τηλεμεταφορά',
       'tank': 'Τζελ επισκευής',
       'weapon1': 'Ειδικό όπλο 1',

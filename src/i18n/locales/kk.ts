@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Шоқ тазы',
+    'steelHound': 'Болат тазы',
     'icebreakerBrute': 'Мұзжарғыш алып',
     'arcSpider': 'Доға өрмекші',
     'stormHornetQueen': 'Дауыл сонасының ханшайымы',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Вольт мұнарасы',
     'gale': 'Аспан доктары',
     'fortress': 'Vex қамалы'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Чит қосулы: Shift+Ctrl+Alt+F1 чит панелін ашады',
+    'off': 'Чит өшірулі',
+    'title': 'Чит панелі',
+    'note': 'Чит қолданылған сақтау көшбасшылар кестесіне ұпай жібермейді.',
+    'unlockAll': 'Барлық сюжеттік миссияларды ашу',
+    'bolts': '+{n} болт',
+    'chips': '+{n} дағды чипі',
+    'gear': 'Эпикалық бластер',
+    'gels': 'Жөндеу гельдерін толтыру',
+    'done': 'Дайын!',
+    'doors': 'Есікке секіру',
+    'boss': 'Босс есігі',
+    'challenge': 'Сынақ есігі',
+    'challengeN': 'Сынақ есігі {n}',
+    'actLevelUp': 'Деңгей көтеру сахнасын ойнату',
+    'actObjective': 'Мақсат орындалды сахнасын ойнату'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{rarity} {item} табылды!',
     'tank': 'Жөндеу гелі табылды!',
     'giftTank': 'Сыйлық: +1 жөндеу гелі!',
+    'skillChip': 'Дағды чипі табылды!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'киілгенмен салыстыру',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Сырғанау',
       'block': 'Қорғану',
       'interact': 'Әрекет',
+      'pip': 'Пиптің жабдықтары',
       'beam': 'Телепорт',
       'tank': 'Жөндеу гелі',
       'weapon1': 'Арнайы қару 1',

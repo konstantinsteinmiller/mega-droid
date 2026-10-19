@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Segugio di Brace',
+    'steelHound': "Segugio d'Acciaio",
     'icebreakerBrute': 'Bruto Rompighiaccio',
     'arcSpider': 'Ragno ad Arco',
     'stormHornetQueen': 'Regina Calabrone della Tempesta',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Torre Volt',
     'gale': 'Moli Celesti',
     'fortress': 'Fortezza di Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trucchi attivi: Maiusc+Ctrl+Alt+F1 apre il pannello',
+    'off': 'Trucchi disattivati',
+    'title': 'Pannello trucchi',
+    'note': 'Un salvataggio con trucchi non invia punteggi alla classifica.',
+    'unlockAll': 'Sblocca tutte le missioni della storia',
+    'bolts': '+{n} bulloni',
+    'chips': '+{n} chip abilità',
+    'gear': 'Blaster epico',
+    'gels': 'Riempi i gel di riparazione',
+    'done': 'Fatto!',
+    'doors': 'Salta a una porta',
+    'boss': 'Porta del boss',
+    'challenge': 'Porta della sfida',
+    'challengeN': 'Porta della sfida {n}',
+    'actLevelUp': 'Riproduci la scena di salita di livello',
+    'actObjective': 'Riproduci la scena di obiettivo completato'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Hai trovato {item} ({rarity})!',
     'tank': 'Gel Riparatore trovato!',
     'giftTank': 'Regalo: +1 Gel Riparatore!',
+    'skillChip': 'Chip abilità trovato!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs equipaggiato',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Scivolata',
       'block': 'Parata',
       'interact': 'Interagisci',
+      'pip': 'Le scorte di Pip',
       'beam': 'Teletrasporto',
       'tank': 'Gel riparatore',
       'weapon1': 'Arma speciale 1',

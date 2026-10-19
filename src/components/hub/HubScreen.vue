@@ -14,10 +14,15 @@
           GameIcon.pi(name="star")
           span {{ t('hub.levelUpReady') }}
       div.spacer
-      //- Pip has supplies (a rewarded video is ready): his dialog, one tap away.
+      //- Pip has supplies (a rewarded video is ready): his dialog, one tap
+      //- away — or one key: "[F] Open" on a keyboard (the hall's captured
+      //- mouse cannot reach the pill).
       button.pill.pip(v-if="hubUi.pipReady" type="button" :aria-label="t('hub.pip.aria')" @click="openPip")
         GameIcon.pi(name="gift")
         span.pip-bang !
+        template(v-if="keyHint")
+          KeyCap.pip-key(code="KeyF")
+          span.pip-open {{ t('hub.act.open') }}
       div.pill.bolts(data-lesson="bolts" @pointerdown="registerQaAdTap()")
         GameIcon.pi(name="nut")
         span {{ fmt(profile.bolts) }}
@@ -27,7 +32,7 @@
       //- it is a dimmed pill with a lock. The Hall of Fame terminal in the
       //- hall opens the same board.
       button.pill.ranks(
-        v-if="leaderboardListEnabled"
+        v-if="boardModalEnabled"
         type="button"
         :class="menuClass('leaderboard')"
         :aria-label="locked('leaderboard') ? lockedAria('leaderboard', t('leaderboard.title')) : t('leaderboard.title')"
@@ -42,7 +47,7 @@
         span.new-chip(v-if="fresh('leaderboard')") {{ t('gear.new') }}
       button.pill.cog(type="button" :aria-label="t('options.title')" @click="$emit('options')")
         GameIcon.pi(name="settings")
-    LeaderboardModal(v-if="leaderboardListEnabled" v-model="showBoard" :score="lifetimeXp()")
+    LeaderboardModal(v-if="boardModalEnabled" v-model="showBoard" :score="lifetimeXp()")
     //- The walk: labels over the places, the stick, and what Flux can do here.
     HubMarkers(@locked="onLockedMark" @hover="onHoverMark" @leave="onLeaveMark")
     div.joy-wrap(v-show="walking")
@@ -96,6 +101,7 @@ import HubMarkers from './HubMarkers.vue'
 import HubPrompt from './HubPrompt.vue'
 import PipDialog from './PipDialog.vue'
 import Joystick from '@/components/hud/Joystick.vue'
+import KeyCap from '@/components/hud/KeyCap.vue'
 import HubSceneLayer from '@/components/story/HubSceneLayer.vue'
 import { hubTab } from './hubLesson'
 import {
@@ -105,10 +111,11 @@ import {
 import { usePipSupplies } from './pipSupplies'
 import { profile, xp01, lifetimeXp, saveProfile, markTip } from '@/game/state/profile'
 import LeaderboardModal from '@/components/organisms/LeaderboardModal.vue'
-import { leaderboardListEnabled } from '@/use/useLeaderboard'
+import { boardModalEnabled } from '@/use/useLeaderboard'
 import { isAnyModalOpen } from '@/use/useModalState'
 import { flow } from '@/game/flow'
-import { currentHub } from '@/game/boot'
+import { currentHub, input } from '@/game/boot'
+import { hud } from '@/game/state/hud'
 import { hubUi, hubDialog } from '@/game/state/hubUi'
 import type { PlaceState } from '@/game/sim/hubPlaces'
 import { formatCount } from '@/utils/localeNumber'
@@ -156,6 +163,8 @@ const closePanel = (): void => {
 // ── Pip's supplies ──
 const sup = usePipSupplies()
 watchEffect(() => { hubUi.pipReady = sup.anyOffer.value })
+/** A keyboard is in play: the pill names Pip's key. */
+const keyHint = computed(() => hud.device !== 'touch' && input.device !== 'touch')
 const openPip = (): void => {
   sfx('pipChirp')
   hubDialog.open = true
@@ -170,7 +179,7 @@ const menuClass = (id: HubMenu) => ({ locked: locked(id), fresh: fresh(id) })
 /** Menus this build shows that open later (the pill only with a live board). */
 const LATER = HUB_UNLOCKS
   .map(m => m.id)
-  .filter(id => needFor(id) > 0 && (id !== 'leaderboard' || leaderboardListEnabled))
+  .filter(id => needFor(id) > 0 && (id !== 'leaderboard' || boardModalEnabled.value))
 
 const lockedAria = (id: HubMenu, name: string) => t('hub.unlock.aria', { name, n: left(id) }, left(id))
 
@@ -451,6 +460,12 @@ onUnmounted(() => {
 .pip-bang
   font-family: var(--font-pixel)
   font-size: 12px
+.pip-key
+  margin-left: 2px
+  font-size: 0.85em
+.pip-open
+  font-family: var(--font-ui)
+  font-size: clamp(11px, 2.4vmin, 14px)
 @keyframes pill-pulse
   50%
     transform: scale(1.06)

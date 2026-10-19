@@ -27,6 +27,11 @@ html, body
   height: 100%
   width: 100%
 
+// Every live button shows the hand (Tailwind 4's base no longer sets it; a
+// pill like Pip's read as dead). Zero specificity: a component's own cursor wins.
+:where(button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, label[for])
+  cursor: pointer
+
 
 // 4. Fixed Pulse for Dark Mode Extensions
 .pulse-yellow-fixed

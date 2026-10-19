@@ -1,11 +1,13 @@
 import { AdditiveBlending, Color, DoubleSide, Group, Mesh, MeshBasicMaterial, RingGeometry } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { PLAYER_R } from '../constants'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildLodestoneGolem, poseLodestoneGolem, newLodePose, LODE_COLORS, LODE_SCALE, LODE_SCRAP, LODE_HAND_UP, type LodePose
 } from '../../models/miniBoss/lodestoneGolem'
-import { TAU, faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease } from './kit'
+import { TAU, faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, sprung, type PoseVel } from './kit'
 import { pushHud } from '../../state/hud'
 
 /**
@@ -70,6 +72,8 @@ interface Chunk {
 }
 
 export interface LodeMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: LodePose
   attack: Attack | ''
   chunks: Chunk[]
@@ -128,7 +132,16 @@ const hideField = (m: LodeMem): void => {
 
 const ready = (m: LodeMem): number => m.chunks.filter(c => c.st === 'orbit').length
 
-const pick = (e: Enemy, m: LodeMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const LODE_REACH: Record<Attack, number> = {
+  // The field it draws: he is dragged PULL_S × PULL_T in, then the slam's ring.
+  pull: PULL_FIELD,
+  slam: SLAM_R + PLAYER_R,
+  // Scrap thrown onto marked spots round him.
+  fling: ANYWHERE
+}
+
+const pick = (e: Enemy, m: LodeMem, d: number): Attack | null => {
   const want = m.phase2 ? 5 : 3
   // Close: it hauls him in; far, it throws (if it has the scrap for it).
   let a: Attack = Math.random() < (d > 7 ? 0.3 : d < 4 ? 0.7 : 0.5) ? 'pull' : 'fling'
@@ -136,7 +149,7 @@ const pick = (e: Enemy, m: LodeMem, d: number): Attack => {
   // Never the same attack three times running.
   else if (a === m.attack && e.step >= 1) a = a === 'pull' ? 'fling' : 'pull'
   if (a === 'fling' && ready(m) === 0) a = 'pull'
-  return a
+  return ready(m) > 0 ? firstInReach(LODE_REACH, d, a, 'fling') : firstInReach(LODE_REACH, d, a)
 }
 
 const begin = (w: World, e: Enemy, m: LodeMem, a: Attack, room: Room): void => {
@@ -154,7 +167,7 @@ const begin = (w: World, e: Enemy, m: LodeMem, a: Attack, room: Room): void => {
   } else if (a === 'slam') {
     e.teleDur = SLAM_TELE
     // The reach of the shockwave, on the floor for the heave and the wave.
-    w.markers.spawn(e.x, e.z, SLAM_R, SLAM_TELE + SLAM_R / SLAM_SPEED)
+    w.markers.spawn(e.x, e.z, SLAM_R, SLAM_TELE + SLAM_R / SLAM_SPEED, e)
     w.sfx('charge2', e.x, e.z)
   } else {
     e.teleDur = FLING_TELE
@@ -172,7 +185,7 @@ const begin = (w: World, e: Enemy, m: LodeMem, a: Attack, room: Room): void => {
     for (let k = 0; k < n; k++) {
       const [x, z] = inRoom(room, w.player.x + sx * offs[k]!, w.player.z + sz * offs[k]!, 0.8)
       m.spots.push({ x, z })
-      w.markers.spawn(x, z, SCRAP_R, FLING_TELE + k * FLING_GAP + FLING_FLIGHT)
+      w.markers.spawn(x, z, SCRAP_R, FLING_TELE + k * FLING_GAP + FLING_FLIGHT, e)
     }
     // The pieces it will throw leave their orbit for its hand.
     let left = n
@@ -221,7 +234,7 @@ const launch = (w: World, e: Enemy, m: LodeMem): void => {
 
 export const LODESTONE_GOLEM_AI: MiniBossBehaviour<LodeMem> = {
   init: () => ({
-    pose: newLodePose(), attack: '', spots: [], thrown: 0, phase2: false, field: null, fieldOn: false, stamped: false, side: 1,
+    pose: newLodePose(), vel: {}, attack: '', spots: [], thrown: 0, phase2: false, field: null, fieldOn: false, stamped: false, side: 1,
     chunks: Array.from({ length: LODE_SCRAP }, (_, n) => ({ st: 'orbit' as const, t: 0, fx: 0, fy: 0, fz: 0, tx: 0, tz: 0, n }))
   }),
 
@@ -242,7 +255,7 @@ export const LODESTONE_GOLEM_AI: MiniBossBehaviour<LodeMem> = {
       w.shake(0.35)
       w.sfx('stomp', e.x, e.z)
     }
-    p.slam = ease(p.slam, e.st > 1.75 && e.st < 2.2 ? 1 : 0, 10, dt)
+    p.slam = sprung(p.slam, m.vel, 'slam', e.st > 1.75 && e.st < 2.2 ? 1 : 0, 10, dt)
     if (e.st >= INTRO_T) {
       p.sleep = 0
       return true
@@ -281,7 +294,8 @@ export const LODESTONE_GOLEM_AI: MiniBossBehaviour<LodeMem> = {
         if (got < 0.3) m.side = -m.side
         walk = 1
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -381,12 +395,12 @@ export const LODESTONE_GOLEM_AI: MiniBossBehaviour<LodeMem> = {
     const moved = Math.hypot(e.x - e.px, e.z - e.pz)
     p.walk = ease(p.walk, walk * Math.min(1, moved / Math.max(1e-4, dt) / 1.5), 8, dt)
     p.phase += moved * 2.6
-    p.pull = ease(p.pull, pull, 10, dt)
-    p.drag = ease(p.drag, drag, 10, dt)
-    p.heave = ease(p.heave, heave, 10, dt)
-    p.slam = ease(p.slam, slam, 18, dt)
-    p.wind = ease(p.wind, wind, 9, dt)
-    p.throw = ease(p.throw, thr, 14, dt)
+    p.pull = sprung(p.pull, m.vel, 'pull', pull, 10, dt)
+    p.drag = sprung(p.drag, m.vel, 'drag', drag, 10, dt)
+    p.heave = sprung(p.heave, m.vel, 'heave', heave, 10, dt)
+    p.slam = sprung(p.slam, m.vel, 'slam', slam, 18, dt)
+    p.wind = sprung(p.wind, m.vel, 'wind', wind, 9, dt)
+    p.throw = sprung(p.throw, m.vel, 'throw', thr, 14, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -395,7 +409,8 @@ export const LODESTONE_GOLEM_AI: MiniBossBehaviour<LodeMem> = {
     tickScrap(w, e, m, dt)
     hideField(m)
     p.dying = Math.min(1, e.deathT / 1.1)
-    for (const k of ['pull', 'drag', 'heave', 'slam', 'wind', 'throw', 'walk'] as const) p[k] = ease(p[k], 0, 8, dt)
+    for (const k of ['pull', 'drag', 'heave', 'slam', 'wind', 'throw'] as const) p[k] = sprung(p[k], m.vel, k, 0, 8, dt)
+    p.walk = ease(p.walk, 0, 8, dt)
     p.heat = ease(p.heat, 0.4 + Math.random() * 2, 12, dt)
     // The field fails: the scrap drops (pose), the plates spit sparks.
     if (Math.random() < dt * 14) {
@@ -475,6 +490,7 @@ export const LODESTONE_GOLEM: MiniBossSpec<LodeMem> = {
   id: 'lodestoneGolem',
   sector: 'magnet',
   nameKey: 'miniboss.lodestoneGolem',
+  reach: LODE_REACH,
   def: {
     kind: 'miniboss', hp: 504, dmg: 17, speed: 2.2, radius: 1.15, hitR: 1.35, aimY: 1.6, fly: 0,
     aggro: 30, range: [3.5, 6.5], xp: 165, bolts: [26, 40], cooldown: 1.6, tele: PULL_TELE, unblockable: true, armor: 1,

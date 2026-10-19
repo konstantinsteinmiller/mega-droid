@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Sintelhond',
+    'steelHound': 'Stalen Hond',
     'icebreakerBrute': 'IJsbreker-Bruut',
     'arcSpider': 'Boogspin',
     'stormHornetQueen': 'Stormhorzel-Koningin',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttoren',
     'gale': 'Luchtdokken',
     'fortress': 'Fort Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Cheats aan: Shift+Ctrl+Alt+F1 opent het cheatpaneel',
+    'off': 'Cheats uit',
+    'title': 'Cheatpaneel',
+    'note': 'Een save met cheats stuurt geen scores naar het klassement.',
+    'unlockAll': 'Alle verhaalmissies ontgrendelen',
+    'bolts': '+{n} bouten',
+    'chips': '+{n} vaardigheidschips',
+    'gear': 'Epische blaster',
+    'gels': 'Reparatiegels bijvullen',
+    'done': 'Klaar!',
+    'doors': 'Spring naar een deur',
+    'boss': 'Baasdeur',
+    'challenge': 'Uitdagingsdeur',
+    'challengeN': 'Uitdagingsdeur {n}',
+    'actLevelUp': 'Level-up-scène afspelen',
+    'actObjective': 'Doel-voltooid-scène afspelen'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) gevonden!',
     'tank': 'Reparatiegel gevonden!',
     'giftTank': 'Cadeau: +1 Reparatiegel!',
+    'skillChip': 'Vaardigheidschip gevonden!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. uitgerust',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Glijden',
       'block': 'Blokkeren',
       'interact': 'Gebruiken',
+      'pip': 'Pips voorraad',
       'beam': 'Wegstralen',
       'tank': 'Reparatiegel',
       'weapon1': 'Speciaal wapen 1',

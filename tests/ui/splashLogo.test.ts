@@ -11,8 +11,8 @@ import { describe, expect, it } from 'vitest'
 // same place. They used not to be: the static copy was a simplified emblem
 // with half the title, so the logo visibly changed as the loader took over.
 //
-// Now the lockup (Flux's head in the hex reactor badge over the MEGA /
-// DROID wordmark) is ONE inline SVG of paths, pasted into both files. This
+// Now the lockup (Flux's helmet in its charged ring over the MEGA /
+// DROID wordmark, store-art/brand/logo.mjs) is ONE inline SVG of paths, pasted into both files. This
 // pins the two copies to each other, byte for byte, and pins every sizing and
 // colour rule of the two layouts to each other, rule for rule. A browser
 // check of the hand-over (boxes and pixels) is in the logo redesign notes;
@@ -23,8 +23,6 @@ const html = read('index.html')
 const vue = read('src/components/atoms/FLogoProgress.vue')
 const manifest = JSON.parse(read('public/manifest.json')) as { name: string; short_name: string; description: string; background_color: string }
 
-const staticSvg = /<div class="s-logo"[^>]*>(<svg[\s\S]*?<\/svg>)<\/div>/.exec(html)?.[1] ?? ''
-const loaderSvg = /h1\.logo\(.*\)\n\s*(<svg[\s\S]*?<\/svg>)\n/.exec(vue)?.[1] ?? ''
 
 /** `prop: value` pairs of a plain CSS rule in index.html's <style>. */
 const cssRule = (selector: string): Record<string, string> => {
@@ -68,46 +66,35 @@ const sassRule = (selector: string, nested?: string): Record<string, string> => 
 const only = (rule: Record<string, string>, keys: string[]): Record<string, string> =>
   Object.fromEntries(keys.map((k) => [k, rule[k]]))
 
-describe('the splash lockup', () => {
-  it('is in both places', () => {
-    expect(staticSvg.length).toBeGreaterThan(1000)
-    expect(loaderSvg.length).toBeGreaterThan(1000)
+describe('the splash logo', () => {
+  // Both loaders show the square lockup (Flux's rendered head over MEGA /
+  // DROID), written by store-art/brand/logo.mjs --raster, as one <img>.
+  const SQUARE = /\/images\/logo\/mega-droid-logo-square-256\.webp/
+  const staticImg = /<img class="s-logo" [^>]*>/.exec(html)?.[0] ?? ''
+  const loaderImg = /h1\.logo\n\s*img\(([^\n]*)\)\n/.exec(vue)?.[1] ?? ''
+  const attr = (s: string, a: string) => new RegExp(`(?:^|\\s)${a}="([^"]*)"`).exec(s)?.[1]
+
+  it('is the 256 px square WebP in both places, with the same 2x source', () => {
+    expect(attr(staticImg, 'src')).toMatch(SQUARE)
+    expect(attr(loaderImg, 'src')).toBe(attr(staticImg, 'src'))
+    expect(attr(loaderImg, 'srcset')).toBe(attr(staticImg, 'srcset'))
+    for (const s of [staticImg, loaderImg]) expect([attr(s, 'width'), attr(s, 'height')]).toEqual(['256', '256'])
   })
 
-  it('is byte-identical in the static splash and in FLogoProgress', () => {
-    expect(loaderSvg).toBe(staticSvg)
+  it('exists, square, transparent, and small (it is on the critical path)', async () => {
+    const sharp = (await import('sharp')).default
+    for (const f of (attr(staticImg, 'srcset') ?? '').split(',').map((x) => x.trim().split(' ')[0]!)) {
+      const buf = readFileSync(resolve(__dirname, '../../public', f.slice(1)))
+      const m = await sharp(buf).metadata()
+      expect(m.width, f).toBe(m.height)
+      expect(m.hasAlpha, f).toBe(true)
+    }
+    expect(readFileSync(resolve(__dirname, '../../public/images/logo/mega-droid-logo-square-256.webp')).length).toBeLessThan(40 * 1024)
   })
 
-  it('is the generated lockup, pasted as it is (node store-art/brand/logo-final.mjs)', () => {
-    // The store covers lay store-art/brand/logo-lockup.svg over the art, so a
-    // splash that drifted from it would show players a different logo.
-    expect(staticSvg).toBe(read('store-art/brand/logo-lockup.svg'))
-  })
-
-  it('carries no id: during the cross-fade both copies are in the document at once', () => {
-    // A duplicated id makes url(#…) / <use href="#…"> resolve into the OTHER
-    // copy, which is then removed from under it.
-    expect(staticSvg).not.toMatch(/\sid=/)
-    expect(staticSvg).not.toMatch(/url\(|href=|<use\b/)
-  })
-
-  it('is paths, not text: nothing reflows before the bundled fonts load', () => {
-    expect(staticSvg).not.toMatch(/<text\b|font-family|font-size/)
-  })
-
-  it('requests nothing (Poki forbids external requests; this paints before any script)', () => {
-    const withoutNs = staticSvg.replace('xmlns="http://www.w3.org/2000/svg"', '')
-    expect(withoutNs).not.toMatch(/https?:|<image\b|@import/)
-  })
-
-  it('stays small: it is on the critical path twice (index.html and the loader chunk)', () => {
-    expect(staticSvg.length).toBeLessThan(5000)
-  })
-
-  it('is decoration for assistive tech; the wrapper carries the name', () => {
-    expect(staticSvg).toMatch(/^<svg [^>]*aria-hidden="true"/)
-    expect(html).toMatch(/<div class="s-logo" role="img" aria-label="Mega Droid">/)
-    expect(vue).toMatch(/h1\.logo\(:aria-label="t\('gameName'\)"\)/)
+  it('carries the game name as its alt text in both places', () => {
+    expect(attr(staticImg, 'alt')).toBe('Mega Droid')
+    expect(loaderImg).toContain(`:alt="t('gameName')"`)
   })
 
   it('is named what the page and the installed app are named', () => {
@@ -117,16 +104,26 @@ describe('the splash lockup', () => {
     const title = /<title>([^<]*)<\/title>/.exec(html)?.[1]
     expect(title).toBe('Mega Droid')
     expect(/<meta name="apple-mobile-web-app-title" content="([^"]*)">/.exec(html)?.[1]).toBe(title)
-    expect(/<div class="s-logo" role="img" aria-label="([^"]*)">/.exec(html)?.[1]).toBe(title)
+    expect(attr(staticImg, 'alt')).toBe(title)
     expect(manifest.name).toBe(title)
     expect(manifest.short_name).toBe(title)
     expect(read('scripts/render-thumbnail.mjs')).toContain(`const TITLE = '${title}'`)
   })
+})
 
-  it('declares the aspect ratio its viewBox has, in both layouts', () => {
-    const [, w, h] = /viewBox="0 0 (\d+) (\d+)"/.exec(staticSvg) ?? []
-    expect(cssRule('.s-logo')['aspect-ratio']).toBe(`${w} / ${h}`)
-    expect(sassRule('.logo')['aspect-ratio']).toBe(`${w} / ${h}`)
+describe('the intro lockup (logoLockup.ts: the start gate and the intro flash)', () => {
+  const introSvg = /`(<svg[\s\S]*?<\/svg>)`/.exec(read('src/components/story/logoLockup.ts'))?.[1] ?? ''
+
+  it('is the generated flat wordmark, pasted as it is (node store-art/brand/logo.mjs)', () => {
+    expect(introSvg).toBe(read('store-art/brand/logo-lockup.svg'))
+  })
+
+  it('carries no id, is paths not text, requests nothing and stays small', () => {
+    expect(introSvg).not.toMatch(/\sid=|url\(|href=|<use\b/)
+    expect(introSvg).not.toMatch(/<text\b|font-family|font-size/)
+    expect(introSvg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|<image\b|@import/)
+    expect(introSvg.length).toBeLessThan(5000)
+    expect(introSvg).toMatch(/^<svg [^>]*aria-hidden="true"/)
   })
 })
 
@@ -142,11 +139,9 @@ describe('the two layouts are the same, rule for rule', () => {
     expect(only(sassRule('.card'), keys)).toEqual(only(cssRule('.s-card'), keys))
   })
 
-  it('size the lockup the same', () => {
-    expect(only(sassRule('.logo'), ['width', 'aspect-ratio'])).toEqual(only(cssRule('.s-logo'), ['width', 'aspect-ratio']))
-    expect(sassRule('.logo', ':deep(svg)')).toEqual(cssRule('.s-logo svg'))
+  it('size the logo the same', () => {
+    expect(only(sassRule('.logo'), ['width', 'aspect-ratio', 'margin'])).toEqual(only(cssRule('.s-logo'), ['width', 'aspect-ratio', 'margin']))
   })
-
   it('draw the bar the same', () => {
     expect(sassRule('.bar')).toEqual(cssRule('.s-bar'))
     expect(sassRule('.track, .lit')).toEqual(cssRule('.s-track, .s-lit'))
@@ -154,6 +149,15 @@ describe('the two layouts are the same, rule for rule', () => {
     expect(sassRule('.lit')).toEqual(cssRule('.s-lit'))
     const fill = ['width', 'height', 'background', 'transform-origin']
     expect(only(sassRule('.fill'), fill)).toEqual(only(cssRule('.s-fill'), fill))
+  })
+
+  it('hang the same mini-game box under the column', () => {
+    const mini = /<style[^>]*lang="sass">([\s\S]*?)<\/style>/.exec(read('src/components/atoms/LoaderMiniGame.vue'))?.[1] ?? ''
+    const body = mini.split('\n.mini-game\n')[1]!.split('\n\n')[0]!
+    const rule = Object.fromEntries(body.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => [l.slice(0, l.indexOf(':')), l.slice(l.indexOf(':') + 1).trim()]))
+    expect(rule).toEqual(cssRule('.s-mini'))
+    expect(html).toMatch(/<canvas class="s-mini" aria-hidden="true"><\/canvas>\n {2}<\/div>\n<\/div>\n[\s\S]*?<script src="\/js\/mini-game\.js"><\/script>/)
+    expect(vue).toMatch(/\n {8}LoaderMiniGame\n/)
   })
 
   it('paint the same backdrop and the same grid', () => {

@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Molosse de Braise',
+    'steelHound': "Molosse d'Acier",
     'icebreakerBrute': 'Brute Brise-Glace',
     'arcSpider': 'Araignée à Arc',
     'stormHornetQueen': 'Reine Frelon des Tempêtes',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Tour Volt',
     'gale': 'Docks célestes',
     'fortress': 'Forteresse de Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Triche activée : Maj+Ctrl+Alt+F1 ouvre le panneau',
+    'off': 'Triche désactivée',
+    'title': 'Panneau de triche',
+    'note': 'Une partie avec triche n\'envoie aucun score au classement.',
+    'unlockAll': 'Débloquer toutes les missions de l\'histoire',
+    'bolts': '+{n} boulons',
+    'chips': '+{n} puces de compétence',
+    'gear': 'Blaster épique',
+    'gels': 'Remplir les gels de réparation',
+    'done': 'Fait !',
+    'doors': 'Aller à une porte',
+    'boss': 'Porte du boss',
+    'challenge': 'Porte du défi',
+    'challengeN': 'Porte du défi {n}',
+    'actLevelUp': "Jouer la scène de montée de niveau",
+    'actObjective': "Jouer la scène d'objectif accompli"
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Butin : {item} ({rarity}) !',
     'tank': 'Gel réparateur trouvé !',
     'giftTank': 'Cadeau : +1 Gel réparateur !',
+    'skillChip': 'Puce de compétence trouvée !',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs équipé',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Glisser',
       'block': 'Bloquer',
       'interact': 'Interagir',
+      'pip': 'Les provisions de Pip',
       'beam': 'Se téléporter',
       'tank': 'Gel réparateur',
       'weapon1': 'Arme spéciale 1',

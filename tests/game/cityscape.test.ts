@@ -10,9 +10,12 @@ import { generateMap, CELL, WALL_H } from '@/game/world/levelGen'
 import { generateClimb } from '@/game/world/climbGen'
 import { THEMES } from '@/game/world/themes'
 import { generateStage } from '@/game/world/stages'
-import { buildCityscape, trafficClearance } from '@/game/world/cityscape'
+import { buildCityscape, cloudSea, CLOUD_SINK, trafficClearance } from '@/game/world/cityscape'
+import { BoxGeometry } from 'three'
+import { coplanarPairs } from './coplanar'
 
 const mapFor = (seed: number) => generateMap({ seed, rooms: 8, boss: true })
+
 
 describe('the cityscape', () => {
   it('is the same city for the same map', async () => {
@@ -51,6 +54,45 @@ describe('the cityscape', () => {
       }
       expect(n, s).toBeGreaterThan(0)
       c.dispose()
+    }
+  })
+
+  it('over open sky the towers rise out of a cloud sea: no extra draw call, a modest vertex bill', async () => {
+    const map = generateStage('gale', 1)
+    const shape = async (clouds: boolean, q: 'full' | 'low') => {
+      const m = { ...map, terrain: { ...map.terrain!, clouds } }
+      const c = await buildCityscape(m, THEMES.gale, undefined, q)
+      c.stream(Infinity)
+      let meshes = 0
+      const body = (c.root.children[0] as Mesh).geometry.attributes.position!.count
+      c.root.traverse((o) => { if ((o as Mesh).isMesh) meshes++ })
+      c.dispose()
+      return { meshes, body }
+    }
+    for (const q of ['full', 'low'] as const) {
+      const sky = await shape(true, q)
+      const flat = await shape(false, q)
+      expect(sky.meshes, q).toBe(flat.meshes)
+      const added = sky.body - flat.body
+      expect(added, q).toBeGreaterThan(q === 'low' ? 600 : 2000)
+      expect(added, q).toBeLessThan(q === 'low' ? 3500 : 8000)
+    }
+  })
+
+  it('its clouds never lie in the ground plane or in one another', () => {
+    let s = 7
+    const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296)
+    const feet = Array.from({ length: 30 }, (_, i) => ({ x: Math.cos(i) * 110, z: Math.sin(i) * 110, w: 6 + (i % 5) }))
+    const parts = cloudSea(r, new Color('#cfe6ff'), 0, 0, 50, feet, false)
+    // The cloud-sea ground: a slab from y = -0.6 to -0.5.
+    const ground = new BoxGeometry(480, 0.1, 480).translate(0, -0.55, 0)
+    expect(coplanarPairs([ground, ...parts], 0.05)).toEqual([])
+    for (const g of parts) {
+      const pos = g.attributes.position!
+      let lo = Infinity
+      for (let i = 0; i < pos.count; i++) lo = Math.min(lo, pos.getY(i))
+      // Each puff either sinks well under the plane or floats clear of it.
+      expect(lo < CLOUD_SINK + 0.5 || lo > 1).toBe(true)
     }
   })
 
@@ -109,6 +151,62 @@ describe('the cityscape', () => {
       c.dispose()
     }
   })
+
+  it('no route ever clips a building or a landmark, a lured detour included', async () => {
+    // A freighter flew through a skyline tower (playtest 2026-10-18): every
+    // route is cleared of the skyline when it is built, and a lure (#181)
+    // that would steer a vehicle into one is refused.
+    const MARGIN = 1
+    const maps = [
+      mapFor(5), mapFor(11), generateMap({ seed: 9, rooms: 10, boss: false }), generateClimb(4),
+      ...(['scrapyard', 'gale', 'neon', 'rotor', 'fortress'] as const).map(s => generateStage(s, 1))
+    ]
+    const themes = Object.values(THEMES)
+    for (const [mi, map] of maps.entries()) {
+      for (const q of ['full', 'low'] as const) {
+        const c = await buildCityscape(map, themes[mi % themes.length]!, undefined, q)
+        c.stream(Infinity)
+        const cx = map.w * CELL / 2
+        const cz = map.h * CELL / 2
+        let seen = 0
+        let lured = 0
+        const check = (t: number) => c.probe(t, (x, y, z, r, below) => {
+          seen++
+          for (const o of c.obstacles) {
+            if (y - below >= o.top + MARGIN) continue
+            const d = Math.hypot(x - o.x, z - o.z)
+            if (d < o.r + r + MARGIN) {
+              throw new Error(`map ${mi} ${q} t=${t.toFixed(2)}: vehicle at ${x.toFixed(1)},${y.toFixed(1)},${z.toFixed(1)} r ${r} in a building at ${o.x.toFixed(1)},${o.z.toFixed(1)} r ${o.r.toFixed(1)} top ${o.top}`)
+            }
+          }
+        })
+        for (let t = 0; t < 400; t += 0.2) {
+          c.update(t)
+          // Now and then a charged shot from the level up past the traffic,
+          // at a random bearing: whatever it lures flies its detour checked.
+          if (Math.round(t * 5) % 10 === 0) {
+            const at: number[][] = []
+            c.probe(t, (x, y, z, r) => { if (r < 5) at.push([x, y, z]) })
+            const v = at[Math.round(t) % Math.max(1, at.length)]
+            // From the level's side, aimed a few metres wide of it.
+            if (v) {
+              const [x, y, z] = v as [number, number, number]
+              const dx = x - cx, dz = z - cz
+              const d = Math.hypot(dx, dz)
+              const sx = cx + dx / d * (d - 60), sz = cz + dz / d * (d - 60), sy = y - 40
+              const tx = x + 4, ty = y, tz = z - 3
+              const l = Math.hypot(tx - sx, ty - sy, tz - sz)
+              if (c.lure(sx, sy, sz, (tx - sx) / l * 40, (ty - sy) / l * 40, (tz - sz) / l * 40, 150)) lured++
+            }
+          }
+          check(t)
+        }
+        expect(seen).toBeGreaterThan(2000)
+        if (q === 'full') expect(lured).toBeGreaterThan(0)
+        c.dispose()
+      }
+    }
+  }, 120_000)
 
   it('a rocket lifts off from the spaceport now and then', async () => {
     const c = await buildCityscape(mapFor(7), THEMES.cryo, undefined, 'full')

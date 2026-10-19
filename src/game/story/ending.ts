@@ -6,10 +6,12 @@ import { getRenderer } from '../engine/renderer'
 import { buildPip, animatePip } from '../models/npc'
 import { buildGauss, poseGauss, newGaussPose, setGaussGlow, type GaussRig } from '../models/gauss'
 import { buildStasisCapsule, type StasisCapsule } from '../models/stasis'
+import { BAY, FLUX_CAP_AT, GAUSS_CAP_AT, bayDir, bayPoint } from '../world/hubLayout'
 import { buildDiorama, type Diorama } from '../models/diorama'
 import { buildAtlas, animateAtlas } from '../models/atlas'
 import type { Rig } from '../models/kit'
-import { buildLabSet } from '../sim/hub'
+import { buildLabSet, buildLabFrontSet } from '../sim/hub'
+import { tickLabScreens } from '../models/labConsole'
 import { Particles } from '../fx/particles'
 import { tickHud } from '../state/hud'
 import { sfx } from '../audio/sfx'
@@ -43,7 +45,13 @@ export interface EndingOptions {
 }
 
 const VALLEY_AT = new Vector3(300, 0, 0)
-const GAUSS_CAP = new Vector3(-1.45, 0, -3.1)
+const GAUSS_CAP = new Vector3(GAUSS_CAP_AT.x, 0, GAUSS_CAP_AT.z)
+/** A point in the lab's stasis bay (`hubLayout.ts`: x toward Flux's capsule,
+ *  z toward the teleporter, 0 between the capsules), as the intro stages it. */
+const bayAt = (x: number, y: number, z: number, out: Vector3): Vector3 => {
+  const [wx, wz] = bayPoint(x, z)
+  return out.set(wx, y, wz)
+}
 const STEP = 1 / 60
 
 export class EndingMode implements GameMode {
@@ -82,11 +90,18 @@ export class EndingMode implements GameMode {
     this.valleySet.add(this.valley.root)
     this.valleySet.position.copy(VALLEY_AT)
     s.add(this.valleySet)
-    this.labSet.add(buildLabSet())
+    this.labSet.add(buildLabSet(), buildLabFrontSet())
     this.cap = buildStasisCapsule()
     this.cap.root.position.copy(GAUSS_CAP)
-    this.cap.root.rotation.y = Math.PI / 2
-    this.labSet.add(this.cap.root)
+    this.cap.root.rotation.y = BAY.yaw + Math.PI / 2
+    // Flux's, beside it: open since the intro, its lever thrown.
+    const fluxCap = buildStasisCapsule()
+    fluxCap.root.position.set(FLUX_CAP_AT.x, 0, FLUX_CAP_AT.z)
+    fluxCap.root.rotation.y = BAY.yaw - Math.PI / 2
+    fluxCap.setOpen(1)
+    fluxCap.setLever(1)
+    fluxCap.setInner('#dfe9ff', 0.06)
+    this.labSet.add(this.cap.root, fluxCap.root)
     this.gauss = buildGauss()
     this.gaussRoot.add(this.gauss.root)
     this.labSet.add(this.gaussRoot)
@@ -95,6 +110,9 @@ export class EndingMode implements GameMode {
     this.labSet.add(this.pipRoot)
     this.atlas = buildAtlas()
     this.labSet.add(this.atlas.root)
+    // Both turned out of the bay, toward the camera.
+    this.pipRoot.rotation.y = BAY.yaw
+    this.atlas.root.rotation.y = BAY.yaw
     s.add(this.labSet)
   }
 
@@ -175,6 +193,7 @@ export class EndingMode implements GameMode {
   }
 
   render(_alpha: number, dt: number): void {
+    tickLabScreens(this.t)
     const t = this.t
     const shot = shotAt(Math.min(t, SUNRISE_FROM + 1e9))
     this.valleySet.visible = shot !== 'lab'
@@ -244,18 +263,20 @@ export class EndingMode implements GameMode {
     gp.look = step > 0.5 ? 0.6 : 0
     poseGauss(this.gauss, gp, t)
     setGaussGlow(this.gauss, ramp(THAW_FROM, STEP_TO, t), 0.5 + 0.5 * Math.sin(t * 3))
-    this.gaussRoot.position.set(GAUSS_CAP.x + 1.3 * step, 0, GAUSS_CAP.z + 1.4 * step)
-    this.gaussRoot.rotation.y = 0.4 * step
+    const [sx, sz] = bayDir(1.3 * step, 1.4 * step)
+    this.gaussRoot.position.set(GAUSS_CAP.x + sx, 0, GAUSS_CAP.z + sz)
+    this.gaussRoot.rotation.y = BAY.yaw + 0.4 * step
     // Pip bouncing with joy once she is out; Atlas at hand.
     const joy = ramp(STEP_TO, STEP_TO + 0.5, t)
     animatePip(this.pip, t)
-    this.pipRoot.position.set(0.4, 1.6 + joy * Math.abs(Math.sin(t * 5)) * 0.5, -1.4)
+    bayAt(0.4, 1.6 + joy * Math.abs(Math.sin(t * 5)) * 0.5, 1.7, this.pipRoot.position)
     animateAtlas(this.atlas, t, t > 33.5 && t < 36 ? 1 : 0)
-    this.atlas.root.position.set(1.3, 1.5, -1.6)
+    bayAt(1.3, 1.5, 1.5, this.atlas.root.position)
     // The camera: a slow drift past the capsule toward her.
     const k = ramp(LAB_FROM, SUNRISE_FROM, t)
-    this.pos.set(2.6 - 1.2 * k, 1.7, 2.8 - 1.0 * k)
-    this.look.set(GAUSS_CAP.x + 0.8 * step, 1.3, GAUSS_CAP.z + 0.6)
+    bayAt(2.6 - 1.2 * k, 1.7, 5.9 - 1.0 * k, this.pos)
+    const [lx, lz] = bayDir(0.8 * step, 0.6)
+    this.look.set(GAUSS_CAP.x + lx, 1.3, GAUSS_CAP.z + lz)
   }
 
   resize(w: number, h: number): void {

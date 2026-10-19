@@ -1,14 +1,15 @@
 import { AdditiveBlending, CircleGeometry, Color, DoubleSide, Mesh, MeshBasicMaterial } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
-import { buildCinderHound, poseCinderHound, newHoundPose, HOUND_COLORS, type HoundPose } from '../../models/miniBoss/cinderHound'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, inCone, near, ease } from './kit'
+import { buildSteelHound, poseSteelHound, newHoundPose, HOUND_COLORS, type HoundPose } from '../../models/miniBoss/steelHound'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, inCone, near, ease, sprung, type PoseVel } from './kit'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
 
 /**
- * ─── The Cinder Hound (Blaze) — the reference mini-boss ──────────────────────
+ * ─── The Steel Hound (Blaze) — the reference mini-boss ──────────────────────
  *
  * A furnace hound that fights like an animal, not like the Blaze Master's
  * fire-slinging android: it circles, crouches and lunges, breathes fire and,
@@ -61,6 +62,8 @@ const EMBER_H = 7
 type Attack = 'lunge' | 'breath' | 'howl'
 
 export interface HoundMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: HoundPose
   attack: Attack | ''
   /** The attack's aim (unit) and the dash's length (m). */
@@ -104,14 +107,25 @@ const makeCone = (e: Enemy): Mesh => {
   return m
 }
 
-const pick = (e: Enemy, m: HoundMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const HOUND_REACH: Record<Attack, number> = {
+  // The longest dash, and its body at the end of it.
+  lunge: LUNGE_SPEED * LUNGE_MAX_T + 1.1,
+  // The cone (his body counts in `inCone`); it does not step in to breathe.
+  breath: BREATH_RANGE + PLAYER_R,
+  howl: ANYWHERE
+}
+
+const pick = (e: Enemy, m: HoundMem, d: number): Attack | null => {
   if (m.phase2 && m.sinceHowl >= 3) return 'howl'
   // Far: it closes the gap with a lunge; near: it breathes fire.
   const wantLunge = d > 7 ? 0.75 : d < 4.5 ? 0.25 : 0.5
   let a: Attack = Math.random() < wantLunge ? 'lunge' : 'breath'
   // Never the same attack three times running.
   if (a === m.attack && e.step >= 1) a = a === 'lunge' ? 'breath' : 'lunge'
-  return a
+  // Only a move that lands from here (#180): at 15 m the breath would burn
+  // the air. When none reaches, it runs in (`engage` closes past 8 m).
+  return firstInReach(HOUND_REACH, d, a, a === 'lunge' ? 'breath' : 'lunge')
 }
 
 const begin = (w: World, e: Enemy, m: HoundMem, a: Attack, room: Room): void => {
@@ -137,7 +151,7 @@ const begin = (w: World, e: Enemy, m: HoundMem, a: Attack, room: Room): void => 
     // The lane: red markers along it, inside the room, for the wind-up and the dash.
     for (let s = 1.2; s <= m.len; s += 1.6) {
       const [x, z] = inRoom(room, e.x + m.ax * s, e.z + m.az * s, 0.6)
-      w.markers.spawn(x, z, 0.95, e.teleDur + 0.25)
+      w.markers.spawn(x, z, 0.95, e.teleDur + 0.25, e)
     }
     w.sfx('alert', e.x, e.z)
   } else if (a === 'breath') {
@@ -208,9 +222,9 @@ const stride = (e: Enemy, m: HoundMem, dt: number): void => {
   m.pose.phase += moved * 2.4
 }
 
-export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
+export const STEEL_HOUND_AI: MiniBossBehaviour<HoundMem> = {
   init: () => ({
-    pose: newHoundPose(), attack: '', ax: 0, az: 1, len: 0, ticks: 0, lastX: 0, lastZ: 0, trailCd: 0,
+    pose: newHoundPose(), vel: {}, attack: '', ax: 0, az: 1, len: 0, ticks: 0, lastX: 0, lastZ: 0, trailCd: 0,
     trail: [], embers: [], sinceHowl: 0, phase2: false, cone: null, burst: false, side: 1
   }),
 
@@ -232,7 +246,7 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
     // …then the howl, head to the sky.
     const howl = e.st > INTRO_RISE + 0.2 && e.st < INTRO_T - 0.25 ? 1 : 0
     if (howl && p.howl < 0.05) w.sfx('howl', e.x, e.z)
-    p.howl = ease(p.howl, howl, 8, dt)
+    p.howl = sprung(p.howl, m.vel, 'howl', howl, 8, dt)
     p.heat = ease(p.heat, 1 + howl * 1.2, 6, dt)
     if (e.st >= INTRO_T) {
       e.y = 0
@@ -270,7 +284,8 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
         if (moveBody(w, e, (mx / ml) * sp * dt, (mz / ml) * sp * dt) < 0.3) m.side = -m.side
         if (Math.random() < dt * 0.25) m.side = -m.side
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -388,11 +403,11 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
     if (e.state !== 'tele' && !(e.state === 'act' && m.attack === 'breath') && m.cone) m.cone.visible = false
     keepInRoom(e, room)
     stride(e, m, dt)
-    p.crouch = ease(p.crouch, crouch, 12, dt)
-    p.lunge = ease(p.lunge, lunge, 14, dt)
-    p.inhale = ease(p.inhale, inhale, 10, dt)
-    p.breath = ease(p.breath, breath, 12, dt)
-    p.howl = ease(p.howl, howl, 8, dt)
+    p.crouch = sprung(p.crouch, m.vel, 'crouch', crouch, 12, dt)
+    p.lunge = sprung(p.lunge, m.vel, 'lunge', lunge, 14, dt)
+    p.inhale = sprung(p.inhale, m.vel, 'inhale', inhale, 10, dt)
+    p.breath = sprung(p.breath, m.vel, 'breath', breath, 12, dt)
+    p.howl = sprung(p.howl, m.vel, 'howl', howl, 8, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -401,10 +416,10 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
     tickHazards(w, e, m, dt)
     if (m.cone) m.cone.visible = false
     p.dying = Math.min(1, e.deathT / 1.1)
-    p.crouch = ease(p.crouch, 0, 8, dt)
-    p.lunge = ease(p.lunge, 0, 8, dt)
-    p.breath = ease(p.breath, 0, 8, dt)
-    p.howl = ease(p.howl, 0, 8, dt)
+    p.crouch = sprung(p.crouch, m.vel, 'crouch', 0, 8, dt)
+    p.lunge = sprung(p.lunge, m.vel, 'lunge', 0, 8, dt)
+    p.breath = sprung(p.breath, m.vel, 'breath', 0, 8, dt)
+    p.howl = sprung(p.howl, m.vel, 'howl', 0, 8, dt)
     p.heat = ease(p.heat, 2.4, 6, dt)
     // Its furnace bursts: vents blowing out one after another.
     if (Math.random() < dt * 16) {
@@ -416,7 +431,7 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
 
   pose(e, m, time) {
     m.pose.time = time
-    poseCinderHound(e.rig, m.pose)
+    poseSteelHound(e.rig, m.pose)
   },
 
   clear(_w, _e, m) {
@@ -424,10 +439,11 @@ export const CINDER_HOUND_AI: MiniBossBehaviour<HoundMem> = {
   }
 }
 
-export const CINDER_HOUND: MiniBossSpec<HoundMem> = {
-  id: 'cinderHound',
+export const STEEL_HOUND: MiniBossSpec<HoundMem> = {
+  id: 'steelHound',
   sector: 'blaze',
-  nameKey: 'miniboss.cinderHound',
+  nameKey: 'miniboss.steelHound',
+  reach: HOUND_REACH,
   def: {
     kind: 'miniboss', hp: 420, dmg: 15, speed: 3.4, radius: 1.1, hitR: 1.3, aimY: 1.1, fly: 0,
     aggro: 30, range: [4, 8], xp: 150, bolts: [24, 36], cooldown: 1.5, tele: LUNGE_TELE, unblockable: true, armor: 1,
@@ -435,6 +451,6 @@ export const CINDER_HOUND: MiniBossSpec<HoundMem> = {
     weak: { part: 'core', up: 1.63, fwd: -0.11, side: 0, r: 0.38 },
     color: HOUND_COLORS.molten
   },
-  build: () => buildCinderHound(),
-  behaviour: CINDER_HOUND_AI
+  build: () => buildSteelHound(),
+  behaviour: STEEL_HOUND_AI
 }

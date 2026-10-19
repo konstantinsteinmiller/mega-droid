@@ -167,12 +167,12 @@ describe('layout detection', () => {
 
 /** Every action's main key as each layout prints it (the HUD's keycaps). */
 const PRINTED: Record<Layout, Partial<Record<(typeof ACTIONS)[number], string>>> = {
-  qwerty: { forward: 'W', back: 'S', left: 'A', right: 'D', interact: 'E', beam: 'B', tank: 'H', map: 'M' },
-  qwertz: { forward: 'W', back: 'S', left: 'A', right: 'D', interact: 'E', beam: 'B', tank: 'H', map: 'M' },
-  azerty: { forward: 'Z', back: 'S', left: 'Q', right: 'D', interact: 'E', beam: 'B', tank: 'H', map: ',' },
-  dvorak: { forward: ',', back: 'O', left: 'A', right: 'E', interact: '.', beam: 'X', tank: 'D', map: 'M' },
-  colemak: { forward: 'W', back: 'R', left: 'A', right: 'S', interact: 'F', beam: 'B', tank: 'H', map: 'M' },
-  turkishF: { forward: 'G', back: 'İ', left: 'U', right: 'E', interact: 'Ğ', beam: 'Ç', tank: 'T', map: 'S' }
+  qwerty: { forward: 'W', back: 'S', left: 'A', right: 'D', interact: 'E', pip: 'F', beam: 'B', tank: 'H', map: 'M' },
+  qwertz: { forward: 'W', back: 'S', left: 'A', right: 'D', interact: 'E', pip: 'F', beam: 'B', tank: 'H', map: 'M' },
+  azerty: { forward: 'Z', back: 'S', left: 'Q', right: 'D', interact: 'E', pip: 'F', beam: 'B', tank: 'H', map: ',' },
+  dvorak: { forward: ',', back: 'O', left: 'A', right: 'E', interact: '.', pip: 'U', beam: 'X', tank: 'D', map: 'M' },
+  colemak: { forward: 'W', back: 'R', left: 'A', right: 'S', interact: 'F', pip: 'T', beam: 'B', tank: 'H', map: 'M' },
+  turkishF: { forward: 'G', back: 'İ', left: 'U', right: 'E', interact: 'Ğ', pip: 'A', beam: 'Ç', tank: 'T', map: 'S' }
 }
 /** Keys no layout renames: named keys and digits. */
 const SAME = { slide: '␣', block: '⇧', turnLeft: '←', turnRight: '→', target: '⇥', weapon1: '1', weapon2: '2', weapon3: '3' }

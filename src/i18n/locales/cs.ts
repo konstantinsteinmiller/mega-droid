@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Škvárový pes',
+    'steelHound': 'Ocelový pes',
     'icebreakerBrute': 'Ledoborec Hromotluk',
     'arcSpider': 'Obloukový pavouk',
     'stormHornetQueen': 'Královna bouřných sršňů',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Věž napětí',
     'gale': 'Nebeské doky',
     'fortress': 'Pevnost Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Cheaty zapnuty: Shift+Ctrl+Alt+F1 otevře panel cheatů',
+    'off': 'Cheaty vypnuty',
+    'title': 'Panel cheatů',
+    'note': 'Uložená hra s cheaty neposílá skóre do žebříčku.',
+    'unlockAll': 'Odemknout všechny příběhové mise',
+    'bolts': '+{n} šroubů',
+    'chips': '+{n} čipů dovedností',
+    'gear': 'Epický blaster',
+    'gels': 'Doplnit opravné gely',
+    'done': 'Hotovo!',
+    'doors': 'Skok ke dveřím',
+    'boss': 'Dveře bosse',
+    'challenge': 'Dveře výzvy',
+    'challengeN': 'Dveře výzvy {n}',
+    'actLevelUp': 'Přehrát scénu nové úrovně',
+    'actObjective': 'Přehrát scénu splněného cíle'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Nalezeno: {item} ({rarity})!',
     'tank': 'Nalezen opravný gel!',
     'giftTank': 'Dárek: +1 opravný gel!',
+    'skillChip': 'Nalezen čip dovedností!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'oproti vybavenému',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Skluz',
       'block': 'Blok',
       'interact': 'Akce',
+      'pip': 'Pipovy zásoby',
       'beam': 'Teleport',
       'tank': 'Opravný gel',
       'weapon1': 'Speciální zbraň 1',

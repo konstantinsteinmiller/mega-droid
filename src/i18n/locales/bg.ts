@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Жаравна хрътка',
+    'steelHound': 'Стоманена хрътка',
     'icebreakerBrute': 'Ледоразбивач Грубиян',
     'arcSpider': 'Дъгов паяк',
     'stormHornetQueen': 'Царица на бурните стършели',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Волт кула',
     'gale': 'Небесни докове',
     'fortress': 'Крепостта на Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Чийтове вкл.: Shift+Ctrl+Alt+F1 отваря панела',
+    'off': 'Чийтове изкл.',
+    'title': 'Панел с чийтове',
+    'note': 'Запис с използван чийт не праща точки в класацията.',
+    'unlockAll': 'Отключи всички сюжетни мисии',
+    'bolts': '+{n} болта',
+    'chips': '+{n} чипа за умения',
+    'gear': 'Епичен бластер',
+    'gels': 'Напълни ремонтните гелове',
+    'done': 'Готово!',
+    'doors': 'Скок до врата',
+    'boss': 'Врата на боса',
+    'challenge': 'Врата на предизвикателството',
+    'challengeN': 'Врата на предизвикателството {n}',
+    'actLevelUp': 'Пусни сцената за ново ниво',
+    'actObjective': 'Пусни сцената за изпълнена цел'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Намерено: {item} ({rarity})!',
     'tank': 'Намерен ремонтен гел!',
     'giftTank': 'Подарък: +1 ремонтен гел!',
+    'skillChip': 'Намерен чип за умения!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'спрямо екипираното',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Плъзгане',
       'block': 'Блок',
       'interact': 'Действие',
+      'pip': 'Запасите на Пип',
       'beam': 'Телепорт',
       'tank': 'Ремонтен гел',
       'weapon1': 'Специално оръжие 1',

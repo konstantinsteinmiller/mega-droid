@@ -38,14 +38,23 @@ export const setTeleRing = (s: Sprite, k: number, red: boolean, parryWindow01: n
   s.visible = true
 }
 
+/** A cancelled marker's fade-out (s): gone promptly, but not in a snap. */
+export const MARKER_FADE = 0.18
+
 export class FloorMarkers {
   readonly root = new Group()
-  private pool: Array<{ mesh: Mesh; fill: Mesh; t: number; dur: number; r: number; active: boolean }> = []
+  /** `owner`: the machine whose wind-up it marks, while the strike is still
+   *  its to cancel (null once launched, or for a hazard nobody owns).
+   *  `fade` > 0: cancelled, fading out over that many seconds. */
+  private pool: Array<{ mesh: Mesh; fill: Mesh; t: number; dur: number; r: number; active: boolean; owner: object | null; fade: number }> = []
   /** The climb: the floor height under a marker (a ledge, a walkway). Null
    *  on a flat map, where every marker lies at y = 0. */
   floorY: ((x: number, z: number) => number) | null = null
 
-  spawn(x: number, z: number, r: number, dur: number): void {
+  /** `owner`: the machine winding up the strike it marks. If it dies or is
+   *  stunned before the strike leaves (`cancelIf`), the marker fades out;
+   *  `release` hands it over to the shell in flight, which still lands. */
+  spawn(x: number, z: number, r: number, dur: number, owner: object | null = null): void {
     let m = this.pool.find(p => !p.active)
     if (!m) {
       const mat = new MeshBasicMaterial({ color: TELE_RED.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false })
@@ -55,10 +64,13 @@ export class FloorMarkers {
       const fill = new Mesh(new CircleGeometry(1, 40), fillMat)
       fill.rotation.x = -Math.PI / 2
       this.root.add(mesh, fill)
-      m = { mesh, fill, t: 0, dur, r, active: true }
+      m = { mesh, fill, t: 0, dur, r, active: true, owner, fade: 0 }
       this.pool.push(m)
     }
     m.active = true
+    m.owner = owner
+    m.fade = 0
+    ;(m.fill.material as MeshBasicMaterial).opacity = 0.18
     m.t = 0
     m.dur = dur
     m.r = r
@@ -70,9 +82,48 @@ export class FloorMarkers {
     m.mesh.visible = m.fill.visible = true
   }
 
+  /** The strike at (x, z) has left its owner (a shell launched): its marker
+   *  is no longer the owner's to cancel. The owned marker nearest the spot. */
+  release(owner: object, x: number, z: number): void {
+    let best: (typeof this.pool)[number] | null = null
+    let bd = 1
+    for (const m of this.pool) {
+      if (!m.active || m.owner !== owner) continue
+      const d = Math.hypot(m.mesh.position.x - x, m.mesh.position.z - z)
+      if (d < bd) { bd = d; best = m }
+    }
+    if (best) best.owner = null
+  }
+
+  /** Cancel the owned markers whose owner `gone` says will never strike
+   *  (dead, stunned, removed): each fades out over MARKER_FADE. */
+  cancelIf(gone: (owner: object) => boolean): void {
+    for (const m of this.pool) {
+      if (!m.active || !m.owner || m.fade > 0 || !gone(m.owner)) continue
+      m.owner = null
+      m.fade = MARKER_FADE
+    }
+  }
+
+  /** Markers still showing (fading ones included): for tests. */
+  get live(): number {
+    return this.pool.filter(m => m.active).length
+  }
+
   update(dt: number, time: number): void {
     for (const m of this.pool) {
       if (!m.active) continue
+      if (m.fade > 0) {
+        m.fade -= dt
+        const a = Math.max(0, m.fade / MARKER_FADE)
+        ;(m.mesh.material as MeshBasicMaterial).opacity = 0.55 * a
+        ;(m.fill.material as MeshBasicMaterial).opacity = 0.18 * a
+        if (m.fade <= 0) {
+          m.active = false
+          m.mesh.visible = m.fill.visible = false
+        }
+        continue
+      }
       m.t += dt
       const k = m.t / m.dur
       if (k >= 1) {
@@ -88,6 +139,8 @@ export class FloorMarkers {
   clear(): void {
     for (const m of this.pool) {
       m.active = false
+      m.owner = null
+      m.fade = 0
       m.mesh.visible = m.fill.visible = false
     }
   }

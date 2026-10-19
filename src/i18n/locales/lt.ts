@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Žarijų skalikas',
+    'steelHound': 'Plieninis skalikas',
     'icebreakerBrute': 'Ledlaužis grubijonas',
     'arcSpider': 'Lankinis voras',
     'stormHornetQueen': 'Audrų širšių karalienė',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Voltų bokštas',
     'gale': 'Dangaus dokai',
     'fortress': 'Vexo tvirtovė'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Gudrybės įjungtos: Shift+Ctrl+Alt+F1 atveria skydelį',
+    'off': 'Gudrybės išjungtos',
+    'title': 'Gudrybių skydelis',
+    'note': 'Išsaugojimas su gudrybėmis nesiunčia taškų į lyderių lentelę.',
+    'unlockAll': 'Atrakinti visas siužeto misijas',
+    'bolts': '+{n} varžtų',
+    'chips': '+{n} įgūdžių lustų',
+    'gear': 'Epinis blasteris',
+    'gels': 'Pripildyti remonto gelių',
+    'done': 'Atlikta!',
+    'doors': 'Peršokti prie durų',
+    'boss': 'Boso durys',
+    'challenge': 'Iššūkio durys',
+    'challengeN': 'Iššūkio durys {n}',
+    'actLevelUp': 'Paleisti lygio kėlimo sceną',
+    'actObjective': 'Paleisti įvykdyto tikslo sceną'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Rasta: {item} ({rarity})!',
     'tank': 'Rastas remonto gelis!',
     'giftTank': 'Dovana: +1 remonto gelis!',
+    'skillChip': 'Rastas įgūdžių lustas!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'palyginti su dėvimu',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Slysti',
       'block': 'Blokuoti',
       'interact': 'Sąveika',
+      'pip': 'Pipo atsargos',
       'beam': 'Teleportuotis',
       'tank': 'Remonto gelis',
       'weapon1': 'Specialusis ginklas 1',

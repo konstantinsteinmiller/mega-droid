@@ -47,6 +47,28 @@ const SAY = {
   'en/flux_hurt_ice_3': 'Brrrr! Zzt!'
 }
 
+/**
+ * Respellings for a word the model gets wrong in every line it is in, per
+ * language: applied to what the model reads (`say`) only, never to the
+ * subtitle. QA still checks the take against the real text.
+ */
+const WORDS = {
+  de: [
+    // "Blocke" ([ˈblɔkə]) comes out "Bloooke" (Whisper hears "Bloke"), worst
+    // at the start of a line. "Blokke", "Blockeh" and "Blockuh" don't help (or
+    // turn the k into "Bloche"), an IPA phoneme tag is read out as text; a
+    // written schwa keeps the o short. "blocken" comes out right as it is.
+    [/\b([Bb])locke\b/g, '$1lockə']
+  ]
+}
+
+/** `text` with the language's word respellings, or null when none applies. */
+const respell = (text, lang) => {
+  let out = text
+  for (const [from, to] of WORDS[lang] ?? []) out = out.replace(from, to)
+  return out === text ? null : out
+}
+
 const a = args()
 const mode = a.samples ? 'samples' : a.all ? 'all' : 'live'
 const langs = a.lang ? [a.lang] : LANGS
@@ -77,7 +99,7 @@ for (const line of pick) {
       max: line.max,
       shown,
       text,
-      ...(SAY[`${lang}/${file}`] ? { say: SAY[`${lang}/${file}`] } : {}),
+      ...((say => say ? { say } : {})(respell(SAY[`${lang}/${file}`] ?? text, lang) ?? SAY[`${lang}/${file}`])),
       // A sound, not words (barks, laughs), or a word broken on purpose: QA does not check it against the text.
       ...(line.neutral || line.loose || BROKEN.has(line.key) ? { loose: true } : {}),
       emphasis,

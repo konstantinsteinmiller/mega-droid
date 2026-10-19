@@ -19,6 +19,9 @@
  *   frost      the duel: Flux in profile, his shot in flight at the Frost Master
  *   vex        the villain: Dr. Vex Mk-I looming over a small, defiant Flux
  *   blaze      the charge: Flux leaping at the lens, the Blaze Master behind
+ *   blaze-face the counter: blaze turned round, Flux firing at the Blaze Master
+ *   frost-face blaze-face in the Cryo Vault, against the Frost Master
+ *   blaze-clash Flux and the Blaze Master meet in mid-air
  *   volt       the storm: Flux close, charging up at the Volt Master in the lightning (#176)
  *   magnet     the pull: Flux braced against the Magnet Master's field, firing back
  *   drill      the eruption: the Drill Master bursts from the floor behind a leaping Flux
@@ -33,13 +36,19 @@
  *   pnpm art:promotion --only 1x1,16x9           just these families
  *   pnpm art:promotion --force                   repaint these masters (old ones archived)
  *   pnpm art:promotion --keep-window             leave the Gemini window open
+ *   pnpm art:promotion --upscale                 cut from a Real-ESRGAN 4x of each master (local, free;
+ *                                                exe from REALESRGAN or ~/tools/realesrgan): the
+ *                                                masters come back 1376 wide, a plain upscale to 1920 is soft
  *
  * Deliverables, into src/assets/promotion/: every size as .jpg AND .webp,
  * once bare (`<w>x<h>`) and once with the logo lockup (`<w>x<h>-logo`).
  * Portals differ on text: Poki tests text-free covers better and YouTube
  * Playables forbids branding; CrazyGames and GamePix allow the exact title;
  * Steam requires it. So the painted master carries NO text, and the logo is
- * laid on afterwards from store-art/brand/logo-lockup.svg: in the lower
+ * laid on afterwards from public/images/logo/mega-droid-logo.svg, in the
+ * calmest of the top-right, bottom-left and bottom-right corners, never the
+ * top-left (tools/promotion/logoOverlay.mjs; `logo` below is the old
+ * per-scenario placement, no longer used). Formerly: in the lower
  * third, off the bottom edge and out of every corner — never top-left, where
  * CrazyGames lays its banners over a tile.
  *
@@ -56,13 +65,13 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
+import { LOGO_WIDTH, withCoverLogo } from './promotion/logoOverlay.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(join(ROOT, 'package.json'))
 const sharp = require('sharp')
 const DIR = join(ROOT, 'art-sheets', 'promotion')
 const OUT = join(ROOT, 'src', 'assets', 'promotion')
-const LOCKUP = join(ROOT, 'store-art', 'brand', 'logo-lockup.svg')
 const rel = (p) => relative(ROOT, p).replace(/\\/g, '/')
 
 const { values: opt } = parseArgs({
@@ -76,7 +85,8 @@ const { values: opt } = parseArgs({
     only: { type: 'string' },
     force: { type: 'boolean', default: false },
     'keep-window': { type: 'boolean', default: false },
-    profile: { type: 'string' }
+    profile: { type: 'string' },
+    upscale: { type: 'boolean', default: false }
   }
 })
 
@@ -110,7 +120,7 @@ const RULES = (accent, ground) => `HIGH-CTR RULES (this image must win a click a
 - A SIMPLE background: big soft shapes and a gradient, no clutter of props, no small detail that turns to mush when the image is small.
 - Everything points at the focal point: speed lines, sparks, the opponent's reach.
 - Nothing that matters within the outer eighth of the image on any side; all four corners and the bottom strip are expendable (a portal may lay a badge or a title bar there).
-- The TOP-LEFT (the top fifth of the left half) holds only background: a portal lays its banner over it. Flux's face is never there.`
+- The TOP-LEFT (the left half of the top half) holds only background: a portal (CrazyGames) lays its banner over it, up to the horizontal middle. Flux's face is never there, and no logo goes there.`
 
 const SCENARIOS = {
   scrapper: {
@@ -229,6 +239,74 @@ const SCENARIOS = {
     logo: { landscape: [0.5, 0.84, 0.26], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.5, 0.84, 0.34] }
   },
 
+  // The vote's winner (blaze), turned round: Flux faces the Blaze Master and
+  // fires, rather than leaping away from him.
+  'blaze-face': {
+    variant: 'blaze',
+    families: ['16x9'],
+    world: 'the Blaze Refinery: a furnace hall in deep red-orange and dark rust, a glow of fire behind, heat haze',
+    cast: [
+      `${FLUX} Exactly as in the attached painting: chibi proportions, the big round white helmet, the black visor band, the round glowing amber eyes, chunky white boots, the big rounded white arm cannon with black bands round it. His chest core is a glowing amber HEXAGON set in a dark hexagonal socket. Furious and fearless: his amber eyes narrowed hard, glaring at the Blaze Master.`,
+      '- THE BLAZE MASTER, the one opponent: a humanoid robot a head and a half taller than Flux, in red and orange armour with gold trim: a crown of FLAME-shaped crests on its helmet, a visor with two glowing YELLOW eyes, a glowing yellow core on its chest, and both forearms wide furnace CANNONS with glowing orange bores. It is a ROBOT: NO mouth, NO nose, NO human face — only the dark visor with the two yellow eyes under the tall flame crown. Big and menacing, as tall as Flux or taller although further back, it stands in a roaring WALL OF FIRE on the right, facing Flux, a darker shape against the glow.'
+    ],
+    moment: 'THE MOMENT — the counter-attack. Flux is NOT running away: he has turned to FACE the Blaze Master and is attacking. He springs forward TOWARD THE RIGHT in a braced, aggressive lunge, front boot planted toward the boss, his RIGHT arm — the white arm cannon — thrust straight out toward the Blaze Master, a huge blazing amber-white CHARGED SHOT swelling on the muzzle, an instant from firing. The Blaze Master raises its furnace cannons back at him; the fire between them curls toward the charge. Huge, explosive, glossy: Flux\'s helmet and his cannon are BIG (the cannon a fat rounded white barrel with black bands, as wide as his head), flames and embers fill the whole background, no calm empty floor.',
+    rules: RULES('deep red-orange, and a COOL blue-white rim light on Flux so the white hero pops off the warm fire', 'deep red-orange and dark rust (the bright yellow of the fire stays behind the opponent, never behind Flux\'s helmet)'),
+    shots: {
+      landscape: 'THE SHOT — WIDE 16:9, a side-on duel read from LEFT to RIGHT. Flux fills the centre-left, big, full body, seen in a near PROFILE from HIS LEFT SIDE: his chest, knees, boots and head all point to the RIGHT at the Blaze Master; we see his left shoulder nearest us, his helmet turned only slightly toward us so the black visor and both amber eyes stay big and readable while they glare RIGHT at the boss (not at the viewer, never back over his shoulder). His back faces the left edge. His RIGHT arm, the far arm, carries the white arm cannon and is thrust straight forward, horizontally to the right past his chest, so the whole cannon reads in front of him; his empty LEFT hand is a fist pulled back at his near side. The blazing charge — the brightest point of the image — at centre-right, whole, an eighth in from the edges. The amber hexagon chest core shows in three-quarter. The Blaze Master stands in the right third facing left at Flux, big, its flame crown cropped by the top edge. Flames sweep from the boss toward the charge. Big clear silhouettes, strong dark-light contrast: it must read at 250 px wide.'
+    },
+    // An EDIT of the winning painting (its plate is that master): a fresh
+    // paint from the in-engine plate lost the winner's look.
+    edit: `Edit this image. Change ONLY two things and keep EVERYTHING else identical: Flux's helmet, his round amber eyes, his pose, his white arm cannon, the Blaze Master, the fire, the debris, the style, the lighting and the framing.
+
+1. REMOVE the glowing hexagon on Flux's torso. His chest faces away from us, so that spot is his back/side: paint it as plain smooth white armour plate, continuing the panel lines around it. No light, no core, no socket there.
+2. REPLACE the big orange-yellow fire swirl at the cannon with the game's blaster CHARGED SHOT: a round glowing PLASMA ORB of electric CYAN energy (#7ff4ff), with a bright pure-WHITE hot core, a soft cyan glow halo around it, and small white-cyan electric crackle sparks jumping off it. It sits just in front of the cannon muzzle, aimed at the Blaze Master, about the size of Flux's head. It must clearly contrast with the orange fire around it (cool cyan against warm orange). The muzzle opening of the white cannon stays visible behind it. No flames, no orange swirl in the shot.
+
+No mouth, no nose on Flux. No text, no logo, no frame. One 16:9 image.`,
+    check: 'Flux with a ROUND white helmet, black visor, round amber eyes glaring RIGHT at the boss, body facing RIGHT (attacking, not fleeing), white arm cannon on his RIGHT arm pointing RIGHT with the big charge, amber hexagon chest core · ONE red-and-orange Blaze Master with a flame crown on the right, facing him',
+    logo: { landscape: [0.5, 0.84, 0.26], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.5, 0.84, 0.34] }
+  },
+
+  // blaze-face moved to the Cryo Vault: an EDIT of blaze-face's master (its
+  // plate), Flux kept as he is, the Master and the world swapped.
+  'frost-face': {
+    variant: 'frost',
+    families: ['16x9'],
+    world: 'the Cryo Vault: a deep navy ice hall',
+    cast: [],
+    edit: `Edit this image. Keep FLUX — the small white robot on the left — exactly IDENTICAL: the same pose (body facing right in a braced lunge), the same round helmet with the black visor band, the same two big ROUND glowing amber chibi eyes, the same PURE BRIGHT WHITE armour (snow-white with cool blue shading, never beige, grey or cream) with the white outline glow, the same bulbous white arm cannon on his right arm, NO core or light on his torso, and the same charged shot at the muzzle. Keep the same composition, camera, painting style and glossy cartoon rendering.
+
+Change these things:
+1. REPLACE the red fire robot on the right with THE FROST MASTER: a humanoid robot a head and a half taller than Flux, in ice-blue and white armour: a tall crown of jagged ICE SPIKES on a dome helmet, a dark visor with two glowing CYAN eyes, a white oval core on its chest, rounded shoulders with ice-crystal fins, forearms ending in long pointed ICE CLAWS, chunky blue boots with white cuffs. It stands where the fire robot stood, turned toward Flux, its body turned three-quarters to face LEFT toward Flux, one long ice-claw arm thrust out at him with a swirl of frost and ice shards gathering in the claws, ready to fire ice at him. A robot: no mouth, no nose.
+2. REPLACE the fire world with ice: a DEEP NAVY and dark blue ice hall, big jagged ice shards and icicles, frosted walls, a frozen floor, cold mist, drifting snowflakes and glittering ice crystals instead of embers. No fire, no orange, no red anywhere. Keep the background a step DARKER than Flux so his white body pops.
+3. The charged shot keeps its shape and place but must pop against the blue: a BLAZING WHITE-HOT core, much brighter than anything else in the image, with a thin electric cyan rim and crackling white lightning — a pure white-and-electric glow with no warm colour, strongly brighter than the ice around it.
+
+No text, no logo, no frame. One 16:9 image.`,
+    shots: { landscape: 'edit' },
+    check: '',
+    logo: { landscape: [0.5, 0.84, 0.26], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.5, 0.84, 0.34] }
+  },
+
+  // The depth master REFRAMED: scaled into the left of the frame over a
+  // blurred border (tools/promotion/blaze-clash-collage.mjs --reframe makes
+  // the plate), and this edit paints the border out. The depth master's own
+  // collage and edit (collage/depth-prompt.txt) are in that script's header.
+  'blaze-clash': {
+    variant: 'blaze',
+    families: ['16x9'],
+    world: 'the Blaze Refinery furnace',
+    cast: [],
+    edit: `Edit this image: the sharp painting in the middle is the finished artwork; the SOFT BLURRED border around it (the wide strip on the right, and the thin strips at the top and bottom) is empty space to paint. Extend the painting into it seamlessly, so the result is ONE sharp, finished, full-bleed 16:9 image with no visible border, frame or seam.
+
+In the extended area:
+- COMPLETE THE BLAZE MASTER (the red robot on the right): his raised back arm with its furnace cannon, his right leg and red boot, and his full flame crown — all fully inside the frame with some margin to the right edge, in exactly his design (red-orange armour with gold trim, dark ink outlines).
+- Continue the wall of fire, the embers, the debris, the speed lines and the dark furnace walls.
+
+Keep EVERYTHING already sharp exactly as it is: Flux (clean white, dark ink outlines, NO cyan tint on him), his cannon and the cyan ball on its tip, the ball in FRONT of the Blaze Master's fist, the painted impact with its cyan arcs and flames, the Blaze Master's face and punching arm. No flat comic starburst. Everything crisp: no blur, no smears. No text, no logo, no frame. One 16:9 image.`,
+    shots: { landscape: 'edit' },
+    check: '',
+    logo: { landscape: [0.5, 0.84, 0.26], portrait: [0.5, 0.86, 0.6], tall: [0.5, 0.85, 0.56], square: [0.5, 0.84, 0.44], classic: [0.5, 0.84, 0.34] }
+  },
+
   // ── #176: four more, on the pattern that scored best in #120 (neon, blaze,
   // frost): one big face, a charge at the lens, one Master behind. ──
 
@@ -321,6 +399,7 @@ const masterOf = (f) => join(PAINTED, `cover-${f}.jpg`)
 // ── The prompt ──────────────────────────────────────────────────────────────
 
 const promptFor = (f) => {
+  if (SC.edit) return SC.edit
   const fam = FAMILIES[f]
   const [w, h] = fam.plate
   const shot = SC.shots[fam.shape]
@@ -418,6 +497,13 @@ if (!opt['no-generate'] && todo.length) {
         // other aspects are painted with it attached as the look to match
         // (portals ask for covers that are recognisably the same picture).
         const lead = f !== LEAD && existsSync(masterOf(LEAD)) ? join(SDIR, `look-${LEAD}.jpg`) : null
+        // `refs`: other scenarios' painted masters, attached after the plate as character references.
+        const refs = []
+        for (const id of SC.refs ?? []) {
+          const to = join(SDIR, `ref-${id}-${f}.jpg`)
+          await sharp(join(DIR, 'painted', id, `cover-${f}.jpg`)).resize({ width: 1280, height: 1280, fit: 'inside' }).jpeg({ quality: 90 }).toFile(to)
+          refs.push(to)
+        }
         if (lead) await sharp(masterOf(LEAD)).resize({ width: 1280, height: 1280, fit: 'inside' }).jpeg({ quality: 90 }).toFile(lead)
         const prompt = lead
           ? `${promptFor(f)}
@@ -425,7 +511,7 @@ if (!opt['no-generate'] && todo.length) {
 TWO IMAGES ARE ATTACHED. The first is the plate (who and where). The second is the FINISHED landscape cover of this same scene: match it exactly in painting style, palette, lighting and in how Flux and his opponent look — it must read as the same artwork — but RECOMPOSE it for this aspect as THE SHOT says. Do not crop or stretch it.`
           : promptFor(f)
         const { bytes } = await painter.paint({
-          refFile: null, styleFiles: lead ? [ref, lead] : [ref], prompt, timeoutMs: g.timeoutSeconds * 1000,
+          refFile: null, styleFiles: lead ? [ref, lead] : [ref, ...refs], prompt, timeoutMs: g.timeoutSeconds * 1000,
           onPhase: (phase, quiet) => { if (!(quiet && phase === last)) { last = phase; console.log(`    ${phase}`) } }
         })
         const dest = masterOf(f)
@@ -454,42 +540,22 @@ TWO IMAGES ARE ATTACHED. The first is the plate (who and where). The second is t
 
 // ── Cut + logo + compress ───────────────────────────────────────────────────
 
-/** The logo lockup `width` px wide, and a soft navy shadow for it (as scripts/render-thumbnail.mjs lays it on). */
-const lockup = async (width) => {
-  // The lockup's viewBox is 300 wide: rasterise at twice the size, then scale down.
-  const logo = await sharp(readFileSync(LOCKUP), { density: Math.ceil((72 * width * 2) / 300) }).resize(width).png().toBuffer()
-  const { height } = await sharp(logo).metadata()
-  const blur = Math.max(2, Math.round(width * 0.02))
-  const pad = blur * 3
-  const a0 = await sharp(logo).extractChannel(3).png().toBuffer()
-  const alpha = await sharp(a0)
-    .extend({ top: pad, bottom: pad, left: pad, right: pad, background: { r: 0, g: 0, b: 0, alpha: 1 } })
-    .blur(blur).linear(0.75, 0).toColourspace('b-w').png().toBuffer()
-  const shadow = await sharp({ create: { width: width + 2 * pad, height: height + 2 * pad, channels: 3, background: '#0b0e24' } })
-    .joinChannel(alpha).png().toBuffer()
-  return { logo, shadow, height, pad, drop: Math.round(width * 0.014) }
-}
-
-/**
- * `png` (w × h) with the lockup laid on: centred at (cx, cy) of the image,
- * `wk` of its width, kept a tenth of the short side off every edge — so it
- * is never in a corner, and never hard against the bottom.
- */
-const withLogo = async (png, w, h, [cx, cy, wk]) => {
-  const margin = Math.round(Math.min(w, h) * 0.1)
-  const width = Math.max(48, Math.min(Math.round(w * wk), w - 2 * margin))
-  const L = await lockup(width)
-  const left = Math.max(margin, Math.min(w - margin - width, Math.round(w * cx - width / 2)))
-  const top = Math.max(margin, Math.min(h - margin - L.height, Math.round(h * cy - L.height / 2)))
-  return sharp(png).composite([
-    { input: L.shadow, left: left - L.pad, top: top - L.pad + L.drop },
-    { input: L.logo, left, top }
-  ]).png().toBuffer()
-}
+// The logo goes in the calmest corner, never the top-left (#185): tools/promotion/logoOverlay.mjs.
 
 if (opt['no-cut']) {
   if (stopped) { console.log(`stopped: ${stopped}`); process.exit(1) }
   process.exit(0)
+}
+
+/** A 4x Real-ESRGAN (anime model) copy of a master, through the worker budget. */
+const upscaled = (src, f) => {
+  const { homedir } = require('node:os')
+  const exe = process.env.REALESRGAN ?? join(homedir(), 'tools', 'realesrgan', 'realesrgan-ncnn-vulkan.exe')
+  if (!existsSync(exe)) throw new Error(`--upscale: no Real-ESRGAN at ${exe} (set REALESRGAN)`)
+  const dest = join(PAINTED, `x4-${f}.png`)
+  const r = spawnSync(process.execPath, [join(homedir(), '.claude', 'skills', 'worker-budget', 'budget.mjs'), 'run', '--want', '2', '--', exe, '-i', src, '-o', dest, '-n', 'realesrgan-x4plus-anime', '-s', '4', '-j', '1:2:1'], { stdio: 'inherit' })
+  if (r.status !== 0 || !existsSync(dest)) throw new Error(`--upscale of ${rel(src)} failed`)
+  return dest
 }
 
 mkdirSync(OUT, { recursive: true })
@@ -497,7 +563,8 @@ const written = []
 for (const f of families) {
   const fam = FAMILIES[f]
   const painted = existsSync(masterOf(f))
-  const src = painted ? masterOf(f) : plateOf(f)
+  let src = painted ? masterOf(f) : plateOf(f)
+  if (painted && opt.upscale) src = upscaled(src, f)
   // `trim`: a painted master that came back with a drawn frame loses its
   // outer edge (a share of each side) before the cut — no frames on a cover.
   const meta = await sharp(src).metadata()
@@ -505,7 +572,7 @@ for (const f of families) {
   const box = { left: Math.round(meta.width * t), top: Math.round(meta.height * t), width: Math.round(meta.width * (1 - 2 * t)), height: Math.round(meta.height * (1 - 2 * t)) }
   for (const [w, h] of fam.out) {
     const bare = await sharp(src).extract(box).resize(w, h, { fit: 'cover', position: 'centre', kernel: 'lanczos3' }).png().toBuffer()
-    const logo = await withLogo(bare, w, h, SC.logo[fam.shape])
+    const logo = await withCoverLogo(bare, w, h, LOGO_WIDTH[fam.shape])
     for (const [name, buf] of [[`${w}x${h}`, bare], [`${w}x${h}-logo`, logo]]) {
       const jpg = join(OUT, `${name}.jpg`)
       const webp = join(OUT, `${name}.webp`)

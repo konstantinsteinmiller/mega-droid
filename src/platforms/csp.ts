@@ -191,7 +191,7 @@ const CSP_DIRECTIVES = [
  * vite.config.ts used to do inline; intended to be called from there at
  * `transformIndexHtml` time.
  */
-export const buildCsp = (env: Record<string, string>): string => {
+export const buildCsp = (env: Record<string, string>, scriptHashes: readonly string[] = []): string => {
   const isGameDistribution = env.VITE_APP_GAME_DISTRIBUTION === 'true'
   const isGlitch = env.VITE_APP_GLITCH === 'true'
   const isCrazyWeb = env.VITE_APP_CRAZY_WEB === 'true'
@@ -231,7 +231,8 @@ export const buildCsp = (env: Record<string, string>): string => {
     ]
 
   // Per-directive extras — mode-driven openings beyond `'self'` + hosts.
-  const scriptSrcExtra: string[] = []
+  // The inline scripts' own hashes (the loading mini-game, vite.config.miniGame.ts).
+  const scriptSrcExtra: string[] = [...scriptHashes]
   if (isGlitch) scriptSrcExtra.push('\'unsafe-inline\'')
   if (adWaterfallBuild) scriptSrcExtra.push('https:', '\'unsafe-inline\'', '\'unsafe-eval\'')
 

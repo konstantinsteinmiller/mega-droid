@@ -1,7 +1,7 @@
-import { Group, Mesh, type Object3D } from 'three'
+import { Group, Mesh, type BufferGeometry, type Object3D } from 'three'
 import { CELL, cellCenter, type MapData, type Pillar, type Room } from '../world/levelGen'
 import { floorAt, hasLineOfSight, type Nav } from '../world/nav'
-import { rcyl, rbox, torus, xform, paint, merge } from '../models/kit'
+import { rcyl, torus, xform, paint, merge } from '../models/kit'
 import { toonVC, outlineMat } from '../models/toon'
 import type { Theme } from '../world/themes'
 import type { Particles } from '../fx/particles'
@@ -51,6 +51,20 @@ export interface ArenaHost {
   sfx(name: string, x?: number, z?: number): void
   shake(amount: number): void
 }
+
+/** A cover pillar's footprint (m): the shaft's radius and its round plinth's. */
+export const PILLAR_R = 0.7
+export const PLINTH_R = 0.84
+
+/** The cover pillar's parts, at its foot: a shaft on a ROUND plinth. The
+ *  plinth used to be a square slab 1.6 m across under a 1.4 m shaft, so its
+ *  corners stuck out from under the round pillar. The shaft starts just
+ *  inside the plinth, so no face of one lies in a face of the other. */
+export const coverPillarParts = (t: Pick<Theme, 'pilaster' | 'trim'>): BufferGeometry[] => [
+  xform(paint(rcyl(PILLAR_R, 2.94, 0.18, 14), t.pilaster), [0, 0.26 + 1.47, 0]),
+  xform(paint(torus(0.68, 0.1, 6, 14), t.trim), [0, 2.7, 0], [Math.PI / 2, 0, 0]),
+  xform(paint(rcyl(PLINTH_R, 0.3, 0.08, 14), t.trim), [0, 0.15, 0])
+]
 
 interface CoverPillar {
   p: Pillar
@@ -119,16 +133,11 @@ export class BossArena {
     const x = cellCenter(i)
     const z = cellCenter(j)
     const y = Math.max(0, floorAt(h.nav, x, z))
-    const p: Pillar = { x, z, r: 0.7 }
+    const p: Pillar = { x, z, r: PILLAR_R }
     h.map.pillars.push(p)
     const nb = h.map.navBlock
     if (nb) nb[j * h.map.w + i] = 1
-    const t = h.theme
-    const geo = merge([
-      xform(paint(rcyl(0.7, 3.2, 0.18, 14), t.pilaster), [0, 1.6, 0]),
-      xform(paint(torus(0.68, 0.1, 6, 14), t.trim), [0, 2.7, 0], [Math.PI / 2, 0, 0]),
-      xform(paint(rbox(1.6, 0.3, 1.6, 0.1, 4, 2), t.trim), [0, 0.15, 0])
-    ])
+    const geo = merge(coverPillarParts(h.theme))
     const mesh = new Group()
     mesh.add(new Mesh(geo, toonVC()))
     const o = new Mesh(geo, outlineMat(0.03))

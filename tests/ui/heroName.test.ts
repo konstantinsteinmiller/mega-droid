@@ -44,7 +44,10 @@ vi.mock('@/use/useSound', () => ({ resumeMusicAfterAd: () => {} }))
 vi.mock('@/components/story/HubSceneLayer.vue', () => ({ default: { name: 'HubSceneLayer', render: () => null } }))
 vi.mock('@/game/audio/sfx', () => ({ sfx: () => {} }))
 vi.mock('@/use/useQaAdTrigger', () => ({ registerQaAdTap: () => false }))
-vi.mock('@/use/useLeaderboard', () => ({ leaderboardListEnabled: false }))
+vi.mock('@/use/useLeaderboard', async () => {
+  const { ref } = await import('vue')
+  return { leaderboardListEnabled: false, boardModalEnabled: ref(false) }
+})
 vi.mock('@/components/organisms/LeaderboardModal.vue', () => ({ default: { name: 'LeaderboardModal', render: () => null } }))
 vi.mock('@/components/hub/CircuitsTab.vue', () => ({ default: { name: 'CircuitsTab', render: () => null } }))
 vi.mock('@/components/hub/WorkshopTab.vue', () => ({ default: { name: 'WorkshopTab', render: () => null } }))

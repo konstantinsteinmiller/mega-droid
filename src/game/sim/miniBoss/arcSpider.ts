@@ -4,11 +4,12 @@ import {
 } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import { buildArcSpider, poseArcSpider, newSpiderPose, SPIDER_COLORS, type SpiderPose } from '../../models/miniBoss/arcSpider'
 import { rcyl, sph, paint, merge, staticProp } from '../../models/kit'
 import { toonVC, glowVC } from '../../models/toon'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, floorLayer, segDist, eyeAt } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, floorLayer, segDist, eyeAt, sprung, type PoseVel } from './kit'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
 
@@ -70,6 +71,8 @@ interface Web { x: number; z: number; t: number; obj: Object3D }
 interface Blob { x: number; z: number; sx: number; sz: number; t: number }
 
 export interface SpiderMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: SpiderPose
   attack: Attack | ''
   /** The pylons' spots this attack, and the lines (pairs of indices). */
@@ -196,13 +199,19 @@ const makeWeb = (): Object3D => {
   return m
 }
 
-const pick = (e: Enemy, m: SpiderMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const SPIDER_REACH: Record<Attack, number> = {
+  // Pylons and webs land round him; the dash runs the room's edge past him.
+  pylons: ANYWHERE, web: ANYWHERE, dash: ANYWHERE
+}
+
+const pick = (e: Enemy, m: SpiderMem, d: number): Attack | null => {
   // A dash at least every fourth attack: it keeps moving round the room.
   if (m.sinceDash >= 3) return 'dash'
   const r = Math.random()
   let a: Attack = d > 8 ? (r < 0.5 ? 'pylons' : r < 0.8 ? 'web' : 'dash') : r < 0.35 ? 'pylons' : r < 0.7 ? 'web' : 'dash'
   if (a === m.attack && e.step >= 1) a = a === 'pylons' ? 'web' : a === 'web' ? 'dash' : 'pylons'
-  return a
+  return firstInReach(SPIDER_REACH, d, a, 'web', 'pylons', 'dash')
 }
 
 const begin = (w: World, e: Enemy, m: SpiderMem, a: Attack, room: Room): void => {
@@ -235,7 +244,7 @@ const begin = (w: World, e: Enemy, m: SpiderMem, a: Attack, room: Room): void =>
       m.pylons.push(inRoom(room, px + ux * 3.6, pz + uz * 3.6, 0.9))
       m.lines.push([1, 2], [2, 0])
     }
-    for (const [x, z] of m.pylons) w.markers.spawn(x, z, 0.7, e.teleDur + 0.1)
+    for (const [x, z] of m.pylons) w.markers.spawn(x, z, 0.7, e.teleDur + 0.1, e)
     w.sfx('alert', e.x, e.z)
   } else if (a === 'web') {
     e.teleDur = WEB_TELE * tempo
@@ -246,7 +255,7 @@ const begin = (w: World, e: Enemy, m: SpiderMem, a: Attack, room: Room): void =>
       const off = k === 0 ? 0 : (k === 1 ? 1 : -1) * 2.6
       const [x, z] = inRoom(room, px - uz * off, pz + ux * off, 0.8)
       m.blobs.push({ x, z, sx: e.x, sz: e.z, t: -1 })
-      w.markers.spawn(x, z, WEB_HIT_R, e.teleDur + WEB_FLY)
+      w.markers.spawn(x, z, WEB_HIT_R, e.teleDur + WEB_FLY, e)
     }
     w.sfx('trapHiss', e.x, e.z)
   } else {
@@ -269,7 +278,7 @@ const begin = (w: World, e: Enemy, m: SpiderMem, a: Attack, room: Room): void =>
       acc += Math.hypot(m.path[k]! - m.path[k - 2]!, m.path[k + 1]! - m.path[k - 1]!)
       if (acc >= 1.4) {
         acc = 0
-        w.markers.spawn(m.path[k]!, m.path[k + 1]!, 0.9, e.teleDur + 0.2 + (k / m.path.length) * (len / DASH_SPEED))
+        w.markers.spawn(m.path[k]!, m.path[k + 1]!, 0.9, e.teleDur + 0.2 + (k / m.path.length) * (len / DASH_SPEED), e)
       }
     }
     w.sfx('trapClick', e.x, e.z)
@@ -406,7 +415,7 @@ const stride = (e: Enemy, m: SpiderMem, dt: number): void => {
 
 export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
   init: () => ({
-    pose: newSpiderPose(), attack: '', pylons: [], lines: [], ticks: 0, blobs: [], webs: [], path: [], ran: 0, pathLen: 0, side: 1, sinceDash: 1,
+    pose: newSpiderPose(), vel: {}, attack: '', pylons: [], lines: [], ticks: 0, blobs: [], webs: [], path: [], ran: 0, pathLen: 0, side: 1, sinceDash: 1,
     phase2: false, landed: false, layer: null, pylonObjs: [], arcObjs: [], webPool: []
   }),
 
@@ -429,7 +438,7 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
     const rear = e.st > INTRO_DROP + 0.2 && e.st < INTRO_T - 0.3 ? 1 : 0
     if (rear && p.rear < 0.05) w.sfx('thunder', e.x, e.z)
     if (rear && Math.random() < 0.5) w.fx.sparks(e.x, y0 + 1.2, e.z, SPIDER_COLORS.coil, 3, 5, 0.12)
-    p.rear = ease(p.rear, rear, 8, dt)
+    p.rear = sprung(p.rear, m.vel, 'rear', rear, 8, dt)
     p.heat = ease(p.heat, 1 + rear * 1.3, 6, dt)
     if (e.st >= INTRO_T) {
       e.y = 0
@@ -475,7 +484,8 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
           if (Math.random() < dt * 0.2) m.side = -m.side
         }
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -601,11 +611,11 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
     if (!(e.state === 'act' && m.attack === 'pylons')) hideArcs(m)
     keepInRoom(e, room)
     stride(e, m, dt)
-    p.rear = ease(p.rear, rear, 10, dt)
-    p.crouch = ease(p.crouch, crouch, 12, dt)
-    p.spit = ease(p.spit, spit, 14, dt)
-    p.drum = ease(p.drum, drum, 12, dt)
-    p.dash = ease(p.dash, dash, 14, dt)
+    p.rear = sprung(p.rear, m.vel, 'rear', rear, 10, dt)
+    p.crouch = sprung(p.crouch, m.vel, 'crouch', crouch, 12, dt)
+    p.spit = sprung(p.spit, m.vel, 'spit', spit, 14, dt)
+    p.drum = sprung(p.drum, m.vel, 'drum', drum, 12, dt)
+    p.dash = sprung(p.dash, m.vel, 'dash', dash, 14, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -614,10 +624,10 @@ export const ARC_SPIDER_AI: MiniBossBehaviour<SpiderMem> = {
     tickHazards(w, e, m, dt)
     hideArcs(m)
     p.dying = Math.min(1, e.deathT / 1.1)
-    p.rear = ease(p.rear, 0, 8, dt)
-    p.crouch = ease(p.crouch, 0, 8, dt)
-    p.drum = ease(p.drum, 0, 8, dt)
-    p.dash = ease(p.dash, 0, 8, dt)
+    p.rear = sprung(p.rear, m.vel, 'rear', 0, 8, dt)
+    p.crouch = sprung(p.crouch, m.vel, 'crouch', 0, 8, dt)
+    p.drum = sprung(p.drum, m.vel, 'drum', 0, 8, dt)
+    p.dash = sprung(p.dash, m.vel, 'dash', 0, 8, dt)
     p.heat = ease(p.heat, 2.4, 6, dt)
     // Its coil shorts out in bursts.
     if (Math.random() < dt * 16) {
@@ -647,6 +657,7 @@ export const ARC_SPIDER: MiniBossSpec<SpiderMem> = {
   id: 'arcSpider',
   sector: 'volt',
   nameKey: 'miniboss.arcSpider',
+  reach: SPIDER_REACH,
   def: {
     kind: 'miniboss', hp: 460, dmg: 16, speed: 4.2, radius: 1.3, hitR: 1.35, aimY: 1.1, fly: 0,
     aggro: 30, range: [4, 10], xp: 165, bolts: [26, 38], cooldown: 1.5, tele: PYLON_TELE, unblockable: true, armor: 1,

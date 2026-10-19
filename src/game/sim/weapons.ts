@@ -25,6 +25,11 @@ import { pushHud } from '../state/hud'
  *                  press again to hurl them forward
  */
 
+/** Aim pitch (the aim vector's y) above which a floor weapon — Flame Wave,
+ *  Bubble Lance, the thrown Gale leaves — leaves the floor and flies along
+ *  the aim instead (about 3°: a level or downward aim still rolls). */
+export const RISE_AIM = 0.05
+
 export interface WeaponHost {
   nav: Nav
   fx: Particles
@@ -140,12 +145,18 @@ export class WeaponSystem {
         // A wall of fire rolling along the floor FLUX STANDS ON. (It used to
         // start at height 0.45 of the map: on any raised floor that is under
         // the ground, so the weapon fired nothing anyone could see or hit.)
+        // Aimed up, it leaves the floor: from the muzzle along the aim, at
+        // the same speed (the combat's floor hug skips a rising wave).
         const feet = h.player.y ?? 0
-        const s = sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, feet + 0.45, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
+        const up = dy > RISE_AIM
+        const s = up
+          ? sys.spawnPlayerShot('charge2', mx, my, mz, dx, dy, dz, dmg, false, null)
+          : sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, feet + 0.45, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
         this.tag(s, id, '#ff7a2a')
         s.pierce = 99
         s.burn = Math.round(dmg * 0.35)
         s.vx *= 0.55
+        s.vy *= 0.55
         s.vz *= 0.55
         s.life = 1.6
         // Wide and low: it takes whatever stands in its lane.
@@ -234,11 +245,15 @@ export class WeaponSystem {
         break
       }
       case 'bubbleLance': {
-        // A big bubble rolling along the floor, through every machine.
-        const s = sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, (h.player.y ?? 0) + 0.7, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
+        // A big bubble rolling along the floor, through every machine;
+        // aimed up, it floats off along the aim (as the Flame Wave does).
+        const s = dy > RISE_AIM
+          ? sys.spawnPlayerShot('charge2', mx, my, mz, dx, dy, dz, dmg, false, null)
+          : sys.spawnPlayerShot('charge2', h.player.x + dx * 0.8, (h.player.y ?? 0) + 0.7, h.player.z + dz * 0.8, dx, 0, dz, dmg, false, null)
         this.tag(s, id, '#5fd2ff')
         s.pierce = 99
         s.vx *= 0.6
+        s.vy *= 0.6
         s.vz *= 0.6
         s.life = 1.8
         h.sfx('chargeShot')
@@ -333,12 +348,15 @@ export class WeaponSystem {
 
   private throwLeaves(aim: [number, number, number, Enemy | null]): void {
     const h = this.host
-    const [dx, , dz, tgt] = aim
+    const [dx, dy, dz, tgt] = aim
+    // Level (or down) they skim at chest height; aimed up they climb with it.
+    const rise = dy > RISE_AIM ? dy : 0
+    const flat = rise ? Math.sqrt(1 - rise * rise) : 1
     const dmg = Math.round(h.stats.busterDmg * WEAPONS.galeGuard.dmg * h.stats.specialMul * 1.2)
     const yaw = Math.atan2(dx, dz)
     for (let k = 0; k < 4; k++) {
       const a = yaw + (k / 3 - 0.5) * 0.5
-      const s = h.system.spawnPlayerShot('charge1', h.player.x + Math.sin(a) * 0.8, (h.player.y ?? 0) + EYE_H - 0.4, h.player.z + Math.cos(a) * 0.8, Math.sin(a), 0, Math.cos(a), dmg, false, tgt)
+      const s = h.system.spawnPlayerShot('charge1', h.player.x + Math.sin(a) * 0.8, (h.player.y ?? 0) + EYE_H - 0.4, h.player.z + Math.cos(a) * 0.8, Math.sin(a) * flat, rise, Math.cos(a) * flat, dmg, false, tgt)
       this.tag(s, 'galeGuard', '#7fffc8', 0.8)
       s.pierce = 2
     }

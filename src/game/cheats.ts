@@ -1,11 +1,10 @@
-import { registerCheat } from '@/use/useCheats'
+import { registerCheat as register } from '@/use/useCheats'
 import { currentMission } from './boot'
-import { profile, saveProfile, grantXp } from './state/profile'
+import { profile, saveProfile, grantXp, markCheated } from './state/profile'
 import { xpToNext } from './data/progression'
 import { SECTORS } from './data/regions'
 import { WEAPONS, type WeaponId } from './data/weapons'
-import { cellCenter } from './world/levelGen'
-import { isSolidAt, floorAt } from './world/nav'
+import { placeAtDoor } from './cheatPanel'
 import { climbJob } from './data/quests'
 import { startMission } from './flow'
 import { wakeGolem } from './sim/enemies'
@@ -17,6 +16,13 @@ import { wakeGolem } from './sim/enemies'
  * App shell must never import the sim. All sit on ctrl+shift+alt, which no
  * game control uses.
  */
+/** Any cheat marks the save: it never posts a leaderboard score again. */
+const registerCheat = (shortcut: string, label: string, fn: () => void): void =>
+  register(shortcut, label, () => {
+    markCheated()
+    fn()
+  })
+
 export const registerGameCheats = (): void => {
   registerCheat('ctrl+shift+alt+b', '+1000 bolts', () => {
     profile.bolts += 1000
@@ -51,27 +57,7 @@ export const registerGameCheats = (): void => {
   })
   // A boss fight is minutes into a mission; QA needs the entrance in seconds.
   // The corridor outside the shutter, facing it, so the last steps are walked.
-  registerCheat('ctrl+shift+alt+j', 'jump to the boss door', () => {
-    const m = currentMission()
-    const d = m?.map.doors.find(o => o.boss)
-    if (!m || !d) return
-    const dx = cellCenter(d.i)
-    const dz = cellCenter(d.j)
-    // Back along the corridor, away from the boss room (`dir` points into it).
-    const bx = d.axis === 'x' ? -d.dir : 0
-    const bz = d.axis === 'z' ? -d.dir : 0
-    let back = 4.5
-    while (back > 1.5 && isSolidAt(m.nav, dx + bx * back, dz + bz * back)) back -= 0.5
-    const p = m.player
-    p.x = p.px = dx + bx * back
-    p.z = p.pz = dz + bz * back
-    // On the climb's floor there (0 on a flat map), not in mid-air.
-    p.y = p.py = p.safeY = floorAt(m.nav, p.x, p.z)
-    p.vy = 0
-    p.ladder = -1
-    p.path = null
-    p.yaw = Math.atan2(bx, bz)
-  })
+  registerCheat('ctrl+shift+alt+j', 'jump to the boss door', () => { placeAtDoor('boss') })
   // The climb (Tower Run) is offered only after a boss falls; QA wants it now.
   // In the selected sector (any, boss beaten or not), a fresh seed each time.
   registerCheat('ctrl+shift+alt+c', 'start a climb (Tower Run)', () => {

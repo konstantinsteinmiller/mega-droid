@@ -4,7 +4,7 @@
 // flying taxis and parcel drones there go down to one hit, sinking out of it.
 import { describe, expect, it, vi } from 'vitest'
 import { BufferGeometry, Float32BufferAttribute, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three'
-import { SkyTargets, type PlaceFn } from '@/game/world/skyTargets'
+import { BANK_MAX, SkyTargets, type PlaceFn } from '@/game/world/skyTargets'
 import { buildCityscape } from '@/game/world/cityscape'
 import { buildClimbLevel, dropRun } from '@/game/world/climbMesh'
 import { generateMap, WALL_H } from '@/game/world/levelGen'
@@ -12,7 +12,8 @@ import { generateStage } from '@/game/world/stages'
 import { planDecor } from '@/game/world/decor'
 import { createNav } from '@/game/world/nav'
 import { THEMES, type SectorId } from '@/game/world/themes'
-import { decorHit, decorTargets, UNBREAKABLE } from '@/game/sim/decorBreak'
+import { breakDecor, decorDrop, decorHit, decorTargets, DECOR_CAPSULE_CHANCE, DECOR_CHIP_CHANCE, DECOR_GEL_CHANCE, DECOR_ITEM_CHIP_CHANCE, DECOR_SKILL_CHIP_CHANCE, UNBREAKABLE, type DecorTarget } from '@/game/sim/decorBreak'
+import { mulberry32 } from '@/game/world/rng'
 
 it('the Cryo coolant pipe breaks like every other prop', () => {
   expect(UNBREAKABLE.has('coolantPipe')).toBe(false)
@@ -56,6 +57,100 @@ describe('sky traffic that can be shot down', () => {
     expect(sky.downed).toBe(1)
     // Once down, it takes no second hit.
     expect(sky.hit(10, 40, 0, 0.2, 1, out)).toBe(false)
+  })
+
+  it('a charged shot passing near a vehicle draws it in to meet the shot, and it goes down (#181)', () => {
+    const { sky, step, p } = setup()
+    step(0)
+    // From below, aimed 3 m wide of where it will be.
+    const ox = 10, oy = 10, oz = 0
+    const vx = 0, vy = 30, vz = 3
+    expect(sky.lure(ox, oy, oz, vx, vy, vz, 100, 0)).toBe(true)
+    let hit = false
+    let last = p.clone()
+    const shot = new Vector3()
+    for (let t = 0; t <= 3 && !hit; t += 1 / 60) {
+      step(t)
+      // Never a jump: no more than a lane step plus the detour's pace.
+      expect(p.distanceTo(last)).toBeLessThan(0.5)
+      last = p.clone()
+      shot.set(ox + vx * t, oy + vy * t, oz + vz * t)
+      hit = sky.hit(shot.x, shot.y, shot.z, 0.4, t, new Vector3())
+    }
+    expect(hit).toBe(true)
+    expect(sky.downed).toBe(1)
+    // It crashes on down out of the sky.
+    expect(step(12)).toBe(false)
+  })
+
+  it('a lured vehicle noses round to where it flies and banks into the turn, then levels on its lane (#181)', () => {
+    const { sky, step, p, q } = setup()
+    step(0)
+    expect(sky.lure(10, 10, 0, 0, 30, 3, 100, 0)).toBe(true)
+    const up = new Vector3()
+    const fwd = new Vector3()
+    let prev = new Vector3()
+    let rolled = 0
+    step(0)
+    prev = p.clone()
+    for (let t = 1 / 60; t < 0.9; t += 1 / 60) {
+      step(t)
+      const vx = p.x - prev.x, vz = p.z - prev.z
+      prev = p.clone()
+      // The model's nose (+z under the identity lane pose turned by yaw)
+      // against its own level velocity: the lane flies along +x, so its
+      // nose is the lane heading turned by the detour.
+      fwd.set(1, 0, 0).applyQuaternion(q)
+      const want = Math.atan2(vz, vx)
+      const have = Math.atan2(fwd.z, fwd.x)
+      expect(Math.abs(Math.atan2(Math.sin(want - have), Math.cos(want - have)))).toBeLessThan(0.12)
+      up.set(0, 1, 0).applyQuaternion(q)
+      const tilt = Math.acos(Math.min(1, up.y))
+      expect(tilt).toBeLessThanOrEqual(BANK_MAX + 1e-3)
+      rolled = Math.max(rolled, tilt)
+      // Early on it swings toward +z: it banks that way (its top leans +z).
+      if (t < 0.3 && tilt > 0.02) expect(up.z).toBeGreaterThan(0)
+    }
+    expect(rolled).toBeGreaterThan(0.05)
+    // Long after, back on its lane: level and on the lane's heading.
+    step(8)
+    expect(p.z).toBeCloseTo(0, 5)
+    up.set(0, 1, 0).applyQuaternion(q)
+    expect(up.y).toBeCloseTo(1, 5)
+    expect(Math.abs(q.w)).toBeCloseTo(1, 5)
+  })
+
+  it('a lure whose detour would clip a building is refused (#181)', () => {
+    // A tower 3 m off the lane at the meeting point, toward the shot's side.
+    const sky = new SkyTargets((x, _y, z, r) => Math.hypot(x - 10, z - 3) > r + 1)
+    const place = sky.wrap(1, 3, -6, line)
+    sky.tick()
+    place(0, 0, new Vector3(), new Quaternion(), new Vector3())
+    expect(sky.lure(10, 10, 0, 0, 30, 3, 100, 0)).toBe(false)
+    // Clear of it, the same shot lures.
+    const free = new SkyTargets()
+    const fp = free.wrap(1, 3, -6, line)
+    free.tick()
+    fp(0, 0, new Vector3(), new Quaternion(), new Vector3())
+    expect(free.lure(10, 10, 0, 0, 30, 3, 100, 0)).toBe(true)
+  })
+
+  it('a shot far from every vehicle steers none of them', () => {
+    const { sky, step, p } = setup()
+    step(0)
+    expect(sky.lure(0, 10, 60, 0, 30, 0, 100, 0)).toBe(false)
+    step(1)
+    expect(p.toArray()).toEqual([10, 40, 0])
+    // Nor one behind the shot, nor past its reach.
+    expect(sky.lure(0, 50, 0, 0, 30, 0, 100, 1)).toBe(false)
+    expect(sky.lure(10, -200, 0, 0, 30, 0, 100, 1)).toBe(false)
+  })
+
+  it('one vehicle per shot: a lured vehicle takes no second lure', () => {
+    const { sky, step } = setup()
+    step(0)
+    expect(sky.lure(10, 10, 0, 0, 30, 3, 100, 0)).toBe(true)
+    expect(sky.lure(10, 10, 0, 0, 30, 3, 100, 0)).toBe(false)
   })
 
   it('a downed vehicle sinks from where it was hit, spinning, and vanishes low down', () => {
@@ -116,7 +211,7 @@ describe('shots over the walls', () => {
     const m = generateStage('volt', 7)
     const top = Math.max(...m.terrain!.wallTop.filter(Number.isFinite))
     expect(roofOf(createNav(m))).toBe(Math.max(WALL_H, top))
-    expect(SKY_RUN).toBe(100)
+    expect(SKY_RUN).toBe(260)
   })
 })
 
@@ -188,4 +283,54 @@ describe('breakable set dressing', () => {
     level.breakDecor!(0)
     expect(below()).toBeGreaterThan(0)
   })
+})
+
+describe('a broken prop\'s rare find', () => {
+  const target = (): DecorTarget => ({ n: 0, kind: 'crate' as DecorTarget['kind'], x0: 0, y0: 0, z0: 0, x1: 1, y1: 1, z1: 1, navIdx: -1, broken: false })
+
+  it('drops at its named rates over many seeded rolls, outcomes exclusive', () => {
+    const rng = mulberry32(1234)
+    const n = 200_000
+    const got = { hp: 0, we: 0, gel: 0, skillChip: 0, chip: 0, none: 0 }
+    for (let k = 0; k < n; k++) {
+      const { broke, drop } = breakDecor(target(), rng, 0.5, 0.5)
+      expect(broke).toBe(true)
+      got[drop ?? 'none']++
+    }
+    expect(got.we).toBe(0) // a tie favours health
+    expect(Math.abs(got.hp / n - DECOR_CAPSULE_CHANCE)).toBeLessThan(0.004)
+    expect(Math.abs(got.gel / n - DECOR_GEL_CHANCE)).toBeLessThan(0.002)
+    expect(Math.abs(got.skillChip / n - DECOR_SKILL_CHIP_CHANCE)).toBeLessThan(0.001)
+    expect(Math.abs(got.chip / n - DECOR_ITEM_CHIP_CHANCE)).toBeLessThan(0.001)
+    expect(Math.abs((got.skillChip + got.chip) / n - 0.01)).toBeLessThan(0.0015)
+    expect(DECOR_CHIP_CHANCE).toBeCloseTo(0.01)
+    expect(DECOR_SKILL_CHIP_CHANCE).toBeCloseTo(DECOR_ITEM_CHIP_CHANCE)
+    expect(DECOR_CAPSULE_CHANCE).toBeGreaterThanOrEqual(0.08)
+    expect(DECOR_CAPSULE_CHANCE).toBeLessThanOrEqual(0.1)
+  })
+
+  it('gives the capsule the player is shorter of', () => {
+    expect(decorDrop(0, 0.9, 0.2)).toBe('we')
+    expect(decorDrop(0, 0.2, 0.9)).toBe('hp')
+    expect(decorDrop(0.999, 0.2, 0.9)).toBeNull()
+  })
+
+  it('rolls once: a broken prop neither breaks again nor rolls', () => {
+    const d = target()
+    const rng = vi.fn(() => 0)
+    expect(breakDecor(d, rng, 1, 1)).toEqual({ broke: true, drop: 'hp' })
+    expect(breakDecor(d, rng, 1, 1)).toEqual({ broke: false, drop: null })
+    expect(rng).toHaveBeenCalledTimes(1)
+    // And a shot no longer finds it.
+    expect(decorHit([d], 0.5, 0.5, -2, 0.5, 0.5, 2, 0.1)).toBeNull()
+  })
+})
+
+it('a found Skill Chip adds one free chip to socket', async () => {
+  const { profile, chipsAvailable, grantSkillChip } = await import('@/game/state/profile')
+  const before = chipsAvailable()
+  const had = profile.hero.bonusChips ?? 0
+  grantSkillChip()
+  expect(chipsAvailable()).toBe(before + 1)
+  profile.hero.bonusChips = had
 })

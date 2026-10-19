@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Cão de Brasa',
+    'steelHound': 'Cão de Aço',
     'icebreakerBrute': 'Bruto Quebra-Gelo',
     'arcSpider': 'Aranha de Arco',
     'stormHornetQueen': 'Rainha Vespa da Tempestade',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Torre Volt',
     'gale': 'Docas Celestes',
     'fortress': 'Fortaleza Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trapaças ativadas: Shift+Ctrl+Alt+F1 abre o painel',
+    'off': 'Trapaças desativadas',
+    'title': 'Painel de trapaças',
+    'note': 'Um save com trapaças não envia pontuações ao ranking.',
+    'unlockAll': 'Desbloquear todas as missões da história',
+    'bolts': '+{n} parafusos',
+    'chips': '+{n} chips de habilidade',
+    'gear': 'Blaster épico',
+    'gels': 'Encher os géis de reparo',
+    'done': 'Pronto!',
+    'doors': 'Pular para uma porta',
+    'boss': 'Porta do chefe',
+    'challenge': 'Porta do desafio',
+    'challengeN': 'Porta do desafio {n}',
+    'actLevelUp': 'Tocar cena de subir de nível',
+    'actObjective': 'Tocar cena de objetivo concluído'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Você encontrou {item} ({rarity})!',
     'tank': 'Gel de Reparo encontrado!',
     'giftTank': 'Presente: +1 Gel de Reparo!',
+    'skillChip': 'Chip de habilidade encontrado!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. equipado',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': 'Deslizar',
       'block': 'Bloquear',
       'interact': 'Interagir',
+      'pip': 'Suprimentos do Pip',
       'beam': 'Teletransportar',
       'tank': 'Gel reparador',
       'weapon1': 'Arma especial 1',

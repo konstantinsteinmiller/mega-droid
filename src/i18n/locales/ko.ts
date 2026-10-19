@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': '잿불 사냥개',
+    'steelHound': '강철 사냥개',
     'icebreakerBrute': '쇄빙 브루트',
     'arcSpider': '아크 거미',
     'stormHornetQueen': '폭풍 말벌 여왕',
@@ -177,6 +177,26 @@ export default {
     'volt': '전격 타워',
     'gale': '하늘 부두',
     'fortress': 'Vex 요새'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': '치트 켜짐: Shift+Ctrl+Alt+F1로 치트 패널 열기',
+    'off': '치트 꺼짐',
+    'title': '치트 패널',
+    'note': '치트를 사용한 저장은 리더보드에 점수를 보내지 않습니다.',
+    'unlockAll': '모든 스토리 미션 해제',
+    'bolts': '볼트 +{n}',
+    'chips': '스킬 칩 +{n}',
+    'gear': '에픽 블래스터',
+    'gels': '수리 젤 가득 채우기',
+    'done': '완료!',
+    'doors': '문으로 이동',
+    'boss': '보스 문',
+    'challenge': '도전 문',
+    'challengeN': '도전 문 {n}',
+    'actLevelUp': '레벨 업 연출 재생',
+    'actObjective': '목표 달성 연출 재생'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{rarity} {item} 발견!',
     'tank': '수리 젤 발견!',
     'giftTank': '선물: 수리 젤 +1!',
+    'skillChip': '스킬 칩 발견!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': '장착 장비와 비교',
     // The last chip when more stats change than the card shows.
@@ -641,6 +662,7 @@ export default {
       'slide': '슬라이딩',
       'block': '막기',
       'interact': '상호작용',
+      'pip': '핍의 보급품',
       'beam': '귀환 전송',
       'tank': '수리 젤',
       'weapon1': '특수 무기 1',

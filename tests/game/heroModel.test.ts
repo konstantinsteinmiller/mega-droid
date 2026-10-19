@@ -8,12 +8,13 @@
 // antenna tip) are the brand's amber under every kit; only the body's glows
 // follow the cannon.
 
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { Color, SRGBColorSpace, type BufferGeometry } from 'three'
 import {
   buildHero, buildViewmodel, animateHeroIdle, animateHeroVictory, DEFAULT_HERO_COLORS, HERO_EYE, type HeroColors
 } from '@/game/models/hero'
-import type { Rig } from '@/game/models/kit'
+import { RigBuilder, type Rig } from '@/game/models/kit'
+import { coplanarOverlaps } from './coplanar'
 import { BASES, BASE_BY_ID, type Item, type Slot } from '@/game/data/items'
 import { WEAPONS, WEAPON_IDS, type WeaponId } from '@/game/data/weapons'
 import { PAL } from '@/game/models/palette'
@@ -287,8 +288,8 @@ describe('the full-body rig', () => {
     expect(geometryDiff(probe, baseRig()), 'the probe kit moved the geometry').toBeNull()
     expect(stray, 'vertices no slot explains').toEqual([])
 
-    // The split `HeroColors` documents: helmets tint the head plates, sensor
-    // blade, glove and boots; chests the torso armour; cannons the right arm.
+    // The split `HeroColors` documents: helmets tint the helmet, ear discs and
+    // pearl limbs; chests the torso armour and pelvis; cannons the right arm.
     const names = baseRig().mesh.skeleton.bones.map(b => b.name)
     const skin = g.attributes.skinIndex!
     const reach: Record<string, Set<string>> = {}
@@ -296,8 +297,8 @@ describe('the full-body rig', () => {
       if (slot[v]! >= 0) (reach[SLOTS[slot[v]!]!] ??= new Set()).add(names[skin.getX(v)]!)
     }
     expect(Object.fromEntries(Object.entries(reach).map(([s, bones]) => [s, [...bones].sort()]))).toEqual({
-      main: ['elbowL', 'head', 'kneeL', 'kneeR'],
-      accent: ['chest', 'shoulderL', 'shoulderR', 'spine'],
+      main: ['elbowL', 'head', 'hipL', 'hipR', 'kneeL', 'kneeR', 'shoulderL'],
+      accent: ['chest', 'hips', 'shoulderL', 'shoulderR'],
       buster: ['elbowR'],
       core: ['chest', 'elbowR']
     })
@@ -382,6 +383,21 @@ describe('the full-body rig', () => {
     // One skinned mesh (toon + glow groups) plus one outline: 3 draw calls.
     expect(g.groups.map(x => x.materialIndex)).toEqual([0, 1])
     expect(rig.outline).not.toBeNull()
+  })
+
+  it('has no two parts in one plane (helmet plates, band, ears, reactor, cannon, boots)', () => {
+    let parts: BufferGeometry[] = []
+    const build = RigBuilder.prototype.build
+    const spy = vi.spyOn(RigBuilder.prototype, 'build').mockImplementation(function (this: RigBuilder, ...a: Parameters<RigBuilder['build']>) {
+      const rig = build.apply(this, a)
+      parts = this.partGeometries
+      return rig
+    })
+    const rig = buildHero()
+    spy.mockRestore()
+    expect(parts.length).toBeGreaterThan(40)
+    expect(coplanarOverlaps(parts)).toBe(0)
+    dispose(rig)
   })
 })
 

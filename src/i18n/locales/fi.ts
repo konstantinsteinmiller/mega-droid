@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Hiilihurtta',
+    'steelHound': 'Teräshurtta',
     'icebreakerBrute': 'Jäänmurtaja-Örkki',
     'arcSpider': 'Kaarihämähäkki',
     'stormHornetQueen': 'Myrskyherhiläiskuningatar',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volttitorni',
     'gale': 'Taivastelakat',
     'fortress': 'Vexin linnoitus'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Huijaukset päällä: Shift+Ctrl+Alt+F1 avaa paneelin',
+    'off': 'Huijaukset pois',
+    'title': 'Huijauspaneeli',
+    'note': 'Huijauksia käyttänyt tallennus ei lähetä pisteitä tulostaululle.',
+    'unlockAll': 'Avaa kaikki tarinatehtävät',
+    'bolts': '+{n} pulttia',
+    'chips': '+{n} taitosirua',
+    'gear': 'Eeppinen blasteri',
+    'gels': 'Täytä korjausgeelit',
+    'done': 'Valmis!',
+    'doors': 'Hyppää ovelle',
+    'boss': 'Pomon ovi',
+    'challenge': 'Haasteovi',
+    'challengeN': 'Haasteovi {n}',
+    'actLevelUp': 'Toista tasonnousukohtaus',
+    'actObjective': 'Toista tavoite suoritettu -kohtaus'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Löytyi: {item} ({rarity})!',
     'tank': 'Korjausgeeli löytyi!',
     'giftTank': 'Lahja: +1 korjausgeeli!',
+    'skillChip': 'Taitosiru löytyi!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. varusteltu',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Liu\'u',
       'block': 'Suojaa',
       'interact': 'Käytä',
+      'pip': 'Pipin tarvikkeet',
       'beam': 'Teleporttaa pois',
       'tank': 'Korjausgeeli',
       'weapon1': 'Erikoisase 1',

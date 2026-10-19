@@ -1,9 +1,11 @@
 import { NG_FOLLOW_CD } from './ngPlus'
+import { bossCanStart } from './attackReach'
 import { Group } from 'three'
 import type { Enemy, World } from './world'
 import { BOSSES, type BossDef } from '../data/bosses'
 import { buildBossRig, poseBoss, type BossId } from '../models/bosses'
 import { newMotion } from '../models/motion'
+import { newBossAnim, stepBossAnim } from '../models/bossAnim'
 import { makeTeleRing, setTeleRing, makeBlobShadow } from '../fx/markers'
 import { scaleDmg, scaleHp } from '../data/enemies'
 import { moveCircle, hasLineOfSight, isSolidAt } from '../world/nav'
@@ -162,14 +164,36 @@ export const startBossIntro = (e: Enemy): void => {
 }
 
 /** One boss tick: the AI, then the motion channels (models/motion.ts) from
- *  what the body actually did — the AI below has many early returns. */
+ *  what the body actually did — the AI below has many early returns — and
+ *  the motion layer's springs (models/bossAnim.ts), which only read it. */
 export const updateBoss = (w: World, e: Enemy, dt: number, room: Room | null): void => {
   e.mo.pyaw = e.yaw
   bossTick(w, e, dt, room)
-  if (e.state === 'dead') return
+  const a = (e.mo.boss ??= newBossAnim(e.id))
+  const def = bdef(e)
+  const headH = e.rig.height * def.scale * 0.85
+  if (e.state === 'dead') {
+    // Its death throes: it buckles, folds over, its servos jerking
+    stepBossAnim(a, e, e.mo, def.fly, headH, w.player.x, w.player.z, dt)
+    return
+  }
   // Out of Flux's body, whatever moved it (a leap landing on his spot)
   keepOffPlayer(w, e)
   stepMotion(e, dt)
+  stepBossAnim(a, e, e.mo, def.fly, headH, w.player.x, w.player.z, dt)
+}
+
+/** Dust kicked out round a landing (deterministic: no dice, so the fight
+ *  that follows rolls the same). */
+const landDust = (w: World, x: number, z: number, r: number): void => {
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2 + 0.26
+    const sp = 3.2 + (k % 3) * 0.9
+    w.fx.emit({
+      x: x + Math.sin(a) * r, y: 0.15, z: z + Math.cos(a) * r, vx: Math.sin(a) * sp, vy: 0.9 + (k % 2) * 0.6, vz: Math.cos(a) * sp,
+      color: k % 2 ? '#b9a993' : '#8f8375', size: 0.75, sizeEnd: 1.5, life: 0.55, drag: 2.4
+    })
+  }
 }
 
 const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
@@ -202,6 +226,7 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
       e.a = 1
       w.shocks.spawn(e.x, 0.05, e.z, 4, def.color, 0.5)
       w.fx.sparks(e.x, 0.3, e.z, def.color, 24, 8, 0.24)
+      if (fly === 0) landDust(w, e.x, e.z, 0.9 * def.scale)
       w.shake(0.5)
       w.sfx('stomp', e.x, e.z)
     }
@@ -261,8 +286,10 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
         step(w, e, (mx / ml) * def.speed * dt, (mz / ml) * def.speed * dt)
       }
       e.cd -= dt
-      if (e.cd <= 0) {
-        const pool = e.phase2 ? [...def.patterns, ...def.patterns2] : def.patterns
+      // Only a pattern that reaches him from here (#180): none does, and it
+      // keeps closing in (the strafe above walks it into its band).
+      const pool = e.cd <= 0 ? (e.phase2 ? [...def.patterns, ...def.patterns2] : def.patterns).filter(a => bossCanStart(w, e.x, e.z, a, d)) : []
+      if (pool.length) {
         let pick = pool[Math.floor(Math.random() * pool.length)]!
         if (pick === e.attack && pool.length > 1) pick = pool[(pool.indexOf(pick) + 1) % pool.length]!
         const meta = PATTERN[pick] ?? { tele: 0.8, red: false }
@@ -276,7 +303,7 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
         // Aim now: leaps/lobs commit to where the player stood at the wind-up
         e.tx = w.player.x
         e.tz = w.player.z
-        if (pick === 'stomp' || pick === 'leapSlam') w.markers.spawn(e.tx, e.tz, 2.8, e.teleDur + 0.75)
+        if (pick === 'stomp' || pick === 'leapSlam') w.markers.spawn(e.tx, e.tz, 2.8, e.teleDur + 0.75, e)
       }
       break
     }
@@ -340,6 +367,7 @@ const leap = (w: World, e: Enemy, dur: number, height: number, color: string): b
   if (k >= 1) {
     w.shocks.spawn(e.x, 0.05, e.z, 3.2, color, 0.45)
     w.fx.sparks(e.x, 0.3, e.z, color, 20, 8, 0.24)
+    landDust(w, e.x, e.z, 0.8 * bdef(e).scale)
     w.shake(0.5)
     w.sfx('stomp', e.x, e.z)
     if (Math.hypot(w.player.x - e.x, w.player.z - e.z) < 2.8 + PLAYER_R) {
@@ -740,7 +768,7 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
         if (Math.random() < 0.7) w.fx.emit({ x: e.x + (Math.random() - 0.5) * 1.2, y: 0.1, z: e.z + (Math.random() - 0.5) * 1.2, vy: 1.5 + Math.random() * 1.5, color: Math.random() < 0.5 ? '#8a6a52' : '#c9b08a', size: 0.5, sizeEnd: 0.1, life: 0.55, gravity: 3 })
         if (e.st >= BURROW_T - BURROW_WARN && e.a === 0) {
           e.a = 1
-          w.markers.spawn(e.x, e.z, BURROW_R, BURROW_WARN + 0.2)
+          w.markers.spawn(e.x, e.z, BURROW_R, BURROW_WARN + 0.2, e)
         }
         if (e.st >= BURROW_T) {
           e.step = 2
@@ -801,6 +829,7 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
           e.step = 1
           melee(w, e, 2.4, 1.25)
           w.shocks.spawn(e.x, 0.05, e.z, 2.6, def.color, 0.35)
+          landDust(w, e.x, e.z, 0.7 * s)
           w.shake(0.35)
         }
         return false
@@ -824,11 +853,19 @@ export const syncBossVisual = (e: Enemy, alpha: number): void => {
   e.shadow.scale.setScalar(e.def.radius * 1.2 * Math.max(0.4, 1 - y * 0.08))
   e.rig.material.emissive.setScalar(e.flash * 0.5)
   const id = e.bossId!
+  const m = e.mo
+  const a = m.boss
   if (e.state === 'dead') {
     const k = Math.min(1, e.deathT / 1.6)
     e.root.visible = !e.shattered && e.deathT < 1.7
     e.shadow.visible = e.root.visible
     e.root.rotation.z = Math.sin(e.deathT * 30) * 0.05 * k
+    // The motion layer plays its death throes (without it the last pose holds)
+    if (a) {
+      m.phase = m.pstride + (m.stride - m.pstride) * alpha
+      poseBoss(e.rig, id, e.anim, 'stun', 0, m, e)
+      placeRoot(e)
+    }
     return
   }
   const act = e.state === 'tele' ? 'tele'
@@ -839,10 +876,31 @@ export const syncBossVisual = (e: Enemy, alpha: number): void => {
   // The motion layer: the gait phase interpolated to this frame like the
   // position; the humanoid bosses blend it with their act poses (Vex: hover,
   // and the boss as his cue: the coming pattern's weapon, phase-2 damage)
-  const m = e.mo
   m.phase = m.pstride + (m.stride - m.pstride) * alpha
   poseBoss(e.rig, id, e.anim, act, k, m, e)
+  if (a) placeRoot(e)
   if (e.ring.visible) e.ring.position.set(x, y + e.rig.height * bdef(e).scale + 0.6, z)
+}
+
+/**
+ * The motion layer's whole-body moves (models/bossAnim.ts), on the boss's two
+ * groups: the squash of a landing and the stretch of a take-off (the outer
+ * group, scaled from the feet), the blink's phase-out (thinned to a line of
+ * light and gone for the swap), the burrow's depth and the dive's pitch (the
+ * rig inside it). Hit volumes are the sim's, never these.
+ */
+const placeRoot = (e: Enemy): void => {
+  const a = e.mo.boss!
+  const fade = e.bossId === 'vexMk1' ? 0 : a.fade
+  const sq = a.sq
+  const wide = (1 - 0.5 * sq) * (1 - 0.94 * fade)
+  e.root.scale.set(wide, (1 + sq) * (1 + 0.35 * fade), wide)
+  const r = e.rig.root
+  r.position.y = -a.sink
+  r.rotation.x = a.pitch.x
+  r.visible = fade < 0.97
+  if (fade > 0) e.rig.material.emissive.setScalar(Math.max(e.flash * 0.5, fade * 0.9))
+  if (a.sink > 0) e.shadow.scale.multiplyScalar(Math.max(0.2, 1 - a.sink / 3))
 }
 
 export const bossRoomOf = (rooms: Room[]): Room | null => rooms.find(r => r.role === 'boss') ?? null

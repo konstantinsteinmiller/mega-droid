@@ -116,7 +116,8 @@ describe('Flux walks and hops (the exit)', () => {
     // The legs cross over through the cycle: their difference changes sign.
     expect(Math.max(...hips)).toBeGreaterThan(0.05)
     expect(Math.min(...hips)).toBeLessThan(-0.05)
-    expect(HERO_GAIT.L).toBeGreaterThan(0.5)
+    // The gait's leg length is the rig's hip-joint height, so the planted foot stays on the floor.
+    expect(HERO_GAIT.L).toBeCloseTo(hero.rest.hips!.p.y + hero.rest.hipL!.p.y, 3)
   })
 
   it('the hop crouches (hips down, knees bent) and tucks in the air', () => {

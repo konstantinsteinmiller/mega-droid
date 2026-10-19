@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Karba Ĉashundo',
+    'steelHound': 'Ŝtala Ĉashundo',
     'icebreakerBrute': 'Glacirompa Bruto',
     'arcSpider': 'Arka Araneo',
     'stormHornetQueen': 'Reĝino de Ŝtormaj Vespegoj',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Volta Turo',
     'gale': 'Ĉielaj Dokoj',
     'fortress': 'Fortikaĵo de Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trompoj ŝaltitaj: Shift+Ctrl+Alt+F1 malfermas la panelon',
+    'off': 'Trompoj malŝaltitaj',
+    'title': 'Trompa panelo',
+    'note': 'Konservaĵo kun trompoj sendas neniujn poentojn al la rangotabelo.',
+    'unlockAll': 'Malŝlosi ĉiujn rakontajn misiojn',
+    'bolts': '+{n} boltoj',
+    'chips': '+{n} lertaj ĉipoj',
+    'gear': 'Epopea blastilo',
+    'gels': 'Plenigi riparajn ĝelojn',
+    'done': 'Farite!',
+    'doors': 'Salti al pordo',
+    'boss': 'Estropordo',
+    'challenge': 'Defipordo',
+    'challengeN': 'Defipordo {n}',
+    'actLevelUp': 'Ludi la nivelaltigan scenon',
+    'actObjective': 'Ludi la celo-plenumitan scenon'
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': '{item} ({rarity}) trovita!',
     'tank': 'Ripara Ĝelo trovita!',
     'giftTank': 'Donaco: +1 Ripara Ĝelo!',
+    'skillChip': 'Kapabla ĉipo trovita!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'kontraŭ ekipita',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Gliti',
       'block': 'Bloki',
       'interact': 'Interagi',
+      'pip': 'Provizoj de Pip',
       'beam': 'Teleportiĝi',
       'tank': 'Ripara Ĝelo',
       'weapon1': 'Speciala armilo 1',

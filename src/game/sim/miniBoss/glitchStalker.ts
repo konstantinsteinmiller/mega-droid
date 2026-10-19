@@ -2,11 +2,12 @@ import type { Group } from 'three'
 import type { Enemy, World } from '../world'
 import type { Rig } from '../../models/kit'
 import type { Room } from '../../world/levelGen'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildGlitchStalker, poseGlitchStalker, newStalkerPose, holoStalker, STALKER_COLORS, type StalkerPose
 } from '../../models/miniBoss/glitchStalker'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, TAU, eyeAt } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, TAU, eyeAt, sprung, type PoseVel } from './kit'
 import { fxLayer, alignFx, FloorStrip } from './worldFx'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
@@ -91,6 +92,8 @@ export interface GridLine {
 }
 
 export interface StalkerMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: StalkerPose
   attack: Attack | ''
   /** Where the blink comes back (the ring), and whether it is gone now. */
@@ -126,12 +129,18 @@ const ensureFx = (e: Enemy, m: StalkerMem): void => {
 
 const liveDecoys = (m: StalkerMem): number => m.decoys.filter(d => d.alive).length
 
-const pick = (e: Enemy, m: StalkerMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const STALKER_REACH: Record<Attack, number> = {
+  // It blinks in beside him; decoys shoot; the grid covers the room.
+  blink: ANYWHERE, decoys: ANYWHERE, grid: ANYWHERE
+}
+
+const pick = (e: Enemy, m: StalkerMem, d: number): Attack | null => {
   if (liveDecoys(m) === 0 && m.sinceDecoys >= 2) return 'decoys'
   if (d > 8) return Math.random() < 0.7 ? 'blink' : 'grid'
   let a: Attack = Math.random() < 0.55 ? 'blink' : 'grid'
   if (a === m.attack && e.step >= 1) a = a === 'blink' ? 'grid' : 'blink'
-  return a
+  return firstInReach(STALKER_REACH, d, a, 'grid', 'blink')
 }
 
 /** The grid's lines: across the room, spaced GRID_GAP from a random start,
@@ -177,7 +186,7 @@ const begin = (w: World, e: Enemy, m: StalkerMem, a: Attack, room: Room): void =
     const [x, z] = inRoom(room, w.player.x + Math.sin(away) * 1.3, w.player.z + Math.cos(away) * 1.3, 1.2)
     m.bx = x
     m.bz = z
-    w.markers.spawn(x, z, SLASH_R, e.teleDur + BLINK_GONE + 0.05)
+    w.markers.spawn(x, z, SLASH_R, e.teleDur + BLINK_GONE + 0.05, e)
     w.sfx('vexGlitch', e.x, e.z)
   } else if (a === 'decoys') {
     e.teleDur = DECOY_TELE * tempo
@@ -307,7 +316,7 @@ const hideGrid = (m: StalkerMem): void => {
 
 export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
   init: () => ({
-    pose: newStalkerPose(), attack: '', bx: 0, bz: 0, gone: false, decoys: [], grid: [], phase2: false, side: 1,
+    pose: newStalkerPose(), vel: {}, attack: '', bx: 0, bz: 0, gone: false, decoys: [], grid: [], phase2: false, side: 1,
     layer: null, strips: [], sinceDecoys: 1
   }),
 
@@ -325,7 +334,7 @@ export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
     }
     if (e.st > 1.5 && e.st - dt <= 1.5) w.sfx('vexGlitch', e.x, e.z)
     // Then the blades snap out wide: a pose.
-    p.split = ease(p.split, e.st > 1.6 && e.st < INTRO_T - 0.3 ? 1 : 0, 8, dt)
+    p.split = sprung(p.split, m.vel, 'split', e.st > 1.6 && e.st < INTRO_T - 0.3 ? 1 : 0, 8, dt)
     p.heat = ease(p.heat, 1 + p.split, 6, dt)
     if (e.st >= INTRO_T) {
       e.rig.root.visible = true
@@ -362,7 +371,8 @@ export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
         if (moveBody(w, e, (mx / ml) * sp * dt, (mz / ml) * sp * dt) < 0.3) m.side = -m.side
         if (Math.random() < dt * 0.3) m.side = -m.side
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -471,9 +481,9 @@ export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
       p.wheel += moved / 0.34
     }
     p.blink = ease(p.blink, blink, 12, dt)
-    p.split = ease(p.split, split, 10, dt)
-    p.grid = ease(p.grid, grid, 10, dt)
-    p.slash = ease(p.slash, slash, 16, dt)
+    p.split = sprung(p.split, m.vel, 'split', split, 10, dt)
+    p.grid = sprung(p.grid, m.vel, 'grid', grid, 10, dt)
+    p.slash = sprung(p.slash, m.vel, 'slash', slash, 16, dt)
     p.glitch = ease(p.glitch, glitch, 10, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
@@ -545,6 +555,7 @@ export const GLITCH_STALKER: MiniBossSpec<StalkerMem> = {
   id: 'glitchStalker',
   sector: 'neon',
   nameKey: 'miniboss.glitchStalker',
+  reach: STALKER_REACH,
   def: {
     kind: 'miniboss', hp: 560, dmg: 18, speed: 3.8, radius: 0.75, hitR: 0.95, aimY: 1.35, fly: 0,
     aggro: 30, range: [4.5, 8], xp: 170, bolts: [26, 40], cooldown: 1.5, tele: BLINK_TELE, unblockable: true, armor: 1,

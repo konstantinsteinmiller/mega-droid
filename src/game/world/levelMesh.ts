@@ -298,7 +298,7 @@ export const buildLevel = async (
         const oz = e.n[2] * inset
         // Rounded top cap + baseboard (the "no hard edges" rule for walls).
         decor[o]!.push(xform(piece('capTop', () => paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim)), [mx, WALL_H, mz], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
-        decor[o]!.push(xform(piece('baseboard', () => paint(cap(0.13, CELL - 0.3, 8, 2), theme.wallLow)), [mx + ox, 0.14, mz + oz], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
+        decor[o]!.push(xform(piece('baseboard', () => paint(baseboardGeo(), theme.wallLow)), [mx + ox, 0.14, mz + oz], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
         // Light strips in rooms, pipes now and then.
         if (c === Cell.Room && rng() < 0.45) {
           glows[o]!.push(xform(piece('strip', () => paint(cap(0.07, 1.1, 8, 2), theme.accent)), [mx + e.n[0] * 0.12, 2.95, mz + e.n[2] * 0.12], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
@@ -315,7 +315,7 @@ export const buildLevel = async (
 
   // Pilasters on every wall corner.
   for (const { x, z, owner: o } of corners.values()) {
-    decor[o]!.push(xform(piece('pilaster', () => paint(rcyl(0.3, WALL_H + 0.25, 0.12, 14), theme.pilaster)), [x, (WALL_H + 0.25) / 2, z]))
+    decor[o]!.push(xform(piece('pilaster', () => paint(wallPilasterGeo(), theme.pilaster)), [x, (WALL_H + 0.25) / 2, z]))
     decor[o]!.push(xform(piece('pilasterCap', () => paint(sph(0.34, 14, 8), theme.trim)), [x, WALL_H + 0.25, z]))
     await slice()
   }
@@ -339,16 +339,10 @@ export const buildLevel = async (
     for (const s of [-1, 1]) {
       const px = along === 'x' ? fx + s * (CELL / 2) : fx
       const pz = along === 'z' ? fz + s * (CELL / 2) : fz
-      doorDecor.push(xform(paint(rcyl(0.4, WALL_H, 0.15, 16), d.boss ? theme.trim : theme.pilaster), [px, WALL_H / 2, pz]))
+      doorDecor.push(xform(paint(rcyl(DOOR_POST_R, WALL_H, DOOR_POST_BEVEL, 16), d.boss ? theme.trim : theme.pilaster), [px, WALL_H / 2, pz]))
     }
     // Hazard stripes on the floor under the door.
-    const hb = doorBatch
-    const hw = 0.5
-    if (d.axis === 'x') {
-      hb.quad([fx - hw, 0.012, fz - CELL / 2], [fx - hw, 0.012, fz + CELL / 2], [fx + hw, 0.012, fz + CELL / 2], [fx + hw, 0.012, fz - CELL / 2], [0, 1, 0], PLAIN_UV, cHaz, cHaz, cHaz, cHaz)
-    } else {
-      hb.quad([fx - CELL / 2, 0.012, fz - hw], [fx - CELL / 2, 0.012, fz + hw], [fx + CELL / 2, 0.012, fz + hw], [fx + CELL / 2, 0.012, fz - hw], [0, 1, 0], PLAIN_UV, cHaz, cHaz, cHaz, cHaz)
-    }
+    doorStripe(doorBatch, d, fx, fz, 0, cHaz)
   }
 
   // Pillars (static obstacles in big rooms).
@@ -419,6 +413,34 @@ export const doorFramePos = (d: Door): [number, number] => {
   return [x, z]
 }
 
+/** A wall-corner pilaster (centred on its height, WALL_H + 0.25). */
+export const wallPilasterGeo = (): BufferGeometry => rcyl(0.3, WALL_H + 0.25, 0.12, 14)
+/** A wall's baseboard along its edge (centred, along Y before turning):
+ *  both rounded ends tuck inside the corner pilasters. */
+export const baseboardGeo = (): BufferGeometry => cap(0.13, CELL - 0.3, 8, 2)
+
+/** A door post's radius and bevel (m). */
+export const DOOR_POST_R = 0.4
+export const DOOR_POST_BEVEL = 0.15
+/** The hazard stripe under a door: its half-width across the doorway and
+ *  its lift off the floor (m). Its ends sit on the post centres, so its
+ *  corners must stay inside the post's round foot at that lift (a bevelled
+ *  post is narrower at the floor than its radius): a stripe 1 m wide used to
+ *  poke yellow corners out from under both round posts. */
+export const DOOR_STRIPE_HW = 0.26
+export const DOOR_STRIPE_Y = 0.02
+
+/** The hazard stripe under door `d` (frame at fx, fz), on the floor at `y`. */
+export const doorStripe = (batch: QuadBatch, d: Door, fx: number, fz: number, y: number, c: Color): void => {
+  const hw = DOOR_STRIPE_HW
+  const yy = y + DOOR_STRIPE_Y
+  if (d.axis === 'x') {
+    batch.quad([fx - hw, yy, fz - CELL / 2], [fx - hw, yy, fz + CELL / 2], [fx + hw, yy, fz + CELL / 2], [fx + hw, yy, fz - CELL / 2], [0, 1, 0], PLAIN_UV, c, c, c, c)
+  } else {
+    batch.quad([fx - CELL / 2, yy, fz - hw], [fx - CELL / 2, yy, fz + hw], [fx + CELL / 2, yy, fz + hw], [fx + CELL / 2, yy, fz - hw], [0, 1, 0], PLAIN_UV, c, c, c, c)
+  }
+}
+
 /**
  * One cell of wall as its own mesh, looking like the walls beside it (the
  * same textured face, cap and baseboard): a way on that is a wall until the
@@ -451,7 +473,7 @@ export const buildWallPlug = (theme: Theme, axis: 'x' | 'z', n: 1 | -1, h = WALL
   const out = (d: number, y: number): [number, number, number] => [axis === 'x' ? d * n : 0, y, axis === 'z' ? d * n : 0]
   const parts = [
     xform(paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim), [0, h, 0], rot),
-    xform(paint(cap(0.13, CELL - 0.3, 8, 2), theme.wallLow), out(0.06, 0.14), rot)
+    xform(paint(baseboardGeo(), theme.wallLow), out(0.06, 0.14), rot)
   ]
   // The rail between two bands, as on a stage's tall walls.
   for (let m = 1; m < bands; m++) parts.push(xform(paint(cap(0.1, CELL - 0.3, 8, 2), theme.pilaster), out(0.08, h * m / bands), rot))

@@ -15,7 +15,7 @@ vi.mock('@/game/fx/markers', async () => {
   return { makeBlobShadow: () => new Mesh(), makeTeleRing: () => new Group(), setTeleRing: () => {} }
 })
 
-import { Matrix4, Vector3 } from 'three'
+import { Matrix4, Quaternion, Vector3 } from 'three'
 import { createBoss, startBossIntro, updateBoss, syncBossVisual } from '@/game/sim/bosses'
 import { stepMotion } from '@/game/sim/enemies'
 import { buildBossRig, poseBoss, type BossId, type BossAct } from '@/game/models/bosses'
@@ -174,6 +174,16 @@ const armAngles = (rig: Rig, side: 'L' | 'R'): { outward: number; forward: numbe
   const up = el.sub(s).normalize()
   const sgn = side === 'L' ? -1 : 1
   return { outward: Math.atan2(up.x * sgn, -up.y) * DEG, forward: Math.atan2(up.z, -up.y) * DEG }
+}
+
+/** One tick's rotation as a vector (axis × angle, rad): its length is how
+ *  far the joint turned, its change from the tick before how hard it jerked. */
+const angularStep = (from: Quaternion, to: Quaternion): Vector3 => {
+  const d = from.clone().invert().multiply(to)
+  if (d.w < 0) d.set(-d.x, -d.y, -d.z, -d.w)
+  const ang = 2 * Math.acos(Math.min(1, d.w))
+  const s = Math.sqrt(Math.max(0, 1 - d.w * d.w))
+  return s < 1e-9 ? new Vector3() : new Vector3(d.x / s, d.y / s, d.z / s).multiplyScalar(ang)
 }
 
 describe('boss motion: poses', () => {
@@ -358,50 +368,53 @@ describe('boss motion: in the fight', () => {
     }
   })
 
-  // 0.25 rad in one tick is a visible snap (the machines' old heli tilt
-  // jumped 0.33). The legs get their own ceiling: a Master strafing at full
-  // speed runs its stride at the per-tick cap (0.55 rad of phase, stepMotion),
-  // and its hip then sweeps up to A·0.55 / (2·(1 − β)) = 0.275 rad in a tick BY
-  // DESIGN — 300 random fights peaked at 0.265, the upper body at 0.18. A leg
-  // that snaps across its stride jumps ≥ 2·A ≈ 1 rad.
-  const SNAP = 0.25
-  const LEG_SNAP = 0.35
+  // A pop is a joint that goes from still to fast in one tick, or jumps a
+  // stretch no motion around it explains. The first layer snapped the strike's
+  // first frame from the wind-up by design (exempt here before); the motion
+  // layer v2 (#183) springs every weight, so nothing is exempt now. Limits
+  // per tick: the step itself (a fast strike's arm crosses ~0.6 rad at its
+  // quickest, the legs' stride by design up to 0.275) and its change from the
+  // tick before (the angular velocity's jump: ≤ 0.35 for a limb).
+  const ARM = /^(shoulder|elbow)[LR]$/
   const LEG = /^(hip|knee)[LR]$/
+  const LIMIT = { arm: [0.75, 0.4], leg: [0.5, 0.35], body: [0.35, 0.2] } as const
   it.each(HUMANOIDS)('%s: no pops from the entrance through telegraphs, attacks and recoveries', (id) => {
     const { w, e } = arena(id, 23)
     tick(w, e) // the first frame poses the rig out of its bind pose
     const bones = Object.values(e.rig.bones)
     let pq = bones.map(b => b.quaternion.clone())
     let pp = bones.map(b => b.position.clone())
-    let worstR = { v: 0, at: '' }
-    let worstLeg = { v: 0, at: '' }
+    let pv = bones.map(() => new Vector3())
+    const worst = { arm: [0, 0, '', ''], leg: [0, 0, '', ''], body: [0, 0, '', ''] } as Record<keyof typeof LIMIT, [number, number, string, string]>
     let worstP = { v: 0, at: '' }
     const states = new Set<string>()
     let prev = e.state
     for (let i = 0; i < 60 * 16; i++) {
       tick(w, e)
       states.add(e.state)
-      // The strike's first frame snaps from the wind-up by design (as before)
-      const strike = e.state === 'act' && prev !== 'act'
-      if (!strike) {
-        bones.forEach((b, j) => {
-          const dr = b.quaternion.angleTo(pq[j]!)
-          const dp = b.position.distanceTo(pp[j]!)
-          const at = `${b.name} ${prev}→${e.state} ${e.attack} st ${e.st.toFixed(2)}`
-          if (LEG.test(b.name)) {
-            if (dr > worstLeg.v) worstLeg = { v: dr, at }
-          } else if (dr > worstR.v) worstR = { v: dr, at }
-          if (dp > worstP.v) worstP = { v: dp, at }
-        })
-      }
+      bones.forEach((b, j) => {
+        const v = angularStep(pq[j]!, b.quaternion)
+        const cls = ARM.test(b.name) ? 'arm' : LEG.test(b.name) ? 'leg' : 'body'
+        const at = `${b.name} ${prev}→${e.state} ${e.attack} st ${e.st.toFixed(2)}`
+        const wv = worst[cls]
+        if (v.length() > wv[0]) { wv[0] = v.length(); wv[2] = at }
+        if (v.distanceTo(pv[j]!) > wv[1]) { wv[1] = v.distanceTo(pv[j]!); wv[3] = at }
+        pv[j] = v
+        const dp = b.position.distanceTo(pp[j]!)
+        if (dp > worstP.v) worstP = { v: dp, at }
+      })
       pq = bones.map(b => b.quaternion.clone())
       pp = bones.map(b => b.position.clone())
       prev = e.state
     }
     for (const s of ['alert', 'engage', 'tele', 'act', 'recover']) expect(states.has(s), `${id} reached ${s}`).toBe(true)
-    expect(worstR.v, `${id} rotation per tick: ${worstR.at}`).toBeLessThan(SNAP)
-    expect(worstLeg.v, `${id} leg rotation per tick: ${worstLeg.at}`).toBeLessThan(LEG_SNAP)
-    expect(worstP.v, `${id} offset per tick: ${worstP.at}`).toBeLessThan(0.08)
+    for (const cls of ['arm', 'leg', 'body'] as const) {
+      expect(worst[cls][0], `${id} ${cls} rotation per tick: ${worst[cls][2]}`).toBeLessThan(LIMIT[cls][0])
+      expect(worst[cls][1], `${id} ${cls} jump in turn rate: ${worst[cls][3]}`).toBeLessThan(LIMIT[cls][1])
+    }
+    // (A leap's push-off straightens the crouched legs in a few ticks: the
+    // hips rise ~0.1 rig units a tick against the body, under its 16 m/s.)
+    expect(worstP.v, `${id} offset per tick: ${worstP.at}`).toBeLessThan(0.12)
   })
 
   it('taunts play only in the recovery after an attack — never in the entrance, a telegraph or an attack', () => {

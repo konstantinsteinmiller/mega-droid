@@ -82,7 +82,8 @@ export const DEV_TOOL_STUBS = {
 export const DEV_TOOL_MARKERS: ReadonlyArray<{ text: string; why: string }> = [
   { text: '[CHEAT]', why: 'dev cheats, src/use/useCheats.ts' },
   { text: 'ctrl+shift+alt+', why: 'cheat shortcuts, src/game/cheats.ts' },
-  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/useCheats.ts' }
+  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/useCheats.ts' },
+  { text: 'cmonc', why: 'typed cheat toggle and cheat panel, src/use/useCheats.ts' }
 ]
 
 /** The `resolve.alias` entries a build with this policy needs for its dev

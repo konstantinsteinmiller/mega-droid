@@ -114,6 +114,18 @@ const DROP_S = 0.5
 const ARM_EVERY = 2.2
 /** The arm draws back this long before it fires (inside ARM_EVERY). */
 const ARM_TELL = 0.5
+/** An arm's recoil after it fires (#183): up in a few frames, past its rest
+ *  and back, still by ARM_KICK_T (long before that arm fires again, so the
+ *  muzzle it fires from stands where it always did). Was a one-frame snap
+ *  to full and a linear fall. */
+const ARM_KICK_T = 0.6
+export const armKickAt = (t: number): number => {
+  if (t < 0 || t >= ARM_KICK_T) return 0
+  const rise = t < 0.05 ? (t / 0.05) * (t / 0.05) * (3 - 2 * (t / 0.05)) : 1
+  const u = Math.max(0, t - 0.05)
+  const w = t < 0.35 ? 1 : 1 - ((t - 0.35) / 0.25) * ((t - 0.35) / 0.25) * (3 - 2 * ((t - 0.35) / 0.25))
+  return rise * Math.exp(-u * 6) * Math.cos(u * 9) * w
+}
 const STOMP_EVERY = 3.0
 /** The crouch and the hop before a stomp lands (inside STOMP_EVERY), and
  *  the hop's height. */
@@ -551,7 +563,8 @@ export class GrandMaster implements StageFeature {
   private armTurn = 0
   /** The arm winding up for the next shot (-1 none). */
   private armNext = -1
-  private readonly armKick = [0, 0]
+  /** s since each arm last fired (its recoil, `armKickAt`); −1 none. */
+  private readonly armKick = [-1, -1]
   /** The core's next attack, shown on its lens before it comes. */
   private bodyPick: BossId | null = null
   private lastBeat = -1
@@ -886,7 +899,7 @@ export class GrandMaster implements StageFeature {
     this.alarm += ((wind ? 1 : 0) - this.alarm) * Math.min(1, dt * (wind ? 6 : 3))
     this.headKick = Math.max(0, this.headKick - dt * 3)
     this.bodyKick = Math.max(0, this.bodyKick - dt * 2.5)
-    for (let i = 0; i < 2; i++) this.armKick[i] = Math.max(0, this.armKick[i]! - dt * 4)
+    for (let i = 0; i < 2; i++) if (this.armKick[i]! >= 0) this.armKick[i] = this.armKick[i]! + dt > ARM_KICK_T ? -1 : this.armKick[i]! + dt
     const breath = Math.sin(this.lookT * 1.7)
     const p = this.host.player
     // Body: breathing, rearing for the cannon, kicked back by its beam.
@@ -911,7 +924,7 @@ export class GrandMaster implements StageFeature {
       const k = this.armNext === i ? 1 - Math.max(0, this.armT) / ARM_TELL : 0
       const draw = Math.sin(Math.min(1, k) * Math.PI) * 0.28
       arm.pose.position.y = arm.pivot.y + 0.03 * breath
-      arm.pose.rotation.set(draw - 0.32 * this.armKick[i]! + 0.03 * Math.sin(this.lookT * 1.1 + i * 2), 0, (i ? -1 : 1) * 0.02 * breath)
+      arm.pose.rotation.set(draw - 0.32 * armKickAt(this.armKick[i]!) + 0.03 * Math.sin(this.lookT * 1.1 + i * 2), 0, (i ? -1 : 1) * 0.02 * breath)
     }
     // Feet: during the hop they hang a little, toes down.
     const hop = this.state === 'fight' && this.phase === 1 ? hopAt(this.stompT) : 0
@@ -1229,7 +1242,7 @@ export class GrandMaster implements StageFeature {
       this.host.fx.flash(m.x, m.y, m.z, '#dff8ff', 1.4, 0.14)
       this.host.fx.sparks(m.x, m.y, m.z, '#bff4ff', 10, 6, 0.16)
     }
-    this.armKick[use] = 1
+    this.armKick[use] = 0
     this.host.shake(0.08)
   }
 

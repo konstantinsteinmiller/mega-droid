@@ -1,11 +1,13 @@
 import { Group, type Object3D } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
+import { PLAYER_R } from '../constants'
+import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import { buildIcebreakerBrute, poseIcebreakerBrute, newBrutePose, ICEBREAKER_COLORS, ICEBREAKER_SCALE, type BrutePose } from '../../models/miniBoss/icebreakerBrute'
 import { rcone, rock, paint, staticProp } from '../../models/kit'
 import { toonVC, glowVC } from '../../models/toon'
-import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, angDiff, floorLayer, eyeAt } from './kit'
+import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, teleRing, near, ease, angDiff, floorLayer, eyeAt, sprung, type PoseVel } from './kit'
 import { pushHud } from '../../state/hud'
 
 /**
@@ -75,6 +77,8 @@ interface Spike { x: number; z: number; t: number; obj: Object3D }
 interface Lane { ax: number; az: number; len: number; hit: boolean; next: number }
 
 export interface BruteMem {
+  /** Its sprung pose channels' velocities (`kit.ts` `sprung`). */
+  vel: PoseVel
   pose: BrutePose
   attack: Attack | ''
   lanes: Lane[]
@@ -109,11 +113,19 @@ const makeSpike = (): Object3D => {
 
 const makeRock = (): Object3D => staticProp([paint(rock(0.5 * ICEBREAKER_SCALE, 7), ICEBREAKER_COLORS.ice)], [], toonVC(), glowVC(), 0.02)
 
-const pick = (e: Enemy, m: BruteMem, d: number): Attack => {
+/** How far each move reaches when it starts (m; `sim/attackReach.ts`, #180). */
+export const BRUTE_REACH: Record<Attack, number> = {
+  // The spikes run out along the floor to SPIKE_RANGE.
+  slam: SPIKE_RANGE + PLAYER_R,
+  // The boulder is thrown onto his spot; the shield is a stance.
+  boulder: ANYWHERE, shield: ANYWHERE
+}
+
+const pick = (e: Enemy, m: BruteMem, d: number): Attack | null => {
   if (m.sinceShield >= (m.phase2 ? 2 : 3)) return 'shield'
   let a: Attack = Math.random() < (d > 6.5 ? 0.35 : 0.65) ? 'slam' : 'boulder'
   if (a === m.attack && e.step >= 1) a = a === 'slam' ? 'boulder' : 'slam'
-  return a
+  return firstInReach(BRUTE_REACH, d, a, a === 'slam' ? 'boulder' : 'slam')
 }
 
 const begin = (w: World, e: Enemy, m: BruteMem, a: Attack, room: Room): void => {
@@ -232,7 +244,7 @@ const dropShield = (m: BruteMem): void => {
 
 export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
   init: () => ({
-    pose: newBrutePose(), attack: '', lanes: [], front: 0, spikes: [], pool: [], bx: 0, bz: 0, bt: -1, marked: false, rock: null,
+    pose: newBrutePose(), vel: {}, attack: '', lanes: [], front: 0, spikes: [], pool: [], bx: 0, bz: 0, bt: -1, marked: false, rock: null,
     shieldUp: false, sinceShield: 1, phase2: false, landed: false, layer: null
   }),
 
@@ -253,8 +265,8 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
     // …a crouch from the landing, then both fists overhead, beaten twice.
     const land = m.landed ? Math.max(0, 1 - (e.st - INTRO_DROP) / 0.35) : 0
     const beat = e.st > INTRO_DROP + 0.45 && e.st < INTRO_T - 0.3 ? 1 : 0
-    p.slam = ease(p.slam, land, 14, dt)
-    p.raise = ease(p.raise, beat * (0.75 + 0.25 * Math.sin(e.st * 9)), 10, dt)
+    p.slam = sprung(p.slam, m.vel, 'slam', land, 14, dt)
+    p.raise = sprung(p.raise, m.vel, 'raise', beat * (0.75 + 0.25 * Math.sin(e.st * 9)), 10, dt)
     p.heat = ease(p.heat, 1 + beat * 1.2, 6, dt)
     if (beat && Math.sin(e.st * 9) > 0.97 && Math.random() < dt * 12) w.sfx('punch', e.x, e.z)
     if (e.st >= INTRO_T) {
@@ -287,7 +299,8 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
           moveBody(w, e, Math.sin(e.yaw) * sp * dt, Math.cos(e.yaw) * sp * dt)
         }
         e.cd -= dt
-        if (e.cd <= 0) begin(w, e, m, pick(e, m, d), room)
+        const a = e.cd <= 0 ? pick(e, m, d) : null
+        if (a) begin(w, e, m, a, room)
         break
       }
       case 'tele': {
@@ -306,7 +319,7 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
             const [x, z] = inRoom(room, w.player.x, w.player.z, 0.8)
             m.bx = x
             m.bz = z
-            w.markers.spawn(x, z, BOULDER_R, e.teleDur * (1 - BOULDER_MARK) + BOULDER_FLY)
+            w.markers.spawn(x, z, BOULDER_R, e.teleDur * (1 - BOULDER_MARK) + BOULDER_FLY, e)
           }
         } else {
           shield = Math.min(1, k * 1.5)
@@ -331,6 +344,8 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
             m.rock.userData.sx = e.x
             m.rock.userData.sz = e.z
             m.bt = 0
+            // In the air: its ring stays to the landing.
+            w.markers.release(e, m.bx, m.bz)
             w.sfx('dash', e.x, e.z)
           } else {
             m.shieldUp = true
@@ -400,11 +415,11 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
     }
     keepInRoom(e, room)
     stride(e, m, dt)
-    p.raise = ease(p.raise, raise, 10, dt)
-    p.slam = ease(p.slam, slam, 18, dt)
-    p.lift = ease(p.lift, lift, 10, dt)
-    p.hurl = ease(p.hurl, hurl, 16, dt)
-    p.shield = ease(p.shield, m.shieldUp ? 1 : shield, 12, dt)
+    p.raise = sprung(p.raise, m.vel, 'raise', raise, 10, dt)
+    p.slam = sprung(p.slam, m.vel, 'slam', slam, 18, dt)
+    p.lift = sprung(p.lift, m.vel, 'lift', lift, 10, dt)
+    p.hurl = sprung(p.hurl, m.vel, 'hurl', hurl, 16, dt)
+    p.shield = sprung(p.shield, m.vel, 'shield', m.shieldUp ? 1 : shield, 12, dt)
     p.heat = ease(p.heat, heat, 8, dt)
   },
 
@@ -413,10 +428,10 @@ export const ICEBREAKER_AI: MiniBossBehaviour<BruteMem> = {
     tickHazards(w, e, m, dt)
     dropShield(m)
     p.dying = Math.min(1, e.deathT / 1.1)
-    p.raise = ease(p.raise, 0, 8, dt)
-    p.slam = ease(p.slam, 0, 8, dt)
-    p.lift = ease(p.lift, 0, 8, dt)
-    p.shield = ease(p.shield, 0, 8, dt)
+    p.raise = sprung(p.raise, m.vel, 'raise', 0, 8, dt)
+    p.slam = sprung(p.slam, m.vel, 'slam', 0, 8, dt)
+    p.lift = sprung(p.lift, m.vel, 'lift', 0, 8, dt)
+    p.shield = sprung(p.shield, m.vel, 'shield', 0, 8, dt)
     p.heat = ease(p.heat, 2.4, 6, dt)
     // Its ice cracks off in bursts.
     if (Math.random() < dt * 14) {
@@ -447,6 +462,7 @@ export const ICEBREAKER_BRUTE: MiniBossSpec<BruteMem> = {
   sector: 'cryo',
   nameKey: 'miniboss.icebreakerBrute',
   guardHint: 'miniboss.guard.icebreakerBrute',
+  reach: BRUTE_REACH,
   def: {
     kind: 'miniboss', hp: 440, dmg: 16, speed: 1.9, radius: 1.25, hitR: 1.5, aimY: 1.9, fly: 0,
     aggro: 30, range: [2, 7], xp: 160, bolts: [26, 38], cooldown: 1.6, tele: SLAM_TELE, unblockable: true, armor: 1,

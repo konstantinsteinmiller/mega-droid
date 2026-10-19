@@ -103,7 +103,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   },
   hopper: {
     kind: 'hopper', hp: 72, dmg: 16, speed: 2.0, radius: 0.75, hitR: 0.9, aimY: 1.35, fly: 0,
-    aggro: 14, range: [0, 6], xp: 26, bolts: [6, 10], cooldown: 2.8, tele: 0.8, unblockable: true, armor: 0.95
+    aggro: 26, range: [0, 6], xp: 26, bolts: [6, 10], cooldown: 2.8, tele: 0.8, unblockable: true, armor: 0.95
   },
   roller: {
     kind: 'roller', hp: 46, dmg: 14, speed: 2.2, radius: 0.7, hitR: 0.85, aimY: 0.9, fly: 0,

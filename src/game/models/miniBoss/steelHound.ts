@@ -2,7 +2,7 @@ import { Color } from 'three'
 import { RigBuilder, sph, ell, cap, torus, rcyl, rcone, rbox, paintBy, pose, nudge, scaleBone, type Rig } from '../kit'
 
 /**
- * ─── The Cinder Hound (the Blaze Refinery's challenge mini-boss) ─────────────
+ * ─── The Steel Hound (the Blaze Refinery's challenge mini-boss) ─────────────
  *
  * A furnace on four legs: a soot-black iron hound the size of a pony, its
  * molten core glowing through a grille on its back and through the vents
@@ -60,18 +60,18 @@ export const newHoundPose = (): HoundPose => ({ run: 0, phase: 0, crouch: 0, lun
 const HIP = 1.02
 
 /** It is drawn this much over its build size (the hit volume and weak spot
- *  in `sim/miniBoss/cinderHound.ts` are measured at this size). */
+ *  in `sim/miniBoss/steelHound.ts` are measured at this size). */
 export const HOUND_SCALE = 1.15
 
-export const buildCinderHound = (c = HOUND_COLORS): Rig => {
-  const rig = cinderHoundParts(c).build({ outline: 0.022, height: 1.6 * HOUND_SCALE })
+export const buildSteelHound = (c = HOUND_COLORS): Rig => {
+  const rig = steelHoundParts(c).build({ outline: 0.022, height: 1.6 * HOUND_SCALE })
   rig.root.scale.setScalar(HOUND_SCALE)
   return rig
 }
 
 /** The hound's rig, its parts laid on its bones, not yet built (the
  *  z-fighting test reads its parts). */
-export const cinderHoundParts = (c = HOUND_COLORS): RigBuilder => {
+export const steelHoundParts = (c = HOUND_COLORS): RigBuilder => {
   const b = new RigBuilder()
   b.bone('root', null, [0, 0, 0])
     .bone('body', 'root', [0, HIP, 0])
@@ -155,7 +155,7 @@ const _heat = new Color()
  * Pose the hound for this frame. Every channel eases (the AI hands over
  * eased values), so nothing pops between states.
  */
-export const poseCinderHound = (rig: Rig, p: HoundPose): void => {
+export const poseSteelHound = (rig: Rig, p: HoundPose): void => {
   const T = p.time
   const run = p.run
   const crouch = p.crouch
@@ -181,8 +181,10 @@ export const poseCinderHound = (rig: Rig, p: HoundPose): void => {
   for (const end of ['F', 'H'] as const) {
     for (const t of ['L', 'R'] as const) {
       const diag = (end === 'F') === (t === 'L') ? 0 : Math.PI
-      const sw = Math.sin(p.phase + diag) * 0.75 * run
-      const lift = Math.max(0, Math.cos(p.phase + diag)) * 0.7 * run
+      // (Mid-lunge the legs hold their reach: a trot at 14 m/s is a blur.)
+      const trot = run * (1 - 0.85 * lunge)
+      const sw = Math.sin(p.phase + diag) * 0.75 * trot
+      const lift = Math.max(0, Math.cos(p.phase + diag)) * 0.7 * trot
       const tuck = end === 'H' ? 0.75 * coil : -0.35 * coil
       const reach = (end === 'F' ? -1.1 : 1.0) * lunge
       pose(rig, `thigh${end}${t}`, sw + tuck + reach, 0, 0)

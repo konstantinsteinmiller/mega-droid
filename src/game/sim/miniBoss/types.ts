@@ -29,7 +29,7 @@ import type { Enemy, Shot, World } from '../world'
 export type ChallengeSector = Exclude<SectorId, 'scrapyard'>
 
 export type MiniBossId =
-  | 'cinderHound' | 'icebreakerBrute' | 'arcSpider' | 'stormHornetQueen' | 'lodestoneGolem'
+  | 'steelHound' | 'icebreakerBrute' | 'arcSpider' | 'stormHornetQueen' | 'lodestoneGolem'
   | 'burrowWyrm' | 'pufferMatriarch' | 'glitchStalker' | 'sawGyro' | 'sentinelPrototype'
 
 export interface MiniBossDef extends EnemyDef {
@@ -86,6 +86,10 @@ export interface MiniBossSpec<M = unknown> {
    *  shot (#153): what gets through it (its back, a full charge, the wait). */
   guardHint?: string
   def: MiniBossDef
+  /** How far each of its attacks reaches when it starts (m; Infinity: a
+   *  shot, a lob or a move that finds him anywhere). It never winds one up
+   *  with Flux beyond it (#180; `sim/attackReach.ts`). */
+  reach: Readonly<Record<string, number>>
   /** Its rig at scale 1 (`Rig.height` is the tele ring's height). */
   build(): Rig
   behaviour: MiniBossBehaviour<M>

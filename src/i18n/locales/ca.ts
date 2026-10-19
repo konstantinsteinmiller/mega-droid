@@ -142,7 +142,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Gos de Brasa',
+    'steelHound': "Gos d'Acer",
     'icebreakerBrute': 'Brut Trencaglaç',
     'arcSpider': 'Aranya d’Arc',
     'stormHornetQueen': 'Reina Vespa de Tempesta',
@@ -177,6 +177,26 @@ export default {
     'volt': 'Torre Volt',
     'gale': 'Molls del Cel',
     'fortress': 'Fortalesa de Vex'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Trucs activats: Maj+Ctrl+Alt+F1 obre el tauler',
+    'off': 'Trucs desactivats',
+    'title': 'Tauler de trucs',
+    'note': 'Una partida amb trucs no envia puntuacions a la classificació.',
+    'unlockAll': 'Desbloqueja totes les missions de la història',
+    'bolts': '+{n} cargols',
+    'chips': '+{n} xips d\'habilitat',
+    'gear': 'Desintegrador èpic',
+    'gels': 'Omple els gels reparadors',
+    'done': 'Fet!',
+    'doors': 'Salta a una porta',
+    'boss': 'Porta del cap',
+    'challenge': 'Porta del repte',
+    'challengeN': 'Porta del repte {n}',
+    'actLevelUp': "Reprodueix l'escena de pujada de nivell",
+    'actObjective': "Reprodueix l'escena d'objectiu complert"
   },
 
   'quest': {
@@ -298,6 +318,7 @@ export default {
     'found': 'Botí: {item} ({rarity})!',
     'tank': 'Gel reparador trobat!',
     'giftTank': 'Regal: +1 gel reparador!',
+    'skillChip': "Xip d'habilitat trobat!",
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'vs. equipat',
     // The last chip when more stats change than the card shows.
@@ -666,6 +687,7 @@ export default {
       'slide': 'Llisca',
       'block': 'Bloqueja',
       'interact': 'Interactua',
+      'pip': 'Provisions de Pip',
       'beam': 'Teletransporta\'t',
       'tank': 'Gel reparador',
       'weapon1': 'Arma especial 1',

@@ -7,9 +7,10 @@ import type { PlayerStats } from './stats'
 import { glowTexture } from '../world/textures'
 import { SHOT_LOOK, CHARGE_AURA, buildAura, tintAura, poseAura, type ChargeKind } from '../fx/chargedShot'
 import { hasLineOfSight, floorAt, type Nav } from '../world/nav'
-import { WALL_H } from '../world/levelGen'
+import { WALL_H, CELL } from '../world/levelGen'
 import { parryWindow, wake, golemShielded, wakeGolem, ROCK_G, tryStun, smashLamp, shove } from './enemies'
 import { Rubble } from '../fx/rubble'
+import { planToss, tossStep } from './pickupToss'
 import { buildShotProp, poseShotProp, isShotStyle, type ShotStyle } from '../fx/weaponShots'
 import { pushHud } from '../state/hud'
 import { incomingShot } from '../state/damageFeed'
@@ -78,10 +79,60 @@ export interface CombatHost extends World {
   /** A player shot over the walls (`Shot.sky`): true if it struck the city's
    *  traffic (a flying taxi or a parcel drone, #169). It ends there. */
   shotHitsSky?(s: Shot): boolean
+  /** A charged player shot just cleared the walls (#181): the city's
+   *  traffic near its line may steer into it. */
+  lureSky?(s: Shot): void
 }
 
-/** How far a player shot flies on once it has cleared the walls (m). */
-export const SKY_RUN = 100
+/** How far a player shot flies on once it has cleared the walls (m): far
+ *  enough to reach the outer traffic lanes from the level's edge. */
+export const SKY_RUN = 260
+
+/**
+ * How high a solid cell's wall visibly stands (m): the top of the tallest
+ * walkable room beside it (a corridor's: its floor plus a wall), WALL_H on a
+ * flat map. Just off the map's edge, the edge cells' wall (a rig's room
+ * that runs to it); a solid cell no walkable one touches: −∞.
+ */
+export const wallTopAt = (nav: Nav, i: number, j: number): number => {
+  const map = nav.map
+  const t = map.terrain
+  let top = -Infinity
+  for (let dj = -1; dj <= 1; dj++) {
+    for (let di = -1; di <= 1; di++) {
+      const a = i + di, b = j + dj
+      if (a < 0 || b < 0 || a >= map.w || b >= map.h) continue
+      const k = b * map.w + a
+      if (nav.solid[k] === 1) continue
+      if (!t) return WALL_H
+      const r = map.room[k]!
+      top = Math.max(top, r >= 0 ? t.wallTop[r]! : t.floor[k]! + WALL_H + 0.8)
+    }
+  }
+  return top
+}
+
+/** True if a player shot stepping from (px, pz) to (x, z) at height `y` is
+ *  over every wall it crosses: a wall the cell test stops it at, but which
+ *  stands lower than the shot, is no wall to it (the level's edge, a low
+ *  room's walls under a high one's roof). */
+export const overWalls = (nav: Nav, px: number, pz: number, x: number, z: number, y: number, needWall = false): boolean => {
+  let wall = false
+  const steps = Math.max(1, Math.ceil(Math.hypot(x - px, z - pz) / (CELL * 0.5)))
+  for (let n = 0; n <= steps; n++) {
+    const u = n / steps
+    const i = Math.floor((px + (x - px) * u) / CELL)
+    const j = Math.floor((pz + (z - pz) * u) / CELL)
+    const k = j * nav.map.w + i
+    const inside = i >= 0 && j >= 0 && i < nav.map.w && j < nav.map.h
+    if (inside && nav.solid[k] !== 1) continue
+    if (y <= wallTopAt(nav, i, j)) return false
+    wall = true
+  }
+  // `needWall`: only a wall (or the map's edge) may be what stopped it — a
+  // closed door's slab or a corner post is not passed over this way.
+  return wall || !needWall
+}
 
 /** The highest wall top of the level (m): a shot above it has nothing left
  *  to strike but the sky. */
@@ -313,10 +364,11 @@ export class CombatSystem {
 
   /**
    * A buster shot. `weakOf`: fired with the crosshair on that machine's weak
-   * spot — the shot flies at the spot and may land it (×1.5). Every other
+   * spot (`weakIdx`: which one) — the shot flies at the spot and may land
+   * it (×1.5), once. Every other
    * shot, the aim assist's included, can only hit bodies.
    */
-  spawnPlayerShot(kind: 'pellet' | 'charge1' | 'charge2' | 'charge3', x: number, y: number, z: number, dx: number, dy: number, dz: number, dmg: number, crit: boolean, target: Enemy | null, weakOf: Enemy | null = null): Shot {
+  spawnPlayerShot(kind: 'pellet' | 'charge1' | 'charge2' | 'charge3', x: number, y: number, z: number, dx: number, dy: number, dz: number, dmg: number, crit: boolean, target: Enemy | null, weakOf: Enemy | null = null, weakIdx = 0): Shot {
     const s = this.acquire()
     s.owner = 'player'
     s.kind = kind
@@ -333,6 +385,7 @@ export class CombatSystem {
     s.pierce = kind === 'pellet' ? 0 : kind === 'charge1' ? 1 : 3
     s.homing = weakOf ?? target
     s.weakOf = weakOf
+    s.weakIdx = weakIdx
     s.turn = kind === 'pellet' ? 4 : 2.5
     s.blockable = true
     this.look(s, kind, crit ? '#ffd84a' : undefined)
@@ -551,7 +604,7 @@ export class CombatSystem {
         const e = s.homing
         // A weak-spot shot keeps to the spot; any other, to the body's middle.
         const onWeak = s.weakOf === e
-        if (onWeak) weakSpotAt(e, _weak)
+        if (onWeak) weakSpotAt(e, _weak, s.weakIdx)
         const ax = (onWeak ? _weak.x : e.x) - s.x
         const ay = (onWeak ? _weak.y : e.y + (e.floor ?? 0) + e.def.aimY) - s.y
         const az = (onWeak ? _weak.z : e.z) - s.z
@@ -583,8 +636,9 @@ export class CombatSystem {
       s.z += s.vz * dt
 
       // The Flame Wave hugs the floor it rolls over (a step up or down, a
-      // ramp); over a gap it holds its height.
-      if (s.weapon === 'flameWave') {
+      // ramp); over a gap it holds its height. Fired upward it flies its
+      // aim and is left alone.
+      if (s.weapon === 'flameWave' && s.vy === 0) {
         const f = floorAt(h.nav, s.x, s.z, s.y + 0.6)
         if (f > -Infinity && Math.abs(f + 0.45 - s.y) < 1.2) s.y = f + 0.45
       }
@@ -619,10 +673,18 @@ export class CombatSystem {
       // Over every wall top (#169): nothing in the level stops it, and it
       // flies on into the sky — over the walls there is no roof, so a shot
       // the walls no longer stop must not end at its usual range either.
-      if (s.owner === 'player' && s.y > this.roof()) {
+      // A player shot the cell test would stop, but which flies over the
+      // walls there (lower than the level's highest roof: a low room's
+      // walls, the level's edge), is out over them too: no invisible wall
+      // stops it. Its own visible walls still do, below their tops.
+      const over = s.owner === 'player' && (s.y > this.roof() ||
+        (s.y > floorAt(h.nav, s.x, s.z) + 0.02 && !hasLineOfSight(h.nav, s.px, s.pz, s.x, s.z) && overWalls(h.nav, s.px, s.pz, s.x, s.z, s.y, true)) ||
+        (!!s.sky && s.y > floorAt(h.nav, s.x, s.z) + 0.02 && overWalls(h.nav, s.px, s.pz, s.x, s.z, s.y)))
+      if (over) {
         if (!s.sky) {
           s.sky = true
           s.life = Math.max(s.life, SKY_RUN / (Math.hypot(s.vx, s.vy, s.vz) || 1))
+          if (chargeLevel(s) > 0) h.lureSky?.(s)
         }
         if (h.shotHitsSky?.(s)) {
           this.kill(s)
@@ -668,7 +730,7 @@ export class CombatSystem {
           // there; still closing on it, the body does not catch it first;
           // once it has passed it by, it is an ordinary shot.
           if (s.weakOf === e) {
-            weakSpotAt(e, _weak)
+            weakSpotAt(e, _weak, s.weakIdx)
             const d = Math.hypot(_weak.x - s.x, _weak.y - s.y, _weak.z - s.z)
             if (d < _weak.r + s.radius + 0.12 && hasLineOfSight(h.nav, s.x, s.z, e.x, e.z)) {
               s.hitIds.push(e.id)
@@ -858,9 +920,19 @@ export class CombatSystem {
     const r = Math.random
     switch (s.weapon) {
       case 'flameWave':
-        for (let n = 0; n < 4; n++) {
-          if (r() > k) continue
-          fx.emit({ x: s.x + (r() - 0.5) * 1.4, y: s.y - 0.3 + r() * 0.3, z: s.z + (r() - 0.5) * 0.7, vx: s.vx * 0.15, vy: 1.8 + r() * 1.6, vz: s.vz * 0.15, color: r() < 0.35 ? '#fff27a' : r() < 0.6 ? '#ffa23a' : '#ff5a1f', size: 0.7 + r() * 0.4, sizeEnd: 0.05, life: 0.45 + r() * 0.2 })
+        {
+          // The wave's face stands across its travel: flames spread sideways
+          // to it (and along its rise when it climbs).
+          const hl = Math.hypot(s.vx, s.vz) || 1
+          const sx = -s.vz / hl
+          const sz = s.vx / hl
+          const sp = Math.hypot(s.vx, s.vy, s.vz) || 1
+          for (let n = 0; n < 4; n++) {
+            if (r() > k) continue
+            const w = (r() - 0.5) * 1.4
+            const a = (r() - 0.5) * 0.7
+            fx.emit({ x: s.x + sx * w + (s.vx / sp) * a, y: s.y - 0.3 + r() * 0.3 + (s.vy / sp) * a, z: s.z + sz * w + (s.vz / sp) * a, vx: s.vx * 0.15, vy: 1.8 + r() * 1.6, vz: s.vz * 0.15, color: r() < 0.35 ? '#fff27a' : r() < 0.6 ? '#ffa23a' : '#ff5a1f', size: 0.7 + r() * 0.4, sizeEnd: 0.05, life: 0.45 + r() * 0.2 })
+          }
         }
         if (r() < 0.3 * k) fx.emit({ x: s.x, y: s.y, z: s.z, vx: (r() - 0.5) * 3, vy: 2.5 + r() * 2, vz: (r() - 0.5) * 3, color: '#ffd35a', size: 0.12, sizeEnd: 0.02, life: 0.7, gravity: 6 })
         break
@@ -1161,20 +1233,19 @@ export class CombatSystem {
         : kind === 'hp' || kind === 'hpBig' ? buildCapsule('hp', kind === 'hpBig')
           : kind === 'we' || kind === 'weBig' ? buildCapsule('we', kind === 'weBig')
             : buildBolt()
-      p = { active: false, kind, value, x, y, z, vx: 0, vy: 0, vz: 0, t: 0, root: mesh.root, magnet: false }
+      p = { active: false, kind, value, x, y, z, vx: 0, vy: 0, vz: 0, t: 0, root: mesh.root, magnet: false, hx: x, hz: z, ref: 0 }
       this.root.add(p.root)
       this.pickups.push(p)
     }
-    const a = Math.random() * Math.PI * 2
-    const sp = 1.5 + Math.random() * 2.5
+    // Aimed at open floor in the source's room, never through a wall
+    // (`sim/pickupToss.ts`); a bolt shed over a pit still falls into it
+    const h = this.host
+    planToss(h.nav, kind, x, y, z, { x: h.player.x, z: h.player.z, feet: feetOf(h) }, Math.random, p)
     p.active = true
     p.value = value
     p.x = x
     p.y = y
     p.z = z
-    p.vx = Math.cos(a) * sp
-    p.vz = Math.sin(a) * sp
-    p.vy = 3.5 + Math.random() * 2
     p.t = 0
     p.magnet = false
     p.root.visible = true
@@ -1200,19 +1271,9 @@ export class CombatSystem {
         p.y += (feetOf(h) + EYE_H - 0.6 - p.y) * Math.min(1, dt * 8)
       } else {
         // Toss, bounce, settle
-        p.vy -= 18 * dt
-        p.x += p.vx * dt
-        p.z += p.vz * dt
-        p.y += p.vy * dt
-        const rest = (p.kind === 'bolt' ? 0.22 : 0.3) + Math.max(-60, floorAt(h.nav, p.x, p.z))
-        if (p.y < rest) {
-          p.y = rest
-          p.vy = Math.abs(p.vy) > 2 ? -p.vy * 0.35 : 0
-          p.vx *= 0.6
-          p.vz *= 0.6
-        }
-        if (!hasLineOfSight(h.nav, px, pz, p.x, p.z) && p.t < 0.6) {
-          // Tossed into a wall: stop horizontally
+        tossStep(h.nav, p, dt)
+        if (Number.isNaN(p.ref) && p.t < 0.6 && !hasLineOfSight(h.nav, px, pz, p.x, p.z)) {
+          // A free toss into a wall: stop horizontally
           p.vx = 0
           p.vz = 0
         }

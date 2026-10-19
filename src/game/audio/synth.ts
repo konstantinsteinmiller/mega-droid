@@ -377,7 +377,7 @@ const RECIPES: Record<SfxName, (pan: number, g: number) => void> = {
     tone({ wave: 'p50', f0: midiHz(79), dur: 0.55, vol: 0.14 * g, at: 0.34, vib: 6, vibRate: 9 })
     tone({ wave: 'tri', f0: midiHz(48), dur: 0.7, vol: 0.3 * g, at: 0.32 })
   },
-  // The Cinder Hound's howl: a rising, wavering wail through a roar of fire.
+  // The Steel Hound's howl: a rising, wavering wail through a roar of fire.
   howl: (p, g) => {
     tone({ wave: 'saw', f0: 220, f1: 520, dur: 0.9, vol: 0.12 * g, vib: 14, vibRate: 7, pan: p })
     tone({ wave: 'p25', f0: 330, f1: 740, dur: 0.85, vol: 0.07 * g, at: 0.05, vib: 18, vibRate: 6, pan: p })

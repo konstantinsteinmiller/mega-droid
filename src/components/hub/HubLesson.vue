@@ -1,13 +1,17 @@
 <template lang="pug">
   div.tour(v-if="visible" :class="device")
-    //- Four blockers dim and fence off everything but the hole: only the
-    //- step's own target can be pressed. A press anywhere else gets an answer:
-    //- the live step pulses, so the dimmed screen never reads as a lock-up.
-    div.block(v-for="(b, i) in blocks" :key="i" :style="b" @pointerdown.prevent.stop="nudge")
-    div.hole(v-if="found" :style="holeStyle" :class="pulse" aria-hidden="true")
+    //- The walk to the forge is guided in the hall itself (the golden trail
+    //- on the floor, the forge's label pinned on screen): no dimming over a
+    //- label that moves with every step. The spotlight starts at its panel.
+    template(v-if="dimmed")
+      //- Four blockers dim and fence off everything but the hole: only the
+      //- step's own target can be pressed. A press anywhere else gets an
+      //- answer: the live step pulses, so the dimmed screen never reads as a lock-up.
+      div.block(v-for="(b, i) in blocks" :key="i" :style="b" @pointerdown.prevent.stop="nudge")
+      div.hole(v-if="found" :style="holeStyle" :class="pulse" aria-hidden="true")
     //- The guide: a hand on touch, a cursor with a mouse. On screen from the
     //- step's first frame, it glides from target to target and taps.
-    div.guide(v-if="placed" :style="guideStyle" aria-hidden="true")
+    div.guide(v-if="dimmed && placed" :style="guideStyle" aria-hidden="true")
       //- (position) → .tip puts the fingertip / arrow tip on the point →
       //- .kick jumps on a pulse → .tap taps
       div.tip
@@ -25,7 +29,7 @@
     //- Pip's catch-up: one short line — the gear has fallen behind.
     div.pip-say(v-if="hubLesson.catchUp && hubLesson.step === 'workshop'" role="status") {{ t('hubLesson.catchUp') }}
     span.sr(role="status" aria-live="polite") {{ t(`hubLesson.${hubLesson.step}`) }}
-    button.skip(type="button" :aria-label="t('close')" @click="endHubLesson()")
+    button.skip(v-if="dimmed" type="button" :aria-label="t('close')" @click="endHubLesson()")
       GameIcon(name="close")
 </template>
 
@@ -58,6 +62,9 @@ const { t } = useI18n()
  *  tour waits underneath, invisible, and resumes afterwards. */
 const blocked = computed(() => !!flow.modal || isAnyModalOpen.value || flow.loading || flow.screen !== 'hub')
 const visible = computed(() => !!hubLesson.step && !blocked.value)
+/** The spotlight is on: every step but the walk to the forge (`hubLesson.ts`:
+ *  the hall's trail leads there while it is 'workshop'). */
+const dimmed = computed(() => visible.value && hubLesson.step !== 'workshop')
 const device = ref<'touch' | 'mouse'>(input.device)
 
 // ── Start: the lab has been calm for a moment ──
@@ -128,7 +135,10 @@ const shownIn = (r: DOMRect, el: HTMLElement): boolean => {
 /** Where the hole and the hand go for the current step. Every frame, and also
  *  the moment a step or the tour appears, ahead of its first frame. */
 const measure = (): void => {
-  if (!hubLesson.step) return
+  // The wallet (the grant chip hangs under it), on the walk too.
+  const b = document.querySelector<HTMLElement>('[data-lesson="bolts"]')?.getBoundingClientRect()
+  if (b) boltsAt.value = { x: b.left + b.width / 2, y: b.bottom }
+  if (!hubLesson.step || hubLesson.step === 'workshop') return
   const el = document.querySelector<HTMLElement>(stepTarget(hubLesson.step))
   const r = el?.getBoundingClientRect()
   if (!el || !r || r.width === 0) {
@@ -160,8 +170,6 @@ const measure = (): void => {
   if (guide.value.x !== gx || guide.value.y !== gy) guide.value = { x: gx, y: gy }
   found.value = true
   placed.value = true
-  const b = document.querySelector<HTMLElement>('[data-lesson="bolts"]')?.getBoundingClientRect()
-  if (b) boltsAt.value = { x: b.left + b.width / 2, y: b.bottom }
 }
 const track = () => {
   raf = requestAnimationFrame(track)
@@ -172,7 +180,7 @@ watch(visible, (v) => { if (v) measure() })
 // A new step: measured once the DOM has caught up; the hand glides over. The
 // tour over: the hand goes with it.
 watch(() => hubLesson.step, (s) => {
-  if (s) {
+  if (s && s !== 'workshop') {
     measure()
     return
   }

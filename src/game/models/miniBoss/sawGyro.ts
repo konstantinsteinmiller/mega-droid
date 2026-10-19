@@ -1,5 +1,6 @@
 import { Color } from 'three'
 import { RigBuilder, sph, ell, torus, rcyl, rcone, rbox, lathe, pose, nudge, scaleBone, type Rig } from '../kit'
+import { newPhase, phaseAt, type Phase } from '../spring'
 
 /**
  * ─── The Saw Gyro (the Rotor Run's challenge mini-boss) ──────────────────────
@@ -35,6 +36,12 @@ export const GYRO_COLORS = {
 }
 
 export interface GyroPose {
+  /** The wobble's precession and the gimbal's turn (integrated: their
+   *  rates change with the dizziness and the heat, their angles never jump). */
+  prec: Phase
+  gimbal: Phase
+  /** The spin's rate (rad/s), eased after the AI's. */
+  spinRate: number
   /** The hull's and the skirt's turn (radians; the AI spins them). */
   spinA: number
   sawA: number
@@ -51,7 +58,7 @@ export interface GyroPose {
   time: number
 }
 
-export const newGyroPose = (): GyroPose => ({ spinA: 0, sawA: 0, spinUp: 0, flare: 0, dizzy: 0, rush: 0, heat: 1, dying: 0, time: 0 })
+export const newGyroPose = (): GyroPose => ({ prec: newPhase(), gimbal: newPhase(), spinRate: 4, spinA: 0, sawA: 0, spinUp: 0, flare: 0, dizzy: 0, rush: 0, heat: 1, dying: 0, time: 0 })
 
 export const GYRO_SCALE = 1.1
 
@@ -142,7 +149,7 @@ const _heat = new Color()
 export const poseSawGyro = (rig: Rig, p: GyroPose): void => {
   const T = p.time
   // The wobble: a top running down circles its tilt round its point.
-  const prec = T * (4 + 4 * p.dizzy)
+  const prec = phaseAt(p.prec, T, 4 + 4 * p.dizzy)
   // (Dizzy, its core swings ~0.25 m off its axis: still inside the weak spot.)
   const tilt = 0.03 + 0.14 * p.dizzy + 0.12 * p.dying
   pose(rig, 'body', -0.28 * p.spinUp + 0.22 * p.rush + Math.sin(prec) * tilt, 0, Math.cos(prec) * tilt)
@@ -151,7 +158,7 @@ export const poseSawGyro = (rig: Rig, p: GyroPose): void => {
   pose(rig, 'spin', 0, p.spinA, 0)
   pose(rig, 'skirt', 0, p.sawA, 0)
   scaleBone(rig, 'skirt', 1 + 0.16 * p.flare + 0.05 * p.spinUp, 1, 1 + 0.16 * p.flare + 0.05 * p.spinUp)
-  pose(rig, 'gimbal', T * (2 + 6 * p.heat), T * 1.3, 0)
+  pose(rig, 'gimbal', phaseAt(p.gimbal, T, 2 + 6 * p.heat), T * 1.3, 0)
   // The petals: shut, fluttering in the spin-up, wide open when dizzy.
   for (let k = 0; k < 3; k++) {
     const open = 1.25 * p.dizzy + 0.08 * p.spinUp * Math.sin(T * 40 + k) + 0.6 * p.dying

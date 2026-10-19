@@ -21,7 +21,7 @@ import { KEY_BINDINGS_KEY } from '@/keys'
 
 export type Action =
   | 'forward' | 'back' | 'left' | 'right' | 'turnLeft' | 'turnRight'
-  | 'slide' | 'block' | 'interact' | 'beam' | 'tank'
+  | 'slide' | 'block' | 'interact' | 'pip' | 'beam' | 'tank'
   | 'weapon1' | 'weapon2' | 'weapon3' | 'target' | 'map'
 
 /** Defaults: the first code is the action's main key, the rest alternates. */
@@ -34,7 +34,10 @@ export const DEFAULT_BINDINGS: Readonly<Record<Action, readonly string[]>> = {
   turnRight: ['ArrowRight'],
   slide: ['Space'],
   block: ['ShiftLeft', 'ShiftRight'],
-  interact: ['KeyE', 'KeyF'],
+  interact: ['KeyE'],
+  // F: Pip's supplies in the lab (his rewarded offers). F used to be an
+  // untaught second interact key; a mission still treats it as one.
+  pip: ['KeyF'],
   beam: ['KeyB'],
   tank: ['KeyH'],
   // Q (#174): the first special weapon under the left hand, beside WASD. It

@@ -7,7 +7,7 @@ export const PAL = {
   // Flux: pearl armour shells over a graphite undersuit, lit by one warm
   // plasma. Gear repaints the shells and the plasma (`HeroColors`); the suit,
   // visor and steel never change, so every kit still reads as him.
-  heroPearl: '#eef0f3',
+  heroPearl: '#f5f4f1',
   heroSuit: '#3a3f4b',
   heroSuitDeep: '#252932',
   heroVisor: '#161a22',

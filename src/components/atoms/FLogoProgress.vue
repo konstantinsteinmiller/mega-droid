@@ -5,16 +5,16 @@
   Transition(name="loader-fade")
     div.loader.no-os-ui(v-if="!done")
       div.card
-        //- The same ONE-SVG lockup as the static splash in index.html, byte for
-        //- byte (tests/ui/splashLogo.test.ts compares them): Flux's visor head in
-        //- the hex reactor badge over the MEGA / DROID wordmark, all paths,
-        //- no ids (the two copies share the document during the hand-over).
-        h1.logo(:aria-label="t('gameName')")
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 256" aria-hidden="true" focusable="false"><g stroke-linejoin="round"><path d="M230 70c4 7 4 14 0 20.9l-31 53.6c-4 7-10 10.5-18 10.5h-62c-8 0-14-3.5-18-10.5l-31-53.6c-4-6.9-4-13.9 0-20.9l31-53.6c4-6.9 10-10.4 18-10.4h62c8 0 14 3.5 18 10.4z" fill="#3a3f4b" stroke="#141a33" stroke-width="8"/><path d="M222 71.1c3.6 6.2 3.6 12.5 0 18.8l-27.9 48.2c-3.6 6.3-9 9.4-16.2 9.4h-55.8c-7.2 0-12.6-3.1-16.2-9.4l-27.9-48.2c-3.6-6.3-3.6-12.6 0-18.8l27.9-48.3c3.6-6.2 9-9.4 16.2-9.4h55.8c7.2 0 12.6 3.2 16.2 9.4z" fill="#252932"/><path d="M214 72.1c3.2 5.6 3.2 11.2 0 16.7l-24.8 42.9c-3.2 5.6-8 8.4-14.4 8.4h-49.6c-6.4 0-11.2-2.8-14.4-8.4l-24.8-42.9c-3.2-5.5-3.2-11.1 0-16.7l24.8-42.9c3.2-5.5 8-8.3 14.4-8.3h49.6c6.4 0 11.2 2.8 14.4 8.3z" fill="none" stroke="#ffa733" stroke-width="2.6"/><g transform="matrix(.9 0 0 .9 153 79.5)"><path d="M-56-20c-12-10-22-24-30-42c8 18 16 38 22 66zM-60-4c0-26 24-42 60-42c36 0 60 16 60 42l-60 8zM-58 8h116c0 22-14 42-34 52c-12 6-36 6-48 0c-20-10-34-30-34-52zM-68-14l68 14l68-14c1 12-1 24-7 32c-19 11-40 15-61 15c-21 0-42-4-61-15c-6-8-8-20-7-32z" fill="#141a33" stroke="#141a33" stroke-width="10"/><circle cx="-86" cy="-62" r="11.5" fill="#141a33"/><path d="M-56-20c-12-10-22-24-30-42c8 18 16 38 22 66z" fill="#c3cad4"/><path d="M-58 8h116c0 22-14 42-34 52c-12 6-36 6-48 0c-20-10-34-30-34-52z" fill="#eef0f3"/><path d="M58 10c0 20-14 40-34 50c-12 6-28 6-36 4c28-6 52-22 57-50z" fill="#c3cad4"/><path d="M-60-4c0-26 24-42 60-42c36 0 60 16 60 42l-60 8z" fill="#eef0f3"/><path d="M60-6c0-24-24-40-56-40c28 6 44 20 43 43z" fill="#c3cad4"/><path d="M-42-26c8-10 20-14 32-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M-68-14l68 14l68-14c1 12-1 24-7 32c-19 11-40 15-61 15c-21 0-42-4-61-15c-6-8-8-20-7-32z" fill="#161a22" stroke="#141a33" stroke-width="3.4"/><path d="M-62-9l62 13l62-13v5l-62 13l-62-13z" fill="#3a4250"/><ellipse cx="-25" cy="15" rx="11.5" ry="13" fill="#b8651a"/><ellipse cx="-25" cy="15" rx="8.6" ry="10.2" fill="#ffa733"/><ellipse cx="-28" cy="10.6" rx="2.7" ry="3.5" fill="#fff0cc"/><ellipse cx="25" cy="15" rx="11.5" ry="13" fill="#b8651a"/><ellipse cx="25" cy="15" rx="8.6" ry="10.2" fill="#ffa733"/><ellipse cx="22" cy="10.6" rx="2.7" ry="3.5" fill="#fff0cc"/><circle cx="-86" cy="-62" r="6.5" fill="#ffa733"/><circle cx="-87.8" cy="-63.8" r="2.2" fill="#fff0cc"/></g><path transform="matrix(1 0 -.213 1 28.2 147.5)" d="M0 58v-50l8-8h13l15 25.5l15-25.5h21v50l-8 8h-6.5v-44.4l-21.5 36.6l-21.5-36.6v44.4zM78 58v-50l8-8h40v12h-33.5v11h27.7v12h-27.7v11h33.5v4l-8 8zM132 58v-50l8-8h50v12h-43.5v34h29v-11h-13.3v-12h27.8v27l-8 8zM196 58v-41l17-17h26l17 17v33l-8 8h-6.5v-11.4h-31v11.4zM210.5 34.6h31v-13.4l-9.2-9.2h-12.6l-9.2 9.2z" fill="#141a33" stroke="#141a33" stroke-width="7"/><path transform="matrix(1 0 -.213 1 28.2 143)" d="M0 58v-50l8-8h13l15 25.5l15-25.5h21v50l-8 8h-6.5v-44.4l-21.5 36.6l-21.5-36.6v44.4zM78 58v-50l8-8h40v12h-33.5v11h27.7v12h-27.7v11h33.5v4l-8 8zM132 58v-50l8-8h50v12h-43.5v34h29v-11h-13.3v-12h27.8v27l-8 8zM196 58v-41l17-17h26l17 17v33l-8 8h-6.5v-11.4h-31v11.4zM210.5 34.6h31v-13.4l-9.2-9.2h-12.6l-9.2 9.2z" fill="#eef0f3" stroke="#141a33" stroke-width="7" paint-order="stroke"/><path d="M68.4 211h172l-8.8 41h-172z" fill="#161a22" stroke="#141a33" stroke-width="6"/><path d="M70.6 214.4h166" stroke="#3a4250" stroke-width="2.4"/><path transform="matrix(1 0 -.213 1 79 217.5)" d="M0 28v-24l4-4h14.6l7.8 7.8v12.4l-7.8 7.8zM7 22h10.2l2.2-2.2v-11.6l-2.2-2.2h-10.2zM35.3 28v-24l4-4h14.6l7.8 7.8v3.6l-7.8 7.8h-1.1l8.9 8.8h-8.9l-8-8.8h-2.5v8.8zM42.3 13.2h9.1l3.3-3.2v-.8l-3.3-3.2h-9.1zM70.5 20.2v-12.4l7.8-7.8h11.8l7.8 7.8v12.4l-7.8 7.8h-11.8zM77.5 19.8l2.2 2.2h9l2.2-2.2v-11.6l-2.2-2.2h-9l-2.2 2.2zM106.8 28v-24l4-4h3v24l-4 4zM123.6 28v-24l4-4h14.6l7.8 7.8v12.4l-7.8 7.8zM130.6 22h10.2l2.2-2.2v-11.6l-2.2-2.2h-10.2z" fill="#ffa733"/></g></svg>
+        //- The same square logo as the static splash in index.html, at the same
+        //- size (tests/ui/splashLogo.test.ts compares them): Flux's rendered head
+        //- over the MEGA / DROID wordmark.
+        h1.logo
+          img(src="/images/logo/mega-droid-logo-square-256.webp" srcset="/images/logo/mega-droid-logo-square-256.webp 1x, /images/logo/mega-droid-logo-square-512.png 2x, /images/logo/mega-droid-logo-square-768.webp 3x" :alt="t('gameName')" width="256" height="256" decoding="async")
         div.bar(role="progressbar" :aria-valuenow="Math.round(progress)" aria-valuemin="0" aria-valuemax="100")
           div.track(aria-hidden="true")
           div.lit(aria-hidden="true")
             div.fill(:style="fillStyle")
+        LoaderMiniGame
         Transition(name="hint-fade")
           div.stuck-hint(v-if="showStuckHint") {{ t('loading.tooLong') }}
 </template>
@@ -23,6 +23,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import useAssets from '@/use/useAssets'
+import LoaderMiniGame from '@/components/atoms/LoaderMiniGame.vue'
 import { stopLoading } from '@/use/useCrazyGames'
 import { armFirstLoadInterstitial, notifySplashGone } from '@/use/useFirstLoadInterstitial'
 import { whenInteractive } from '@/use/whenInteractive'
@@ -264,12 +265,12 @@ const onBackdropGone = (): void => {
   gap: clamp(10px, 3vmin, 20px)
   width: min(84vw, 70vh, 420px)
 
-// ── The lockup: one inline SVG, sized by its box ──
+// ── The logo: the square lockup, never wider than its 256 px file ──
 .logo
   margin: 0
-  width: 100%
-  aspect-ratio: 300 / 256
-  :deep(svg)
+  width: min(100%, 256px)
+  aspect-ratio: 1
+  img
     display: block
     width: 100%
     height: 100%
@@ -319,6 +320,10 @@ const onBackdropGone = (): void => {
 .hint-fade-enter-from
   opacity: 0
 
+// Room for the mini-game on a short screen (index.html's .s-logo does the same).
+@media (max-height: 600px)
+  .logo
+    width: min(100%, 256px, 42vh)
 @media (prefers-reduced-motion: reduce)
   .backdrop-grid
     animation: none

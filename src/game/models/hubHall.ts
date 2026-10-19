@@ -1,5 +1,5 @@
 import {
-  BoxGeometry, BufferGeometry, Color, Curve, Float32BufferAttribute, TubeGeometry, Vector3
+  BoxGeometry, BufferGeometry, Color, Curve, Float32BufferAttribute, PlaneGeometry, TubeGeometry, Vector3
 } from 'three'
 import { rcyl, rbox, torus, sph, ell, cap, lathe, xform, paint, paintBy, stripUv, rcone, merge, dome } from './kit'
 import {
@@ -260,6 +260,23 @@ export const buildLabFront = (): Parts => {
 /** The door's energy curtain: its size and place. */
 export const DOOR_CURTAIN = { w: DOOR_HALF * 2, h: DOOR_H, z: Math.sqrt(LAB_R * LAB_R - (DOOR_HALF + 0.3) ** 2) }
 
+/** The curtain's sheet of light, bright at its edges and its scan lines
+ *  (vertex colours: its material wants `vertexColors`). */
+export const doorCurtainGeometry = (): BufferGeometry => {
+  const g = new PlaneGeometry(DOOR_CURTAIN.w, DOOR_CURTAIN.h, 8, 24)
+  g.deleteAttribute('uv')
+  const pos = g.attributes.position!
+  const col = new Float32Array(pos.count * 3)
+  for (let i = 0; i < pos.count; i++) {
+    const x = Math.abs(pos.getX(i)) / (DOOR_CURTAIN.w / 2)
+    const y = (pos.getY(i) / DOOR_CURTAIN.h) + 0.5
+    const v = 0.25 + 0.75 * x ** 4 + (Math.round(y * 24) % 3 === 0 ? 0.25 : 0)
+    col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = Math.min(1, v)
+  }
+  g.setAttribute('color', new Float32BufferAttribute(col, 3))
+  return g
+}
+
 // ─── The briefing table ──────────────────────────────────────────────────────
 
 /** The projector table: the hologram of the valley floats over it (`hubHolo.ts`). */
@@ -406,6 +423,13 @@ export const buildForge = (side: -1 | 1, z: number): Parts => {
   p.toon.push(xform(paint(rcone(0.1, 0.02, 0.42, 0.02, 10), '#5b6476'), [ax, 0.92, az + 0.62], [Math.PI / 2, 0, 0]))
   // The hot plate on the anvil, glowing.
   p.glow.push(xform(paint(rbox(0.22, 0.05, 0.42, 0.3), '#ff9a2e'), [ax, 1.02, az]))
+  // The lever hammer's frame: two cheeks and the axle its beam turns on.
+  const [hx, hy, hz] = forgePivot(side, z)
+  for (const dz of [-0.17, 0.17]) {
+    p.toon.push(xform(paint(rbox(0.24, hy + 0.3, 0.08, 0.3), C.gun), [hx, (hy + 0.3) / 2 - 0.05, hz + dz]))
+    p.toon.push(xform(paint(sph(0.075, 10, 8), C.steelHi), [hx, hy, hz + dz * 1.5]))
+  }
+  p.toon.push(xform(paint(rcyl(0.05, 0.5, 0.02, 10), C.steelHi), [hx, hy, hz], [Math.PI / 2, 0, 0]))
   // A bin of bolts.
   const bx = xb + toHall * 0.7
   p.toon.push(xform(paint(rbox(0.8, 0.55, 0.8, 0.25), '#8a5b3a'), [bx, 0.28, z + 1.25]))
@@ -416,14 +440,35 @@ export const buildForge = (side: -1 | 1, z: number): Parts => {
   return p
 }
 
-/** The forge's hammer: an arm hung from the niche's ceiling, pivoting at its
- *  top (local origin), the head at its end over the anvil. */
+/** The forge's anvil: where its hot plate is (the hammer's strike). */
+export const forgeAnvil = (side: -1 | 1, z: number): [number, number, number] =>
+  [nicheBack(side) - side * 1.75, 1.05, z + 0.55]
+
+/** The lever hammer's axle: by the niche's back, in line with the anvil, at
+ *  the head's own height when it rests on the plate (so the head's last
+ *  stretch is straight down). */
+export const forgePivot = (side: -1 | 1, z: number): [number, number, number] =>
+  [nicheBack(side) - side * 0.35, HAMMER_PIVOT_Y, z + 0.55]
+/** The beam's reach, axle to head, and the axle's height. */
+export const HAMMER_ARM = 1.4
+const HAMMER_PIVOT_Y = 1.37
+
+/**
+ * The forge's hammer: a lever (a helve hammer) turning on its axle (local
+ * origin), the beam along +x out over the anvil, the head hung at its end,
+ * a counterweight on its short tail. Raised, the beam tilts up about z; let
+ * go, the head drops onto the plate from above.
+ */
 export const forgeHammer = (): Parts => {
   const p = newParts()
-  p.toon.push(xform(paint(rcyl(0.16, 0.3, 0.05, 12), C.gun), [0, 0, 0], [Math.PI / 2, 0, 0]))
-  p.toon.push(xform(paint(cap(0.07, 2.2, 8, 2), C.steel), [0, -1.15, 0]))
-  p.toon.push(xform(paint(rbox(0.36, 0.34, 0.6, 0.3), '#4a5262'), [0, -2.35, 0]))
-  p.glow.push(xform(paint(torus(0.1, 0.03, 6, 14), C.amber), [0, -1.9, 0], [Math.PI / 2, 0, 0]))
+  const L = HAMMER_ARM
+  p.toon.push(xform(paint(rbox(L + 0.7, 0.16, 0.14, 0.3), C.steel), [(L - 0.6) / 2, 0, 0]))
+  p.toon.push(xform(paint(rcyl(0.12, 0.22, 0.04, 14), C.gun), [0, 0, 0], [Math.PI / 2, 0, 0]))
+  p.toon.push(xform(paint(rbox(0.26, 0.28, 0.24, 0.25), '#4a5262'), [-0.56, 0, 0]))
+  // The head, the beam's end through it, and its darker striking face.
+  p.toon.push(xform(paint(rbox(0.36, 0.42, 0.4, 0.25), '#4a5262'), [L, -0.03, 0]))
+  p.toon.push(xform(paint(rbox(0.3, 0.06, 0.34, 0.3), '#2a2f3a'), [L, -0.26, 0]))
+  p.glow.push(xform(paint(torus(0.13, 0.03, 6, 14), C.amber), [L * 0.55, 0, 0], [0, Math.PI / 2, 0]))
   return p
 }
 

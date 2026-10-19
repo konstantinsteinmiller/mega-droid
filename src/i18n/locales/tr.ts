@@ -144,7 +144,7 @@ export default {
 
   // Challenge rooms' mini-bosses (`sim/miniBoss/registry.ts`).
   'miniboss': {
-    'cinderHound': 'Kor Tazı',
+    'steelHound': 'Çelik Tazı',
     'icebreakerBrute': 'Buzkıran Kaba',
     'arcSpider': 'Ark Örümceği',
     'stormHornetQueen': 'Fırtına Eşekarısı Kraliçesi',
@@ -179,6 +179,26 @@ export default {
     'volt': 'Volt Kulesi',
     'gale': 'Gök Rıhtımı',
     'fortress': 'Vex Kalesi'
+  },
+
+  // Dev cheat panel (#Cheat1): only with localStorage.cheat on.
+  'cheat': {
+    'on': 'Hileler açık: Shift+Ctrl+Alt+F1 hile panelini açar',
+    'off': 'Hileler kapalı',
+    'title': 'Hile paneli',
+    'note': 'Hile kullanılan kayıt liderlik tablosuna puan göndermez.',
+    'unlockAll': 'Tüm hikâye görevlerinin kilidini aç',
+    'bolts': '+{n} cıvata',
+    'chips': '+{n} Yetenek Çipi',
+    'gear': 'Epik blaster',
+    'gels': 'Onarım Jellerini doldur',
+    'done': 'Tamam!',
+    'doors': 'Bir kapıya atla',
+    'boss': 'Boss kapısı',
+    'challenge': 'Meydan okuma kapısı',
+    'challengeN': 'Meydan okuma kapısı {n}',
+    'actLevelUp': 'Seviye atlama sahnesini oynat',
+    'actObjective': 'Hedef tamamlandı sahnesini oynat'
   },
 
   'quest': {
@@ -300,6 +320,7 @@ export default {
     'found': '{rarity} {item} bulundu!',
     'tank': 'Tamir Jeli bulundu!',
     'giftTank': 'Hediye: +1 Tamir Jeli!',
+    'skillChip': 'Yetenek Çipi bulundu!',
     // Over the loot chips: they are measured against the equipped piece (#158).
     'vsEquipped': 'kuşanılana göre',
     // The last chip when more stats change than the card shows.
@@ -643,6 +664,7 @@ export default {
       'slide': 'Kayma',
       'block': 'Blok',
       'interact': 'Etkileşim',
+      'pip': 'Pip\'in malzemeleri',
       'beam': 'Işınlan',
       'tank': 'Onarım jeli',
       'weapon1': 'Özel silah 1',

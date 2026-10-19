@@ -166,7 +166,9 @@ export const poseStreetFlux = (R: Rig, F: Object3D, m: EnemyMotion, st: number, 
   m.walk = 1 - ramp(RUN_EASE[0], RUN_EASE[1], st)
   m.phase = st * RUN_CADENCE
   m.stride = m.phase
-  animateHeroWalk(R, m, st, RUN_GAIT)
+  // A third of the vault the gait would give: at sprint pace its full rise
+  // and fall read as bouncing down the alley.
+  animateHeroWalk(R, m, st, RUN_GAIT, 0.35)
   const dash = dashPose(R, st, DASH_RUN[0], DASH_RUN[1])
   F.position.set(0, -dash.drop, z)
   F.rotation.set(dash.lean + 0.18 * m.walk * (1 - dash.on), ry, 0)
@@ -216,8 +218,10 @@ export const poseStreetFlux = (R: Rig, F: Object3D, m: EnemyMotion, st: number, 
   poseToward(R, 'elbowL', -0.5, 0, 0, guard)
   // The Repair Gel: the flask up in his left hand.
   const gel = settle(SHOW_GEL, SHOW_GEL + 0.35, st) * (1 - settle(SHOW_GEL_BURST, SHOW_GEL_BURST + 0.45, st))
-  poseToward(R, 'shoulderL', -2.5, 0, 0.25, gel)
-  poseToward(R, 'elbowL', -0.9, 0, 0, gel)
+  // Held up in front and out to the side, clear of the new helmet (measured:
+  // the hand 21 cm from it; the old pose brought it to the ear disc).
+  poseToward(R, 'shoulderL', -2.2, 0, -0.6, gel)
+  poseToward(R, 'elbowL', -0.3, 0, 0, gel)
   // The hero pose after the gel: chin up, the cannon held across.
   const hero = settle(SHOW_GEL_BURST + 0.3, SHOW_GEL_BURST + 0.9, st)
   poseToward(R, 'shoulderR', -0.6, 0, 0.62, hero)

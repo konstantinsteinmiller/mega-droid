@@ -15,7 +15,7 @@ import { buildStasisCapsule, stasisBeat, type StasisCapsule } from '../models/st
 import { buildDiorama, type Diorama } from '../models/diorama'
 import { buildStreet, vexFaceTexture, STREET_HAZE, type Street } from '../models/street'
 import { newMotion } from '../models/motion'
-import { pose, nudge, torus, cap, sph, rcyl, paint, type Rig } from '../models/kit'
+import { pose, poseAdd, nudge, torus, cap, sph, rcyl, paint, type Rig } from '../models/kit'
 import { PAL } from '../models/palette'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
 import { buildChargedShot, type ChargedShotFx } from '../fx/chargedShot'
@@ -1012,6 +1012,105 @@ export class IntroMode implements GameMode {
    * he dashes away charging to the Overload and puts it in its weak spot;
    * then a Repair Gel. Every pose is a function of the action clock.
    */
+  /**
+   * The Shield Trooper's acting, layered over its gait/guard pose: hits throw
+   * the body back joint by joint (shield arm flung, chest and then the head
+   * snapping back, knees buckling, a damped wobble as its servos catch it),
+   * each shot kicks the gun arm, and the slam is a real overhead blow —
+   * crouch, shield and gun raised together, the chest arched, then the whole
+   * body driving down through bent knees, a shudder on contact and a slow
+   * recovery.
+   */
+  private actTrooper(st: number): void {
+    const R = this.trooper
+    const hips = R.bones.hips!
+    /** A damped oscillation `age` seconds after an event (0 before it). */
+    const wob = (age: number, hz: number, damp: number): number => age < 0 ? 0 : Math.exp(-damp * age) * Math.sin(2 * Math.PI * hz * age)
+    /** A fast rise, then an exponential settle. */
+    const hit = (age: number, settle: number): number => age < 0 ? 0 : ramp(0, 0.06, age) * Math.exp(-settle * age)
+    let chX = 0
+    let chY = 0
+    let chZ = 0
+    let hdX = 0
+    let hdZ = 0
+    let shLX = 0
+    let shLY = 0
+    let shLZ = 0
+    let elL = 0
+    let shRX = 0
+    let shRZ = 0
+    let elR = 0
+    let crouch = 0
+    let lift = 0
+    // Hit reactions: the charged shot full force, its own shots coming home smaller.
+    const react = (age: number, k: number): void => {
+      if (age < 0 || age > 2.5) return
+      const e = hit(age, 2.4) * k
+      const lag = hit(age - 0.05, 2.8) * k
+      chX -= 0.45 * e + 0.08 * k * wob(age, 2.6, 4)
+      chY += 0.32 * e
+      chZ -= 0.12 * e
+      hdX -= 0.55 * lag + 0.12 * k * wob(age - 0.05, 3.4, 5)
+      hdZ += 0.25 * lag
+      shLX += 0.9 * e
+      shLZ -= 0.5 * e
+      elL -= 0.4 * e
+      shRX += 0.5 * e
+      shRZ += 0.45 * lag
+      elR -= 0.35 * lag
+      crouch += 0.75 * e * (1 - 0.4 * Math.exp(-6 * age))
+    }
+    react(st - SHOW_HIT, 1)
+    for (const v of SHOW_TROOP_SHOTS) react(st - (v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK), 0.6)
+    // Each of its shots: brace, then the gun arm kicks up and the chest twists back.
+    for (const v of SHOW_TROOP_SHOTS) {
+      const a = st - v
+      if (a < -0.2 || a > 1) continue
+      crouch += 0.2 * ramp(-0.2, 0, a) * (1 - ramp(0.1, 0.5, a))
+      const k = hit(a, 7)
+      shRX -= 0.4 * k
+      elR -= 0.3 * k
+      chY -= 0.14 * k
+      chX -= 0.06 * k
+      hdX -= 0.08 * hit(a - 0.03, 6)
+    }
+    // The slam: wind up (crouch, then rise with both arms high, chest arched),
+    // drive down, shudder, hold, recover.
+    const up = ramp(SHOW_SLAM - 0.65, SHOW_SLAM - 0.15, st)
+    const prep = ramp(SHOW_SLAM - 0.75, SHOW_SLAM - 0.55, st) * (1 - ramp(SHOW_SLAM - 0.5, SHOW_SLAM - 0.3, st))
+    const drive = ramp(SHOW_SLAM - 0.15, SHOW_SLAM, st)
+    const strike = drive * drive * (1 - ramp(SHOW_SLAM + 0.45, SHOW_SLAM + 1.1, st))
+    const wind = up * (1 - drive)
+    if (up > 0 || drive > 0) {
+      const sa = st - SHOW_SLAM
+      const shake = 0.06 * wob(sa, 7, 7)
+      crouch += 0.45 * prep + 1.1 * strike
+      lift += 0.06 * wind
+      chX += -0.4 * wind + 0.6 * strike + shake
+      hdX += -0.3 * wind + 0.25 * strike - 0.12 * wob(sa - 0.04, 4, 6)
+      shLX += -2.7 * wind - 0.75 * strike
+      shLY += 1.4 * (wind + strike)
+      elL += 0.3 * wind - 0.2 * strike
+      shRX += -2.4 * wind - 0.95 * strike
+      shRZ += -0.25 * wind
+      elR += 0.35 * wind - 0.15 * strike
+    }
+    // Knees take the weight: hips drop, thighs forward, shins back.
+    const c = Math.min(crouch, 1.2)
+    // (0.055 per unit: what the thigh/shin angles below shorten the legs by, feet planted)
+    hips.position.y += -0.055 * c + lift
+    poseAdd(R, 'hipL', -0.5 * c, 0, 0)
+    poseAdd(R, 'hipR', -0.5 * c, 0, 0)
+    poseAdd(R, 'kneeL', 0.85 * c, 0, 0)
+    poseAdd(R, 'kneeR', 0.85 * c, 0, 0)
+    poseAdd(R, 'chest', chX - 0.12 * c, chY, chZ)
+    poseAdd(R, 'head', hdX, 0, hdZ)
+    poseAdd(R, 'shoulderL', shLX, shLY, shLZ)
+    poseAdd(R, 'elbowL', elL, 0, 0)
+    poseAdd(R, 'shoulderR', shRX, 0, shRZ)
+    poseAdd(R, 'elbowR', elR, 0, 0)
+  }
+
   private renderShowcase(st: number, t: number, muzzle: Vector3): void {
     const R = this.runner
     const F = this.runnerRoot
@@ -1062,7 +1161,9 @@ export class IntroMode implements GameMode {
       const home = v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK
       reel = Math.max(reel, ramp(home, home + 0.08, st) * (1 - ramp(home + 0.15, home + 0.55, st)))
     }
-    T.rotation.x = -0.35 * stagger - 0.25 * lift + 0.4 * down - 0.6 * fall - 0.4 * reel
+    // The body does the acting (`actTrooper`); the root only carries its weight.
+    T.rotation.x = -0.12 * stagger - 0.08 * lift + 0.12 * down - 0.6 * fall - 0.1 * reel
+    this.actTrooper(st)
     // The finish takes it apart: its pieces are the shatter's (`showcaseBursts`).
     T.visible = st < SHOW_FINISH_HIT
     // The shock ring: out from the Trooper's feet, over Flux as he slides.
@@ -1353,7 +1454,8 @@ export class IntroMode implements GameMode {
     // and adds a soft neutral self-light; both fade out once the lab calms.
     const alarmK = 1 - calm
     this.sleeper.material.color.setRGB(1 - 0.5 * alarmK, 1, 1 - 0.08 * alarmK)
-    this.sleeper.material.emissive.setRGB(0.2, 0.2, 0.22).multiplyScalar(alarmK)
+    // (Kept faint: any more and he glows through the capsule glass.)
+    this.sleeper.material.emissive.setRGB(0.07, 0.07, 0.08).multiplyScalar(alarmK)
     this.sleeperRoot.visible = !fp
     // His capsule: the lever, the glass sliding down.
     const lever = ramp(LEVER_AT - 0.4, LEVER_AT, t)

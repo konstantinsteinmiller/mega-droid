@@ -37,6 +37,9 @@
       div.lid.bottom(ref="lidBottomEl")
     div.black(ref="blackEl" aria-hidden="true")
     div.flash(ref="flashEl" aria-hidden="true")
+      //- The logo on the loaders' night-blue grid, not on the bare white.
+      div.logo-card(ref="logoCardEl")
+        SplashBackdrop
       div.logo(ref="logoEl" v-html="LOGO_HTML")
     //- Skip: a labelled button, bottom corner (thumb reach on a phone); with a
     //- keyboard, also "hold Space", its ring filling as it is held.
@@ -87,6 +90,7 @@ import { initChargeRing, paintChargeRing } from '@/components/hud/chargeRing'
 import { KRANCK_LIFE, kranckTransform } from '@/components/hud/kranck'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { LOGO_HTML } from './logoLockup'
+import SplashBackdrop from '@/components/atoms/SplashBackdrop.vue'
 
 /**
  * ─── The intro's screen layer ────────────────────────────────────────────────
@@ -139,6 +143,7 @@ const lidBottomEl = ref<HTMLElement | null>(null)
 const blackEl = ref<HTMLElement | null>(null)
 const flashEl = ref<HTMLElement | null>(null)
 const logoEl = ref<HTMLElement | null>(null)
+const logoCardEl = ref<HTMLElement | null>(null)
 const xhEl = ref<HTMLElement | null>(null)
 const xhL1El = ref<SVGCircleElement | null>(null)
 const xhL2El = ref<SVGCircleElement | null>(null)
@@ -251,6 +256,7 @@ onMounted(() => {
       holdEl.value?.classList.toggle('held', L.hold > 0)
     }
     show(flashEl.value, L.flash)
+    show(logoCardEl.value, L.logoCard)
     if (logoEl.value) {
       logoEl.value.style.opacity = L.logo.toFixed(3)
       logoEl.value.style.transform = `scale(${(1.35 - 0.35 * L.logo).toFixed(3)})`
@@ -376,7 +382,12 @@ onUnmounted(() => {
   display: grid
   place-items: center
   visibility: hidden
+.logo-card
+  position: absolute
+  inset: 0
+  visibility: hidden
 .logo
+  position: relative
   width: min(62vw, 46vh, 420px)
   opacity: 0
   :deep(img)

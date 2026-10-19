@@ -445,6 +445,29 @@ const busterSlot = (): BufferGeometry =>
 export const HERO_MUZZLE_X = 0.045
 export const HERO_MUZZLE_Y = -0.4
 
+/** Flux's gloss, spliced in before the opaque output (`heroGloss`). */
+const GLOSS_GLSL = /* glsl */`
+      {
+        vec3 gN = normalize(normal);
+        vec3 gV = normalize(vViewPosition);
+        float ndv = clamp(dot(gN, gV), 0.0, 1.0);
+        float nh = clamp(dot(gN, normalize(normalize(vec3(-0.35, 0.65, 0.68)) + gV)), 0.0, 1.0);
+        float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+        // A soft, wide highlight over a faint sheen (rough painted armour, matched to the
+        // other machines); next to nothing on the dark parts
+        float spec = smoothstep(0.93, 0.99, nh) * (0.02 + 0.16 * smoothstep(0.05, 0.6, lum)) + pow(nh, 4.0) * (0.01 + 0.05 * smoothstep(0.05, 0.6, lum));
+        float rim = smoothstep(0.6, 0.95, 1.0 - ndv) * (0.05 + 0.1 * smoothstep(0.1, 0.6, lum));
+        // Creamy pearl: lift the lit whites, cool the shaded side a touch
+        float lit = max(outgoingLight.r, max(outgoingLight.g, outgoingLight.b));
+        float pearl = smoothstep(0.35, 0.75, lum);
+        outgoingLight *= mix(vec3(1.0), mix(vec3(0.97, 1.0, 1.08), vec3(1.3, 1.27, 1.2), smoothstep(0.3, 0.8, lit)), pearl);
+        outgoingLight += vec3(1.0, 0.97, 0.92) * spec + vec3(1.0, 0.86, 0.7) * rim;
+      }
+      #include <opaque_fragment>`
+let h = 0
+for (let i = 0; i < GLOSS_GLSL.length; i++) h = (h * 31 + GLOSS_GLSL.charCodeAt(i)) | 0
+const GLOSS_KEY = `flux-gloss-${(h >>> 0).toString(36)}`
+
 let glossRamp: DataTexture | null = null
 /**
  * Flux's own lit material: the toon material over a softer, filtered ramp,
@@ -463,25 +486,11 @@ const heroGloss = (): MeshToonMaterial => {
   }
   const m = new MeshToonMaterial({ vertexColors: true, gradientMap: glossRamp, emissive: new Color(0, 0, 0) })
   m.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', /* glsl */`
-      {
-        vec3 gN = normalize(normal);
-        vec3 gV = normalize(vViewPosition);
-        float ndv = clamp(dot(gN, gV), 0.0, 1.0);
-        float nh = clamp(dot(gN, normalize(normalize(vec3(-0.35, 0.65, 0.68)) + gV)), 0.0, 1.0);
-        float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-        // A small hot spot (the cover's) over a broad soft sheen; next to nothing on the dark parts
-        float spec = smoothstep(0.986, 0.994, nh) * (0.05 + 0.55 * smoothstep(0.05, 0.6, lum)) + pow(nh, 10.0) * (0.03 + 0.12 * smoothstep(0.05, 0.6, lum));
-        float rim = smoothstep(0.55, 0.95, 1.0 - ndv) * (0.1 + 0.22 * smoothstep(0.1, 0.6, lum));
-        // Creamy pearl: lift the lit whites, cool the shaded side a touch
-        float lit = max(outgoingLight.r, max(outgoingLight.g, outgoingLight.b));
-        float pearl = smoothstep(0.35, 0.75, lum);
-        outgoingLight *= mix(vec3(1.0), mix(vec3(0.97, 1.0, 1.08), vec3(1.3, 1.27, 1.2), smoothstep(0.3, 0.8, lit)), pearl);
-        outgoingLight += vec3(1.0, 0.97, 0.92) * spec + vec3(1.0, 0.86, 0.7) * rim;
-      }
-      #include <opaque_fragment>`)
+    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', GLOSS_GLSL)
   }
-  m.customProgramCacheKey = () => 'flux-gloss'
+  // Keyed by the shader text: a constant key let the renderer keep serving the
+  // old program after an edit (the intro still showed the old gloss).
+  m.customProgramCacheKey = () => GLOSS_KEY
   return m
 }
 

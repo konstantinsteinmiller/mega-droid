@@ -456,10 +456,12 @@ export interface IntroOverlay {
   /** The white flash, and the logo stamped onto it. */
   flash: number
   logo: number
+  /** The loader's night-blue grid the logo sits on, over the flash, 0..1. */
+  logoCard: number
 }
 
 export const newOverlay = (): IntroOverlay => ({
-  black: 1, rewind: 0, eyelid: 0, blur: 0, hud: 0, hp: 0, lv: 0, glyph: 0, tagFortress: 0, tagScrap: 0, cutin: 0, flash: 0, logo: 0
+  black: 1, rewind: 0, eyelid: 0, blur: 0, hud: 0, hp: 0, lv: 0, glyph: 0, tagFortress: 0, tagScrap: 0, cutin: 0, flash: 0, logo: 0, logoCard: 0
 })
 
 /** Out of the dark: shut a moment, two slow blinks, then eyes open. */
@@ -503,5 +505,6 @@ export const overlayAt = (t: number, o: IntroOverlay = newOverlay()): IntroOverl
   const out = 1 - ramp(STREET_AT - 0.2, STREET_AT + 0.5, t)
   o.flash = ramp(FLASH_FROM, FLASH_FULL, t) * out
   o.logo = ramp(LOGO_AT, LOGO_AT + 0.3, t) * (1 - ramp(STREET_AT - 0.5, STREET_AT, t))
+  o.logoCard = ramp(LOGO_AT - 0.15, LOGO_AT + 0.15, t) * (1 - ramp(STREET_AT - 0.5, STREET_AT, t))
   return o
 }

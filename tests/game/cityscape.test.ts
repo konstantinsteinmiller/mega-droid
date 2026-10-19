@@ -10,7 +10,7 @@ import { generateMap, CELL, WALL_H } from '@/game/world/levelGen'
 import { generateClimb } from '@/game/world/climbGen'
 import { THEMES } from '@/game/world/themes'
 import { generateStage } from '@/game/world/stages'
-import { buildCityscape, cloudSea, CLOUD_SINK, trafficClearance } from '@/game/world/cityscape'
+import { buildCityscape, cloudPalette, cloudSea, CLOUD_DRIFT, CLOUD_SINK, trafficClearance } from '@/game/world/cityscape'
 import { BoxGeometry } from 'three'
 import { coplanarPairs } from './coplanar'
 
@@ -53,6 +53,12 @@ describe('the cityscape', () => {
         expect(d, s).toBeLessThan(0.15)
       }
       expect(n, s).toBeGreaterThan(0)
+      // The cloud sea, its rolling surface too, stays down by the level:
+      // nothing above the ground within 20 m of its reach.
+      const { reach } = trafficClearance(map)
+      for (let i = 0; i < pos.count; i++) {
+        if (pos.getY(i) >= 0.5) expect(Math.hypot(pos.getX(i) - cx, pos.getZ(i) - cz), s).toBeGreaterThan(reach + 20)
+      }
       c.dispose()
     }
   })
@@ -64,26 +70,38 @@ describe('the cityscape', () => {
       const c = await buildCityscape(m, THEMES.gale, undefined, q)
       c.stream(Infinity)
       let meshes = 0
+      let all = 0
       const body = (c.root.children[0] as Mesh).geometry.attributes.position!.count
-      c.root.traverse((o) => { if ((o as Mesh).isMesh) meshes++ })
+      c.root.traverse((o) => {
+        const m = o as Mesh
+        if (!m.isMesh) return
+        meshes++
+        all += m.geometry.attributes.position!.count * ((m as unknown as { count?: number }).count ?? 1)
+      })
       c.dispose()
-      return { meshes, body }
+      return { meshes, body, all }
     }
     for (const q of ['full', 'low'] as const) {
       const sky = await shape(true, q)
       const flat = await shape(false, q)
       expect(sky.meshes, q).toBe(flat.meshes)
+      // The whole sea (rolling surface, billows, banks, horizon ridge,
+      // islands) in the body mesh...
       const added = sky.body - flat.body
-      expect(added, q).toBeGreaterThan(q === 'low' ? 600 : 2000)
-      expect(added, q).toBeLessThan(q === 'low' ? 3500 : 8000)
+      expect(added, q).toBeGreaterThan(q === 'low' ? 2500 : 9000)
+      expect(added, q).toBeLessThan(q === 'low' ? 7000 : 18000)
+      // ...and none streamed in with the far band or the landmarks: no cloud
+      // hugs a tower's foot any more.
+      expect(sky.all - flat.all - added, q).toBe(0)
     }
   })
 
   it('its clouds never lie in the ground plane or in one another', () => {
     let s = 7
     const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296)
-    const feet = Array.from({ length: 30 }, (_, i) => ({ x: Math.cos(i) * 110, z: Math.sin(i) * 110, w: 6 + (i % 5) }))
-    const parts = cloudSea(r, new Color('#cfe6ff'), 0, 0, 50, feet, false)
+    const feet = Array.from({ length: 30 }, (_, i) => ({ x: Math.cos(i) * 110, z: Math.sin(i) * 110, r: 6 + (i % 5) }))
+    const marks = [{ x: 180, z: 0, r: 36 }, { x: -170, z: 40, r: 34 }]
+    const parts = cloudSea(r, new Color('#cfe6ff'), 0, 0, 50, [...feet, ...marks], false)
     // The cloud-sea ground: a slab from y = -0.6 to -0.5.
     const ground = new BoxGeometry(480, 0.1, 480).translate(0, -0.55, 0)
     expect(coplanarPairs([ground, ...parts], 0.05)).toEqual([])
@@ -94,6 +112,171 @@ describe('the cityscape', () => {
       // Each puff either sinks well under the plane or floats clear of it.
       expect(lo < CLOUD_SINK + 0.5 || lo > 1).toBe(true)
     }
+  })
+
+  it('no cloud vertex, at either end of its drift, ever lies inside a tower or landmark footprint', () => {
+    for (const low of [false, true]) {
+      let s = 11
+      const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296)
+      // A dense skyline: towers in the gaps' way, landmarks on the horizon ridge.
+      const keepOut = [
+        ...Array.from({ length: 90 }, (_, i) => ({ x: Math.cos(i * 0.7) * (95 + (i % 5) * 25), z: Math.sin(i * 0.7) * (95 + (i % 5) * 25), r: 8 + (i % 6) * 3 })),
+        { x: 200, z: 0, r: 40 }, { x: -190, z: 60, r: 34 }, { x: 30, z: -205, r: 36 }
+      ]
+      const parts = cloudSea(r, new Color('#cfe6ff'), 0, 0, 50, keepOut, low)
+      let islands = 0
+      let surface = 0
+      let inside = 0
+      for (const g of parts) {
+        const pos = g.attributes.position!
+        const aw = g.attributes.aW!
+        // Every puff is a cloud to the shader (aW.y < 0): never a window wall.
+        for (let i = 0; i < aw.count; i++) expect(aw.getY(i)).toBeLessThan(-0.5)
+        // A drifting puff (aW.y < -1.5) sways up to CLOUD_DRIFT each way in x and z.
+        const sway = aw.getY(0) < -1.5 ? CLOUD_DRIFT : 0
+        let lo = Infinity
+        for (let i = 0; i < pos.count; i++) {
+          lo = Math.min(lo, pos.getY(i))
+          for (const k of keepOut) {
+            for (const dx of [-sway, sway]) {
+              for (const dz of [-sway, sway]) {
+                if (Math.hypot(pos.getX(i) + dx - k.x, pos.getZ(i) + dz - k.z) <= k.r) inside++
+              }
+            }
+          }
+        }
+        if (lo > 1) islands++
+        else surface++
+      }
+      expect(inside).toBe(0)
+      expect(inside).toBe(0)
+      // Still a sea: plenty on the surface, and islands floating over it.
+      expect(islands).toBeGreaterThan(0)
+      expect(surface).toBeGreaterThan(low ? 15 : 50)
+    }
+  })
+
+  it('a rolling surface covers the sea to the horizon, hugging every footprint it does not enter', () => {
+    for (const low of [false, true]) {
+      let s = 5
+      const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296)
+      const keepOut = Array.from({ length: 36 }, (_, i) => ({ x: Math.cos(i * 2.4) * (95 + (i % 4) * 35), z: Math.sin(i * 2.4) * (95 + (i % 4) * 35), r: 6 + (i % 5) * 3 }))
+      const parts = cloudSea(r, new Color('#cfe6ff'), 0, 0, 50, keepOut, low)
+      const g = parts[parts.length - 1]!
+      const pos = g.attributes.position!
+      let far = 0
+      let hi = -Infinity
+      let bad = 0
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i)
+        const y = pos.getY(i)
+        const z = pos.getZ(i)
+        hi = Math.max(hi, y)
+        // Static, nowhere inside a footprint, and never up into the level's reach.
+        if (g.attributes.aW!.getY(i) !== -1) bad++
+        for (const k of keepOut) if (Math.hypot(x - k.x, z - k.z) <= k.r) bad++
+        const d = Math.hypot(x, z)
+        if (d <= 50 + 20) bad++
+        // A flat facet lies clear of the ground plane's top (y = -0.5), above
+        // it or dipped under it: never a few cm off it.
+        if (i % 3 === 0) {
+          const ys = [y, pos.getY(i + 1), pos.getY(i + 2)]
+          if (Math.max(...ys) - Math.min(...ys) < 0.05 && Math.abs(y + 0.5) <= 0.5) bad++
+        }
+        if (d > 230) far++
+      }
+      expect(bad).toBe(0)
+      // It swells over the plane and reaches the horizon ridge all round.
+      expect(hi).toBeGreaterThan(2)
+      expect(far).toBeGreaterThan(low ? 60 : 150)
+      // Every tower stands in a trough of it, ringed all round (within about
+      // two grid cells), that runs under the ground plane at its rim, so the
+      // cut's edge hides under the plane. (Rings counted on footprints
+      // standing alone; where two overlap, the trough runs round both.)
+      let high = 0
+      let lone = 0
+      for (const k of keepOut) {
+        const alone = keepOut.every(o => o === k || Math.hypot(o.x - k.x, o.z - k.z) > o.r + k.r + 12)
+        const sides = new Set<number>()
+        for (let i = 0; i < pos.count; i++) {
+          const dx = pos.getX(i) - k.x
+          const dz = pos.getZ(i) - k.z
+          const e = Math.hypot(dx, dz) - k.r
+          if (e < 1.5 && pos.getY(i) >= -0.5) high++
+          if (e < 6 + 0.15 * Math.hypot(k.x, k.z)) sides.add(Math.floor(((Math.atan2(dz, dx) + Math.PI) / (Math.PI * 2)) * 4) % 4)
+        }
+        if (alone) { lone++; expect(sides.size, `${k.x},${k.z}`).toBe(4) }
+      }
+      expect(high).toBe(0)
+      expect(lone).toBeGreaterThan(3)
+      // Faceted, facing up, and in stepped tones (crests, flanks, troughs).
+      const tones = new Set<string>()
+      for (let i = 0; i < pos.count; i += 3) {
+        expect(g.attributes.normal!.getY(i)).toBeGreaterThan(0)
+        const col = g.attributes.color!
+        tones.add(`${col.getX(i).toFixed(3)},${col.getZ(i).toFixed(3)}`)
+      }
+      expect(tones.size).toBeGreaterThanOrEqual(4)
+    }
+  })
+
+  it('each sky sector has its own cloud palette, matching its sky', () => {
+    const lum = (c: Color) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+    const gale = cloudPalette('gale', new Color(THEMES.gale.fog))
+    const neon = cloudPalette('neon', new Color(THEMES.neon.fog))
+    const rotor = cloudPalette('rotor', new Color(THEMES.rotor.fog))
+    for (const p of [gale, rotor]) expect(lum(p.top)).toBeGreaterThan(lum(p.under) + 0.2)
+    // (A moodier night: muted crests, still well clear of the troughs.)
+    expect(lum(neon.top)).toBeGreaterThan(lum(neon.under) + 0.15)
+    // Gale: white tops, cool blue bellies.
+    expect(gale.top.getHexString()).toBe('ffffff')
+    expect(gale.under.b - gale.under.r).toBeGreaterThan(0.1)
+    expect(gale.glow).toHaveLength(0)
+    expect(gale.haze).toBe(0.3)
+    // Neon: a moodier moonlit night — muted lavender-grey crests (blue over
+    // green, well short of white), deep indigo troughs, a few bellies lit
+    // magenta or cyan by the city, the flat sea past the level a night
+    // indigo, not the pits' grey mist.
+    expect(neon.top.b).toBeGreaterThan(neon.top.g)
+    expect(neon.top.r).toBeGreaterThan(neon.top.g)
+    expect(lum(neon.top)).toBeLessThan(0.45)
+    expect(lum(neon.top)).toBeGreaterThan(lum(new Color(THEMES.neon.skyBottom)))
+    expect(neon.under.b).toBeGreaterThan(neon.under.g * 3)
+    expect(neon.under.r).toBeGreaterThan(neon.under.g)
+    expect(lum(neon.under)).toBeLessThan(0.04)
+    expect(neon.glow.some(c => c.r > c.b && c.r > c.g)).toBe(true)
+    expect(neon.glow.some(c => c.b > c.r && c.g > c.r)).toBe(true)
+    const neonMist = new Color(THEMES.neon.fog).lerp(new Color('#ffffff'), 0.35)
+    expect(lum(neon.rim)).toBeLessThan(lum(neonMist) - 0.05)
+    expect(neon.rim.b).toBeGreaterThan(neon.rim.g * 2)
+    // Rotor: a warm dusk with contrast — sunlit crests (red over blue),
+    // dusky rose-mauve troughs far darker than the warm haze, and less
+    // of that haze on the clouds.
+    const rotorFog = new Color(THEMES.rotor.fog)
+    expect(rotor.top.r).toBeGreaterThan(rotor.top.b)
+    expect(lum(rotor.top)).toBeGreaterThan(lum(rotorFog))
+    expect(rotor.under.r).toBeGreaterThan(rotor.under.g)
+    expect(rotor.under.b).toBeGreaterThan(rotor.under.g)
+    expect(lum(rotor.under)).toBeLessThan(lum(rotorFog) * 0.25)
+    expect(rotor.haze).toBeLessThan(gale.haze)
+    expect(rotor.sink).toBeGreaterThan(gale.sink)
+  })
+
+  it('its clouds are white on top and a cool blue underneath', () => {
+    let s = 3
+    const r = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296)
+    const [g] = cloudSea(r, new Color('#e8eef8'), 0, 0, 50, [], false)
+    const col = g!.attributes.color!
+    const nor = g!.attributes.normal!
+    let top = 0
+    let under = 0
+    for (let i = 0; i < col.count; i++) {
+      const blue = col.getZ(i) - col.getX(i)
+      if (nor.getY(i) > 0.55) { expect(col.getX(i)).toBeCloseTo(1, 2); top++ }
+      else if (nor.getY(i) < -0.1) { expect(blue).toBeGreaterThan(0.1); under++ }
+    }
+    expect(top).toBeGreaterThan(0)
+    expect(under).toBeGreaterThan(0)
   })
 
   it('stands clear of the level: nothing above the ground within 20 m of its reach', async () => {

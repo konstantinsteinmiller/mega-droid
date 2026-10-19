@@ -43,6 +43,7 @@ import { SkyTargets } from './skyTargets'
 // ─── The shader ──────────────────────────────────────────────────────────────
 
 const VERT = /* glsl */`
+#define CLOUD_DRIFT 6.0
 #include <common>
 #include <color_pars_vertex>
 attribute vec2 aW;
@@ -50,7 +51,9 @@ uniform float uHazeNear;
 uniform float uHazeFar;
 uniform float uHazeMax;
 uniform float uHazeLit;
+uniform float uCloudHaze;
 uniform float uReveal;
+uniform float uTime;
 varying float vHaze;
 varying vec2 vW;
 varying vec2 vUv;
@@ -61,8 +64,15 @@ void main() {
     wp = instanceMatrix * wp;
   #endif
   wp = modelMatrix * wp;
-  float d = distance( wp.xyz, cameraPosition );
   float hazeMax = uHazeMax;
+  // Cloud puffs (aW.y < 0, see puff()) cut through the haze, so the cloud
+  // sea reads to the horizon; drifting ones (aW.y < -1.5) sway slowly on
+  // their own phase (aW.x), every vertex of a puff by the same offset.
+  if ( aW.y < -0.5 ) {
+    hazeMax *= uCloudHaze;
+    if ( aW.y < -1.5 ) wp.xz += vec2( sin( uTime * 0.05 + aW.x ), cos( uTime * 0.037 + aW.x * 1.7 ) ) * CLOUD_DRIFT;
+  }
+  float d = distance( wp.xyz, cameraPosition );
   #ifdef VEHICLE
     // A vehicle's lights (aW.y = 1) cut through the haze further than its body.
     hazeMax = mix( uHazeMax, uHazeLit, aW.y );
@@ -96,7 +106,8 @@ void main() {
     if ( vW.x > 0.0 ) c *= 0.15 + 0.85 * step( 0.55, fract( uTime * 0.7 + vW.x ) );
   #elif !defined( GLOW )
     // At night the walls sink into the dark and the lights carry them.
-    c *= 1.0 - 0.5 * uNight;
+    // (Clouds, vW.y < -0.5, keep their own palette: see cloudPalette.)
+    c *= 1.0 - 0.5 * uNight * step( -0.5, vW.y );
   #endif
   #ifdef WINDOWS
     // A grid of windows on every wall face (vW.y = 1), lit at random, more
@@ -106,7 +117,7 @@ void main() {
     vec2 id = floor( vUv );
     float win = step( 0.16, cell.x ) * step( cell.x, 0.84 ) * step( 0.28, cell.y ) * step( cell.y, 0.82 );
     float px = max( fwidth( vUv.x ), fwidth( vUv.y ) );
-    win = mix( win, 0.42, clamp( px * 2.2 - 0.4, 0.0, 1.0 ) ) * vW.y;
+    win = mix( win, 0.42, clamp( px * 2.2 - 0.4, 0.0, 1.0 ) ) * max( vW.y, 0.0 );
     float rnd = fract( sin( dot( id, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );
     float lit = step( 0.82 - 0.42 * uNight, rnd );
     c = mix( c, uGlass * ( 0.85 + 0.3 * rnd ), win * 0.8 );
@@ -146,6 +157,8 @@ const cityMat = (look: CityLook, kind: 'body' | 'glow' | 'vehicle', hazeMax: num
       uHazeFar: { value: 320 },
       uHazeMax: { value: hazeMax },
       uHazeLit: { value: hazeLit },
+      // How much of the haze the clouds take (see VERT): the palette's.
+      uCloudHaze: { value: 0.3 },
       uReveal: { value: 1 }
     }
   })
@@ -240,6 +253,37 @@ const prism = (sides: number, r0: number, r1: number, h: number, hex: string, ya
   g.setAttribute('color', new Float32BufferAttribute(cols, 3))
   g.setIndex(idx)
   return finish(g, windows)
+}
+
+/**
+ * A flat ring round the ground's disc, out to the horizon: its rings at
+ * `radii` (the first the disc's own edge, same yaw, so they meet without a
+ * gap or an overlap), each in its colour, shaded as the disc's roof.
+ */
+const seaRim = (sides: number, radii: number[], cols: Color[]): BufferGeometry => {
+  const pos: number[] = []
+  const col: number[] = []
+  const idx: number[] = []
+  for (let k = 0; k < radii.length; k++) {
+    for (let s = 0; s <= sides; s++) {
+      const a = (s / sides) * Math.PI * 2 + Math.PI / sides
+      pos.push(Math.cos(a) * radii[k]!, 0, Math.sin(a) * radii[k]!)
+      col.push(cols[k]!.r, cols[k]!.g, cols[k]!.b)
+    }
+  }
+  const w = sides + 1
+  for (let k = 0; k + 1 < radii.length; k++) {
+    for (let s = 0; s < sides; s++) {
+      const a = k * w + s
+      idx.push(a, a + 1, a + w + 1, a, a + w + 1, a + w)
+    }
+  }
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3))
+  g.setAttribute('normal', new Float32BufferAttribute(pos.map((_, i) => i % 3 === 1 ? 1 : 0), 3))
+  g.setAttribute('color', new Float32BufferAttribute(col, 3))
+  g.setIndex(idx)
+  return finish(g, false)
 }
 
 /** Place a geometry (translate, rotate, scale), as the kit's `xform`. */
@@ -959,14 +1003,59 @@ const plume = (): BufferGeometry[] => [prism(10, 3.4, 1.6, 1, '#eef0f6', 0, fals
  *  ever lies in the plane (no z-fighting at any distance). */
 export const CLOUD_SINK = -2.5
 
+/** How far a drifting puff sways off its spot (m): CLOUD_DRIFT in VERT. */
+export const CLOUD_DRIFT = 6
+
+/**
+ * A cloud's three tones, top to belly (toon steps, no shading baked), plus
+ * the city glow some bellies catch (none by day), the flat sea's tone past
+ * the level (`rim`: the pits' mist only under it) and how much of the haze
+ * the clouds take (`haze`, a share of the walls') and how much of the
+ * rolling sea falls out of the crest's tone into the flanks and troughs
+ * (`sink`, 0 by day: more contrast where the sky would swallow the crests).
+ */
+export interface CloudPalette { top: Color; flank: Color; under: Color; glow: Color[]; rim: Color; haze: number; sink: number }
+
+/**
+ * The clouds' palette for a sector, to match its sky: white tops and soft
+ * blue bellies by day (gale and every other); under neon's purple night,
+ * muted moonlit lavender-grey crests over deep indigo troughs, a few bellies
+ * lit magenta or cyan by the city, the flat sea a night indigo; in rotor's
+ * dusk, warm sunlit crests over dusky rose-mauve troughs, thinly hazed so
+ * they do not melt into the warm fog. The clouds keep it at night too (FRAG
+ * leaves them out of the walls' night dimming).
+ */
+export const cloudPalette = (themeId: string, fog: Color): CloudPalette => {
+  const mist = fog.clone().lerp(new Color('#ffffff'), 0.35)
+  // `shade`: how far the flanks fall toward the belly (deeper for contrast).
+  const pal = (top: string, under: Color, rim = mist, haze = 0.3, glow: string[] = [], shade = 0.38, sink = 0): CloudPalette => {
+    const t = new Color(top)
+    return { top: t, flank: t.clone().lerp(under, shade), under, glow: glow.map(h => new Color(h)), rim, haze, sink }
+  }
+  if (themeId === 'neon') {
+    return pal('#7c74a4', new Color('#24184e').lerp(new Color('#a0308a'), 0.12), new Color('#2c2058'), 0.3, ['#c0409c', '#3aa8c8'], 0.58, 0.06)
+  }
+  if (themeId === 'rotor') return pal('#ffeacc', new Color('#7a4466').lerp(new Color('#5e4282'), 0.3), new Color('#c89a98'), 0.12, [], 0.55, 0.16)
+  return pal('#ffffff', fog.clone().lerp(new Color('#5d7cc4'), 0.6))
+}
+
+/** A belly's tone: now and then lit by the city's glow, if the palette has
+ *  one (`pick` in 0..1 picks the facet and its colour). */
+const belly = (pal: CloudPalette, c: Color, pick: number): Color => {
+  const n = pal.glow.length
+  if (n && pick < 0.3) c.lerp(pal.glow[Math.floor((pick / 0.3) * n) % n]!, 0.24)
+  return c
+}
+
 /**
  * One chunky puff: a 20-facet icosahedron, flattened and turned, each facet
- * its own flat colour — lit white on top, shading into the fog's own tint
- * underneath (the city's haze then fades it into the horizon). Indexed, with
- * the city's attributes, so it merges into the skyline's body mesh: the whole
- * cloud sea costs no draw call of its own.
+ * its own flat colour from the palette — the top lit, shading into the
+ * belly's tone underneath. Indexed, with the city's attributes, so it merges into the
+ * skyline's body meshes: the whole cloud sea costs no draw call of its own.
+ * `aW` flags it a cloud for VERT (y = -1, or -2 to drift, on phase x), which
+ * thins the haze on it so the banks still read at the horizon.
  */
-const puff = (r: () => number, fog: Color, p: V3, s: V3): BufferGeometry => {
+const puff = (r: () => number, pal: CloudPalette, p: V3, s: V3, drift = false): BufferGeometry => {
   const g = new IcosahedronGeometry(1, 0)
   g.deleteAttribute('uv')
   g.deleteAttribute('normal')
@@ -974,67 +1063,256 @@ const puff = (r: () => number, fog: Color, p: V3, s: V3): BufferGeometry => {
   g.computeVertexNormals()
   const nor = g.attributes.normal!
   const n = nor.count
-  const top = new Color('#ffffff')
-  const under = fog.clone().lerp(new Color('#7f8db0'), 0.45)
+  const { top, under } = pal
   const cols = new Float32Array(n * 3)
   const c = new Color()
+  // One glow pick per puff (drawn only if the palette glows, so day clouds
+  // keep their layout).
+  const pick = pal.glow.length ? r() : 1
   for (let i = 0; i < n; i++) {
     const up = nor.getY(i)
     const sun = Math.max(0, nor.getX(i) * SUN.x + nor.getY(i) * SUN.y + nor.getZ(i) * SUN.z)
-    // Toon steps: sunlit top, a pale flank, a cool belly.
-    const k = up > 0.55 ? 0 : up > -0.1 ? 0.3 - 0.12 * sun : 0.75
+    // Toon steps: sunlit top, a pale blue flank, a cool blue belly.
+    const k = up > 0.55 ? 0 : up > -0.1 ? 0.42 - 0.14 * sun : 0.85
     c.copy(top).lerp(under, k)
+    if (k > 0.8) belly(pal, c, pick)
     cols.set([c.r, c.g, c.b], i * 3)
   }
   g.setAttribute('color', new Float32BufferAttribute(cols, 3))
   g.setIndex([...Array(n).keys()])
-  return finish(g, false, 0, false)
+  finish(g, false, 0, false)
+  const aw = g.attributes.aW!
+  const phase = r() * Math.PI * 2
+  for (let i = 0; i < n; i++) aw.setXY(i, phase, drift ? -2 : -1)
+  return g
+}
+
+/** Where cloud geometry may rise: see CLOUD_SINK. A puff `sy` tall half
+ *  shows above it. */
+const lift = (sy: number) => CLOUD_SINK + sy * 0.75
+
+/** What no cloud may enter: a tower's or landmark's footprint (`r`, its
+ *  whole spread), a vertical column from the ground up. */
+export type CloudKeepOut = Array<{ x: number; z: number; r: number }>
+
+/** The room a cloud has at (x, z): its distance to the nearest footprint's
+ *  rim (m). */
+const room = (keepOut: CloudKeepOut, x: number, z: number): number => {
+  let m = Infinity
+  for (const k of keepOut) m = Math.min(m, Math.hypot(k.x - x, k.z - z) - k.r)
+  return m
+}
+
+/** Clear of every footprint by `gap` m, every vertex, at any sway. */
+const clearOf = (g: BufferGeometry, keepOut: CloudKeepOut, gap: number): boolean => {
+  const pos = g.attributes.position!
+  for (let i = 0; i < pos.count; i++) {
+    if (room(keepOut, pos.getX(i), pos.getZ(i)) <= gap) return false
+  }
+  return true
 }
 
 /**
- * The cloud sea the sky city rises out of (`Terrain.clouds` maps): a mound
- * hugging every near tower's foot, so no tower ends in a cut-off edge on the
- * flat plane; banks scattered out to the horizon; and a few cloud islands
- * adrift above it. Purely visual (nothing collides with the city), kept out
- * past the level's reach, and modest: ~60 vertices a puff.
+ * The cloud sea the sky city rises out of (`Terrain.clouds` maps). The
+ * towers pierce its flat surface (the pale ground) cleanly; no cloud ever
+ * wraps one or enters a footprint in `keepOut` (by its sway and a margin
+ * more). On the surface: low, flat billows filling the open gaps between
+ * the buildings, broad drifting banks out where the sky opens up, and a
+ * billowing ridge on the horizon; above it, a few cloud islands adrift in
+ * open sky. Purely visual (nothing collides with the city), kept out past
+ * the level's reach, and modest: ~60 vertices a puff.
  */
 export const cloudSea = (
   r: () => number, fog: Color, cx: number, cz: number, reach: number,
-  feet: Array<{ x: number; z: number; w: number }>, low: boolean
+  keepOut: CloudKeepOut, low: boolean, pal: CloudPalette = cloudPalette('', fog), half?: [number, number]
 ): BufferGeometry[] => {
   const out: BufferGeometry[] = []
-  const lift = (sy: number) => CLOUD_SINK + sy * 0.75
-  for (const f of feet) {
-    const sx = f.w * (1.2 + r() * 0.6)
-    const sy = 5 + r() * 3
-    out.push(puff(r, fog, [f.x + (r() - 0.5) * 3, lift(sy), f.z + (r() - 0.5) * 3], [sx, sy, sx * (0.8 + r() * 0.4)]))
+  const MARGIN = 2
+  // One puff at (x, z), as wide as the room there allows (up to `size`),
+  // dropped when it would be a crumb or would still touch a footprint.
+  const place = (x: number, z: number, size: number, flat: number, y: number | null, drift: boolean): boolean => {
+    const sway = drift ? CLOUD_DRIFT : 0
+    // A tilted puff reaches a little past its widest axis: keep 1.3x room.
+    const sx = Math.min(size, (room(keepOut, x, z) - sway - MARGIN) / 1.3, Math.hypot(x - cx, z - cz) - reach - 22)
+    if (sx < 4) return false
+    const sy = sx * flat
+    const g = puff(r, pal, [x, y ?? lift(sy), z], [sx, sy, sx * (0.6 + r() * 0.4)], drift)
+    if (!clearOf(g, keepOut, sway + MARGIN)) { g.dispose(); return false }
+    out.push(g)
+    return true
   }
-  const ring = (n: number, from: number, to: number, size: number, hy: number) => {
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + r() * (Math.PI * 2 / n)
+  const scatter = (n: number, from: number, to: number, size: number, flat: number, drift: boolean) => {
+    for (let i = 0, tries = 0; i < n && tries < n * 4; tries++) {
+      const a = r() * Math.PI * 2
       const d = from + r() * (to - from)
-      const sy = hy * (0.6 + r() * 0.6)
-      const sx = size * (0.6 + r() * 0.8)
-      out.push(puff(r, fog, [cx + Math.cos(a) * d, lift(sy), cz + Math.sin(a) * d], [sx, sy, sx * (0.6 + r() * 0.5)]))
+      if (place(cx + Math.cos(a) * d, cz + Math.sin(a) * d, size * (0.7 + r() * 0.6), flat * (0.8 + r() * 0.4), null, drift)) i++
     }
   }
-  // Banks: low swells near, broad ones far.
-  ring(low ? 8 : 18, reach + 32, reach + 90, 9, 5)
-  ring(low ? 6 : 16, reach + 90, 230, 22, 9)
-  // Islands adrift: a big puff with two smaller ones on its back.
+  // Billows in the gaps between the towers: still, low and flat, so the
+  // sea's surface swells round the feet without touching them.
+  scatter(low ? 24 : 70, reach + 28, 215, 11, 0.4, false)
+  // Banks where the sky opens up: broad, and drifting.
+  scatter(low ? 6 : 16, reach + 60, 215, 20, 0.45, true)
+  // The horizon ridge — tall, overlapping billows round the ground's rim,
+  // so the skyline ends in a cloud sea instead of a flat edge.
+  for (let i = 0, n = low ? 14 : 30; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + r() * (Math.PI * 2 / n)
+    const d = 215 + r() * 30
+    place(cx + Math.cos(a) * d, cz + Math.sin(a) * d, 34 * (0.6 + r() * 0.8), 0.6 + r() * 0.3, null, true)
+  }
+  // Islands adrift above the sea: a big puff with two smaller ones on its
+  // back, in open sky only.
   const islands = low ? 2 : 5
-  for (let i = 0; i < islands; i++) {
+  for (let i = 0, tries = 0; i < islands && tries < 60; tries++) {
     const a = r() * Math.PI * 2
     const d = reach + 60 + r() * 100
     const x = cx + Math.cos(a) * d
     const z = cz + Math.sin(a) * d
-    const y = 6 + r() * 8
+    const y = 8 + r() * 10
     const s = 5 + r() * 4
-    out.push(puff(r, fog, [x, y, z], [s * 1.6, s * 0.55, s * 1.2]))
-    out.push(puff(r, fog, [x + s * 0.5, y + s * 0.4, z], [s * 0.8, s * 0.5, s * 0.7]))
-    out.push(puff(r, fog, [x - s * 0.6, y + s * 0.25, z + s * 0.3], [s * 0.6, s * 0.4, s * 0.6]))
+    // The island's own reach (its big puff, 1.6 s, tilted) plus its sway.
+    if (room(keepOut, x, z) < s * 2.2 + CLOUD_DRIFT + MARGIN) continue
+    const parts = [
+      puff(r, pal, [x, y, z], [s * 1.6, s * 0.55, s * 1.2], true),
+      puff(r, pal, [x + s * 0.5, y + s * 0.4, z], [s * 0.8, s * 0.5, s * 0.7], true),
+      puff(r, pal, [x - s * 0.6, y + s * 0.25, z + s * 0.3], [s * 0.6, s * 0.4, s * 0.6], true)
+    ]
+    if (!parts.every(g => clearOf(g, keepOut, CLOUD_DRIFT + MARGIN))) { parts.forEach(g => g.dispose()); continue }
+    i++
+    out.push(...parts)
   }
+  // Under it all, the rolling surface every tower pierces (last: the puffs
+  // come first).
+  out.push(cloudSurface(r, fog, pal, cx, cz, reach, keepOut, low, half))
   return out
+}
+
+/** Where the rolling surface sinks to at its rims (round every footprint
+ *  and at its inner edge): well under the ground plane, so it runs into the
+ *  plane at a slant and never lies in it. */
+export const SURFACE_DIP = CLOUD_SINK + 0.3
+
+/**
+ * The cloud sea's rolling surface: a faceted polar heightfield from just
+ * past the level's walls (`half`, its half extents; else its reach) to the
+ * ground's rim, swelling up to ~10 m over the pale ground plane (higher
+ * toward the horizon) but kept under 0.5 m within 20 m of the level's reach
+ * (the city's clearance), each facet a stepped tone by its height and its
+ * slope to the sun (white crests, pale flanks, blue troughs). Static, cut round the
+ * footprints: no facet with a corner (or an edge's middle, or its own) in a
+ * tower's or landmark's footprint, and every corner of the cut's edge sinks
+ * to SURFACE_DIP, under the ground plane: each tower stands in a narrow
+ * trough, one facet wide, whose ragged rim stays hidden under the plane.
+ */
+const cloudSurface = (
+  r: () => number, fog: Color, pal: CloudPalette, cx: number, cz: number, reach: number,
+  keepOut: CloudKeepOut, low: boolean, half?: [number, number]
+): BufferGeometry => {
+  const GAP = 1.5
+  const r1 = 238
+  // Where it starts, by bearing: 14 m past the walls (or round the reach).
+  const from = (a: number) => half
+    ? Math.min(half[0] / Math.max(1e-6, Math.abs(Math.cos(a))), half[1] / Math.max(1e-6, Math.abs(Math.sin(a)))) + 14
+    : reach + 24
+  const rings = low ? 14 : 22
+  const segs = low ? 56 : 84
+  const ph = [r() * 6.3, r() * 6.3, r() * 6.3, r() * 6.3]
+  const mist = fog.clone().lerp(new Color('#ffffff'), 0.35)
+  const inside = (x: number, z: number) => keepOut.some(k => Math.hypot(k.x - x, k.z - z) <= k.r)
+  // The grid: rings closer near (where it is seen big), jittered a little.
+  const n = (rings + 1) * segs
+  const px = new Float32Array(n)
+  const pz = new Float32Array(n)
+  const py = new Float32Array(n)
+  const hn = new Float32Array(n)
+  const bad = new Uint8Array(n)
+  const rim = new Uint8Array(n)
+  for (let i = 0; i <= rings; i++) {
+    const jit = i === 0 || i === rings ? 0 : 0.3
+    for (let j = 0; j < segs; j++) {
+      const v = i * segs + j
+      const a = ((j + (i % 2) * 0.5 + (r() - 0.5) * jit) / segs) * Math.PI * 2
+      const r0 = Math.min(from(a), r1 - 40)
+      const dd = r0 + (r1 - r0) * (i / rings) ** 1.3 + (r() - 0.5) * jit * (r1 - r0) / rings
+      const x = cx + Math.cos(a) * dd
+      const z = cz + Math.sin(a) * dd
+      px[v] = x
+      pz[v] = z
+      // Rolling swells, two octaves, rising toward the horizon.
+      const w = 0.5 + 0.25 * Math.sin(x * 0.045 + ph[0]!) * Math.sin(z * 0.05 + ph[1]!) +
+        0.25 * Math.sin((x - z) * 0.11 + ph[2]!) * Math.sin((x + z) * 0.07 + ph[3]!)
+      const dc = Math.hypot(x - cx, z - cz)
+      // Low by the level (under 0.5 m within its reach + 20), rising past it.
+      const h = Math.min(0.6 + 6 * w * w + 3 * Math.min(1, Math.max(0, (dc - 170) / 60)), 0.4 + Math.max(0, dc - reach - 20) * 0.35)
+      if (keepOut.some(k => Math.hypot(k.x - x, k.z - z) <= k.r + GAP)) bad[v] = 1
+      // Down into the dip at the inner edge.
+      const f = Math.min(1, Math.max(0, (dd - r0) / 8))
+      py[v] = SURFACE_DIP + (h - SURFACE_DIP) * f
+      hn[v] = w * f
+    }
+  }
+  // The cut: every facet with a corner, an edge's middle or its middle in a
+  // footprint goes, and the corners it leaves on the edge sink under the plane.
+  const tris: number[] = []
+  const cut = (a: number, b: number, d: number): boolean =>
+    !!(bad[a] || bad[b] || bad[d]) ||
+    inside((px[a]! + px[b]!) / 2, (pz[a]! + pz[b]!) / 2) || inside((px[b]! + px[d]!) / 2, (pz[b]! + pz[d]!) / 2) ||
+    inside((px[d]! + px[a]!) / 2, (pz[d]! + pz[a]!) / 2) ||
+    inside((px[a]! + px[b]! + px[d]!) / 3, (pz[a]! + pz[b]! + pz[d]!) / 3)
+  for (let i = 0; i < rings; i++) {
+    for (let j = 0; j < segs; j++) {
+      const a = i * segs + j
+      const b = i * segs + (j + 1) % segs
+      const d = (i + 1) * segs + j
+      const e = (i + 1) * segs + (j + 1) % segs
+      for (const t of [[a, b, d], [b, e, d]] as const) {
+        if (cut(...t)) for (const v of t) rim[v] = 1
+        else tris.push(...t)
+      }
+    }
+  }
+  for (let v = 0; v < n; v++) {
+    if (!rim[v]) continue
+    py[v] = SURFACE_DIP
+    hn[v] = 0
+  }
+  const pos: number[] = []
+  const col: number[] = []
+  const c = new Color()
+  const sunk = new Color().copy(pal.flank).lerp(pal.under, 0.7).lerp(mist, 0.35)
+  for (let i = 0; i < tris.length; i += 3) {
+    const a = tris[i]!
+    const b = tris[i + 1]!
+    const d = tris[i + 2]!
+    // Wound to face up.
+    const o = (px[b]! - px[a]!) * (pz[d]! - pz[a]!) - (pz[b]! - pz[a]!) * (px[d]! - px[a]!)
+    for (const v of o < 0 ? [a, b, d] : [a, d, b]) pos.push(px[v]!, py[v]!, pz[v]!)
+    // Stepped tones by the facet's height in the swell and its slope to the
+    // sun: crest, flank, trough; a facet sinking into a dip takes the
+    // belly's tone, lifted toward the ground's mist, so the seam with the
+    // plane is quiet.
+    const ux = px[b]! - px[a]!, uy = py[b]! - py[a]!, uz = pz[b]! - pz[a]!
+    const vx = px[d]! - px[a]!, vy = py[d]! - py[a]!, vz = pz[d]! - pz[a]!
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx
+    const sun = Math.abs(nx * SUN.x + ny * SUN.y + nz * SUN.z) / (Math.hypot(nx, ny, nz) || 1)
+    const t = (hn[a]! + hn[b]! + hn[d]!) / 3 + 1.6 * (sun - SUN.y) - pal.sink
+    if (Math.min(py[a]!, py[b]!, py[d]!) < 0) c.copy(sunk)
+    else if (t > 0.55) c.copy(pal.top)
+    else if (t > 0.4) c.copy(pal.top).lerp(pal.flank, 0.5)
+    else if (t > 0.25) c.copy(pal.flank)
+    else belly(pal, c.copy(pal.flank).lerp(pal.under, 0.6), (Math.sin(px[a]! * 12.9898 + pz[a]! * 78.233) * 43758.5453 % 1 + 1) % 1)
+    for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b)
+  }
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3))
+  g.setAttribute('color', new Float32BufferAttribute(col, 3))
+  g.computeVertexNormals()
+  g.setIndex([...Array(pos.length / 3).keys()])
+  finish(g, false, 0, false)
+  // A static cloud to the shader (aW.y = -1): thin haze, no drift.
+  const aw = g.attributes.aW!
+  for (let i = 0; i < aw.count; i++) aw.setXY(i, 0, -1)
+  return g
 }
 
 export interface Cityscape {
@@ -1141,9 +1419,17 @@ export const buildCityscape = async (
   // every gap between the docks, so the walls, hazed pale toward the fog,
   // read as glass panes over it ("everything is see-through", Sky Docks
   // playtest 2026-10-16).
-  const groundHex = map.terrain?.clouds ? `#${fog.clone().lerp(new Color('#ffffff'), 0.35).getHexString()}` : '#2a3048'
-  const ground = prism(low ? 20 : 40, 240, 240, 0.1, groundHex, 0, false)
+  // Past the level it takes the sea's own tone (`CloudPalette.rim`: a night
+  // indigo under neon), shading over from the mist round the level's edge.
+  const sky = map.terrain?.clouds ? cloudPalette(theme.id, fog) : null
+  const groundHex = sky ? `#${fog.clone().lerp(new Color('#ffffff'), 0.35).getHexString()}` : '#2a3048'
+  const inner = sky ? Math.min(reach + 10, 180) : 240
+  const ground = prism(low ? 20 : 40, inner, inner, 0.1, groundHex, 0, false)
   kit.body.push(at(ground, [cx, -0.6, cz]))
+  if (sky) {
+    bodyMat.uniforms.uCloudHaze!.value = sky.haze
+    kit.body.push(at(seaRim(low ? 20 : 40, [inner, inner + 25, 240], [new Color(groundHex), sky.rim, sky.rim]), [cx, -0.5, cz]))
+  }
 
   // Landmarks, at spread-out bearings in the far ring. Placed now (the
   // skyline keeps clear of them); BUILT when they stream in.
@@ -1195,7 +1481,11 @@ export const buildCityscape = async (
   // Over open sky the towers rise out of a sea of clouds, merged into the
   // near body mesh (no draw call of its own). Drawn from its own seed, so
   // the rest of the city stays the same.
-  if (map.terrain?.clouds) kit.body.push(...cloudSea(lcg(map.seed ^ 0xc10d), fog, cx, cz, reach, near, low))
+  const clouds = map.terrain?.clouds ? lcg(map.seed ^ 0xc10d) : null
+  if (clouds) {
+    const keepOut = [...plots.map(p => ({ x: p.x, z: p.z, r: plotBounds(p.b, p.h, p.w).r })), ...markAt.map(m => ({ x: m.x, z: m.z, r: MARK_BOUNDS[m.id]!.r }))]
+    kit.body.push(...cloudSea(clouds, fog, cx, cz, reach, keepOut, low, sky!, [cx, cz]))
+  }
   for (let i = 0; i < near.length; i++) {
     const p = near[i]!
     p.b(kit, p.x, p.z, p.h, p.w)
@@ -1215,9 +1505,15 @@ export const buildCityscape = async (
   const far = plots.filter(p => p.far)
   for (let i = 0; i < far.length; i += 5) {
     const chunk = far.slice(i, i + 5)
-    jobs.push(() => { for (const p of chunk) p.b(farKit, p.x, p.z, p.h, p.w) })
+    jobs.push(() => {
+      for (const p of chunk) p.b(farKit, p.x, p.z, p.h, p.w)
+    })
   }
-  for (const m of markAt) jobs.push(() => m.make(farKit, m.x, m.z, m.a))
+  for (const m of markAt) {
+    jobs.push(() => {
+      m.make(farKit, m.x, m.z, m.a)
+    })
+  }
   let lastT = 0
   const reveals: Array<{ mats: ShaderMaterial[]; at: number }> = []
   // Merged in two jobs (bodies, then lights), each with its own copy of the

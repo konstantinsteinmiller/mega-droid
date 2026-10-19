@@ -374,7 +374,8 @@ describe('the intro director', () => {
     intros[0]!.opts.onEnd(false)
     await settle()
     expect(builds).toHaveLength(0)
-    expect(flowMod.flow.screen).toBe('hub')
+    // Back behind the Lab-return beam (#Mini1), a paint later.
+    await vi.waitFor(() => expect(flowMod.flow.screen).toBe('hub'))
     expect(h.modes.at(-1)).toBe(hubMode)
   })
 })

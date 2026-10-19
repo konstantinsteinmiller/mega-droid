@@ -219,7 +219,8 @@ describe('the Fortress won: the ad, then the ending (#102), then its card', () =
     end('ngplus')
     expect(profile.world.ngPlus).toBe(ng + 1)
     expect(profile.world.seen).toContain('ending')
-    expect(order.at(-1)).toBe('hub')
+    // The Lab behind its return beam (#Mini1), a paint later.
+    await vi.waitFor(() => expect(order.at(-1)).toBe('hub'))
   })
 
   it('Back to the Lab keeps the cycle', async () => {
@@ -229,6 +230,6 @@ describe('the Fortress won: the ad, then the ending (#102), then its card', () =
     const ng = profile.world.ngPlus
     end('lab')
     expect(profile.world.ngPlus).toBe(ng)
-    expect(m.flow.screen).toBe('hub')
+    await vi.waitFor(() => expect(m.flow.screen).toBe('hub'))
   })
 })

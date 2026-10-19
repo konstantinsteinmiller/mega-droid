@@ -49,7 +49,7 @@
          the same place, so the handover when Vue mounts moves nothing: Flux's
          visor head in its charged ring over the chrome MEGA / amber DROID
          wordmark (store-art/brand/logo.mjs), as ONE inline SVG of paths (no ids, no text, so no web font
-         can reflow it before the bundled faces load), above the plasma bar.
+         can reflow it before the bundled faces load), above the HP-style loading bar.
          Change one, change both: tests/ui/splashLogo.test.ts holds the two to
          the same markup and the same sizes. */
       body {
@@ -104,36 +104,46 @@
           margin: 0;
       }
 
-      /* The plasma bar: an amber fill in a graphite capsule, leaning with the
-         wordmark. ONE fill scaled by transform, so it creeps on the
-         COMPOSITOR from the first byte, before any script runs: a slow portal
-         SDK or a slow network never looks like a frozen page, and the Vue
-         loader then continues from wherever this has got to. */
-      .s-bar {
+      /* The loading bar: Flux's HP bar, 28 cyan energy cells in a navy
+         capsule. ONE stylesheet for every loader: these hp-* rules are
+         global (this <style> stays in <head> after the splash div is
+         removed), and FLogoProgress.vue and the mission beam
+         (MissionLoading.vue) draw their bars with the same classes, so the
+         three cannot drift and the hand-over swaps nothing. ONE fill scaled by transform, clipped by the cells
+         mask, so it creeps on the COMPOSITOR from the first byte, before any
+         script runs; the Vue loader continues from wherever it has got to. */
+      .hp-bar {
           position: relative;
           width: 76%;
-          height: clamp(12px, 2.6vmin, 18px);
-          border: 2px solid #141a33;
-          border-radius: 4px;
-          background: #161a22;
-          box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+          height: clamp(16px, 3.4vmin, 24px);
+          border: 3px solid #141a33;
+          border-radius: 6px;
+          background: #0b1433;
+          box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
           box-sizing: border-box;
-          transform: skewX(-12deg);
+          flex: none;
       }
-
-      .s-track, .s-lit {
+      .hp-cells, .hp-lit {
           position: absolute;
-          inset: 1px;
-          border-radius: 2px;
+          inset: 3px;
+          -webkit-mask-image: repeating-linear-gradient(90deg, #000 0, #000 calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28 + 2px));
+          mask-image: repeating-linear-gradient(90deg, #000 0, #000 calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28 + 2px));
       }
-      .s-track { background: linear-gradient(#232936, #161a22); }
-      .s-lit { overflow: hidden; }
-      .s-fill {
+      .hp-cells { background: rgba(255, 255, 255, 0.08); }
+      .hp-lit { overflow: hidden; }
+      .hp-fill {
           width: 100%;
           height: 100%;
-          background: linear-gradient(#fff0cc 0%, #ffc768 35%, #ffa733 62%, #e27a10 100%);
+          background: linear-gradient(#e8fdff 0%, #7ff4ff 45%, #1f9fd8 100%);
           transform-origin: left center;
           transform: scaleX(0);
+          transition-property: transform;
+          transition-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+          will-change: transform;
+      }
+      /* Only the static copy creeps by keyframes; the Vue copy is driven by
+         its inline transform + transition. */
+      #static-splash .hp-fill {
           animation: s-creep 5s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
       }
       @keyframes s-creep {
@@ -166,7 +176,7 @@
 
       @media (prefers-reduced-motion: reduce) {
           .s-grid { animation: none; }
-          .s-fill { animation-duration: 0.01s; }
+          #static-splash .hp-fill { animation-duration: 0.01s; }
       }
   </style>
 </head>
@@ -175,7 +185,7 @@
   <div class="s-grid" aria-hidden="true"></div>
   <div class="s-card">
     <img class="s-logo" src="/images/logo/mega-droid-logo-square-256.webp" srcset="/images/logo/mega-droid-logo-square-256.webp 1x, /images/logo/mega-droid-logo-square-512.png 2x, /images/logo/mega-droid-logo-square-768.webp 3x" alt="Mega Droid" width="256" height="256" decoding="async" fetchpriority="high">
-    <div class="s-bar"><div class="s-track"></div><div class="s-lit"><div class="s-fill"></div></div></div>
+    <div class="hp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="hp-cells" aria-hidden="true"></div><div class="hp-lit" aria-hidden="true"><div class="hp-fill"></div></div></div>
     <canvas class="s-mini" aria-hidden="true"></canvas>
   </div>
 </div>

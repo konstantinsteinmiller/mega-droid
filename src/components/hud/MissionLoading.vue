@@ -1,6 +1,6 @@
 <template lang="pug">
   Transition(name="beam")
-    div.mission-loading.no-os-ui(v-if="flow.loading")
+    div.mission-loading.no-os-ui(v-if="flow.loading || flow.loadingLab")
       //- The boot loader's night blue and grid (#117), opaque: the intro's
       //- last frame (its white beam flash) showed through when the
       //- tutorial was still building behind it.
@@ -13,17 +13,19 @@
         div.splash(v-if="flow.loadingBoss" aria-hidden="true")
           MasterPortrait.face(:id="loadingBoss" :size="104")
           div.name {{ t(`boss.${flow.loadingBoss}`) }}
-        div.sector(v-if="flow.loadingSector") {{ t(`sector.${flow.loadingSector}`) }}
-        div.bar(
+        div.sector(v-if="label") {{ label }}
+        //- The HP-style bar: the global hp-* classes from index.html's <style>,
+        //- the very rules both boot loaders draw their bar with.
+        div.hp-bar(
           role="progressbar"
-          :aria-label="flow.loadingSector ? t(`sector.${flow.loadingSector}`) : undefined"
+          :aria-label="label || undefined"
           :aria-valuenow="Math.round(flow.loadProgress * 100)"
           aria-valuemin="0"
           aria-valuemax="100"
         )
-          div.cells(aria-hidden="true")
-          div.lit(aria-hidden="true")
-            div.fill(:style="{ transform: `scaleX(${Math.max(0.04, flow.loadProgress).toFixed(4)})` }")
+          div.hp-cells(aria-hidden="true")
+          div.hp-lit(aria-hidden="true")
+            div.hp-fill(:style="{ transform: `scaleX(${Math.max(0.04, flow.loadProgress).toFixed(4)})` }")
         LoaderMiniGame
 </template>
 
@@ -40,10 +42,13 @@ import type { BossId } from '@/game/models/bosses'
  * Hub → mission: the teleport beam shown the instant Deploy is tapped, while
  * the sector builds behind it (`flow.startMission`, time-sliced, so the lab
  * keeps animating and this bar keeps filling). The same masked 28-cell bar
- * as the boot loader, animated by transform on the compositor.
+ * as the boot loaders (their global hp-* classes), animated by transform on the compositor. Also the way
+ * back: mission / debrief / ending → Lab (`flow.returnToLab`).
  */
 const { t } = useI18n()
 const loadingBoss = computed(() => flow.loadingBoss as BossId)
+/** The sector being built, or the Lab on the way back (`returnToLab`). */
+const label = computed(() => flow.loadingSector ? t(`sector.${flow.loadingSector}`) : flow.loadingLab ? t('ending.card.lab') : '')
 </script>
 
 <style scoped lang="sass">
@@ -72,7 +77,8 @@ const loadingBoss = computed(() => flow.loadingBoss as BossId)
   flex-direction: column
   align-items: center
   gap: 12px
-  padding-top: 38vh
+  // Leaves the mini-game under the bar clear of the bottom edge (720 px tall).
+  padding-top: 30vh
   &:has(.splash)
     padding-top: 18vh
 .splash
@@ -104,31 +110,14 @@ const loadingBoss = computed(() => flow.loadingBoss as BossId)
   color: #fff
   text-shadow: 0 3px 0 #141a33, 0 0 14px rgba(127, 244, 255, 0.7)
   letter-spacing: 0.04em
-.bar
-  position: relative
+// ── The bar ──
+// Drawn by the global hp-* rules in index.html's <style> (shared with both
+// boot loaders, so the three cannot drift). Only the beam's layout differs:
+// the bar spans the card, and the fill eases each progress step itself.
+.hp-bar
   width: 100%
-  height: clamp(16px, 3.4vmin, 24px)
-  border: 3px solid #141a33
-  border-radius: 6px
-  background: #0b1433
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35)
-  box-sizing: border-box
-.cells, .lit
-  position: absolute
-  inset: 3px
-  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0, #000 calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28 + 2px))
-  mask-image: repeating-linear-gradient(90deg, #000 0, #000 calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28), transparent calc((100% - 54px) / 28 + 2px))
-.cells
-  background: rgba(255, 255, 255, 0.08)
-.lit
-  overflow: hidden
-.fill
-  width: 100%
-  height: 100%
-  background: linear-gradient(#e8fdff 0%, #7ff4ff 45%, #1f9fd8 100%)
-  transform-origin: left center
-  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.3, 1)
-  will-change: transform
+.hp-fill
+  transition-duration: 0.35s
 @keyframes beam-pulse
   from
     opacity: 0.55

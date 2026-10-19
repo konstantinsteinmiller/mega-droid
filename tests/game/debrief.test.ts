@@ -124,7 +124,8 @@ describe('the debrief in the flow', () => {
     expect(m.profile.world.seen).toContain(debriefSeen('scrapper'))
     expect(m.profile.world.seen).toContain(hubSceneFor('scrapper')!.seen)
     h.end!()
-    expect(m.flow.screen).toBe('hub')
+    // Built behind the Lab-return beam (#Mini1), a paint later.
+    await vi.waitFor(() => expect(m.flow.screen).toBe('hub'))
     expect(h.hubs).toBe(1)
 
     // The same Master's mission again in this run: straight to the Lab.

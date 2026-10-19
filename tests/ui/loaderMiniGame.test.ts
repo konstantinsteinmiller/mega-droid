@@ -52,6 +52,15 @@ describe('the loading mini-game', () => {
     expect(20 - a.hp).toBe(1)
   })
 
+  it('a charged shot flies 50% faster than a tap shot', () => {
+    const s = g.M()
+    g.fire(s, false); g.fire(s, true)
+    const x0 = s.sh.map((p) => (p as { x: number }).x)
+    g.step(s, 0.1, 2000)
+    const v = s.sh.map((p, i) => ((p as { x: number }).x - x0[i]!) / 0.1)
+    expect(v[1]).toBeCloseTo(v[0]! * 1.5)
+  })
+
   it('a kill sprinkles bolts and brings in the next machine', () => {
     const s = g.M(); s.drop = 0; s.hp = 1
     g.fire(s, false)
@@ -154,10 +163,81 @@ describe('the loading mini-game', () => {
       expect(g.S!.sh).toHaveLength(1)
     })
 
+    const pe = (type: string, o: Record<string, unknown> = {}): Event =>
+      Object.assign(new Event(type, { bubbles: true, cancelable: true }), { pointerId: 1, pointerType: 'mouse', button: 0, ...o })
+
+    it('a press outside the canvas, held, released outside it, fires a charged shot', () => {
+      g.run(canvas)
+      const s = g.S!
+      const out = document.createElement('div')
+      // A page element that swallows its events: the capture listeners still hear them
+      out.addEventListener('pointerdown', (e) => { e.stopPropagation() })
+      document.body.appendChild(out)
+      const d = pe('pointerdown')
+      out.dispatchEvent(d)
+      expect(d.defaultPrevented).toBe(false)
+      s.t += g.CH + 0.1
+      // While held, a drag or a selection cannot steal the press
+      const drag = new Event('dragstart', { cancelable: true, bubbles: true })
+      out.dispatchEvent(drag)
+      expect(drag.defaultPrevented).toBe(true)
+      document.dispatchEvent(pe('pointerup'))
+      expect(s.sh).toMatchObject([{ c: 1 }])
+      out.remove()
+    })
+
+    it('a cancelled press or a lost focus drops the charge without a shot', () => {
+      g.run(canvas)
+      const s = g.S!
+      document.body.dispatchEvent(pe('pointerdown'))
+      document.body.dispatchEvent(pe('pointercancel'))
+      expect(s.hold).toBe(-1)
+      document.body.dispatchEvent(pe('pointerdown'))
+      window.dispatchEvent(new Event('blur'))
+      expect(s.hold).toBe(-1)
+      document.body.dispatchEvent(pe('pointerup'))
+      expect(s.sh).toHaveLength(0)
+    })
+
+    it('touch: a tap anywhere fires, a hold fires charged; a second finger neither fires nor breaks it', () => {
+      g.run(canvas)
+      const s = g.S!
+      const t = (type: string, id: number): Event => pe(type, { pointerType: 'touch', pointerId: id })
+      document.body.dispatchEvent(t('pointerdown', 7))
+      document.body.dispatchEvent(t('pointerup', 7))
+      expect(s.sh).toMatchObject([{ c: 0 }])
+      document.body.dispatchEvent(t('pointerdown', 8))
+      document.body.dispatchEvent(t('pointerdown', 9))
+      document.body.dispatchEvent(t('pointerup', 9))
+      expect(s.sh).toHaveLength(1)
+      // A scroll or pinch is held off while the finger charges
+      const move = new Event('touchmove', { cancelable: true, bubbles: true })
+      document.body.dispatchEvent(move)
+      expect(move.defaultPrevented).toBe(true)
+      s.t += g.CH
+      // The compatibility mouse events a tap may bring are not listened to
+      document.body.dispatchEvent(new Event('mousedown', { bubbles: true }))
+      document.body.dispatchEvent(new Event('mouseup', { bubbles: true }))
+      document.body.dispatchEvent(t('pointerup', 8))
+      expect(s.sh).toHaveLength(2)
+      expect(s.sh[1]).toMatchObject({ c: 1 })
+      // Not charging: a scroll is left alone
+      const free = new Event('touchmove', { cancelable: true, bubbles: true })
+      document.body.dispatchEvent(free)
+      expect(free.defaultPrevented).toBe(false)
+    })
+
+    it('a right click does not shoot', () => {
+      g.run(canvas)
+      document.body.dispatchEvent(pe('pointerdown', { button: 2 }))
+      document.body.dispatchEvent(pe('pointerup', { button: 2 }))
+      expect(g.S!.sh).toHaveLength(0)
+    })
+
     it('stops itself once its canvas leaves the page', () => {
       let cb: FrameRequestCallback | null = null
       vi.spyOn(window, 'requestAnimationFrame').mockImplementation((f) => { cb = f; return 1 })
-      const rem = vi.spyOn(canvas, 'removeEventListener')
+      const rem = vi.spyOn(window, 'removeEventListener')
       g.run(canvas)
       canvas.remove()
       cb!(16)

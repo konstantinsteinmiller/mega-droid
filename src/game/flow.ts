@@ -73,6 +73,9 @@ export const flow = reactive({
   loadProgress: 0,
   /** The sector being built (the overlay's label). */
   loadingSector: '' as SectorId | '',
+  /** The beam is up for the way back to the Lab (`returnToLab`): while it
+   *  builds, and held a moment after (the beam shows on this OR `loading`). */
+  loadingLab: false,
   /** A new player's first play, from the intro going live to the first
    *  mission's first moment of control: the portals count it as ONE play
    *  (`use/useGameplayLifecycle.ts`). Never a replay from Options. */
@@ -206,7 +209,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
       hello,
       onEnd: () => {
         debriefLive = null
-        goHub({ kind: 'brief' })
+        void returnToLab({ kind: 'brief' })
       }
     })
     // Both of Atlas's lines heard before the film takes over.
@@ -219,7 +222,7 @@ export const startDebrief = async (plan: DebriefPlan): Promise<void> => {
     console.warn('[flow] debrief failed to load', e)
     debriefLive = null
     loader?.dispose()
-    goHub()
+    void returnToLab()
   }
 }
 
@@ -245,7 +248,7 @@ export const startEnding = async (): Promise<void> => {
       if (!profile.world.seen.includes('ending')) profile.world.seen.push('ending')
       if (choice === 'ngplus') startNewGamePlus()
       saveProfile()
-      goHub({ kind: 'home' })
+      void returnToLab({ kind: 'home' })
     }
   })
   endingLive = m
@@ -485,7 +488,7 @@ const finishIntro = async (replay: boolean, _skipped: boolean): Promise<void> =>
   markStorySeen('intro')
   void flushSaveNow()
   if (replay) {
-    goHub()
+    await returnToLab()
     return
   }
   if (!behind) buildBehindIntro()
@@ -568,6 +571,7 @@ export const startMission = async (quest: Quest, snapshot: MissionSnapshot | nul
   if (!missionFactory || flow.loading) return
   copiedNow = null
   flow.loading = true
+  flow.loadingLab = false
   flow.loadProgress = 0
   flow.loadingSector = quest.sector
   flow.loadingBoss = quest.template === 'stage' || quest.template === 'boss' ? SECTOR_BY_ID[quest.sector].boss : ''
@@ -625,6 +629,37 @@ export const goHub = (arrival?: HubArrival): void => {
   app.setMode(h)
   app.setWanted(true)
   ensureJobs()
+}
+
+/** The shortest the Lab-return beam stays up: long enough to be seen. */
+export const LAB_LOADER_MIN_MS = 700
+
+/**
+ * Mission / debrief → Lab (#Mini1: the mini-game on every load). The Lab
+ * builds behind the same beam overlay as a deploy (`flow.loading`), and the
+ * beam goes as soon as it is built, held only to `LAB_LOADER_MIN_MS` so it
+ * does not flash. Resolves once the Lab has the screen (not the hold).
+ */
+export const returnToLab = async (arrival?: HubArrival): Promise<void> => {
+  if (!hubFactory || flow.loading) { goHub(arrival); return }
+  const t0 = performance.now()
+  flow.loading = true
+  flow.loadingLab = true
+  flow.loadProgress = 0
+  flow.loadingSector = ''
+  flow.loadingBoss = ''
+  try {
+    await afterPaint()
+    goHub(arrival)
+    flow.loadProgress = 1
+  } finally {
+    // Built: the Lab is live (a Deploy answers at once); only the label
+    // keeps the beam up for the rest of the hold. `startMission` takes over.
+    flow.loading = false
+    const left = LAB_LOADER_MIN_MS - (performance.now() - t0)
+    if (left > 0) setTimeout(() => { if (!flow.loading) flow.loadingLab = false }, left)
+    else flow.loadingLab = false
+  }
 }
 
 // ─── Rewards ─────────────────────────────────────────────────────────────────
@@ -783,7 +818,7 @@ export const leaveResults = async (): Promise<void> => {
       pendingEnding = false
       void startEnding()
     } else if (debrief) void startDebrief(debrief)
-    else goHub()
+    else await returnToLab()
   }
 }
 

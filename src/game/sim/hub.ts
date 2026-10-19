@@ -1107,6 +1107,13 @@ export class HubMode implements GameMode {
 
   private wasPanel = false
 
+  /** The beam overlay is up (back to the Lab, `returnToLab`, or out on a
+   *  deploy): nothing the player holds or presses reaches Flux until it
+   *  lifts. A key still held then moves him as usual. */
+  get inputBlocked(): boolean {
+    return flow.loading || flow.loadingLab
+  }
+
   update(dt: number, first: boolean): void {
     this.t += dt
     this.actT += dt
@@ -1129,8 +1136,9 @@ export class HubMode implements GameMode {
     const panel = hubTab.value !== 'missions'
     if (this.wasPanel && !panel) this.panelClosed()
     this.wasPanel = panel
+    const blocked = this.inputBlocked
     stepWalker(w, {
-      moveX: inp.moveX, moveY: inp.moveY, camYaw: this.camYaw, free: this.free || (this.act === 'land' && this.actT > LAND_FREE && !panel),
+      moveX: blocked ? 0 : inp.moveX, moveY: blocked ? 0 : inp.moveY, camYaw: this.camYaw, free: this.free || (this.act === 'land' && this.actT > LAND_FREE && !panel),
       funnel: DOOR_FUNNEL
     }, dt, this.walls, POSTS)
     // At a station's panel he turns to the camera; on arrival, to the place.
@@ -1168,7 +1176,7 @@ export class HubMode implements GameMode {
       if (g.open && hubUi.near === g.id) this.interact()
     }
     if (first) {
-      if (this.act === 'walk' && !panel && !flow.modal && !hubDialog.open) {
+      if (this.act === 'walk' && !panel && !flow.modal && !hubDialog.open && !blocked) {
         if (inp.pipQueued) this.openPip()
         else if (inp.interactQueued) this.interact()
         else if (inp.beamQueued && this.slotOf(hubUi.near)?.poi.kind !== 'station') this.interact()
@@ -1192,7 +1200,7 @@ export class HubMode implements GameMode {
         // Back on a pedestal: a step out to the walkway, turned along the hall
         // (the film until he stands there; a push on the stick ends it).
         const p = onPad ? this.places.find(q => q.id === (this.arrival as { id: string }).id) : null
-        if (p && p.side !== 0 && Math.hypot(this.input.moveX, this.input.moveY) < 0.12) {
+        if (p && p.side !== 0 && (this.inputBlocked || Math.hypot(this.input.moveX, this.input.moveY) < 0.12)) {
           walkRoute(w, [[p.side * (HALL_HALF - 1.4), p.az]], this.onwardYaw(p.az))
           this.camAim = this.onwardYaw(p.az)
           this.stepping = true
@@ -1352,7 +1360,7 @@ export class HubMode implements GameMode {
   private applyLook(dt: number): void {
     const inp = this.input
     if (inp.lookDX || inp.lookDY) {
-      if (this.act === 'walk' && hubTab.value === 'missions' && !hubDialog.open) {
+      if (this.act === 'walk' && hubTab.value === 'missions' && !hubDialog.open && !this.inputBlocked) {
         const s = inp.device === 'touch' ? LOOK_TOUCH : inp.locked ? LOOK_LOCK : LOOK_MOUSE
         this.camYaw -= inp.lookDX * s
         // His eyes tilt as the missions' do; the chase camera orbits.
@@ -1364,7 +1372,7 @@ export class HubMode implements GameMode {
       inp.lookDX = 0
       inp.lookDY = 0
     }
-    if (inp.turn && this.act === 'walk' && hubTab.value === 'missions') {
+    if (inp.turn && this.act === 'walk' && hubTab.value === 'missions' && !this.inputBlocked) {
       this.camYaw -= inp.turn * TURN_RATE * Math.min(dt, 0.05)
       this.lastLook = this.t
       this.camAim = null

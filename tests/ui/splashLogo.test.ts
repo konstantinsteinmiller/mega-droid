@@ -142,13 +142,27 @@ describe('the two layouts are the same, rule for rule', () => {
   it('size the logo the same', () => {
     expect(only(sassRule('.logo'), ['width', 'aspect-ratio', 'margin'])).toEqual(only(cssRule('.s-logo'), ['width', 'aspect-ratio', 'margin']))
   })
-  it('draw the bar the same', () => {
-    expect(sassRule('.bar')).toEqual(cssRule('.s-bar'))
-    expect(sassRule('.track, .lit')).toEqual(cssRule('.s-track, .s-lit'))
-    expect(sassRule('.track')).toEqual(cssRule('.s-track'))
-    expect(sassRule('.lit')).toEqual(cssRule('.s-lit'))
-    const fill = ['width', 'height', 'background', 'transform-origin']
-    expect(only(sassRule('.fill'), fill)).toEqual(only(cssRule('.s-fill'), fill))
+  it('draw the bar from ONE stylesheet: the global hp-* rules in index.html', () => {
+    // The static splash and FLogoProgress use the same classes, nested the same way…
+    expect(html).toContain('<div class="hp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="hp-cells" aria-hidden="true"></div><div class="hp-lit" aria-hidden="true"><div class="hp-fill"></div></div></div>')
+    expect(vue).toMatch(/div\.hp-bar\(role="progressbar"[^\n]*\)\n\s+div\.hp-cells\(aria-hidden="true"\)\n\s+div\.hp-lit\(aria-hidden="true"\)\n\s+div\.hp-fill\(:style="fillStyle"\)/)
+    // …and the Vue copy restyles nothing: no scoped rule may touch a bar class.
+    const style = /<style[^>]*lang="sass">([\s\S]*?)<\/style>/.exec(vue)?.[1] ?? ''
+    expect(style).not.toMatch(/^\.(hp-|bar|track|lit|fill)/m)
+    for (const sel of ['.hp-bar', '.hp-cells, .hp-lit', '.hp-cells', '.hp-lit', '.hp-fill']) expect(() => cssRule(sel)).not.toThrow()
+  })
+
+  it("the mission beam draws the same bar: the same hp-* classes, restyling only its layout", () => {
+    const mission = read('src/components/hud/MissionLoading.vue').replace(/\r\n/g, '\n')
+    expect(mission).toMatch(/div\.hp-bar\(\n\s+role="progressbar"[\s\S]*?:aria-valuenow="Math\.round\(flow\.loadProgress \* 100\)"[\s\S]*?\)\n\s+div\.hp-cells\(aria-hidden="true"\)\n\s+div\.hp-lit\(aria-hidden="true"\)\n\s+div\.hp-fill\(:style=/)
+    const style = /<style[^>]*lang="sass">([\s\S]*?)<\/style>/.exec(mission)?.[1] ?? ''
+    // No private copy of the bar left behind…
+    expect(style).not.toMatch(/^\.(bar|cells|lit|fill)\b/m)
+    // …and its own hp-* rules touch layout only, never the look.
+    const own = (sel: string) => (style.split(`\n${sel}\n`)[1] ?? '').split(/\n(?! )/)[0]!.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => l.slice(0, l.indexOf(':')))
+    expect(own('.hp-bar')).toEqual(['width'])
+    expect(own('.hp-fill')).toEqual(['transition-duration'])
+    expect(style).not.toMatch(/^\.hp-(cells|lit)/m)
   })
 
   it('hang the same mini-game box under the column', () => {
@@ -179,14 +193,14 @@ describe('the two layouts are the same, rule for rule', () => {
 
 describe('the loader mechanics survive the restyle', () => {
   it('the static bar creeps on the compositor, from nothing, by transform', () => {
-    expect(cssRule('.s-fill').transform).toBe('scaleX(0)')
-    expect(cssRule('.s-fill').animation).toMatch(/^s-creep /)
+    expect(cssRule('.hp-fill').transform).toBe('scaleX(0)')
+    expect(cssRule('#static-splash .hp-fill').animation).toMatch(/^s-creep /)
     expect(html).toMatch(/@keyframes s-creep \{\s*to \{ transform: scaleX\(0\.1\); \}/)
   })
 
   it('the Vue bar starts where the static one got to, and only ever creeps forward from there', () => {
-    expect(vue).toContain("readScaleX(document.querySelector('#static-splash .s-fill'))")
-    expect(vue).toMatch(/div\.fill\(:style="fillStyle"\)/)
+    expect(vue).toContain("readScaleX(document.querySelector('#static-splash .hp-fill'))")
+    expect(vue).toMatch(/div\.hp-fill\(:style="fillStyle"\)/)
     const creepTo = Number(/const CREEP_TO = ([\d.]+)/.exec(vue)?.[1])
     const staticEnd = Number(/@keyframes s-creep \{\s*to \{ transform: scaleX\(([\d.]+)\)/.exec(html)?.[1])
     expect(creepTo).toBeGreaterThan(staticEnd)
@@ -197,10 +211,8 @@ describe('the loader mechanics survive the restyle', () => {
     expect(vue).toMatch(/div\.backdrop-grid\(ref="gridEl"/)
   })
 
-  it('the 28-cell bar is gone from both (it was a MegaMan health bar)', () => {
-    for (const src of [html, vue]) {
-      expect(src).not.toMatch(/\/ 28\)|28-cell|helm/i)
-    }
+  it('the old amber plasma capsule is gone (the bar is the HP bar now)', () => {
+    for (const src of [html, vue]) expect(src).not.toMatch(/\bs-(bar|track|lit|fill)\b|skewX/)
   })
 })
 

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { gzipSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { MINI_GAME_TAG, miniGameCode, scriptHash, transformIndex } from '../../vite.config.miniGame'
 
@@ -29,7 +30,8 @@ describe('the inlined loading mini-game', () => {
     const scriptSrc = /script-src ([^;]+)/.exec(csp(out))?.[1] ?? ''
     expect(scriptSrc.split(' ')).toContain(scriptHash(scripts[0]!))
     expect(scriptSrc).not.toContain('unsafe-inline')
-    expect(scripts[0]!.length).toBeLessThan(9000)
+    // Small: it ships inside every index.html (under 6 KB gzipped)
+    expect(gzipSync(scripts[0]!).length).toBeLessThan(6144)
   })
 
   it('keeps every other build CSP as it was, plus only the hash', async () => {

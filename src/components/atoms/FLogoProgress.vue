@@ -10,10 +10,12 @@
         //- over the MEGA / DROID wordmark.
         h1.logo
           img(src="/images/logo/mega-droid-logo-square-256.webp" srcset="/images/logo/mega-droid-logo-square-256.webp 1x, /images/logo/mega-droid-logo-square-512.png 2x, /images/logo/mega-droid-logo-square-768.webp 3x" :alt="t('gameName')" width="256" height="256" decoding="async")
-        div.bar(role="progressbar" :aria-valuenow="Math.round(progress)" aria-valuemin="0" aria-valuemax="100")
-          div.track(aria-hidden="true")
-          div.lit(aria-hidden="true")
-            div.fill(:style="fillStyle")
+        //- The HP-style bar: global hp-* classes from index.html's <style>,
+        //- the very rules the static splash's bar is drawn with.
+        div.hp-bar(role="progressbar" :aria-label="t('leaderboard.loading')" :aria-valuenow="Math.round(shown * 100)" aria-valuemin="0" aria-valuemax="100")
+          div.hp-cells(aria-hidden="true")
+          div.hp-lit(aria-hidden="true")
+            div.hp-fill(:style="fillStyle")
         LoaderMiniGame
         Transition(name="hint-fade")
           div.stuck-hint(v-if="showStuckHint") {{ t('loading.tooLong') }}
@@ -29,7 +31,7 @@ import { armFirstLoadInterstitial, notifySplashGone } from '@/use/useFirstLoadIn
 import { whenInteractive } from '@/use/whenInteractive'
 
 /**
- * The boot splash: the Mega Droid lockup + an amber plasma bar, driven by
+ * The boot splash: the Mega Droid lockup + Flux's HP-style energy bar, driven by
  * `useAssets.preloadAssets`, which primes the 3D engine — procedural meshes,
  * baked textures and the shader compile — so the first frame after the
  * splash is a real frame, not a hitch.
@@ -43,7 +45,7 @@ const { loadingProgress, preloadAssets } = useAssets()
 const progress = computed(() => loadingProgress.value)
 
 // ── The bar ──
-// One fill scaled by `transform`, clipped by the capsule. A transform
+// One fill scaled by `transform`, clipped by the cells mask. A transform
 // transition runs on the COMPOSITOR, so the bar keeps moving through a long
 // main-thread task (the engine chunk evaluating, a slice that overran) where
 // a per-segment class toggle would freeze.
@@ -57,15 +59,19 @@ const readScaleX = (el: Element | null): number => {
   const v = m ? parseFloat(m[1]!) : 0
   return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0
 }
-const startAt = typeof document !== 'undefined' ? readScaleX(document.querySelector('#static-splash .s-fill')) : 0
+const startAt = typeof document !== 'undefined' ? readScaleX(document.querySelector('#static-splash .hp-fill')) : 0
 const CREEP_TO = 0.14
 const armed = ref(false)
-const fillStyle = computed(() => {
+/** Where the bar is heading: never below the static bar's hand-over point. */
+const shown = computed(() => {
   const real = Math.max(progress.value / 100, startAt)
   const creeping = progress.value < CREEP_TO * 100
-  const target = armed.value ? (creeping ? Math.max(real, CREEP_TO) : real) : startAt
+  return armed.value ? (creeping ? Math.max(real, CREEP_TO) : real) : startAt
+})
+const fillStyle = computed(() => {
+  const creeping = progress.value < CREEP_TO * 100
   return {
-    transform: `scaleX(${target.toFixed(4)})`,
+    transform: `scaleX(${shown.value.toFixed(4)})`,
     transitionDuration: !armed.value ? '0ms' : creeping ? '3200ms' : '420ms'
   }
 })
@@ -224,7 +230,7 @@ const onBackdropGone = (): void => {
   &, & *
     -webkit-user-drag: none
 
-// The backdrop, the lockup and the bar mirror the static splash in
+// The backdrop and the lockup mirror the static splash in
 // index.html rule for rule (same values, same place), so the hand-over moves
 // nothing. Change one, change both: tests/ui/splashLogo.test.ts compares them.
 .splash-backdrop
@@ -275,36 +281,9 @@ const onBackdropGone = (): void => {
     width: 100%
     height: 100%
 
-// ── The plasma bar ──
-// An amber fill in a graphite capsule, leaning with the wordmark. ONE fill
-// element animated by transform, clipped by `.lit`; its hot top edge is the
-// gloss, so the empty track stays dark and the fill reads at 12 px.
-.bar
-  position: relative
-  width: 76%
-  height: clamp(12px, 2.6vmin, 18px)
-  border: 2px solid #141a33
-  border-radius: 4px
-  background: #161a22
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3)
-  box-sizing: border-box
-  transform: skewX(-12deg)
-.track, .lit
-  position: absolute
-  inset: 1px
-  border-radius: 2px
-.track
-  background: linear-gradient(#232936, #161a22)
-.lit
-  overflow: hidden
-.fill
-  width: 100%
-  height: 100%
-  background: linear-gradient(#fff0cc 0%, #ffc768 35%, #ffa733 62%, #e27a10 100%)
-  transform-origin: left center
-  transition-property: transform
-  transition-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1)
-  will-change: transform
+// ── The bar ──
+// Drawn by the global hp-* rules in index.html's <style> (Flux's HP bar,
+// shared with the static splash), so nothing here may restyle it.
 
 .stuck-hint
   font-size: clamp(0.8rem, 3.2vmin, 1rem)

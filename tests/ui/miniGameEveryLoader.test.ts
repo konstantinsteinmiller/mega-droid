@@ -14,7 +14,7 @@ const flow = vi.hoisted(() => ({ value: null as unknown }))
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/game/flow', async () => {
   const { reactive } = await import('vue')
-  flow.value = reactive({ loading: false, loadingSector: '', loadingBoss: '', loadProgress: 0 })
+  flow.value = reactive({ loading: false, loadingSector: '', loadingBoss: '', loadingLab: false, loadProgress: 0 })
   return { flow: flow.value }
 })
 
@@ -22,7 +22,7 @@ import MissionLoading from '@/components/hud/MissionLoading.vue'
 
 const read = (p: string): string => readFileSync(resolve(__dirname, '../..', p), 'utf8')
 const SRC = read('public/js/mini-game.js')
-type F = { loading: boolean; loadingSector: string; loadingBoss: string; loadProgress: number }
+type F = { loading: boolean; loadingSector: string; loadingBoss: string; loadingLab: boolean; loadProgress: number }
 const f = (): F => flow.value as F
 
 describe('the mini-game on every loader', () => {
@@ -31,18 +31,27 @@ describe('the mini-game on every loader', () => {
     run = vi.fn(() => () => {})
     ;(window as unknown as { mdMini: unknown }).mdMini = { run }
   })
-  afterEach(() => { Object.assign(f(), { loading: false, loadingSector: '', loadingBoss: '' }) })
+  afterEach(() => { Object.assign(f(), { loading: false, loadingSector: '', loadingBoss: '', loadingLab: false }) })
 
   it.each([
     ['a story stage (boss splash)', { loadingSector: 'magnet', loadingBoss: 'magnetMaster' }],
     ['a supply run / challenge / job', { loadingSector: 'scrapyard', loadingBoss: '' }],
-    ['the intro\'s tutorial build', { loadingSector: '', loadingBoss: '' }]
+    ['the intro\'s tutorial build', { loadingSector: '', loadingBoss: '' }],
+    ['the way back to the Lab', { loadingSector: '', loadingBoss: '', loadingLab: true }]
   ])('the mission beam runs it at once for %s', async (_, s) => {
     Object.assign(f(), s, { loading: true })
     const w = mount(MissionLoading, { global: { stubs: { Transition: false } } })
     const c = w.find('canvas.mini-game')
     expect(c.exists()).toBe(true)
     expect(run).toHaveBeenCalledWith(c.element)
+    w.unmount()
+  })
+
+  it('the way back to the Lab is labelled as such', () => {
+    Object.assign(f(), { loading: true, loadingLab: true })
+    const w = mount(MissionLoading, { global: { stubs: { Transition: false } } })
+    expect(w.find('.sector').text()).toBe('ending.card.lab')
+    expect(w.find('[role=progressbar]').attributes('aria-label')).toBe('ending.card.lab')
     w.unmount()
   })
 
@@ -53,14 +62,18 @@ describe('the mini-game on every loader', () => {
   })
 
   it('every loading screen hosts it, and the beam is always mounted in the game view', () => {
-    expect(read('src/components/atoms/FLogoProgress.vue')).toMatch(/\n {8}LoaderMiniGame\n/)
-    expect(read('src/components/hud/MissionLoading.vue')).toMatch(/\n {8}LoaderMiniGame\n/)
-    expect(read('src/views/GameScene.vue')).toMatch(/\n {4}MissionLoading\n/)
-    expect(read('src/App.vue')).toMatch(/\n {4}FLogoProgress\n/)
+    expect(read('src/components/atoms/FLogoProgress.vue')).toMatch(/\n {8}LoaderMiniGame\r?\n/)
+    expect(read('src/components/hud/MissionLoading.vue')).toMatch(/\n {8}LoaderMiniGame\r?\n/)
+    expect(read('src/views/GameScene.vue')).toMatch(/\n {4}MissionLoading\r?\n/)
+    expect(read('src/App.vue')).toMatch(/\n {4}FLogoProgress\r?\n/)
     // Every way into a mission goes through the beam (flow.loading).
     const fl = read('src/game/flow.ts')
     expect(fl).toMatch(/deployFromPad[\s\S]*?return startMission\(quest\)/)
     expect(fl).toMatch(/export const startMission[\s\S]*?flow\.loading = true/)
+    // And every way back to the Lab after a mission, debrief or ending.
+    expect(fl).toMatch(/export const returnToLab[\s\S]*?flow\.loading = true/)
+    expect(fl).toMatch(/onEnd: \(\) => \{\s*debriefLive = null\s*void returnToLab\(\{ kind: 'brief' \}\)/)
+    expect(fl).toMatch(/else await returnToLab\(\)/)
   })
 
   it('the cold HTML load has it before any bundle', () => {

@@ -4,6 +4,7 @@ import {
 import { rbox, rcyl, sph, torus, tube, ell, xform, paint, merge } from './kit'
 import { toonVC, glowVC, outlineMat } from './toon'
 import { buildCapsule } from './props'
+import { RARITY_COLOR } from './palette'
 import type { Theme } from '../world/themes'
 import type { SecretSpec } from '../world/levelGen'
 
@@ -203,10 +204,12 @@ export const buildPrize = (prize: SecretSpec['prize']): Group => {
     return g
   }
   if (prize === 'tank') return buildRepairKit()
+  // 'gear': the power orb in the Tuned rarity's blue.
+  const core = prize === 'gear' ? RARITY_COLOR.tuned : '#ff5fd8'
   return assemble([
     xform(paint(torus(0.34, 0.045, 6, 22), '#c9d3e6'), [0, 0, 0], [Math.PI / 2, 0, 0]),
     xform(paint(torus(0.34, 0.045, 6, 22), '#c9d3e6'), [0, 0, 0], [0, Math.PI / 2, 0])
-  ], [xform(paint(sph(0.2, 12, 8), '#ff5fd8'), [0, 0, 0])], 0.015)
+  ], [xform(paint(sph(0.2, 12, 8), core), [0, 0, 0])], 0.015)
 }
 
 /** A shaft of light over the prize once the wall is gone: the room's one

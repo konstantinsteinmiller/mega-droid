@@ -521,9 +521,13 @@ export interface SecretSpec {
   door: { i: number; j: number; axis: 'x' | 'z' }
   /** Alcove cell indices (hidden until solved). */
   cells: number[]
-  /** 'tank' = +1 Repair Tank (heal pack) even over the cap, 'power' = a borrowed Core Master weapon charge set. */
-  prize: 'tank' | 'hp' | 'weapon' | 'power'
+  /** 'tank' = +1 Repair Tank (heal pack) even over the cap, 'power' = a borrowed Core Master weapon charge set,
+   *  'gear' = a Tuned (blue) buster and a Skill Chip. */
+  prize: 'tank' | 'hp' | 'weapon' | 'power' | 'gear'
   prizeAt: { x: number; y: number; z: number }
+  /** Once per save: the loot key (`lootTaken`) its prize is recorded under.
+   *  A save that took it finds the wall open and the alcove empty. */
+  once?: string
 }
 
 export interface Terrain {

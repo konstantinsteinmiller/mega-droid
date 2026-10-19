@@ -30,7 +30,8 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
  *      (the long corridor out: the Repair Gel plate and its lesson, with a
  *      whole room between it and the boss door, so the lesson never fires
  *      while the player is already at the shutter)
- *   9 Antechamber      a breather before the gate
+ *   9 Antechamber      a breather before the gate, and the first secret:
+ *                      one button to shoot, an alcove with a blue buster
  *   Arena              the Scrapper, 7 × 7
  *
  * Three rows: east along the top, back west through the middle, east again
@@ -40,6 +41,9 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
 
 const W = 38
 const H = 27
+
+/** The loot key the tutorial secret's prize is recorded under (`lootTaken`). */
+export const TUTORIAL_SECRET = 'tutorial-secret'
 
 export const TUTORIAL_STEPS: string[][] = [
   ['charge'], ['crate'], ['block'], ['gap'], ['chest'], ['slide'], ['clear'], ['clear'], ['clear'], ['rest']
@@ -130,6 +134,10 @@ export const generateWakeUpCall = (seed: number): MapData => {
   b.addRoom(15, 19, 5, 5, 'combat', 'hall', y)
   b.checkpoint(15, 21, YAW_PX, [[15, 20], [15, 21], [15, 22], [16, 21]])
   b.corridor(20, 21, 1, 0, 2, y, true)
+  // The first secret: one lamp button on the bare north wall, a false wall
+  // in the south one (off the way from door to door). One shot opens it: a
+  // Tuned buster and a Skill Chip, once per save.
+  b.secret(9, 'lights', [17, 24, 17, 25], { i: 17, j: 24, axis: 'z' }, [[17, 19, 'n']], [1], 'gear').once = TUTORIAL_SECRET
 
   // ── Arena ─────────────────────────────────────────────────────────────────
   b.addRoom(22, 18, 7, 7, 'boss', 'arena', y)

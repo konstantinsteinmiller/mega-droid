@@ -41,6 +41,7 @@ import {
   iconGeometry, buildBeamLamp, buildBeamTarget, buildFloorPlate, buildMapPanel, buildMirror, buildSequencePanel
 } from '@/game/models/secretProps'
 import { coplanarOverlaps } from './coplanar'
+import { generateWakeUpCall, TUTORIAL_SECRET } from '@/game/world/stages/tutorial'
 import { BorrowedRun, LENT_SHOTS, secretWeapon } from '@/game/sim/borrowed'
 import { WEAPON_IDS } from '@/game/data/weapons'
 import type { AtlasLine } from '@/game/sim/atlas'
@@ -308,6 +309,49 @@ const shootMirror = (r: Rig, i: number): boolean => {
   const m = r.run.t.secrets![0]!.mirrors![i]!
   return r.run.shotStep(step([m.x + 2, m.y, m.z], [m.x - 0.3, m.y, m.z]))
 }
+
+describe('the tutorial\'s one-button secret', () => {
+  it('one shot opens it; its gear prize is paid once and recorded under its key; a save that took it finds it open and empty', () => {
+    const map = generateWakeUpCall(1)
+    const spec = map.terrain!.secrets![0]!
+    expect(spec.kind).toBe('lights')
+    expect(spec.buttons).toHaveLength(1)
+    expect(spec.prize).toBe('gear')
+    expect(spec.once).toBe(TUTORIAL_SECRET)
+    const taken = new Set<string>()
+    const once: Array<string | undefined> = []
+    const a = rig(map)
+    a.host.secretPrize = (p, _x, _y, _z, key) => { a.prizes.push(p); once.push(key); if (key) taken.add(key) }
+    a.host.lootTaken = (k) => taken.has(k)
+    const at = spec.prizeAt
+    const onPrize = body(at.x, at.z, at.y)
+    expect(shootAt(a, 0)).toBe(true)
+    expect(a.sec.isSolved(0)).toBe(true)
+    tick(a, SINK_T + 0.5, onPrize)
+    tick(a, 1, onPrize)
+    expect(a.prizes).toEqual(['gear'])
+    expect(once).toEqual([TUTORIAL_SECRET])
+
+    // A replay on the same save: open from the start, nothing to take, no lines.
+    const b = rig(map)
+    b.host.secretPrize = (p) => { b.prizes.push(p) }
+    b.host.lootTaken = (k) => taken.has(k)
+    // (The rig built its feature before lootTaken was set: build it again.)
+    const sec = new SecretsFeature(b.host, map.terrain!, { openSecret: noop } as never)
+    expect(sec.isSolved(0)).toBe(true)
+    expect(sec.list[0]!.taken).toBe(true)
+    expect(sec.list[0]!.prize.visible).toBe(false)
+    expect(sec.list[0]!.state).toEqual([1])
+  })
+
+  it('a save that never took it finds it shut', () => {
+    const map = generateWakeUpCall(1)
+    const r = rig(map)
+    r.host.lootTaken = () => false
+    const sec = new SecretsFeature(r.host, map.terrain!, { openSecret: noop } as never)
+    expect(sec.isSolved(0)).toBe(false)
+  })
+})
 
 describe('the later puzzles', () => {
   it('sequence: takes the panel\'s order; a wrong button buzzes and starts over (from it, if it is the first step)', () => {

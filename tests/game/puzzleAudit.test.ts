@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest'
 import { generateStage } from '@/game/world/stages'
 import { generateClimb } from '@/game/world/climbGen'
+import { generateWakeUpCall } from '@/game/world/stages/tutorial'
 import { secretWallFaces } from '@/game/world/climbMesh'
 import { CELL, type MapData } from '@/game/world/levelGen'
 import { createNav, findPath, floorAt, hasLineOfSight } from '@/game/world/nav'
@@ -177,6 +178,11 @@ describe('puzzle audit: hints and buttons hang where they can be read and hit', 
       for (let seed = 0; seed < 24; seed++) audit(generateStage(sector, seed), `${sector} #${seed}`)
     })
   }
+  it('the tutorial: its one-button secret in the antechamber', () => {
+    const m = generateWakeUpCall(1)
+    expect(m.terrain!.secrets?.length).toBe(1)
+    audit(m, 'tutorial')
+  })
   it('the Tower Run', () => {
     for (let seed = 0; seed < 24; seed++) audit(generateClimb(seed), `climb #${seed}`)
   })

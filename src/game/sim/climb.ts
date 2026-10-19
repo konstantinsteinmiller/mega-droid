@@ -190,7 +190,9 @@ export interface ClimbHost {
   /** A secret's prize is taken (`sim/secrets.ts`): 'tank' one Repair Gel
    *  more, even over the cap; 'weapon' / 'power' a borrowed Core Master
    *  weapon's charges (`sim/borrowed.ts`). ('hp' is `onPickup('hpBig')`.) */
-  secretPrize?(prize: SecretSpec['prize'], x: number, y: number, z: number): void
+  secretPrize?(prize: SecretSpec['prize'], x: number, y: number, z: number, once?: string): void
+  /** A once-per-save prize (`SecretSpec.once`) this save already took. */
+  lootTaken?(key: string): boolean
   /** A sealed flood room (`sim/stages/water.ts`) works its doorways: how far
    *  door `id` stands open (0 shut .. 1), whether something already holds
    *  it shut, slamming it shut and held, letting it go again; and whether a

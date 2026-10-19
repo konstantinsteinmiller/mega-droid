@@ -426,7 +426,25 @@ export class SecretsFeature implements StageFeature {
       for (let i = 0; i < mirrors.length; i++) mirrors[i]!.pivot.rotation.y = mirrorYaw(rt.state[i]!)
       this.paintAll(rt)
       this.list.push(rt)
+      // A once-per-save prize already taken: the wall stands open, the alcove empty.
+      if (spec.once && host.lootTaken?.(spec.once)) this.openQuietly(rt, true)
     })
+  }
+
+  /** Solved without a show: the wall gone, the paths in, the prize there unless taken. */
+  private openQuietly(rt: SecretRt, taken: boolean): void {
+    rt.taken = taken
+    rt.solved = true
+    rt.blink = 0
+    rt.sink = 1
+    for (let i = 0; i < rt.state.length; i++) {
+      const v = targetOf(rt.spec, i)
+      if (v >= 0) rt.state[i] = v
+    }
+    if (rt.wall) rt.wall.position.y = -rt.wallH
+    this.run.openSecret(rt.n)
+    this.showPrize(rt)
+    this.paintAll(rt)
   }
 
   // ─── Looks ─────────────────────────────────────────────────────────────────
@@ -821,7 +839,7 @@ export class SecretsFeature implements StageFeature {
     h.fx.riseRing(a.x, a.y + 0.2, a.z, '#8dff7a', 0.8, 18)
     h.fx.sparks(a.x, a.y + PRIZE_HOVER, a.z, '#fff2a8', 16, 4, 0.16)
     if (rt.spec.prize === 'hp' || !h.secretPrize) h.onPickup('hpBig', 0)
-    else h.secretPrize(rt.spec.prize, a.x, a.y, a.z)
+    else h.secretPrize(rt.spec.prize, a.x, a.y, a.z, rt.spec.once)
   }
 
   // ─── Save ──────────────────────────────────────────────────────────────────

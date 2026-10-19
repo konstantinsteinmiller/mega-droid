@@ -2128,9 +2128,24 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
 
   /** A secret's prize (`ClimbHost.secretPrize`): a Repair Gel past the cap
    *  (a secret is worth breaking the rule for), or a borrowed weapon — the
-   *  one this mission's capsules lend, else one chosen the same way. */
-  secretPrize(prize: SecretSpec['prize'], x: number, y: number, z: number): void {
-    if (prize === 'tank') {
+   *  one this mission's capsules lend, else one chosen the same way; 'gear'
+   *  a Tuned (blue) buster at the player's level as of pickup (the
+   *  tutorial's item level is fixed at 1, a returning hero's is not) and
+   *  a Skill Chip.
+   *  A once-per-save prize (`SecretSpec.once`) is recorded as a chest's
+   *  authored loot is (`lootTaken`). */
+  secretPrize(prize: SecretSpec['prize'], x: number, y: number, z: number, once?: string): void {
+    if (once && !this.lootTaken(once)) profile.world.seen.push(`loot:${once}`)
+    if (prize === 'gear') {
+      const it = rollItem((this.map.seed ^ 0x51c7e7) >>> 0, Math.max(1, profile.level), { rarity: 'tuned', slot: 'buster' })
+      profile.inv.items.push(it)
+      profile.inv.fresh.push(it.id)
+      this.itemsFound.push(it)
+      pushHud({ t: 'loot', item: it })
+      grantSkillChip()
+      pushHud({ t: 'toast', key: 'loot.skillChip', color: '#3cff9a' })
+      sfx('loot')
+    } else if (prize === 'tank') {
       this.giftGel()
     } else if (prize === 'hp') {
       this.onPickup('hpBig', 0)

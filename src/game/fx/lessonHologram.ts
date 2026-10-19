@@ -1,11 +1,11 @@
 import {
   AdditiveBlending, BoxGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial,
-  RingGeometry, SphereGeometry, Vector3, type Object3D
+  Quaternion, RingGeometry, SphereGeometry, Vector3, type Object3D
 } from 'three'
 import { buildHero, buildViewmodel, animateHeroIdle, animateHeroWalk, animateHeroHop, HERO_MUZZLE_X, HERO_MUZZLE_Y, type HeroColors } from '../models/hero'
 import { buildEnemyRig, poseHeli, poseTrooper, poseHopper } from '../models/enemies'
 import { pose, type Rig } from '../models/kit'
-import { newMotion } from '../models/motion'
+import { newMotion, cycleLen, swingA, HERO_GAIT, TAU } from '../models/motion'
 import { buildChargedShot, type ChargedShotFx } from './chargedShot'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
 import type { TrainId } from '../sim/training'
@@ -46,7 +46,7 @@ export const HOLO_LOOP: Readonly<Record<HoloId, number>> = { charge: 4.2, block:
 
 /** The moment each loop's input is down: [from, to) in loop seconds. */
 export const HOLO_PRESS: Readonly<Record<HoloId, readonly [number, number]>> = {
-  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0, 2.8], gel: [1, 1.2], weapon: [0.3, 0.8], crate: [0.6, 1.9], chest: [0.55, 0.7]
+  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0.3, 2.3], gel: [1, 1.2], weapon: [0.3, 0.8], crate: [0.6, 1.9], chest: [0.55, 0.7]
 }
 const ACT: Readonly<Record<HoloId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon', crate: 'fire', chest: 'fire' }
 
@@ -124,6 +124,114 @@ const holoProp = (root: Object3D, mat: MeshBasicMaterial, fx: MeshBasicMaterial)
 /** The block lesson's Trooper: this far (m) along the hologram's line from
  *  its middle (the tutorial's real Trooper stands beside it, `sim/spawn.ts`). */
 export const HOLO_TROOPER_X = 2.6
+
+/**
+ * The gap lesson's run, as the player's own edge-leap (`sim/climb.ts`): Flux
+ * speeds up to a walk, runs off the lip at that speed and keeps it through
+ * the air (LEAP_VY up under GRAVITY, a ballistic arc), lands on the far
+ * ledge and slows to a stop. The ground speed eases in and out and never
+ * changes at the take-off or the landing, so he never slides or snaps.
+ */
+export const HOLO_GAP = {
+  /** Start and take-off x (the near ledge's lip is at −0.7). */
+  from: -3.2, lip: -0.75,
+  /** Walking speed (m/s; the player walks at 4.7). */
+  speed: 4.4,
+  /** The edge-leap's hop (m/s up) and the climb's gravity (m/s²). */
+  vy: 5, gravity: 26,
+  /** Loop seconds: starts walking, done speeding up, done slowing down after the landing. */
+  go: 0.4, ramp: 0.5, stop: 0.65
+} as const
+
+export interface HoloGapPose {
+  x: number
+  y: number
+  /** Ground speed (m/s). */
+  vx: number
+  /** The gait's `walk` (0..1) and its phase (rad, by distance). */
+  walk: number
+  stride: number
+  /** 0..1: how far into the hop pose (the air), and the legs' tuck. */
+  air: number
+  tuck: number
+}
+
+/** Seconds in the air: up at `vy` and back down to the take-off height. */
+export const holoGapFlight = (): number => (2 * HOLO_GAP.vy) / HOLO_GAP.gravity
+
+/** Where the gap lesson's Flux is at loop time `u` (pure, into `out`). */
+export const holoGapAt = (u: number, out: HoloGapPose): HoloGapPose => {
+  const G = HOLO_GAP
+  const V = G.speed
+  const T = holoGapFlight()
+  const walkIn = G.lip - G.from - V * G.ramp * 0.5
+  const tUp = G.go + G.ramp + walkIn / V
+  const tDown = tUp + T
+  let x: number
+  let vx: number
+  let y = 0
+  let air = 0
+  let tuck = 0
+  if (u < G.go) {
+    x = G.from
+    vx = 0
+  } else if (u < G.go + G.ramp) {
+    // Speeding up: v = V·smooth(s), x its integral.
+    const s = (u - G.go) / G.ramp
+    vx = V * s * s * (3 - 2 * s)
+    x = G.from + V * G.ramp * (s * s * s - (s * s * s * s) / 2)
+  } else if (u < tUp) {
+    vx = V
+    x = G.from + V * G.ramp * 0.5 + V * (u - G.go - G.ramp)
+  } else if (u < tDown) {
+    const a = u - tUp
+    vx = V
+    x = G.lip + V * a
+    y = G.vy * a - 0.5 * G.gravity * a * a
+    const k = a / T
+    tuck = Math.sin(k * Math.PI)
+    air = smooth(Math.min(k, 1 - k) / 0.2)
+  } else {
+    // Slowing down: v = V·(1 − smooth(s)).
+    const s = Math.min(1, (u - tDown) / G.stop)
+    vx = V * (1 - s * s * (3 - 2 * s))
+    x = G.lip + V * T + V * G.stop * (s - s * s * s + (s * s * s * s) / 2)
+  }
+  const dist = x - G.from
+  out.x = x
+  out.y = y
+  out.vx = vx
+  out.walk = vx / 4.7
+  out.stride = 1.3 + (dist / cycleLen(HERO_GAIT, swingA(HERO_GAIT, 1, 0))) * TAU
+  out.air = air
+  out.tuck = tuck
+  return out
+}
+const _gap: HoloGapPose = { x: 0, y: 0, vx: 0, walk: 0, stride: 0, air: 0, tuck: 0 }
+
+/** A rig's bone pose, kept to blend another toward it. */
+type BonePose = Map<string, { q: Quaternion; p: Vector3 }>
+const _walkPose: BonePose = new Map()
+const _bq = new Quaternion()
+const _bp = new Vector3()
+const keepPose = (rig: Rig, into: BonePose): void => {
+  for (const [k, b] of Object.entries(rig.bones)) {
+    if (!b) continue
+    let e = into.get(k)
+    if (!e) into.set(k, (e = { q: new Quaternion(), p: new Vector3() }))
+    e.q.copy(b.quaternion)
+    e.p.copy(b.position)
+  }
+}
+/** Each bone from the kept pose (w 0) to its own (w 1). */
+const blendPose = (rig: Rig, from: BonePose, w: number): void => {
+  for (const [k, b] of Object.entries(rig.bones)) {
+    const e = b && from.get(k)
+    if (!b || !e) continue
+    b.quaternion.slerpQuaternions(e.q, _bq.copy(b.quaternion), w)
+    b.position.lerpVectors(e.p, _bp.copy(b.position), w)
+  }
+}
 
 /** Yaw that turns a rig (which faces +Z) toward +X. */
 const FACE_PX = Math.PI / 2
@@ -454,20 +562,22 @@ export class LessonHologram {
   }
 
   private poseGap(u: number, t: number): void {
-    // Walk to the edge (0–1.5), the leap carries him over (1.5–2.1), walk on.
-    let x: number
-    let y = 0
-    if (u < 1.5) x = -3.2 + 2.5 * span(u, 0, 1.5)
-    else if (u < 2.1) {
-      const k = span(u, 1.5, 2.1)
-      x = -0.7 + 1.6 * k
-      y = Math.sin(k * Math.PI) * 1.1
-    } else x = 0.9 + 1.5 * span(u, 2.1, 2.8)
-    this.stand(x)
-    this.flux.root.position.y = y
-    if (u >= 1.5 && u < 2.1) animateHeroHop(this.flux, 0, Math.sin(span(u, 1.5, 2.1) * Math.PI), t)
-    else if (u < 2.8) animateHeroWalk(this.flux, this.motion, t)
-    else animateHeroIdle(this.flux, t)
+    const g = holoGapAt(u, _gap)
+    this.stand(g.x)
+    this.flux.root.position.y = g.y
+    const m = this.motion
+    m.walk = g.walk
+    m.phase = g.stride
+    m.fwd = 1
+    m.side = 0
+    m.dash = 0
+    animateHeroWalk(this.flux, m, t)
+    if (g.air <= 0) return
+    // In the air: the hop's tucked legs, blended in over the take-off and out
+    // over the landing so the walking legs never snap.
+    keepPose(this.flux, _walkPose)
+    animateHeroHop(this.flux, 0, g.tuck, t)
+    blendPose(this.flux, _walkPose, g.air)
   }
 
   private poseGel(u: number, t: number): void {

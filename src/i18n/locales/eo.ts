@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Restas {s} sekundoj, ankoraŭ {n} dronoj',
     'tink': 'TINK!',
+    'getClear': 'FORIRU!',
+    'lockLost': 'CELO PERDITA!',
     'perfect': 'PERFEKTE!',
     'parry': 'PARITE!',
     'guardBreak': 'GARDO ROMPITA!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Defipordo',
     'challengeN': 'Defipordo {n}',
     'actLevelUp': 'Ludi la nivelaltigan scenon',
-    'actObjective': 'Ludi la celo-plenumitan scenon'
+    'actObjective': 'Ludi la celo-plenumitan scenon',
+    'climbs': 'Salti al grimpado',
+    'practice': 'Ekzerca muro',
+    'climbN': 'Grimpado {n} ({h} m)',
+    'shortcutStart': 'Komenco de la ŝparvojo',
+    'battleRoom': 'Batalĉambro'
   },
 
   'quest': {

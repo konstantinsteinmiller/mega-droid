@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Nog {s} seconden, nog {n} drones',
     'tink': 'TING!',
+    'getClear': 'WEG HIER!',
+    'lockLost': 'DOEL KWIJT!',
     'perfect': 'PERFECT!',
     'parry': 'GEPAREERD!',
     'guardBreak': 'DEKKING GEBROKEN!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Uitdagingsdeur',
     'challengeN': 'Uitdagingsdeur {n}',
     'actLevelUp': 'Level-up-scène afspelen',
-    'actObjective': 'Doel-voltooid-scène afspelen'
+    'actObjective': 'Doel-voltooid-scène afspelen',
+    'climbs': 'Naar een klimwand springen',
+    'practice': 'Oefenwand',
+    'climbN': 'Klimwand {n} ({h} m)',
+    'shortcutStart': 'Begin van de kortere weg',
+    'battleRoom': 'Gevechtsruimte'
   },
 
   'quest': {

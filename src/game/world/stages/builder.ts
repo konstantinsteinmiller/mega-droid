@@ -3,7 +3,7 @@ import {
   type Ladder, type Lift, type Crusher, type RollerLane, type Checkpoint, type RewardSpot, type FoePost,
   type ChestSpot, type SecretSpec, type PitKind, type WindZone, type RailSpec, type WaveSpec, type VentSpec, type NavLink,
   type IcePillar, type IcicleSpec, type CrumbleSpec, type MagnetRail, type WaterZone, type NeonBridge, type NeonSwitch, type BlackoutSpec, type ChestLoot,
-  type Pillar, challengeSpot
+  type Pillar, type ClimbSpot, challengeSpot
 } from '../levelGen'
 
 /**
@@ -93,6 +93,8 @@ export class Builder {
   icePillars: IcePillar[] = []
   icicles: IcicleSpec[] = []
   crumbles: CrumbleSpec[] = []
+  /** Wall climbs (`world/climbFeature.ts`, placed last). */
+  climbs: ClimbSpot[] = []
   /** The beam-in room and its door, if the stage has one (`beamRoom`). */
   beam: { room: number; door: number } | null = null
   /** The room behind the boss, if the stage has one (`exitRoom`). */
@@ -611,7 +613,8 @@ export class Builder {
  */
 export const finish = (b: Builder, start: { x: number; z: number; yaw: number }, seed: number): MapData => {
   // Doors lead INTO rooms: each room's door index.
-  for (const d of b.doors) b.rooms[d.to]!.door = d.id
+  // (A shortcut's way out is a second door into its room, not the one in.)
+  for (const d of b.doors) if (!d.shortcut) b.rooms[d.to]!.door = d.id
 
   const wallTop: number[] = []
   const pitBottom: number[] = []
@@ -665,6 +668,7 @@ export const finish = (b: Builder, start: { x: number; z: number; yaw: number },
   for (const p of b.pillars) navBlock[b.k(Math.floor(p.x / CELL), Math.floor(p.z / CELL))] = 1
   if (b.icicles.length) terrain.icicles = b.icicles
   if (b.crumbles.length) terrain.crumbles = b.crumbles
+  if (b.climbs.length) terrain.climbs = b.climbs
   const map: MapData = {
     seed, w: b.W, h: b.H, cell: b.cell, room: b.room, navBlock, rooms: b.rooms,
     doors: b.doors, pillars: b.pillars.map(p => ({ ...p })), start, terrain
@@ -761,6 +765,17 @@ export const mirrorX = (m: MapData): MapData => {
   if (t.icePillars) terrain.icePillars = t.icePillars.map(p => ({ ...p, i: mi(p.i) }))
   if (t.icicles) terrain.icicles = t.icicles.map(c => ({ ...c, i: mi(c.i) }))
   if (t.crumbles) terrain.crumbles = t.crumbles.map(c => ({ ...c, i: mi(c.i + (c.w ?? 1) - 1) }))
+  if (t.climbs) {
+    terrain.climbs = t.climbs.map(c => ({
+      ...c, cells: c.cells.map(mk), ladders: c.ladders.slice(), top: { ...c.top, i: mi(c.top.i) },
+      ...(c.shortcut ? {
+        shortcut: {
+          ...c.shortcut, skips: c.shortcut.skips.slice(),
+          ...(c.shortcut.sign ? { sign: { ...c.shortcut.sign, x: X - c.shortcut.sign.x, dx: -c.shortcut.sign.dx } } : {})
+        }
+      } : {})
+    }))
+  }
   return {
     ...m,
     cell: flip(m.cell),

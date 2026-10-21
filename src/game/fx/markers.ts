@@ -54,7 +54,7 @@ export class FloorMarkers {
   /** `owner`: the machine winding up the strike it marks. If it dies or is
    *  stunned before the strike leaves (`cancelIf`), the marker fades out;
    *  `release` hands it over to the shell in flight, which still lands. */
-  spawn(x: number, z: number, r: number, dur: number, owner: object | null = null): void {
+  spawn(x: number, z: number, r: number, dur: number, owner: object | null = null, color: Color = TELE_RED): void {
     let m = this.pool.find(p => !p.active)
     if (!m) {
       const mat = new MeshBasicMaterial({ color: TELE_RED.clone(), transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false })
@@ -70,6 +70,9 @@ export class FloorMarkers {
     m.active = true
     m.owner = owner
     m.fade = 0
+    // A Master's charged blast (#188) wears its element; every other, red.
+    ;(m.mesh.material as MeshBasicMaterial).color.copy(color)
+    ;(m.fill.material as MeshBasicMaterial).color.copy(color)
     ;(m.fill.material as MeshBasicMaterial).opacity = 0.18
     m.t = 0
     m.dur = dur

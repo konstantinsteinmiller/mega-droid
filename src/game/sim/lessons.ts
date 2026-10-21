@@ -111,6 +111,9 @@ const CLEAR_SETTLE = 1.2
 const WEAPON_TRIES = 3
 /** A taught lesson's drones come back this long after a try with the buster (s). */
 const WEAPON_AGAIN = 1.5
+/** A lesson drone outside the lesson's room this long (s) is beamed back in
+ *  front of Flux; with no spot for it, the lesson stops waiting on it. */
+export const DRONE_STRAY = 2
 /** The drone's glyph waits for the coach's move and look glyphs at most
  *  this long (s of play) before it comes in anyway. */
 const REVEAL_AFTER = 10
@@ -158,9 +161,13 @@ export const roomClear = (enemies: Enemy[], roomId: number, combat: boolean): bo
  * returns null when nothing fits. On a terrain map every drone must hover
  * over a floor within DRONE_FLOOR of the player's feet `py`: never over a
  * pit, never under a ledge (the line of sight is a grid walk, blind to it).
+ * Given a `room`, every drone hovers inside it: a lesson started on the
+ * threshold put one back through the open doorway, the door shut behind
+ * Flux, and the lesson waited on a drone he could never reach (playtest
+ * 2026-10-20, Blaze: the room behind the boss, the beam-out pedestal dark).
  */
 export const droneRow = (
-  nav: Nav, map: MapData, px: number, pz: number, yaw: number, layout: 'fan' | 'line' = 'fan', py = 0
+  nav: Nav, map: MapData, px: number, pz: number, yaw: number, layout: 'fan' | 'line' = 'fan', py = 0, room = -1
 ): Array<[number, number]> | null => {
   const turns = [0, 0.35, -0.35, 0.7, -0.7, 1.1, -1.1, Math.PI]
   for (const dy of turns) {
@@ -174,7 +181,8 @@ export const droneRow = (
         const dd = layout === 'fan' ? d : d - 2 + k * 2
         const x = px - Math.sin(b) * dd
         const z = pz - Math.cos(b) * dd
-        if (isSolidAt(nav, x, z) || roomAt(map, x, z) < 0) break
+        const r = roomAt(map, x, z)
+        if (isSolidAt(nav, x, z) || r < 0 || (room >= 0 && r !== room)) break
         // −∞ over a pit fails this too.
         if (map.terrain && !(Math.abs(groundAt(map, x, z) - py) <= DRONE_FLOOR)) break
         if (!hasLineOfSight(nav, px, pz, x, z)) break
@@ -228,6 +236,8 @@ export class LessonDirector {
   private weaponRoom = -1
   private weaponUsed = false
   private weaponTries = 0
+  /** Since when a lesson drone has been outside the lesson's room (-1: none). */
+  private strayFrom = -1
   /** A stage's beam-in lesson names its weapon (`teachWeapon`): the
    *  automatic room-by-room one stands down, and a try shot down with the
    *  buster brings the drones back instead of giving up. */
@@ -514,6 +524,7 @@ export class LessonDirector {
     }
     // ── 3. The special weapon: a quiet room, a row of sleeping drones ──
     if (this.live === 'weapon') {
+      this.leashDrones()
       const standing = this.drones.filter(e => e.state !== 'dead')
       if (standing.length === 0) {
         const last = this.drones[1] ?? this.drones[0]
@@ -541,6 +552,9 @@ export class LessonDirector {
       const room = h.map.rooms[tw.room]
       const slot = this.slotOf(tw.id)
       if (room && slot) this.startWeapon(room, slot)
+      // No row fits from where he stands: try again in a beat (it used to
+      // stop here for good, the pedestal dark with nothing left to shoot).
+      if (room && slot && this.live !== 'weapon') tw.again = h.time + WEAPON_AGAIN
     }
     // No weapon lesson in just any quiet room: a weapon is taught only in
     // the room behind the boss it came from (`teachWeapon`, playtest
@@ -557,6 +571,54 @@ export class LessonDirector {
     this.weaponRooms.add(roomId)
     this.startWeapon(room, slot)
     return this.live === 'weapon'
+  }
+
+  /**
+   * The lesson's drones are leashed to its room: one outside it (placed or
+   * pushed past the doorway, chasing Flux once woken) for DRONE_STRAY is
+   * beamed back to a free spot of a fresh row in front of him, asleep again.
+   * With none to give it, the lesson stops counting it: no lesson ever waits
+   * on a drone behind a shut door.
+   */
+  private leashDrones(): void {
+    const h = this.host
+    const p = h.player
+    const room = this.weaponRoom
+    const out = this.drones.filter(e => e.state !== 'dead' && roomAt(h.map, e.x, e.z) !== room)
+    if (!out.length) {
+      this.strayFrom = -1
+      return
+    }
+    if (this.strayFrom < 0) this.strayFrom = h.time
+    if (h.time - this.strayFrom < DRONE_STRAY) return
+    this.strayFrom = -1
+    const here = roomAt(h.map, p.x, p.z) === room
+    const py = h.map.terrain ? p.y ?? 0 : 0
+    const row = here ? droneRow(h.nav, h.map, p.x, p.z, p.yaw, 'fan', py, room) : null
+    const inside = this.drones.filter(e => e.state !== 'dead' && !out.includes(e))
+    for (const e of out) {
+      const spot = row?.find(([x, z]) => inside.every(o => Math.hypot(o.x - x, o.z - z) > 1.2))
+      if (!spot) {
+        this.drones.splice(this.drones.indexOf(e), 1)
+        continue
+      }
+      e.x = e.px = spot[0]
+      e.z = e.pz = spot[1]
+      e.room = room
+      e.hold = true
+      e.awake = false
+      e.state = 'idle'
+      e.st = 0
+      e.yaw = Math.atan2(p.x - spot[0], p.z - spot[1])
+      if (h.map.terrain) {
+        const f = groundAt(h.map, spot[0], spot[1])
+        e.floor = f
+        e.hover = [f, f]
+      }
+      inside.push(e)
+      h.fx.riseRing(spot[0], (e.floor ?? 0) + 0.1, spot[1], PAL.glowCyan, 0.7, 16)
+      h.sfx('beamIn', spot[0], spot[1])
+    }
   }
 
   /** The slot a weapon sits in (1 or 2), if it is slotted. */
@@ -713,7 +775,7 @@ export class LessonDirector {
     const p = h.player
     const layout = w.id === 'flameWave' || w.id === 'iceLance' ? 'line' : 'fan'
     const py = h.map.terrain ? p.y ?? 0 : 0
-    const row = droneRow(h.nav, h.map, p.x, p.z, p.yaw, layout, py)
+    const row = droneRow(h.nav, h.map, p.x, p.z, p.yaw, layout, py, room.id)
     if (!row) return
     // One hit of the weapon takes a drone (through its armour); enough
     // energy for a few tries.
@@ -746,6 +808,7 @@ export class LessonDirector {
     h.sfx('beamIn', row[1]![0], row[1]![1])
     h.combat.we = Math.min(h.combat.maxWe, Math.max(h.combat.we, h.weaponCost(w.id) * 3))
     this.weaponUsed = false
+    this.strayFrom = -1
     this.weaponRoom = room.id
     this.live = 'weapon'
     this.nudge = 0

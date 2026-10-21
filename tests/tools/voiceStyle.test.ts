@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 // @ts-expect-error plain .mjs tool module, no types
 import { styleFor } from '../../tools/voice/style.mjs'
 // @ts-expect-error plain .mjs tool module, no types
-import { tagFor } from '../../tools/voice/engines/elevenlabs.mjs'
+import { MODEL_ID, VOICES, VOICE_IDS, speakApi, tagFor } from '../../tools/voice/engines/elevenlabs.mjs'
 // @ts-expect-error plain .mjs tool module, no types
 import { normalize } from '../../tools/voice/normalize.mjs'
 
@@ -42,3 +42,29 @@ describe('the delivery a line is spoken with', () => {
     expect(normalize('Dr. Vex Mk-I ist da.', 'de').text).toBe('Dr. Vex Mark Eins ist da.')
   })
 })
+
+describe('ElevenLabs by API key', () => {
+  it('has an API voice id for every speaker the web desk voices', () => {
+    for (const name of Object.values(VOICES)) expect(VOICE_IDS[name as keyof typeof VOICE_IDS], name).toMatch(/^\w{20}$/)
+  })
+
+  it("posts the line to the voice with the web desk's model and the voice's own settings", async () => {
+    let seen: { url: string; init: RequestInit } | null = null
+    const fake = async (url: string, init: RequestInit) => {
+      seen = { url, init }
+      return new Response(new Uint8Array([1, 2, 3]), { status: 200 })
+    }
+    const mp3 = await speakApi('sk_test', 'bIHbv24MWmeRgasZH58o', '[calm] Hi.', fake as typeof fetch)
+    expect([...mp3]).toEqual([1, 2, 3])
+    expect(seen!.url).toContain('/v1/text-to-speech/bIHbv24MWmeRgasZH58o')
+    const body = JSON.parse(String(seen!.init.body))
+    expect(body).toEqual({ text: '[calm] Hi.', model_id: MODEL_ID })
+    expect((seen!.init.headers as Record<string, string>)['xi-api-key']).toBe('sk_test')
+  })
+
+  it('never puts the key in an error', async () => {
+    const fake = async () => new Response('bad key sk_abcDEF123', { status: 401 })
+    await expect(speakApi('sk_abcDEF123', 'x', 'Hi.', fake as unknown as typeof fetch)).rejects.toThrow(/^ElevenLabs API 401: bad key <key>$/)
+  })
+})
+

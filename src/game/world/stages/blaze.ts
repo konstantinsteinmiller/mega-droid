@@ -2,6 +2,7 @@ import { CELL, Ramp, cellCenter, type MapData, type VentSpec } from '../levelGen
 import { mulberry32, shuffle } from '../rng'
 import { STOREY } from '../climbGen'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Meltdown Descent (the blaze sector's story stage) ──────────────────────
@@ -274,6 +275,8 @@ export const generateMeltdown = (seed: number): MapData => {
   // never passes it. Level with the ledge, over the void like the stack.
   floor(19, 15, 21, 15, L(1))
   b.challengeRoom(6, { mouth: { i: 20, j: 15, di: 0, dj: 1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'blaze', seed)
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

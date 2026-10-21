@@ -60,7 +60,9 @@ const visiblyClear = (nav: Nav, a: Vector3, b: Vector3): boolean => {
     q.copy(p.lerpVectors(a, b, (k - 1) / n))
     p.lerpVectors(a, b, k / n)
     if (p.y <= floorAt(nav, p.x, p.z) + 0.05) return false
-    if (!overWalls(nav, q.x, q.z, p.x, p.z, p.y)) return false
+    // At the step's lower end: a rising line crosses a wall lower than where
+    // the step ends, and a shot skimming a wall's top is stopped by it.
+    if (!overWalls(nav, q.x, q.z, p.x, p.z, Math.min(q.y, p.y))) return false
   }
   return true
 }

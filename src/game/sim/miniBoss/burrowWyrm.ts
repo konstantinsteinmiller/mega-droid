@@ -1,7 +1,7 @@
 import { AdditiveBlending, CircleGeometry, Color, DoubleSide, Group, Mesh, MeshBasicMaterial } from 'three'
 import type { Enemy, World } from '../world'
 import type { Room } from '../../world/levelGen'
-import { PLAYER_R } from '../constants'
+import { PLAYER_R, EYE_H } from '../constants'
 import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
@@ -54,6 +54,10 @@ const ERUPT_T = 0.8
  *  the fan's half-angle (rad), their speed (m/s), the lanes' length (m). */
 export const SPIT_TELE = 0.9
 const SPIT_LOCK = 0.3
+/** How fast it turns its aim onto Flux before the lock (rad/s). At 2.6 a
+ *  wyrm weaving past him side-on was still up to a radian off him when the
+ *  aim locked: the fan (and its drawn lanes) went past him. */
+const SPIT_TURN = 7
 export const SPIT_N = 5
 export const SPIT_HALF = 0.55
 const SPIT_SPEED = 12
@@ -233,11 +237,17 @@ const mouth = (e: Enemy, m: WyrmMem): [number, number, number] => {
 
 const spit = (w: World, e: Enemy, m: WyrmMem): void => {
   const [x, y, z] = mouth(e, m)
-  const d = Math.max(2, distToPlayer(w, e))
+  // Down from the reared head to his middle where he stands — the height
+  // the shot test hits him at, over the way from the MOUTH to him. Tipped
+  // to 1 m over the floor at his distance from its body, the rocks came in
+  // over his shoulders and never touched him, blocked or not. Aimed in
+  // world heights already (its floor is in `mouth`): a climb must not lift it again.
+  const d = Math.max(2, Math.hypot(w.player.x - x, w.player.z - z))
+  const dy = ((w.player.y ?? 0) + EYE_H - 0.45 - y) / d
   const off = m.volleys % 2 ? SPIT_HALF / (SPIT_N - 1) : 0
   for (let k = 0; k < SPIT_N; k++) {
     const a = e.yaw - SPIT_HALF + (2 * SPIT_HALF * k) / (SPIT_N - 1) + off
-    w.fireEnemyShot(e, x, y, z, Math.sin(a) * d, fy(e) + 1 - y, Math.cos(a) * d, SPIT_SPEED, Math.round(e.dmg * 0.6))
+    w.fireEnemyShot(e, x, y, z, Math.sin(a), dy, Math.cos(a), SPIT_SPEED, Math.round(e.dmg * 0.6), true)
   }
   w.fx.sparks(x, y, z, '#c9b08a', 10, 5, 0.2)
   w.sfx('enemyShot', e.x, e.z)
@@ -416,7 +426,7 @@ export const BURROW_WYRM_AI: MiniBossBehaviour<WyrmMem> = {
           pitch = -0.4 * Math.min(1, k * 2)
           jaw = Math.min(1, k * 1.8)
           spin = 12 * (1 - k)
-          if (e.teleDur - e.st > SPIT_LOCK) faceTo(e, w.player.x, w.player.z, 2.6, dt)
+          if (e.teleDur - e.st > SPIT_LOCK) faceTo(e, w.player.x, w.player.z, SPIT_TURN, dt)
           fanOpacity(m, 0.1 + 0.3 * k + (k > 0.8 ? 0.12 * Math.sin(e.st * 40) : 0))
         }
         if (e.st >= e.teleDur) {

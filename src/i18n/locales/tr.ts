@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} saniye kaldı, {n} dron kaldı',
     'tink': 'ÇIN!',
+    'getClear': 'UZAKLAŞ!',
+    'lockLost': 'HEDEF KAYBOLDU!',
     'perfect': 'MÜKEMMEL!',
     'parry': 'SAVUŞTURMA!',
     'guardBreak': 'GARD KIRILDI!',
@@ -198,7 +200,12 @@ export default {
     'challenge': 'Meydan okuma kapısı',
     'challengeN': 'Meydan okuma kapısı {n}',
     'actLevelUp': 'Seviye atlama sahnesini oynat',
-    'actObjective': 'Hedef tamamlandı sahnesini oynat'
+    'actObjective': 'Hedef tamamlandı sahnesini oynat',
+    'climbs': 'Tırmanışa atla',
+    'practice': 'Alıştırma duvarı',
+    'climbN': 'Tırmanış {n} ({h} m)',
+    'shortcutStart': 'Kestirme başlangıcı',
+    'battleRoom': 'Savaş odası'
   },
 
   'quest': {

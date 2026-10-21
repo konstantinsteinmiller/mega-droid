@@ -55,6 +55,8 @@ describe('the rule', () => {
     expect(blockCut({ blockable: true }, true)).toBe(BLOCK_CUT)
     expect(blockCut({ blockable: false }, true)).toBe(AOE_BLOCK_CUT)
     expect(blockCut({ blockable: false }, false)).toBe(0)
+    // #188 A Core Master's charged blast: the named exception, no cut at all
+    expect(blockCut({ blockable: false, blast: true }, true)).toBe(0)
   })
 
   it('every shot that flies at Flux is blockable; only a lobbed shell is not', () => {
@@ -86,9 +88,9 @@ const field = (): MapData => {
 const recorder = (e: Enemy, dist: number) => {
   const map = field()
   const out: Attack[] = []
-  const hit = (src: Enemy | null, _d: number, o: { blockable: boolean; kind: string }) => {
+  const hit = (src: Enemy | null, _d: number, o: { blockable: boolean; kind: string; blast?: boolean }) => {
     expect(src, `${e.kind}: an attack with no machine behind it`).toBe(e)
-    out.push({ what: `${o.kind}${o.blockable ? '' : ' (blast)'}`, cut: blockCut(o, !!src) })
+    out.push({ what: `${o.kind}${o.blast ? ' (charged blast)' : o.blockable ? '' : ' (blast)'}`, cut: blockCut(o, !!src) })
     return 'hit'
   }
   // A machine's shot becomes a pooled shot; its kind decides (`shotBlockable`).
@@ -104,7 +106,7 @@ const recorder = (e: Enemy, dist: number) => {
     markers: { spawn: noop }, shocks: { spawn: noop, spawnLinear: noop },
     stats: { chargeTimeMul: 1 },
     hitStop: 0, shake: noop, sfx: noop, pull: noop, addEnemy: noop, skyFlash: noop,
-    fireEnemyShot: shot, fireOrb: shot, lobShell: shell, spawnWave: blast, spawnRing: blast,
+    fireEnemyShot: shot, fireOrb: shot, fireMissile: shot, lobShell: shell, spawnWave: blast, spawnRing: blast,
     hitPlayer: hit
   } as unknown as World
   return { w, out }
@@ -150,7 +152,9 @@ describe('every machine\'s every attack follows the rule', () => {
         seen.push(...out)
       }
       expect(seen.length, `${id}: attacked at all`).toBeGreaterThan(0)
-      for (const a of seen) expect([BLOCK_CUT, AOE_BLOCK_CUT], `${id} ${a.what}`).toContain(a.cut)
+      // The one named exception (#188): the charged blast, only escaped by
+      // running out of its ring — the shield takes none of it.
+      for (const a of seen) expect(a.what.endsWith('(charged blast)') ? [0] : [BLOCK_CUT, AOE_BLOCK_CUT], `${id} ${a.what}`).toContain(a.cut)
     })
   }
 })

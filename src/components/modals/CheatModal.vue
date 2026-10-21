@@ -26,6 +26,19 @@
               :label="r.challenge > 1 ? t('cheat.challengeN', { n: k }) : t('cheat.challenge')"
               @click="jump(r.id, 'challenge', k - 1)"
             )
+      div.d-title {{ t('cheat.climbs') }}
+      div.rows
+        div.row(v-for="r in climbRows" :key="r.id")
+          span.name {{ t(`sector.${r.id}`) }}
+          div.btns
+            FButton(
+              v-for="(c, k) in r.climbs"
+              :key="k"
+              size="sm"
+              :type="c.kind === 'battle' ? 'danger' : c.kind === 'shortcut' ? 'warning' : 'secondary'"
+              :label="climbLabel(c)"
+              @click="climb(r.id, k)"
+            )
 </template>
 
 <script setup lang="ts">
@@ -34,11 +47,11 @@ import { useI18n } from 'vue-i18n'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
 import { cheatUi } from '@/use/useCheats'
-import { formatCount } from '@/utils/localeNumber'
+import { formatCount, formatTenths } from '@/utils/localeNumber'
 import { SECTORS } from '@/game/data/regions'
 import {
   CHEAT_BOLTS, CHEAT_CHIPS, unlockAllStory, grantBolts, grantChips, grantEpicBlaster, fillGels,
-  storyDoors, jumpToDoor, playCelebration, type DoorKind
+  storyDoors, jumpToDoor, playCelebration, storyClimbs, jumpToClimb, type DoorKind, type ClimbWarp
 } from '@/game/cheatPanel'
 import type { CelebrationKind } from '@/game/state/celebrate'
 import { flow } from '@/game/flow'
@@ -47,7 +60,7 @@ import type { SectorId } from '@/game/world/themes'
 /**
  * The cheat panel (#Cheat1, ctrl+shift+alt+F1 with cheats on): grants, every
  * story mission unlocked, and a jump to the front of each story map's boss
- * and challenge doors. The game is paused under it like under any modal;
+ * and challenge doors and of each wall climb. The game is paused under it like under any modal;
  * Esc, the X or the backdrop close it.
  */
 const { t, locale } = useI18n()
@@ -56,6 +69,21 @@ const done = ref(false)
 
 /** Each sector's story map, counted once per opening. */
 const rows = SECTORS.map(s => ({ id: s.id, ...storyDoors(s.id) }))
+
+/** Each story map's climbs (#Climb1); the tutorial has none. Flux is
+ *  deployed first unless he is already in that mission. */
+const climbRows = SECTORS.map(s => ({ id: s.id, climbs: storyClimbs(s.id) })).filter(r => r.climbs.length)
+
+const climbLabel = (c: Omit<ClimbWarp, 'spot'>): string =>
+  c.kind === 'practice' ? t('cheat.practice')
+    : c.kind === 'shortcut' ? t('cheat.shortcutStart')
+      : c.kind === 'battle' ? t('cheat.battleRoom')
+        : t('cheat.climbN', { n: c.n, h: formatTenths(c.h, locale.value) })
+
+const climb = (sector: SectorId, index: number) => {
+  close()
+  void jumpToClimb(sector, index)
+}
 
 const close = () => { cheatUi.open = false }
 

@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Liko sekundžių: {s}, dronų: {n}',
     'tink': 'DZIN!',
+    'getClear': 'TRAUKIS!',
+    'lockLost': 'TAIKINYS PRARASTAS!',
     'perfect': 'TOBULA!',
     'parry': 'ATREMTA!',
     'guardBreak': 'GYNYBA PRALAUŽTA!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Iššūkio durys',
     'challengeN': 'Iššūkio durys {n}',
     'actLevelUp': 'Paleisti lygio kėlimo sceną',
-    'actObjective': 'Paleisti įvykdyto tikslo sceną'
+    'actObjective': 'Paleisti įvykdyto tikslo sceną',
+    'climbs': 'Peršokti į laipiojimą',
+    'practice': 'Treniruočių siena',
+    'climbN': 'Laipiojimas {n} ({h} m)',
+    'shortcutStart': 'Trumpinio pradžia',
+    'battleRoom': 'Kovos kambarys'
   },
 
   'quest': {

@@ -127,6 +127,16 @@ export interface Enemy {
   phase2: boolean
   /** Extra seconds a boss's entrance or phase-2 roar runs while a story scene speaks over it (#117). */
   beatHold?: number
+  /** Boss-only (#188): attacks started so far (the charged blast and the
+   *  homing salvo come on a count, `sim/bosses.ts` `bossSpecial`), the
+   *  seconds its shield bubble still holds (untouchable meanwhile), and the
+   *  bubble itself (made on its first charge). */
+  bossN?: number
+  bossShield?: number
+  shieldMesh?: Mesh | null
+  /** The tutorial's boss (#188): its charged attacks wait for phase 2, and
+   *  its blast charges longer. */
+  onboard?: boolean
   /** Boss-only, New Game+ (`sim/ngPlus.ts`): tells and cooldowns × this,
    *  and the chance of a quick follow-up attack. Absent: 1 and none. */
   tempo?: number
@@ -214,6 +224,11 @@ export interface Shot {
   sky?: boolean
   /** Enemy orbs that steer toward the player and can be shot down. */
   homePlayer: boolean
+  /** A Master's homing missile (#188): it turns at most `turn` rad/s, a
+   *  block takes it whole, and slid through it loses its lock (`lost`) and
+   *  flies straight on into a wall. */
+  missile?: boolean
+  lost?: boolean
   destructible: boolean
   /** Special-weapon payloads: burn (dps, s) / freeze (s) applied on hit. */
   burn: number
@@ -309,6 +324,8 @@ export interface World {
   spawnWave(e: Enemy, x: number, z: number, dx: number, dz: number, speed: number, halfWidth: number, range: number, dmg: number, color: string): void
   spawnRing(e: Enemy, x: number, z: number, speed: number, maxR: number, dmg: number, color: string): void
   fireOrb(e: Enemy, x: number, y: number, z: number, speed: number, dmg: number): void
+  /** A Master's homing missile (#188), launched along (dx, dz). */
+  fireMissile?(e: Enemy, x: number, y: number, z: number, dx: number, dz: number, speed: number, turn: number, dmg: number, color: string): void
   /** Drag the player toward (x, z) at `speed` m/s for `dur` s (a boss's pull). */
   pull?(x: number, z: number, speed: number, dur: number): void
   /** Flux walks at `mul` of his speed for `dur` s (an Arc Spider's web). */
@@ -320,8 +337,11 @@ export interface World {
   cueSwoop?(e: Enemy, eta: number): boolean
   /** Melee / AoE / contact damage from an enemy to the player. `parryable`:
    *  an unblockable dash/charge contact a perfect block still parries — the
-   *  attacker is stunned (a plain block only softens it, as before). */
-  hitPlayer(e: Enemy | null, dmg: number, opts: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss'
+   *  attacker is stunned (a plain block only softens it, as before).
+   *  `noChip`: a block takes all of it (a Master's homing missile, #188).
+   *  `blast`: neither the shield nor a slide's i-frames take any of it —
+   *  only being out of its reach does (a Master's charged blast, #188). */
+  hitPlayer(e: Enemy | null, dmg: number, opts: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string; noChip?: boolean; blast?: boolean }): 'hit' | 'block' | 'parry' | 'miss'
   shake(amount: number): void
   sfx(name: string, x?: number, z?: number): void
 }

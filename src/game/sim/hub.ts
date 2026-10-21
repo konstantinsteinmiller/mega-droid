@@ -34,7 +34,7 @@ import { tickHud, hud } from '../state/hud'
 import { HoloMaterial, setHoloTime } from '../fx/holoMaterial'
 import { hubUi, hubMarks, hubDialog, resetHubUi } from '../state/hubUi'
 import {
-  BAY, BRIEF_SPOT, FLUX_CAP_AT, GAUSS_CAP_AT, GATE_LEAF_Z, GATE_PYLON_X, HALL_END, HALL_HALF, HOME_PAD, LAB_POSTS, LAB_R, NICHE_DEPTH, POI_BY_ID, POSTS, TABLE_Z,
+  BAY, BRIEF_SPOT, FLUX_CAP_AT, GAUSS_CAP_AT, GATE_LEAF_Z, GATE_PYLON_X, HALL_END, HALL_HALF, HOME_PAD, GAUSS_AWAKE_AT, LAB_POSTS, LAB_POSTS_AWAKE, LAB_R, NICHE_DEPTH, POI_BY_ID, POSTS, POSTS_AWAKE, TABLE_Z,
   TROPHY_SPOT, WALLS, fenceOf, openGateWalls, poiAt, rayHit, rayHitPosts, routeTo, spawnOnPad, zoneAt,
   type Poi, type PoiId, type Seg, type Spawn
 } from '../world/hubLayout'
@@ -643,11 +643,11 @@ export class HubMode implements GameMode {
     // her; awake by the briefing table once the ending has played (#102).
     this.gauss = buildGauss()
     if (awake) {
-      this.gauss.root.position.set(2.5, 0, TABLE_Z + 0.6)
-      this.gauss.root.rotation.y = -0.9
+      this.gauss.root.position.set(GAUSS_AWAKE_AT.x, 0, GAUSS_AWAKE_AT.z)
+      this.gauss.root.rotation.y = GAUSS_AWAKE_AT.yaw
       setGaussGlow(this.gauss, 1)
       const sh = makeBlobShadow(0.5)
-      sh.position.set(2.5, 0.01, TABLE_Z + 0.6)
+      sh.position.set(GAUSS_AWAKE_AT.x, 0.01, GAUSS_AWAKE_AT.z)
       s.add(sh)
     } else {
       this.gauss.root.position.set(GAUSS_CAP_AT.x, 0.34, GAUSS_CAP_AT.z)
@@ -1140,7 +1140,7 @@ export class HubMode implements GameMode {
     stepWalker(w, {
       moveX: blocked ? 0 : inp.moveX, moveY: blocked ? 0 : inp.moveY, camYaw: this.camYaw, free: this.free || (this.act === 'land' && this.actT > LAND_FREE && !panel),
       funnel: DOOR_FUNNEL
-    }, dt, this.walls, POSTS)
+    }, dt, this.walls, this.gaussAsleep ? POSTS : POSTS_AWAKE)
     // At a station's panel he turns to the camera; on arrival, to the place.
     if (panel) w.yaw += angDiff(this.panelFacing(), w.yaw) * Math.min(1, dt * 6)
     if (w.cancelled) {
@@ -1599,7 +1599,7 @@ export class HubMode implements GameMode {
     const want = CAM_DIST * (this.act === 'beam' ? 1 + 0.25 * smooth(0, BEAM_T, this.actT) : 1)
     const ex = px - fx * (want + 0.35)
     const ez = pz - fz * (want + 0.35)
-    const hit = Math.min(rayHit(px, pz, ex, ez, this.walls), zoneAt(px, pz) === 'lab' ? rayHitPosts(px, pz, ex, ez, LAB_POSTS) : 1)
+    const hit = Math.min(rayHit(px, pz, ex, ez, this.walls), zoneAt(px, pz) === 'lab' ? rayHitPosts(px, pz, ex, ez, this.gaussAsleep ? LAB_POSTS : LAB_POSTS_AWAKE) : 1)
     const room = Math.max(0.9, hit * (want + 0.35) - 0.35)
     this.camDist = room < this.camDist ? room : this.camDist + (room - this.camDist) * Math.min(1, dt * 2.5)
     const d = Math.min(this.camDist, room)

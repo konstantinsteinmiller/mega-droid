@@ -264,7 +264,8 @@ describe('generateMeltdown', () => {
       const m = generateMeltdown(seed)
       const t = m.terrain!
       expect(t.chests!.length).toBeGreaterThanOrEqual(2)
-      expect(t.rewards.filter(r => r.kind === 'weapon')).toHaveLength(1)
+      // One weapon ledge of the stage's own; a wall climb's (`Terrain.climbs`) is a refill of the same weapon.
+      expect(t.rewards.filter(r => r.kind === 'weapon' && !(t.climbs ?? []).some(c => c.top.i === Math.floor(r.x / CELL) && c.top.j === Math.floor(r.z / CELL)))).toHaveLength(1)
       expect(t.rewards.length).toBeGreaterThanOrEqual(4)
       expect(t.foes.length).toBeGreaterThanOrEqual(15)
       for (const f of t.foes) {

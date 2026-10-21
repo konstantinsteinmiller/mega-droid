@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s}초 남음, 드론 {n}대 남음',
     'tink': '팅!',
+    'getClear': '피해!',
+    'lockLost': '추적 상실!',
     'perfect': '퍼펙트!',
     'parry': '패링!',
     'guardBreak': '가드 브레이크!',
@@ -196,7 +198,12 @@ export default {
     'challenge': '도전 문',
     'challengeN': '도전 문 {n}',
     'actLevelUp': '레벨 업 연출 재생',
-    'actObjective': '목표 달성 연출 재생'
+    'actObjective': '목표 달성 연출 재생',
+    'climbs': '클라이밍으로 이동',
+    'practice': '연습용 벽',
+    'climbN': '클라이밍 {n} ({h} m)',
+    'shortcutStart': '지름길 시작',
+    'battleRoom': '전투실'
   },
 
   'quest': {

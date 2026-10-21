@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'เหลือเวลา {s} วินาที โดรนอีก {n} ลำ',
     'tink': 'เคร้ง!',
+    'getClear': 'หนีไป!',
+    'lockLost': 'หลุดเป้า!',
     'perfect': 'เพอร์เฟกต์!',
     'parry': 'ปัดป้อง!',
     'guardBreak': 'ทำลายการ์ด!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'ประตูท้าทาย',
     'challengeN': 'ประตูท้าทาย {n}',
     'actLevelUp': 'เล่นฉากเลเวลอัป',
-    'actObjective': 'เล่นฉากทำเป้าหมายสำเร็จ'
+    'actObjective': 'เล่นฉากทำเป้าหมายสำเร็จ',
+    'climbs': 'ไปยังจุดปีน',
+    'practice': 'กำแพงฝึก',
+    'climbN': 'จุดปีน {n} ({h} ม.)',
+    'shortcutStart': 'จุดเริ่มทางลัด',
+    'battleRoom': 'ห้องต่อสู้'
   },
 
   'quest': {

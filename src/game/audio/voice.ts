@@ -1,5 +1,6 @@
 import { audio, duckMusic } from './engine'
 import { VOICE_FILES } from '../assets/overrides'
+import { VOICE_ALIASES } from './voiceAliases'
 import { registerOneShotSource } from '@/use/useAssets'
 import { englishVoice, hasOwnVoice } from '@/use/useEnglishVoice'
 
@@ -61,12 +62,15 @@ export const currentLocale = (): string => {
 export const voiceLang = (): VoiceLang => voiceLangFor(currentLocale())
 
 /** The file for a line in a language, if one was dropped in. English stands
- *  in for a line that has no file in the player's language yet. */
-export const voiceUrl = (id: string, lang: VoiceLang = voiceLang(), files = VOICE_FILES): string | null => {
+ *  in for a line that has no file in the player's language yet. A line with
+ *  the same words as another plays that line's file (`voiceAliases.ts`): one
+ *  recording per sentence. */
+export const voiceUrl = (id: string, lang: VoiceLang = voiceLang(), files = VOICE_FILES, aliases = VOICE_ALIASES): string | null => {
   // A language with no voice-over hears English only if the player said yes:
   // otherwise the line is its bubble alone (a null is the silent path).
   if (lang === 'en' && !englishVoiceAllowed(currentLocale())) return null
-  return files.get(lang)?.get(id) ?? (lang !== 'en' ? files.get('en')?.get(id) ?? null : null)
+  const own = (g: VoiceLang) => files.get(g)?.get(aliases[g]?.[id] ?? id)
+  return own(lang) ?? (lang !== 'en' ? own('en') ?? null : null)
 }
 
 const buffers = new Map<string, AudioBuffer>()

@@ -124,8 +124,13 @@ export const placeAtDoor = (kind: DoorKind, index = 0): boolean => {
   const m = currentMission()
   const d = m && doorsOf(m.map, kind)[index]
   if (!m || !d) return false
-  const s = doorApproach(m.nav, d)
-  const p = m.player
+  placeAt(doorApproach(m.nav, d))
+  return true
+}
+
+/** Stand Flux on a spot of the running mission, still, facing its way. */
+const placeAt = (s: DoorSpot): void => {
+  const p = currentMission()!.player
   p.x = p.px = s.x
   p.z = p.pz = s.z
   p.y = p.py = p.safeY = s.y
@@ -133,7 +138,6 @@ export const placeAtDoor = (kind: DoorKind, index = 0): boolean => {
   p.ladder = -1
   p.path = null
   p.yaw = s.yaw
-  return true
 }
 
 /** Jump to a door of a sector's story map: deploy into that mission first
@@ -151,3 +155,72 @@ export const jumpToDoor = async (sector: SectorId, kind: DoorKind, index = 0): P
 
 /** Test seam: a story map with its nav, built like the mission builds it. */
 export const storyNav = (sector: SectorId): Nav => createNav(levelMap(storyQuestFor(sector)))
+
+// ─── Climb jumps ─────────────────────────────────────────────────────────────
+
+/** A wall climb to jump to (#Climb1, `ClimbSpot`): the Blaze practice wall,
+ *  a climb (`n` counts them, `h` its height in m), a shortcut's start or its
+ *  battle room's drop. */
+export type ClimbWarpKind = 'practice' | 'climb' | 'shortcut' | 'battle'
+export interface ClimbWarp { kind: ClimbWarpKind; n: number; h: number; spot: DoorSpot }
+
+/** Where a shaft is climbed from: the middle of its foot cell, on that
+ *  cell's floor, facing the wall. */
+export const ladderFoot = (nav: Nav, l: { i: number; j: number; di: number; dj: number }): DoorSpot => {
+  const x = cellCenter(l.i)
+  const z = cellCenter(l.j)
+  return { x, z, y: floorAt(nav, x, z), yaw: Math.atan2(-l.di, -l.dj) }
+}
+
+/** Every climb of a map, in its terrain's order, from the layout the mission
+ *  builds (so the seed and the mirroring follow): each at its first shaft's
+ *  foot; a shortcut also on its balcony, past the door in, facing the drop. */
+export const climbWarps = (map: MapData, nav: Nav): ClimbWarp[] => {
+  const t = map.terrain
+  const out: ClimbWarp[] = []
+  let n = 0
+  for (const c of t?.climbs ?? []) {
+    const l = t!.ladders[c.ladders[0]!]
+    if (!l) continue
+    const h = Math.round((c.top.y - l.y0) * 10) / 10
+    const kind: ClimbWarpKind = c.shortcut ? 'shortcut' : c.tier === 0 ? 'practice' : 'climb'
+    out.push({ kind, n: kind === 'climb' ? ++n : 0, h, spot: ladderFoot(nav, l) })
+    const d = c.shortcut && map.doors[c.shortcut.doorIn]
+    if (d) {
+      const bx = d.axis === 'x' ? d.dir : 0
+      const bz = d.axis === 'z' ? d.dir : 0
+      const x = cellCenter(d.i + bx)
+      const z = cellCenter(d.j + bz)
+      out.push({ kind: 'battle', n: 0, h, spot: { x, z, y: floorAt(nav, x, z), yaw: Math.atan2(-bx, -bz) } })
+    }
+  }
+  return out
+}
+
+/** What a sector's story map offers to climb (labels only, for the panel). */
+export const storyClimbs = (sector: SectorId): Array<Omit<ClimbWarp, 'spot'>> => {
+  const map = levelMap(storyQuestFor(sector))
+  return climbWarps(map, createNav(map)).map(({ kind, n, h }) => ({ kind, n, h }))
+}
+
+/** Put Flux at a climb of the running mission. */
+export const placeAtClimb = (index: number): boolean => {
+  const m = currentMission()
+  const w = m && climbWarps(m.map, m.nav)[index]
+  if (!w) return false
+  placeAt(w.spot)
+  return true
+}
+
+/** Jump to a climb of a sector's story map, deploying into it first unless
+ *  Flux is already in it. */
+export const jumpToClimb = async (sector: SectorId, index: number): Promise<boolean> => {
+  markCheated()
+  saveProfile()
+  const q = storyQuestFor(sector)
+  if (!sameMission(q)) {
+    await startMission(q)
+    if (!(await waitForPlay())) return false
+  }
+  return placeAtClimb(index)
+}

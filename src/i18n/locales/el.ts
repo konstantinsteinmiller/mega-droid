@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Απομένουν {s} δευτερόλεπτα, ακόμα {n} ντρόουν',
     'tink': 'ΝΤΙΝ!',
+    'getClear': 'ΦΥΓΕ!',
+    'lockLost': 'ΧΑΘΗΚΕ Ο ΣΤΟΧΟΣ!',
     'perfect': 'ΤΕΛΕΙΟ!',
     'parry': 'ΑΠΟΚΡΟΥΣΗ!',
     'guardBreak': 'ΕΣΠΑΣΕ Η ΑΜΥΝΑ!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Πόρτα πρόκλησης',
     'challengeN': 'Πόρτα πρόκλησης {n}',
     'actLevelUp': 'Παίξε τη σκηνή ανόδου επιπέδου',
-    'actObjective': 'Παίξε τη σκηνή ολοκλήρωσης στόχου'
+    'actObjective': 'Παίξε τη σκηνή ολοκλήρωσης στόχου',
+    'climbs': 'Μετάβαση σε αναρρίχηση',
+    'practice': 'Τοίχος εξάσκησης',
+    'climbN': 'Αναρρίχηση {n} ({h} μ.)',
+    'shortcutStart': 'Αρχή συντόμευσης',
+    'battleRoom': 'Αίθουσα μάχης'
   },
 
   'quest': {

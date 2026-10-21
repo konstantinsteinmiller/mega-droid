@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Atlicis sekunžu: {s}, dronu: {n}',
     'tink': 'DZINK!',
+    'getClear': 'BĒDZ!',
+    'lockLost': 'MĒRĶIS ZAUDĒTS!',
     'perfect': 'IDEĀLI!',
     'parry': 'ATVAIRĪTS!',
     'guardBreak': 'AIZSARDZĪBA SALAUZTA!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Izaicinājuma durvis',
     'challengeN': 'Izaicinājuma durvis {n}',
     'actLevelUp': 'Atskaņot līmeņa celšanas ainu',
-    'actObjective': 'Atskaņot mērķa izpildes ainu'
+    'actObjective': 'Atskaņot mērķa izpildes ainu',
+    'climbs': 'Pārlēkt uz kāpienu',
+    'practice': 'Treniņu siena',
+    'climbN': 'Kāpiens {n} ({h} m)',
+    'shortcutStart': 'Īsceļa sākums',
+    'battleRoom': 'Kaujas telpa'
   },
 
   'quest': {

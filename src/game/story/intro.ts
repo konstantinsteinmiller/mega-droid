@@ -15,6 +15,7 @@ import { buildStasisCapsule, stasisBeat, type StasisCapsule } from '../models/st
 import { buildDiorama, type Diorama } from '../models/diorama'
 import { buildStreet, vexFaceTexture, STREET_HAZE, type Street } from '../models/street'
 import { newMotion } from '../models/motion'
+import { actHit, actShot, actSlam, applyTrooperAct, newTrooperAct, resetTrooperAct } from '../models/trooperAct'
 import { pose, poseAdd, nudge, torus, cap, sph, rcyl, paint, type Rig } from '../models/kit'
 import { PAL } from '../models/palette'
 import { buildBarrier, type BarrierFx } from '../models/barrier'
@@ -169,10 +170,15 @@ interface CamKey {
 }
 
 const _a = new Vector3()
+const _act = newTrooperAct()
 const _b = new Vector3()
 const _c = new Vector3()
 const _d = new Vector3()
 const _up = new Vector3(0, 1, 0)
+
+/** A yaw `k` of the way from `from` to `to`, the short way round. */
+const blendYaw = (from: number, to: number, k: number): number =>
+  from + (to - from - 2 * Math.PI * Math.round((to - from) / (2 * Math.PI))) * k
 
 /** Smoothly between camera keys (held before the first and after the last). */
 const camAt = (list: readonly CamKey[], t: number, pos: Vector3, look: Vector3): number => {
@@ -1022,93 +1028,14 @@ export class IntroMode implements GameMode {
    * recovery.
    */
   private actTrooper(st: number): void {
-    const R = this.trooper
-    const hips = R.bones.hips!
-    /** A damped oscillation `age` seconds after an event (0 before it). */
-    const wob = (age: number, hz: number, damp: number): number => age < 0 ? 0 : Math.exp(-damp * age) * Math.sin(2 * Math.PI * hz * age)
-    /** A fast rise, then an exponential settle. */
-    const hit = (age: number, settle: number): number => age < 0 ? 0 : ramp(0, 0.06, age) * Math.exp(-settle * age)
-    let chX = 0
-    let chY = 0
-    let chZ = 0
-    let hdX = 0
-    let hdZ = 0
-    let shLX = 0
-    let shLY = 0
-    let shLZ = 0
-    let elL = 0
-    let shRX = 0
-    let shRZ = 0
-    let elR = 0
-    let crouch = 0
-    let lift = 0
+    const a = resetTrooperAct(_act)
     // Hit reactions: the charged shot full force, its own shots coming home smaller.
-    const react = (age: number, k: number): void => {
-      if (age < 0 || age > 2.5) return
-      const e = hit(age, 2.4) * k
-      const lag = hit(age - 0.05, 2.8) * k
-      chX -= 0.45 * e + 0.08 * k * wob(age, 2.6, 4)
-      chY += 0.32 * e
-      chZ -= 0.12 * e
-      hdX -= 0.55 * lag + 0.12 * k * wob(age - 0.05, 3.4, 5)
-      hdZ += 0.25 * lag
-      shLX += 0.9 * e
-      shLZ -= 0.5 * e
-      elL -= 0.4 * e
-      shRX += 0.5 * e
-      shRZ += 0.45 * lag
-      elR -= 0.35 * lag
-      crouch += 0.75 * e * (1 - 0.4 * Math.exp(-6 * age))
-    }
-    react(st - SHOW_HIT, 1)
-    for (const v of SHOW_TROOP_SHOTS) react(st - (v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK), 0.6)
+    actHit(a, st - SHOW_HIT, 1)
+    for (const v of SHOW_TROOP_SHOTS) actHit(a, st - (v + SHOW_TROOP_FLIGHT + SHOW_TROOP_BACK), 0.6)
     // Each of its shots: brace, then the gun arm kicks up and the chest twists back.
-    for (const v of SHOW_TROOP_SHOTS) {
-      const a = st - v
-      if (a < -0.2 || a > 1) continue
-      crouch += 0.2 * ramp(-0.2, 0, a) * (1 - ramp(0.1, 0.5, a))
-      const k = hit(a, 7)
-      shRX -= 0.4 * k
-      elR -= 0.3 * k
-      chY -= 0.14 * k
-      chX -= 0.06 * k
-      hdX -= 0.08 * hit(a - 0.03, 6)
-    }
-    // The slam: wind up (crouch, then rise with both arms high, chest arched),
-    // drive down, shudder, hold, recover.
-    const up = ramp(SHOW_SLAM - 0.65, SHOW_SLAM - 0.15, st)
-    const prep = ramp(SHOW_SLAM - 0.75, SHOW_SLAM - 0.55, st) * (1 - ramp(SHOW_SLAM - 0.5, SHOW_SLAM - 0.3, st))
-    const drive = ramp(SHOW_SLAM - 0.15, SHOW_SLAM, st)
-    const strike = drive * drive * (1 - ramp(SHOW_SLAM + 0.45, SHOW_SLAM + 1.1, st))
-    const wind = up * (1 - drive)
-    if (up > 0 || drive > 0) {
-      const sa = st - SHOW_SLAM
-      const shake = 0.06 * wob(sa, 7, 7)
-      crouch += 0.45 * prep + 1.1 * strike
-      lift += 0.06 * wind
-      chX += -0.4 * wind + 0.6 * strike + shake
-      hdX += -0.3 * wind + 0.25 * strike - 0.12 * wob(sa - 0.04, 4, 6)
-      shLX += -2.7 * wind - 0.75 * strike
-      shLY += 1.4 * (wind + strike)
-      elL += 0.3 * wind - 0.2 * strike
-      shRX += -2.4 * wind - 0.95 * strike
-      shRZ += -0.25 * wind
-      elR += 0.35 * wind - 0.15 * strike
-    }
-    // Knees take the weight: hips drop, thighs forward, shins back.
-    const c = Math.min(crouch, 1.2)
-    // (0.055 per unit: what the thigh/shin angles below shorten the legs by, feet planted)
-    hips.position.y += -0.055 * c + lift
-    poseAdd(R, 'hipL', -0.5 * c, 0, 0)
-    poseAdd(R, 'hipR', -0.5 * c, 0, 0)
-    poseAdd(R, 'kneeL', 0.85 * c, 0, 0)
-    poseAdd(R, 'kneeR', 0.85 * c, 0, 0)
-    poseAdd(R, 'chest', chX - 0.12 * c, chY, chZ)
-    poseAdd(R, 'head', hdX, 0, hdZ)
-    poseAdd(R, 'shoulderL', shLX, shLY, shLZ)
-    poseAdd(R, 'elbowL', elL, 0, 0)
-    poseAdd(R, 'shoulderR', shRX, 0, shRZ)
-    poseAdd(R, 'elbowR', elR, 0, 0)
+    for (const v of SHOW_TROOP_SHOTS) actShot(a, st - v)
+    actSlam(a, st - SHOW_SLAM)
+    applyTrooperAct(this.trooper, a)
   }
 
   private renderShowcase(st: number, t: number, muzzle: Vector3): void {
@@ -1185,7 +1112,10 @@ export class IntroMode implements GameMode {
     if (st >= SHOW_DIVE) {
       _c.set(-1.9, 3.6, -7.5).lerp(_d.set(-0.15, 1.35, fz - 1.1), dive)
       d0.position.set(_c.x - 2.5 * knock, Math.max(0.25, _c.y + 2.2 * knock - 3.6 * knock * knock), _c.z - 3.0 * knock)
-      d0.rotation.set(0.8 * dive * (1 - knock), Math.PI - 0.3, knock * 7)
+      // It turns from its flight line to face Flux as it dives at him (the
+      // model looks down +z, its eye on the front: yaw 0 faces up the street).
+      const aimYaw0 = Math.atan2(F.position.x - d0.position.x, fz - d0.position.z)
+      d0.rotation.set(0.8 * dive * (1 - knock), blendYaw(Math.PI - 0.3, aimYaw0, dive), knock * 7)
       if (knock > 0) poseHeli(this.drones[0]!, st, 0, knock < 1 ? st * 40 * (1 - knock) : 0)
     } else d0.rotation.set(0, Math.PI - 0.3, 0)
     // Drone 2: up high for its volley, then Flux's answer brings it down.
@@ -1195,7 +1125,11 @@ export class IntroMode implements GameMode {
     if (st >= SHOW_GUARD_DOWN) {
       _c.set(1.9, 3.6, -7.5).lerp(_d.set(1.4, 3.0, -8.2), rise)
       d1.position.set(_c.x + 0.8 * drop, Math.max(0.25, _c.y * (1 - drop * drop)), _c.z)
-      d1.rotation.set(0, Math.PI + 0.3, -drop * 5)
+      // It turns to face Flux as it climbs, nose dipped at him, so the volley
+      // leaves its front (the model looks down +z, its eye on the front).
+      const dx = F.position.x - d1.position.x, dy = 1.05 - d1.position.y, dz = fz - d1.position.z
+      const aimYaw = Math.atan2(dx, dz), aimPitch = Math.atan2(-dy, Math.hypot(dx, dz))
+      d1.rotation.set(aimPitch * rise * (1 - drop), blendYaw(Math.PI + 0.3, aimYaw, rise), -drop * 5)
       if (drop > 0) poseHeli(this.drones[1]!, st, 0, drop < 1 ? st * 40 * (1 - drop) : 0)
     } else d1.rotation.set(0, Math.PI + 0.3, 0)
     // Its orbs, each from the drone to the barrier.

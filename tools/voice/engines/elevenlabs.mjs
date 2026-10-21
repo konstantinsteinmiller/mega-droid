@@ -14,11 +14,12 @@
 // language. The take is read from the app's own stream response (MP3), then
 // converted to the WAV the pipeline expects. Paced, one line at a time.
 
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ffmpeg } from '../post.mjs'
 import { connect, signInWindow, sleep } from './browser.mjs'
+import { ROOT } from '../lib.mjs'
 
 const URL = 'https://elevenlabs.io/app/speech-synthesis/text-to-speech'
 /** One library voice per speaker (the "My voices" defaults; search finds them by name). */
@@ -30,6 +31,16 @@ export const VOICES = {
   // His card: a light, clear tenor in his late twenties, brisk and cheerful.
   pip: 'Will - Relaxed Optimist'
 }
+/** The same library voices by id, for the API (looked up by name, 2026-10-20). */
+export const VOICE_IDS = {
+  'River - Relaxed, Neutral, Informative': 'SAz9YHcvj6GT2YYXdXww',
+  'Callum - Husky Trickster': 'N2lVS1w4EtoT3dr4eOWO',
+  'Liam - Energetic, Social Media Creator': 'TX3LPaxmHKxFdv7VOQHJ',
+  'Sarah - Mature, Reassuring, Confident': 'EXAVITQu4vr4xnSDxMaL',
+  'Will - Relaxed Optimist': 'bIHbv24MWmeRgasZH58o'
+}
+/** The web app's "Eleven v4" as the API names it. */
+export const MODEL_ID = process.env.EL_MODEL ?? 'eleven_v4'
 const GAP_MS = 3000
 /** Longest one line may take, voice pick to WAV, before the run gives up. */
 const LINE_MS = 180000
@@ -107,9 +118,62 @@ const speak = async (page, text) => {
   return res.body()
 }
 
+/**
+ * API mode: `ELEVENLABS_API_KEY` (environment, or .env.voice.local). Same
+ * voices, same model, the voice's own default settings (no voice_settings
+ * sent: the web app's defaults too), the same tone tag in front of the text.
+ * Preferred whenever the key is there; without it the web app (the desk) runs.
+ * The key never reaches a log: errors are cut and any key-shaped text masked.
+ */
+export const apiKey = () => {
+  if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY
+  const f = join(ROOT, '.env.voice.local')
+  const m = existsSync(f) && readFileSync(f, 'utf8').match(/^ELEVENLABS_API_KEY=(\S+)/m)
+  return m ? m[1] : null
+}
+const mask = (t) => String(t).replace(/sk_[A-Za-z0-9]+/g, '<key>').slice(0, 160)
+
+/** One take by the API: the MP3 bytes. */
+export const speakApi = async (key, voiceId, text, fetchFn = fetch) => {
+  const res = await fetchFn(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+    method: 'POST',
+    headers: { 'xi-api-key': key, 'content-type': 'application/json', accept: 'audio/mpeg' },
+    body: JSON.stringify({ text, model_id: MODEL_ID })
+  })
+  if (!res.ok) throw new Error(`ElevenLabs API ${res.status}: ${mask(await res.text().catch(() => ''))}`)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+const synthApi = async (items, key) => {
+  const tmp = mkdtempSync(join(tmpdir(), 'el-'))
+  const out = new Array(items.length)
+  try {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i]
+      try {
+        const id = VOICE_IDS[it.voice.id]
+        if (!id) throw new Error(`ElevenLabs API: no voice id for "${it.voice.id}"; add it to VOICE_IDS`)
+        const mp3 = join(tmp, `${i}.mp3`)
+        writeFileSync(mp3, await speakApi(key, id, tagFor(it.directionEn ?? it.direction, it.tone) + it.text))
+        await ffmpeg(['-i', mp3, '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', it.raw])
+        out[i] = { ok: true }
+      } catch (e) {
+        out[i] = { ok: false, error: mask(e.message.split('\n')[0]) }
+        // A key, quota or permission refusal fails every line alike: stop.
+        if (/API (401|402|403|429)/.test(e.message)) { for (let j = 0; j < items.length; j++) out[j] ??= { ok: false, error: 'skipped: ' + out[i].error }; break }
+      }
+    }
+  } finally {
+    rmSync(tmp, { recursive: true, force: true })
+  }
+  return out
+}
+
+const API = !!apiKey()
+
 export default {
   name: 'elevenlabs',
-  label: 'ElevenLabs Eleven v4 (web app, browser)',
+  label: API ? 'ElevenLabs Eleven v4 (API)' : 'ElevenLabs Eleven v4 (web app, browser)',
   signIn: () => signInWindow(URL),
   async voice({ speaker }) {
     // A speaker added to the cast later needs its library voice picked by ear first.
@@ -117,6 +181,8 @@ export default {
     return { id: VOICES[speaker] }
   },
   async synth(items) {
+    const key = apiKey()
+    if (key) return synthApi(items, key)
     const { page, close } = await connect(URL)
     const tmp = mkdtempSync(join(tmpdir(), 'el-'))
     const out = new Array(items.length)

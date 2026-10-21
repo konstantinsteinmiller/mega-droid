@@ -23,6 +23,15 @@ export interface BossDef extends EnemyDef {
   patterns: string[]
   patterns2: string[]
   color: string
+  /** #188 The charged blast (`sim/bosses.ts` `bossSpecial`): every
+   *  `every`-th attack the Master stands still in a shield bubble and
+   *  charges a blast of radius `r` (m) round itself — only running clear of
+   *  the ring on the floor avoids it. */
+  blast: { every: number; r: number }
+  /** #188 The homing salvo, rarer than any of its own patterns: every
+   *  `every`-th attack, `n` missiles at `speed` m/s that turn at most
+   *  `turn` rad/s after Flux. */
+  homing: { every: number; n: number; speed: number; turn: number }
 }
 
 const base = (o: Partial<BossDef> & Pick<BossDef, 'id' | 'hp' | 'dmg' | 'element' | 'weakTo' | 'patterns' | 'patterns2' | 'color'>): BossDef => ({
@@ -41,6 +50,8 @@ const base = (o: Partial<BossDef> & Pick<BossDef, 'id' | 'hp' | 'dmg' | 'element
   unblockable: false,
   armor: 1,
   scale: 1.35,
+  blast: { every: 5, r: 5 },
+  homing: { every: 7, n: 3, speed: 9, turn: 2.2 },
   ...o
 })
 
@@ -48,60 +59,71 @@ export const BOSSES: Record<BossId, BossDef> = {
   scrapper: base({
     id: 'scrapper', hp: 580, dmg: 14, element: 'none', weakTo: null, scale: 1, radius: 1.3, hitR: 1.4, aimY: 1.5,
     speed: 2.4, range: [4, 9], xp: 150, bolts: [40, 60], color: MASTER_COLOR.scrapper,
-    patterns: ['charge', 'scrapToss', 'stomp'], patterns2: ['magnetPunch']
+    patterns: ['charge', 'scrapToss', 'stomp'], patterns2: ['magnetPunch'],
+    blast: { every: 5, r: 4.5 }, homing: { every: 8, n: 2, speed: 7.5, turn: 1.6 }
   }),
   blazeMaster: base({
     id: 'blazeMaster', hp: 520, dmg: 16, element: 'fire', weakTo: 'galeGuard', color: MASTER_COLOR.blazeMaster,
-    patterns: ['fireWave', 'flameBurst', 'leapSlam'], patterns2: ['flameRing']
+    patterns: ['fireWave', 'flameBurst', 'leapSlam'], patterns2: ['flameRing'],
+    blast: { every: 5, r: 5.5 }, homing: { every: 7, n: 3, speed: 9, turn: 2.0 }
   }),
   frostMaster: base({
     id: 'frostMaster', hp: 560, dmg: 17, element: 'ice', weakTo: 'flameWave', color: MASTER_COLOR.frostMaster,
-    patterns: ['iceVolley', 'freezeFloor', 'dashSlash'], patterns2: ['iceVolleyBig']
+    patterns: ['iceVolley', 'freezeFloor', 'dashSlash'], patterns2: ['iceVolleyBig'],
+    blast: { every: 6, r: 6.5 }, homing: { every: 7, n: 2, speed: 11, turn: 2.6 }
   }),
   voltMaster: base({
     id: 'voltMaster', hp: 600, dmg: 18, element: 'volt', weakTo: 'iceLance', color: MASTER_COLOR.voltMaster,
-    patterns: ['chainBolt', 'orbStorm', 'blink'], patterns2: ['voltRing']
+    patterns: ['chainBolt', 'orbStorm', 'blink'], patterns2: ['voltRing'],
+    blast: { every: 5, r: 4.5 }, homing: { every: 7, n: 4, speed: 9.5, turn: 2.2 }
   }),
   galeMaster: base({
     id: 'galeMaster', hp: 640, dmg: 19, element: 'wind', weakTo: 'thunderArc', color: MASTER_COLOR.galeMaster,
-    patterns: ['featherFan', 'tornado', 'dive'], patterns2: ['featherStorm']
+    patterns: ['featherFan', 'tornado', 'dive'], patterns2: ['featherStorm'],
+    blast: { every: 5, r: 5 }, homing: { every: 7, n: 3, speed: 10, turn: 3.0 }
   }),
   // The Polarity Works' Master: homing horseshoes, a pull to its pole, a
   // rail-straight charge; phase 2 storms both poles at once.
   magnetMaster: base({
     id: 'magnetMaster', hp: 680, dmg: 20, element: 'none', weakTo: 'droneSwarm', color: MASTER_COLOR.magnetMaster,
-    patterns: ['magnetMissiles', 'polePull', 'charge'], patterns2: ['polarStorm']
+    patterns: ['magnetMissiles', 'polePull', 'charge'], patterns2: ['polarStorm'],
+    blast: { every: 6, r: 5.5 }, homing: { every: 7, n: 4, speed: 9, turn: 2.4 }
   }),
   // The Deep Mine's Master: it burrows and bursts up under Flux, lobs
   // drill bombs, charges; phase 2 shakes the mine (rings and falling rock).
   drillMaster: base({
     id: 'drillMaster', hp: 720, dmg: 21, element: 'none', weakTo: 'magnetPull', color: MASTER_COLOR.drillMaster,
-    patterns: ['burrow', 'drillBombs', 'charge'], patterns2: ['quake']
+    patterns: ['burrow', 'drillBombs', 'charge'], patterns2: ['quake'],
+    blast: { every: 4, r: 6 }, homing: { every: 9, n: 2, speed: 8.5, turn: 2.0 }
   }),
   // The Tidewater Locks' Master: a lance thrust, tidal waves to slide
   // under, a slow volley of bubbles; phase 2 a whirlpool that pulls.
   tideMaster: base({
     id: 'tideMaster', hp: 760, dmg: 22, element: 'none', weakTo: 'drillBomb', color: MASTER_COLOR.tideMaster,
-    patterns: ['dashSlash', 'tidalWave', 'bubbleVolley'], patterns2: ['whirlpool']
+    patterns: ['dashSlash', 'tidalWave', 'bubbleVolley'], patterns2: ['whirlpool'],
+    blast: { every: 5, r: 7 }, homing: { every: 8, n: 3, speed: 8, turn: 1.8 }
   }),
   // The Blackout Boulevard's Master: a blade thrown out and back, a dash
   // out of the dark, a neon volley; phase 2 a laser grid of rings.
   neonMaster: base({
     id: 'neonMaster', hp: 800, dmg: 23, element: 'none', weakTo: 'bubbleLance', color: MASTER_COLOR.neonMaster,
-    patterns: ['bladeBoomerang', 'dashSlash', 'neonVolley'], patterns2: ['laserGrid']
+    patterns: ['bladeBoomerang', 'dashSlash', 'neonVolley'], patterns2: ['laserGrid'],
+    blast: { every: 5, r: 4.5 }, homing: { every: 7, n: 5, speed: 11, turn: 2.2 }
   }),
   // The Rotor Run's Master: a swarm of drones, a downdraft that blows Flux
   // back, a dive from above; phase 2 a storm of drones and rings.
   rotorMaster: base({
     id: 'rotorMaster', hp: 840, dmg: 24, element: 'none', weakTo: 'neonBlade', color: MASTER_COLOR.rotorMaster,
-    patterns: ['droneSwarm', 'downdraft', 'dive'], patterns2: ['rotorStorm']
+    patterns: ['droneSwarm', 'downdraft', 'dive'], patterns2: ['rotorStorm'],
+    blast: { every: 5, r: 5.5 }, homing: { every: 7, n: 4, speed: 10, turn: 2.8 }
   }),
   // 1.5× the first draft's 1100 (playtest 2026-10-12); the Grand Master
   // Bot's parts follow (GM_HP_MUL of his max).
   vexMk1: base({
     id: 'vexMk1', hp: 1650, dmg: 22, element: 'none', weakTo: null, scale: 1, fly: 1.6, radius: 1.3, hitR: 1.3, aimY: 0.2,
     speed: 2.2, range: [6, 11], xp: 600, bolts: [150, 220], color: MASTER_COLOR.vexMk1,
-    patterns: ['flameBurst', 'iceVolley', 'orbStorm', 'lobBarrage'], patterns2: ['voltRing', 'fireWave', 'dive']
+    patterns: ['flameBurst', 'iceVolley', 'orbStorm', 'lobBarrage'], patterns2: ['voltRing', 'fireWave', 'dive'],
+    blast: { every: 6, r: 6 }, homing: { every: 12, n: 4, speed: 10, turn: 2.4 }
   })
 }
 

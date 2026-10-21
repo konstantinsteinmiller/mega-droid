@@ -22,6 +22,7 @@ type Mini = {
   next: (s: S) => void
   hpOf: (k: number, lap: number) => number
   CH: number
+  paint: (c: CanvasRenderingContext2D, s: S, k: number) => void
 }
 const load = (): Mini => {
   new Function(SRC)()
@@ -34,13 +35,26 @@ describe('the loading mini-game', () => {
   let g: Mini
   beforeEach(() => { g = load() })
 
-  it('rotor drone, hard hat, guardroid, crate golem, then round again, stronger', () => {
+  it('rotor drone, hard hat, hornet, mole, guardroid, crate golem, then round again, stronger', () => {
     const s = g.M()
     const seen: Array<[number, number, number]> = []
-    for (let i = 0; i < 8; i++) { seen.push([s.k, s.lap, s.hp]); g.next(s) }
-    expect(seen.map((x) => x[0])).toEqual([0, 1, 2, 3, 0, 1, 2, 3])
-    expect(seen.slice(1, 4).every((x, i) => x[2] > seen[i]![2])).toBe(true)
-    for (let k = 0; k < 4; k++) expect(g.hpOf(k, 1)).toBeGreaterThan(g.hpOf(k, 0))
+    for (let i = 0; i < 12; i++) { seen.push([s.k, s.lap, s.hp]); g.next(s) }
+    expect(seen.map((x) => x[0])).toEqual([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5])
+    expect(seen.slice(1, 6).every((x, i) => x[2] > seen[i]![2])).toBe(true)
+    for (let k = 0; k < 6; k++) expect(g.hpOf(k, 1)).toBeGreaterThan(g.hpOf(k, 0))
+  })
+
+  it('every machine draws, at rest and mid-flinch, without throwing', () => {
+    const calls: string[] = []
+    const ctx = new Proxy({}, { get: (_, k) => (k === 'createLinearGradient' || k === 'createRadialGradient' ? () => ({ addColorStop() {} }) : (...a: unknown[]) => { calls.push(String(k)); return a }), set: () => true }) as unknown as CanvasRenderingContext2D
+    for (let k = 0; k < 6; k++) {
+      for (const ht of [-99, 0.9]) {
+        const s = g.M(); s.t = 1; (s as S & { ht: number }).ht = ht
+        calls.length = 0
+        expect(() => g.paint(ctx, s, k)).not.toThrow()
+        expect(calls.filter((c) => c === 'fill').length).toBeGreaterThan(8)
+      }
+    }
   })
 
   it('a charged shot does more damage than a normal one', () => {

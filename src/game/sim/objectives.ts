@@ -45,6 +45,9 @@ export interface Chest {
   beam: Mesh
   /** An authored prize (`ChestSpot.loot`). */
   loot?: ChestLoot
+  /** On a wall climb's top ledge (`ChestSpot.ledge`): a shot opens it only
+   *  with Flux up on that ledge. */
+  ledge?: boolean
 }
 
 export interface Crate {
@@ -272,7 +275,7 @@ export class MissionObjects {
 
   /** A chest on the cell centred at (x, z), its floor at `y`, backed onto
    *  the wall `yaw` faces (`Room.wallSpots`' convention). */
-  private addChestAt(x: number, y: number, z: number, yaw: number, supply: boolean, rarity: Rarity, loot?: ChestLoot): void {
+  private addChestAt(x: number, y: number, z: number, yaw: number, supply: boolean, rarity: Rarity, loot?: ChestLoot, ledge = false): void {
     const h = this.host
     const mesh = buildChest(h.theme, rarity)
     // Push toward the wall it stands against so it does not block the room.
@@ -292,7 +295,7 @@ export class MissionObjects {
     beam.position.set(cx, y + 2.5, cz)
     beam.visible = false
     parent.add(beam)
-    this.chests.push({ id: this.chests.length, x: cx, y, z: cz, yaw, mesh, opened: false, openT: 0, supply, rarity, navIdx, beam, ...(loot ? { loot } : {}) })
+    this.chests.push({ id: this.chests.length, x: cx, y, z: cz, yaw, mesh, opened: false, openT: 0, supply, rarity, navIdx, beam, ...(loot ? { loot } : {}), ...(ledge ? { ledge } : {}) })
   }
 
   private place(): void {
@@ -400,7 +403,7 @@ export class MissionObjects {
       // Its prize once per save; after that a plain chest, a notch down.
       const loot = c.loot && !this.host.lootTaken?.(c.loot.key) ? c.loot : undefined
       const rarity = loot ? loot.rarity : c.loot ? (c.loot.rarity === 'legendary' ? 'prototype' : c.loot.rarity) : roll
-      this.addChestAt(c.x, c.y, c.z, c.yaw, false, rarity, loot)
+      this.addChestAt(c.x, c.y, c.z, c.yaw, false, rarity, loot, !!c.ledge)
     }
   }
 
@@ -646,7 +649,9 @@ export class MissionObjects {
       if (y > c.y + 1.05 + r || y < c.y - r) continue
       if (Math.hypot(c.x - x, c.z - z) > this.host.nav.props[c.navIdx]!.r + r) continue
       if (!hasLineOfSight(this.host.nav, x, z, c.x, c.z)) continue
-      if (!c.opened) this.openChest(c)
+      // A climb's chest is the climb's prize: a shot from the floor below
+      // stops on it (`CHEST_DY`, as the interact reach).
+      if (!c.opened && (!c.ledge || Math.abs((this.host.player.y ?? 0) - c.y) < CHEST_DY)) this.openChest(c)
       return true
     }
     return false

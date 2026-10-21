@@ -39,6 +39,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} seconds left, {n} drones to go',
     'tink': 'TINK!',
+    'getClear': 'GET CLEAR!',
+    'lockLost': 'LOCK LOST!',
     'perfect': 'PERFECT!',
     'parry': 'PARRY!',
     'guardBreak': 'GUARD BREAK!',
@@ -214,7 +216,12 @@ export default {
     'challenge': 'Challenge door',
     'challengeN': 'Challenge door {n}',
     'actLevelUp': 'Play level-up act',
-    'actObjective': 'Play objective-done act'
+    'actObjective': 'Play objective-done act',
+    'climbs': 'Jump to a climb',
+    'practice': 'Practice wall',
+    'climbN': 'Climb {n} ({h} m)',
+    'shortcutStart': 'Shortcut start',
+    'battleRoom': 'Battle room'
   },
 
   // ─── Missions ─────────────────────────────────────────────────────────────

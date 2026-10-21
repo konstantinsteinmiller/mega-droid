@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Осталось секунд: {s}, дронов: {n}',
     'tink': 'ДЗЫНЬ!',
+    'getClear': 'БЕГИ!',
+    'lockLost': 'ЦЕЛЬ ПОТЕРЯНА!',
     'perfect': 'ИДЕАЛЬНО!',
     'parry': 'ОТБИТО!',
     'guardBreak': 'ЗАЩИТА ПРОБИТА!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Дверь испытания',
     'challengeN': 'Дверь испытания {n}',
     'actLevelUp': 'Показать сцену повышения уровня',
-    'actObjective': 'Показать сцену выполненной цели'
+    'actObjective': 'Показать сцену выполненной цели',
+    'climbs': 'Перейти к подъёму',
+    'practice': 'Тренировочная стена',
+    'climbN': 'Подъём {n} ({h} м)',
+    'shortcutStart': 'Начало короткого пути',
+    'battleRoom': 'Боевой зал'
   },
 
   'quest': {

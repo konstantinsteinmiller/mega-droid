@@ -2,6 +2,7 @@ import { CELL, Ramp, cellCenter, type MapData, type Lift } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
 import { railCourse } from './volt'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Deep Mine (the drill sector's story stage) ─────────────────────────────
@@ -250,6 +251,8 @@ export const generateDeepMine = (seed: number): MapData => {
   // the wyrm to dive through) — its door in the wall ahead of Flux as he
   // comes down the flight; the way on is east.
   b.challengeRoom(8, { mouth: { i: 5, j: 24, di: 0, dj: 1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'drill', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

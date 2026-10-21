@@ -13,7 +13,7 @@ vi.mock('@/game/fx/markers', async () => {
 })
 
 import { createEnemy, updateEnemy } from '@/game/sim/enemies'
-import { createBoss, startBossIntro, updateBoss } from '@/game/sim/bosses'
+import { createBoss, startBossIntro, updateBoss, blastReaches } from '@/game/sim/bosses'
 import { createMiniBoss, startMiniBoss, updateMiniBoss } from '@/game/sim/miniBosses'
 import { MINI_BOSSES } from '@/game/sim/miniBoss/registry'
 import { STEEL_HOUND, HOUND_REACH, BREATH_RANGE } from '@/game/sim/miniBoss/steelHound'
@@ -63,7 +63,8 @@ const watch = (w: World, e: Enemy, secs: number, tick: () => void, keepReady = t
     const d = Math.hypot(w.player.x - e.x, w.player.z - e.z)
     tick()
     // A choice made in 'engage' (a follow-up, like the pull's slam, is part of its move).
-    if (was === 'engage' && e.state === 'tele') starts.push({ attack: e.attack, d })
+    // A surfaced Mole Driller picks its lunge out of the ground ('act').
+    if ((was === 'engage' || (e.kind === 'mole' && was === 'act')) && e.state === 'tele') starts.push({ attack: e.attack, d })
   }
   return starts
 }
@@ -112,6 +113,8 @@ describe('attack reach (#180)', () => {
           const w = world([e])
           const starts = watch(w, e, 8, () => updateBoss(w, e, DT, ROOM))
           for (const s of starts) expect(withinReach(BOSS_REACH, s.attack, s.d - 0.05), `${id} ${s.attack} at ${s.d.toFixed(1)} m`).toBe(true)
+          // #188 Its charged blast: only with him inside its ring
+          for (const s of starts) if (s.attack === 'chargedBlast') expect(blastReaches(def, s.d - 0.05), `${id} blast at ${s.d.toFixed(1)} m`).toBe(true)
           expect(starts.length, `${id} from ${d} m`).toBeGreaterThan(0)
         }
       }

@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} सेकंड बाकी, {n} ड्रोन बाकी',
     'tink': 'टन्न!',
+    'getClear': 'दूर हटो!',
+    'lockLost': 'निशाना छूटा!',
     'perfect': 'परफ़ेक्ट!',
     'parry': 'पलटवार!',
     'guardBreak': 'गार्ड टूटा!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'चुनौती का दरवाज़ा',
     'challengeN': 'चुनौती का दरवाज़ा {n}',
     'actLevelUp': 'लेवल-अप दृश्य चलाएँ',
-    'actObjective': 'लक्ष्य-पूर्ण दृश्य चलाएँ'
+    'actObjective': 'लक्ष्य-पूर्ण दृश्य चलाएँ',
+    'climbs': 'चढ़ाई पर जाएँ',
+    'practice': 'अभ्यास दीवार',
+    'climbN': 'चढ़ाई {n} ({h} मी)',
+    'shortcutStart': 'शॉर्टकट की शुरुआत',
+    'battleRoom': 'युद्ध कक्ष'
   },
 
   'quest': {

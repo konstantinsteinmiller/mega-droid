@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData, type RailSpec } from '../levelGen'
 import { mulberry32, shuffle } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Rail Rush (the volt sector's story stage) ──────────────────────────────
@@ -325,6 +326,8 @@ export const generateRailRush = (seed: number): MapData => {
   // between the secret's false wall and the chest — the door Flux faces as
   // he steps off the cart; the way on is east.
   b.challengeRoom(6, { mouth: { i: 7, j: 31, di: 0, dj: 1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'volt', seed)
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

@@ -20,15 +20,21 @@ const PATHS = {
   cards: 'src/game/audio/voiceCards.ts',
   locale: (lang) => `src/i18n/locales/${lang}.ts`,
   langs: ['en', 'de', 'es', 'zh', 'fr'],
+  // The languages `voice:review` lists for approval (a language shows only the
+  // lines it has a file for), and the file of verdicts.
+  review: ['en', 'de', 'ru'],
+  approvals: 'voice-over-approvals.md',
   work: 'vo-src',
   out: 'public/audio/voice'
 }
 
 const catalog = await load(PATHS.catalog)
-export const { SPEAKERS, SCENES, fileName } = catalog
+export const { SPEAKERS, SCENES, fileName, voiceAliasesOf } = catalog
 export const { CARDS, TONES, toneOf } = await load(PATHS.cards)
 export const LANGS = PATHS.langs
-export const LOCALES = Object.fromEntries(await Promise.all(LANGS.map(async (l) => [l, (await load(PATHS.locale(l))).default])))
+export const REVIEW_LANGS = PATHS.review
+export const APPROVALS = join(ROOT, PATHS.approvals)
+export const LOCALES = Object.fromEntries(await Promise.all([...new Set([...LANGS, ...REVIEW_LANGS])].map(async (l) => [l, (await load(PATHS.locale(l))).default])))
 /** Every voice line: the catalogue's detail plus every text line of a
  *  speaker's section in the source locale (`deriveVoiceLines`). */
 export const VOICE_LINES = catalog.deriveVoiceLines(LOCALES[LANGS[0]])

@@ -2,7 +2,7 @@ import { hasLineOfSight } from '../world/nav'
 import type { World } from './world'
 import type { EnemyKind } from '../models/enemies'
 import {
-  ROLLER_LUNGE_MAX, HOPPER_LEAP_R, BRUTE_RUSH_MAX, BRUTE_STOMP_MAX, STALKER_LUNGE_R, PUFFER_SWELL_R, MOLE_STRIKE,
+  ROLLER_LUNGE_MAX, HOPPER_LEAP_R, BRUTE_RUSH_MAX, BRUTE_STOMP_MAX, STALKER_LUNGE_R, PUFFER_SWELL_R, MOLE_STRIKE, MOLE_LUNGE_R,
   GOLEM_RAM_R, GATE_STOMP_R
 } from './enemies'
 import { PLAYER_R } from './constants'
@@ -43,7 +43,7 @@ const KINDS: Partial<Record<EnemyKind, Record<string, number>>> = {
   stalker: { lunge: STALKER_LUNGE_R },
   spotter: { lock: ANYWHERE },
   puffer: { swell: PUFFER_SWELL_R },
-  mole: { erupt: MOLE_STRIKE },
+  mole: { erupt: MOLE_STRIKE, lunge: MOLE_LUNGE_R },
   golem: { ram: GOLEM_RAM_R, lob: ANYWHERE, throw: ANYWHERE }
 }
 
@@ -95,7 +95,12 @@ export const BOSS_REACH: Record<string, number> = {
   bladeBoomerang: ANYWHERE,
   neonVolley: ANYWHERE,
   droneSwarm: ANYWHERE,
-  rotorStorm: ANYWHERE
+  rotorStorm: ANYWHERE,
+  // #188 Every Master's charged attacks: the homing salvo flies anywhere;
+  // the blast is gated per Master on its own ring (`blastReaches`,
+  // sim/bosses.ts) — it walks in and holds it until he is inside
+  chargedBlast: ANYWHERE,
+  homingSalvo: ANYWHERE
 }
 
 /** Patterns that only land along a clear line (an instant bolt). */

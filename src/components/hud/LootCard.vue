@@ -73,6 +73,8 @@ onUnmounted(() => {
   left: 50%
   top: calc(env(safe-area-inset-top, 0px) + clamp(52px, 12vh, 96px))
   transform: translateX(-50%)
+  // Above the objective badge, which mounts after it and would paint over it.
+  z-index: 3
   max-width: min(92vw, 380px)
   padding: clamp(10px, 2.2vmin, 14px) clamp(12px, 2.8vmin, 18px)
   border-radius: 18px

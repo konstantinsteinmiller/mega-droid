@@ -9,7 +9,7 @@ import {
 } from '../../models/miniBoss/glitchStalker'
 import { faceTo, moveBody, distToPlayer, keepInRoom, inRoom, roomBox, teleRing, near, ease, TAU, eyeAt, sprung, type PoseVel } from './kit'
 import { fxLayer, alignFx, FloorStrip } from './worldFx'
-import { PLAYER_R } from '../constants'
+import { PLAYER_R, EYE_H } from '../constants'
 import { pushHud } from '../../state/hud'
 
 /**
@@ -278,7 +278,12 @@ const tickDecoys = (w: World, e: Enemy, m: StalkerMem, room: Room, dt: number): 
       const sx = d.x + Math.sin(d.yaw) * 0.6
       const sz = d.z + Math.cos(d.yaw) * 0.6
       const l = Math.hypot(w.player.x - sx, w.player.z - sz) || 1
-      w.fireEnemyShot(e, sx, 1.5, sz, (w.player.x - sx) / l, 0, (w.player.z - sz) / l, DECOY_SHOT_SPEED, Math.round(e.dmg * 0.3))
+      // From its blade down to his middle (the height the shot test hits
+      // him at): flown level at 1.5 m it skimmed his head and missed him
+      // the moment he stepped aside. In world heights (a climb's floor too).
+      const sy = y0 + 1.5
+      const dy = ((w.player.y ?? 0) + EYE_H - 0.45 - sy) / Math.max(1, l)
+      w.fireEnemyShot(e, sx, sy, sz, (w.player.x - sx) / l, dy, (w.player.z - sz) / l, DECOY_SHOT_SPEED, Math.round(e.dmg * 0.3), true)
       w.sfx('enemyShot', d.x, d.z)
     }
   }
@@ -435,7 +440,8 @@ export const GLITCH_STALKER_AI: MiniBossBehaviour<StalkerMem> = {
               w.sfx('bladeWhoosh', e.x, e.z)
               if (near(w, e.x, e.z, SLASH_R)) {
                 e.hitPlayer = true
-                w.hitPlayer(e, Math.round(e.dmg * 1.15), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+                // A perfect block stops the blink's slash cold: the parry stuns it (#189).
+                if (w.hitPlayer(e, Math.round(e.dmg * 1.15), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
               }
               e.st = 0
             }

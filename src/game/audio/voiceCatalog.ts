@@ -71,6 +71,11 @@ export interface VoiceLine {
   /** A sound more than words ("Hoppla-hopp!", "Bzzt! Ups!"): QA only fails a
    *  take that adds speech, since a read-back cannot spell an interjection. */
   loose?: boolean
+  /** Its own recording even when another line of the speaker has the same
+   *  words: takes the game picks from at random (Flux's barks), or a
+   *  direction that changes the delivery (Vex's short and maniacal laugh).
+   *  Every other line shares one file with its twins (`voiceAliasesOf`). */
+  distinct?: boolean
   /** The delivery knob (voiceCards' TONES has the detailed lines' tones;
    *  a derived line takes its section's). */
   tone?: string
@@ -816,7 +821,7 @@ const VEX: VoiceLine[] = [
   // Live: the story scenes close a line with one (`story/vexScene.ts`). No bubble of their own.
   ...([['short', 1.2], ['medium', 1.8], ['maniacal', 2.6]] as const).map(([k, max]) => ({ ...plan(`vex.laugh.${k}`, 'vex', 'laughs', max, {
     when: ['A bubble that ends in a laugh', 'Eine Sprechblase, die mit einem Lachen endet'],
-    draft: ['Mwa-ha-HA!', 'Mwa-ha-HA!'], neutral: true,
+    draft: ['Mwa-ha-HA!', 'Mwa-ha-HA!'], neutral: true, distinct: true,
     direction: [`The ${k} laugh.`, `Das ${k === 'short' ? 'kurze' : k === 'medium' ? 'mittlere' : 'wahnsinnige'} Lachen.`]
   }), status: 'live' as const }))
 ]
@@ -841,7 +846,7 @@ const BARKS: ReadonlyArray<readonly [type: string, max: number, takes: readonly 
 const FLUX: VoiceLine[] = BARKS.flatMap(([type, max, takes, tail]) => takes.map((t, i) => ({ ...plan(`flux.hurt.${type}.${i + 1}`, 'flux', 'barks', max, {
   when: [`Flux takes a hit: ${type} (the game picks one of 3 at random; synth tail in post: ${tail})`,
     `Flux wird getroffen: ${type} (das Spiel wählt zufällig einen von 3)`],
-  draft: [t, t], neutral: true,
+  draft: [t, t], neutral: true, distinct: true,
   direction: takes.indexOf(t) !== i
     ? ['Another take of the same word: vary the pitch and energy.', 'Eine weitere Aufnahme desselben Worts: Tonhöhe und Energie variieren.']
     : ['Comedy first: a cartoon robot getting bonked, never a real injury.', 'Komik zuerst: ein Cartoon-Roboter kriegt eins ab, nie eine echte Verletzung.']
@@ -917,6 +922,28 @@ const FINALE: VoiceLine[] = [
   ship('ending.spark', 'gauss', 'ending', 3.5, {
     when: ["The ending: the sunrise, the last line", "Das Ende: der Sonnenaufgang, die letzte Zeile"],
     direction: ["Soft wonder.", "Sanftes Staunen."]
+  }),
+  // Pip tells the ending (its captions with no one on screen speaking): the
+  // debrief voice, so the last mission has its debrief too.
+  live('ending.fall', 'pip', 'ending', {
+    when: ["The ending: the Grand Master falls", "Das Ende: der Großmeister fällt"],
+    direction: ["Hushed, then relieved: it is really over.", "Gedämpft, dann erleichtert: Es ist wirklich vorbei."],
+    max: 3.5
+  }),
+  live('ending.relays', 'pip', 'ending', {
+    when: ["The ending: the relays light up over the city", "Das Ende: die Relais leuchten über der Stadt auf"],
+    direction: ["Wonder, counting them as they light.", "Staunend, zählt sie mit, wie sie aufleuchten."],
+    max: 3.5
+  }),
+  live('ending.thaw', 'pip', 'ending', {
+    when: ["The ending: Gauss's capsule thaws", "Das Ende: die Kapsel von Gauss taut auf"],
+    direction: ["Soft, holding its breath.", "Leise, hält den Atem an."],
+    max: 3
+  }),
+  live('ending.morning', 'pip', 'ending', {
+    when: ["The ending: sunrise over Cyber City", "Das Ende: Sonnenaufgang über Cyber City"],
+    direction: ["Warm and glad, a smile in it.", "Warm und froh, mit einem Lächeln."],
+    max: 3.5
   })
 ]
 
@@ -1417,6 +1444,45 @@ export const deriveVoiceLines = (source: unknown): VoiceLine[] => {
     })
   }
   return [...VOICE_DETAIL, ...derived]
+}
+
+/**
+ * Lines that say the same words share one recording: the same speaker, the
+ * same language and the same text the model reads (`spoken`, trimmed, runs
+ * of spaces as one) make one file, and every other key of that group plays it.
+ * Returns, per language, alias key → canonical key. The canonical line is the
+ * first of the group that already has a file (`hasFile`), else the first in
+ * catalogue order (cast order, then playing order). A `distinct` line never
+ * joins a group. `voice:collect` writes the result to `voiceAliases.ts`.
+ */
+export const voiceAliasesOf = (
+  lines: readonly VoiceLine[],
+  langs: readonly string[],
+  spoken: (l: VoiceLine, lang: string) => string | null,
+  hasFile: (lang: string, file: string) => boolean = () => false
+): Record<string, Record<string, string>> => {
+  const out: Record<string, Record<string, string>> = {}
+  for (const lang of langs) {
+    const groups = new Map<string, VoiceLine[]>()
+    for (const l of lines) {
+      if (l.distinct) continue
+      const t = spoken(l, lang)?.trim().replace(/\s+/g, ' ')
+      if (!t) continue
+      const id = `${l.speaker}
+${t}`
+      const g = groups.get(id)
+      if (g) g.push(l)
+      else groups.set(id, [l])
+    }
+    const map: Record<string, string> = {}
+    for (const g of groups.values()) {
+      if (g.length < 2) continue
+      const canon = g.find(l => hasFile(lang, fileName(l.key))) ?? g[0]!
+      for (const l of g) if (l !== canon) map[l.key] = canon.key
+    }
+    out[lang] = Object.fromEntries(Object.entries(map).sort(([a], [b]) => a.localeCompare(b)))
+  }
+  return out
 }
 
 /** A key's file name, without the extension: `atlas.bossAhead` → `atlas_bossAhead`. */

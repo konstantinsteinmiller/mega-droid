@@ -15,8 +15,9 @@ import { buildChest, buildCrate, type PropMesh } from '../models/props'
 import { THEMES, type Theme } from '../world/themes'
 
 /** What a hologram shows: a lesson's move, or the crate and the chest rooms'
- *  (shoot the crate with a charge, shoot the chest open). */
-export type HoloId = TrainId | 'crate' | 'chest'
+ *  (shoot the crate with a charge, shoot the chest open), or the Blaze
+ *  practice wall's wall-kick (`world/climbFeature.ts`). */
+export type HoloId = TrainId | 'crate' | 'chest' | 'kick'
 
 /**
  * ─── Lesson holograms: show, don't tell ──────────────────────────────────────
@@ -42,13 +43,13 @@ export type HoloAct = '' | 'fire' | 'block' | 'slide' | 'tank' | 'move' | 'weapo
 export interface HoloGlyph { act: HoloAct; down: boolean }
 
 /** Each lesson's loop (s). */
-export const HOLO_LOOP: Readonly<Record<HoloId, number>> = { charge: 4.2, block: 4.2, slide: 4.2, gap: 4.6, gel: 3.6, weapon: 3.6, crate: 4.6, chest: 3.8 }
+export const HOLO_LOOP: Readonly<Record<HoloId, number>> = { charge: 4.2, block: 4.2, slide: 4.2, gap: 4.6, gel: 3.6, weapon: 3.6, crate: 4.6, chest: 3.8, kick: 3.8 }
 
 /** The moment each loop's input is down: [from, to) in loop seconds. */
 export const HOLO_PRESS: Readonly<Record<HoloId, readonly [number, number]>> = {
-  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0.3, 2.3], gel: [1, 1.2], weapon: [0.3, 0.8], crate: [0.6, 1.9], chest: [0.55, 0.7]
+  charge: [0.6, 1.9], block: [1.5, 2.4], slide: [0.95, 1.2], gap: [0.3, 2.3], gel: [1, 1.2], weapon: [0.3, 0.8], crate: [0.6, 1.9], chest: [0.55, 0.7], kick: [0.8, 1.0]
 }
-const ACT: Readonly<Record<HoloId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon', crate: 'fire', chest: 'fire' }
+const ACT: Readonly<Record<HoloId, HoloAct>> = { charge: 'fire', block: 'block', slide: 'slide', gap: 'move', gel: 'tank', weapon: 'weapon', crate: 'fire', chest: 'fire', kick: 'slide' }
 
 /** The last part of a loop fades out and back in, so the reset never snaps. */
 export const HOLO_RESET = 0.45
@@ -235,6 +236,10 @@ const blendPose = (rig: Rig, from: BonePose, w: number): void => {
 
 /** Yaw that turns a rig (which faces +Z) toward +X. */
 const FACE_PX = Math.PI / 2
+/** The kick hologram: the wall's face this far ahead of its start (m, the
+ *  hologram stands at its cell's middle), and the practice wall's top. */
+export const KICK_WALL = 1.5
+export const KICK_TOP = 1.5
 const FACE_NX = -Math.PI / 2
 
 export class LessonHologram {
@@ -421,6 +426,7 @@ export class LessonHologram {
       case 'weapon': this.poseWeapon(u, t); break
       case 'crate': this.poseCrate(u, t); break
       case 'chest': this.poseChest(u, t); break
+      case 'kick': this.poseKick(u, t); break
     }
   }
 
@@ -578,6 +584,41 @@ export class LessonHologram {
     keepPose(this.flux, _walkPose)
     animateHeroHop(this.flux, 0, g.tuck, t)
     blendPose(this.flux, _walkPose, g.air)
+  }
+
+  /**
+   * The wall-kick (the Blaze practice wall): Flux walks up to the REAL wall
+   * before him (the hologram stands a cell in front of the practice tower,
+   * its +X into the face, KICK_WALL m off), turns square to it, slides —
+   * the input lit at the moment — and the kick runs him up the face to the
+   * ledge (KICK_TOP over the floor), where he steps on. No wall of its own:
+   * the hologram's light never lies in the tower's face.
+   */
+  private poseKick(u: number, t: number): void {
+    const walk = smooth(span(u, 0.1, 0.75))
+    const up = smooth(span(u, 0.8, 1.25))
+    const over = smooth(span(u, 1.25, 1.65))
+    const x = -0.6 + (KICK_WALL - 0.55 + 0.6) * walk + 1.15 * over
+    this.stand(x)
+    this.flux.root.position.y = KICK_TOP * up
+    const m = this.motion
+    m.walk = u < 0.75 ? 1 - smooth(span(u, 0.6, 0.75)) : over > 0 && over < 1 ? 0.6 : 0
+    m.phase = u * 2.2
+    m.fwd = 1
+    m.side = 0
+    m.dash = 0
+    animateHeroWalk(this.flux, m, t)
+    if (up > 0 && up < 1) {
+      // On the wall: a kick, knees up, a lean into it.
+      keepPose(this.flux, _walkPose)
+      animateHeroHop(this.flux, 0, Math.sin(up * Math.PI), t)
+      this.flux.root.rotation.x = 0
+    }
+    // The kick's spark ring on the face, at the foot of the kick.
+    this.ring.visible = u >= 0.8 && u < 1.2
+    this.ring.position.set(KICK_WALL - 0.04, 0.4 + KICK_TOP * up, 0)
+    this.ring.rotation.set(0, Math.PI / 2, 0)
+    this.ring.scale.setScalar(0.35 + 0.5 * span(u, 0.8, 1.2))
   }
 
   private poseGel(u: number, t: number): void {

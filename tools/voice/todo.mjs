@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url'
 import { LANGS, LOCALES, ROOT, VOICE_LINES, VOICE_OUT, VO_SRC, fileName } from './lib.mjs'
 
 const { renderVoiceTodo } = await import(pathToFileURL(join(ROOT, 'src/game/audio/voiceTodo.ts')).href)
+const { VOICE_ALIASES } = await import(pathToFileURL(join(ROOT, 'src/game/audio/voiceAliases.ts')).href)
 
 /** The file names (no extension) in public/audio/voice/<lang>/. */
 export const voiceFilesOf = (lang) => {
@@ -23,7 +24,8 @@ export const writeVoiceTodo = () => {
     locales: LOCALES,
     shipped: existsSync(shippedFile) ? JSON.parse(readFileSync(shippedFile, 'utf8')) : {},
     files: Object.fromEntries(LANGS.map(l => [l, voiceFilesOf(l)])),
-    fileName
+    fileName,
+    aliases: VOICE_ALIASES
   })
   const out = join(ROOT, 'voice-todo.md')
   writeFileSync(out, md)

@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift, type WaterZone } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, POOL_DEEP, POOL_FREEBOARD, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Tidewater Locks (the tide sector's story stage) ─────────────────────────
@@ -270,6 +271,8 @@ export const generateTidewaterLocks = (seed: number): MapData => {
   // a dry floor (the Matriarch hovers and hoses; she brings her own water)
   // behind the door at the end of the last terrace; the way on is west.
   b.challengeRoom(9, { mouth: { i: 28, j: 34, di: 0, dj: 1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'tide', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

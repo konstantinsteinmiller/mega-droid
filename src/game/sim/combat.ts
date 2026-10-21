@@ -16,6 +16,7 @@ import { pushHud } from '../state/hud'
 import { incomingShot } from '../state/damageFeed'
 import { buildBolt, buildCapsule } from '../models/props'
 import { BASE_COLORS } from '../models/enemies'
+import { noteHit } from '../models/motion'
 import { PLAYER_R, EYE_H } from './constants'
 import { scaleXp } from '../data/enemies'
 import { COUNTER, type BossDef } from '../data/bosses'
@@ -173,10 +174,13 @@ export const AOE_BLOCK_CUT = 0.3
  * blow) BLOCK_CUT; any other machine attack AOE_BLOCK_CUT; a level's own
  * hazard (a trap, a crusher, the cold: no machine behind it) nothing. No
  * attack pierces the shield: one that should must be named here, and stay
- * blockable (a perfect block still reflects it).
+ * blockable (a perfect block still reflects it). The one named so far: a
+ * Core Master's charged blast (`blast`, #188) — it charges for seconds in
+ * its shield bubble with its whole reach filling on the floor, and only
+ * running out of that ring is meant to save him.
  */
-export const blockCut = (o: { blockable: boolean }, fromMachine: boolean): number =>
-  o.blockable ? BLOCK_CUT : fromMachine ? AOE_BLOCK_CUT : 0
+export const blockCut = (o: { blockable: boolean; blast?: boolean }, fromMachine: boolean): number =>
+  o.blast ? 0 : o.blockable ? BLOCK_CUT : fromMachine ? AOE_BLOCK_CUT : 0
 
 const sphereGeo = new SphereGeometry(1, 12, 8)
 
@@ -188,6 +192,20 @@ const DRILL_BLAST = 2.5
 const DRILL_SPLASH = 0.6
 /** The Neon Blade's flight left (s) when it turns back. */
 const BLADE_TURN = 0.4
+/** A Master's homing missile's flight (s, #188): long enough to cross the
+ *  arena and turn, then it burns out. */
+export const MISSILE_LIFE = 4
+
+/** A missile slid through (#188): its lock is gone, it flies straight on
+ *  (into a wall, `update`) and can no longer touch him. */
+const loseLock = (h: World, s: Shot): void => {
+  s.homePlayer = false
+  s.lost = true
+  ;(s.sprite.material as SpriteMaterial).color.set('#9aa4b8')
+  h.fx.sparks(s.x, s.y, s.z, '#ffffff', 8, 4, 0.16)
+  pushHud({ t: 'text', x: s.x, y: s.y + 0.4, z: s.z, key: 'combat.lockLost', color: '#dfe7ff' })
+  h.sfx('tink', s.x, s.z)
+}
 
 const chargeLevel = (s: Shot): number =>
   s.weapon === 'drillBomb' ? 2 : s.kind === 'charge3' ? 3 : s.kind === 'charge2' || s.kind === 'reflect' ? 2 : s.kind === 'charge1' || s.weapon ? 1 : 0
@@ -295,6 +313,8 @@ export class CombatSystem {
     s.sky = false
     s.homePlayer = false
     s.destructible = false
+    s.missile = false
+    s.lost = false
     s.burn = 0
     s.freeze = 0
     s.rock = null
@@ -473,6 +493,25 @@ export class CombatSystem {
     s.radius = 0.25
   }
 
+  /**
+   * A Master's homing missile (#188): launched along (dx, dz), it turns at
+   * most `turn` rad/s after Flux, so a sidestep late enough outruns its turn.
+   * Not to be shot down: a block takes it whole (a perfect one sends it
+   * back), and a slide through it breaks its lock — it flies straight on
+   * until a wall stops it. Its own pool slot, like every shot.
+   */
+  fireMissile(e: Enemy, x: number, y: number, z: number, dx: number, dz: number, speed: number, turn: number, dmg: number, color: string): void {
+    const s = this.spawnEnemyShot(e, x, y, z, dx, 0, dz, speed, dmg)
+    s.homePlayer = true
+    s.missile = true
+    s.life = MISSILE_LIFE
+    s.turn = turn
+    this.look(s, 'enemy', color)
+    s.sprite.scale.setScalar(s.prop ? 1 : 1.5)
+    s.core!.scale.setScalar(0.24)
+    s.radius = 0.28
+  }
+
   private updateHazards(dt: number): void {
     const h = this.host
     const px = h.player.x
@@ -586,8 +625,23 @@ export class CombatSystem {
         continue
       }
 
-      // Enemy orbs curve toward the player
-      if (s.homePlayer) {
+      // A Master's missile (#188) turns toward him at most `turn` rad/s,
+      // level with his chest; once its lock is lost it flies straight.
+      if (s.missile) {
+        if (s.homePlayer) {
+          const want = Math.atan2(h.player.x - s.x, h.player.z - s.z)
+          const sp = Math.hypot(s.vx, s.vz) || 1
+          let da = want - Math.atan2(s.vx, s.vz)
+          while (da > Math.PI) da -= Math.PI * 2
+          while (da < -Math.PI) da += Math.PI * 2
+          const a = Math.atan2(s.vx, s.vz) + Math.max(-s.turn * dt, Math.min(s.turn * dt, da))
+          s.vx = Math.sin(a) * sp
+          s.vz = Math.cos(a) * sp
+          s.vy = (feetOf(h) + EYE_H - 0.45 - s.y) * 2
+        } else s.vy = 0
+        if (Math.random() < 0.6) h.fx.emit({ x: s.x, y: s.y, z: s.z, color: s.lost ? '#9aa4b8' : s.color, size: 0.4, sizeEnd: 0.05, life: 0.3 })
+      } else if (s.homePlayer) {
+        // Enemy orbs curve toward the player
         const ax = h.player.x - s.x
         const ay = feetOf(h) + EYE_H - 0.45 - s.y
         const az = h.player.z - s.z
@@ -762,6 +816,8 @@ export class CombatSystem {
           s.pierce--
         }
       } else {
+        // A missile slid through (#188) has lost him: it only finds a wall now.
+        if (s.lost) continue
         const dx = h.player.x - s.x
         const dy = feetOf(h) + EYE_H - 0.45 - s.y
         const dz = h.player.z - s.z
@@ -779,9 +835,12 @@ export class CombatSystem {
           if (h.cueBlock?.(s, toPlayer / sp)) continue
         }
         if (dx * dx + dy * dy + dz * dz < rr * rr) {
-          const r = h.hitPlayer(s.source, s.dmg, { blockable: s.blockable, fromX: s.px, fromZ: s.pz, kind: 'shot' })
-          if (r === 'parry') this.reflect(s)
-          else if (r !== 'miss') this.kill(s)
+          const r = h.hitPlayer(s.source, s.dmg, { blockable: s.blockable, fromX: s.px, fromZ: s.pz, kind: 'shot', noChip: s.missile })
+          if (r === 'parry') {
+            s.missile = false
+            this.reflect(s)
+          } else if (r !== 'miss') this.kill(s)
+          else if (s.missile && h.combat.slideT > 0) loseLock(h, s)
         }
       }
     }
@@ -1055,9 +1114,12 @@ export class CombatSystem {
     if (e.state === 'dead' || e.offstage || e.buried) return
     // Bosses are untouchable during their entrance and their phase-2 roar,
     // a challenge's mini-boss during its entrance.
-    if ((e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar'))) ||
+    // and inside the shield bubble of a charged blast (#188).
+    if ((e.boss && (e.state === 'idle' || e.state === 'alert' || (e.state === 'act' && e.attack === 'roar') || (e.bossShield ?? 0) > 0)) ||
       (e.challenge && (e.state === 'idle' || e.state === 'alert')) || h.lessonShield?.(e)) {
       h.fx.sparks(o.x, o.y, o.z, '#ffffff', 6, 4, 0.14)
+      // The bubble lights where it was struck (#188)
+      if ((e.bossShield ?? 0) > 0) h.fx.flash(o.x, o.y, o.z, (e.def as BossDef).color, 1.6, 0.14)
       pushHud({ t: 'text', x: o.x, y: o.y + 0.3, z: o.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', e.x, e.z)
       return
@@ -1126,6 +1188,8 @@ export class CombatSystem {
       if (e.challenge) h.fx.flash(o.x, o.y, o.z, e.challenge.spec.def.color, 1.6, 0.16)
       pushHud({ t: 'text', x: o.x, y: o.y + 0.3, z: o.z, key: 'combat.tink', color: '#dfe7ff' })
       h.sfx('tink', e.x, e.z)
+      // The body takes it on the guard (view-only, `models/trooperAct.ts`)
+      noteHit(e.mo, e.anim, o.charge >= 1 ? 0.8 : 0.45, e.x, e.z, e.yaw, o.fromX, o.fromZ, true)
       h.onDeflect?.(e)
       return
     }
@@ -1155,6 +1219,8 @@ export class CombatSystem {
     if (o.share !== undefined) dmg = Math.max(1, e.hp - Math.floor(e.maxHp * o.share))
     e.hp -= dmg
     e.flash = 1
+    // The body's reaction (view-only): a chip shot small, a charge or a guard break full
+    noteHit(e.mo, e.anim, o.charge >= 2 || guarded || o.special ? 1 : o.charge >= 1 ? 0.6 : 0.3, e.x, e.z, e.yaw, o.fromX, o.fromZ, false)
     // Magnet Pull yanks a flyer out of its hover: a short stun (it sags).
     if (o.weapon === 'magnetPull' && e.def.fly > 0 && !e.boss && e.hp > 0) this.stun(e, 0.8)
     // A Searchlight Drone's lamp is its weak spot: a shot on it puts the light out.
@@ -1189,6 +1255,14 @@ export class CombatSystem {
     e.state = 'dead'
     e.deathT = 0
     e.ring.visible = false
+    // A Master goes down with nothing of its own left live: no shield bubble
+    // on the wreck, none of its shots, missiles or shock rings still flying
+    // (#188 left them to the room after the fight).
+    if (e.boss) {
+      e.bossShield = 0
+      if (e.shieldMesh) e.shieldMesh.visible = false
+      this.clearHostile(e)
+    }
     const cy = e.y + (e.floor ?? 0) + e.def.aimY
     const col = e.boss ? (e.def as BossDef).color : e.elite ? '#ffd84a' : e.golem ? e.golem.wood : BASE_COLORS[e.kind].main
     h.fx.orbBurst(e.x, cy, e.z, col, e.boss ? 2 : e.elite ? 1.4 : e.def.radius > 0.8 ? 1.2 : 1)
@@ -1306,6 +1380,14 @@ export class CombatSystem {
       p.magnet = true
       p.t = Math.max(p.t, 0.5)
     }
+  }
+
+  /** Every machine shot, wave and shock ring in flight (only `source`'s, when
+   *  given) gone at once: a Master's fall, the exit's start. */
+  clearHostile(source: Enemy | null = null): void {
+    for (const s of this.shots) if (s.active && s.owner === 'enemy' && (!source || s.source === source)) this.kill(s)
+    for (const w of this.waves) if (!source || w.source === source) w.active = false
+    for (const r of this.rings) if (!source || r.source === source) r.active = false
   }
 
   clear(): void {

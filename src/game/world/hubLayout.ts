@@ -288,6 +288,15 @@ export const POSTS: readonly Post[] = [
   { x: TROPHY_SPOT.side * (HALL_HALF + NICHE_DEPTH - 0.85), z: TROPHY_SPOT.z, r: 1.45 }
 ]
 
+/** Dr. Gauss once the ending has woken her (New Game+): by the briefing
+ *  table, right of it, clear of the walk from the pad to the table and of
+ *  the right workstation. Her body is a post, so Flux walks round her. */
+export const GAUSS_AWAKE_AT = { x: 2.5, z: TABLE_Z + 0.6, yaw: -0.9 }
+export const GAUSS_POST: Post = { x: GAUSS_AWAKE_AT.x, z: GAUSS_AWAKE_AT.z, r: 0.45 }
+/** Every post in the hub with Gauss awake and standing in the lab. */
+export const POSTS_AWAKE: readonly Post[] = [...POSTS, GAUSS_POST]
+export const LAB_POSTS_AWAKE: readonly Post[] = [...LAB_POSTS, GAUSS_POST]
+
 /** The gate's leaves once it stands open: along its niche's sides. */
 export const GATE_LEAF_Z = HALL_END + 0.95
 export const openGateWalls = (): Seg[] => [-1, 1].map(s => ({

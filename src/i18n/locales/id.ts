@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} detik lagi, {n} drone tersisa',
     'tink': 'TING!',
+    'getClear': 'MENJAUH!',
+    'lockLost': 'KUNCIAN HILANG!',
     'perfect': 'SEMPURNA!',
     'parry': 'TANGKIS!',
     'guardBreak': 'PERTAHANAN JEBOL!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Pintu tantangan',
     'challengeN': 'Pintu tantangan {n}',
     'actLevelUp': 'Putar adegan naik level',
-    'actObjective': 'Putar adegan tujuan selesai'
+    'actObjective': 'Putar adegan tujuan selesai',
+    'climbs': 'Lompat ke panjatan',
+    'practice': 'Dinding latihan',
+    'climbN': 'Panjatan {n} ({h} m)',
+    'shortcutStart': 'Awal jalan pintas',
+    'battleRoom': 'Ruang pertempuran'
   },
 
   'quest': {

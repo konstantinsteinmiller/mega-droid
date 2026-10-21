@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Faltam {s} segundos, restam {n} drones',
     'tink': 'TINK!',
+    'getClear': 'SAI DAÍ!',
+    'lockLost': 'ALVO PERDIDO!',
     'perfect': 'PERFEITO!',
     'parry': 'APARADO!',
     'guardBreak': 'GUARDA QUEBRADA!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Porta do desafio',
     'challengeN': 'Porta do desafio {n}',
     'actLevelUp': 'Tocar cena de subir de nível',
-    'actObjective': 'Tocar cena de objetivo concluído'
+    'actObjective': 'Tocar cena de objetivo concluído',
+    'climbs': 'Pular para uma escalada',
+    'practice': 'Parede de treino',
+    'climbN': 'Escalada {n} ({h} m)',
+    'shortcutStart': 'Início do atalho',
+    'battleRoom': 'Sala de batalha'
   },
 
   'quest': {

@@ -8,8 +8,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Group, Scene } from 'three'
-import { generateMap, roomCenter, cellCenter, type MapData } from '@/game/world/levelGen'
+import { generateMap, roomCenter, cellCenter, CELL, type MapData } from '@/game/world/levelGen'
 import { generateClimb } from '@/game/world/climbGen'
+import { generateStage } from '@/game/world/stages'
 import { createNav, hasLineOfSight, isSolidAt, groundAt } from '@/game/world/nav'
 import { profile } from '@/game/state/profile'
 import { flushPersist } from '@/use/useGameState'
@@ -27,7 +28,7 @@ vi.mock('@/game/sim/enemies', () => ({
   })
 }))
 
-const { LessonDirector, lessonDone, roomAt, roomClear, droneRow } = await import('@/game/sim/lessons')
+const { LessonDirector, lessonDone, roomAt, roomClear, droneRow, DRONE_STRAY } = await import('@/game/sim/lessons')
 type Host = import('@/game/sim/lessons').LessonHost
 type Tick = import('@/game/sim/lessons').LessonTick
 
@@ -410,6 +411,60 @@ describe('the special-weapon lesson (sleeping drones)', () => {
     expect(enemies.filter(e => e.state !== 'dead')).toHaveLength(3)
   })
 
+  // Playtest 2026-10-20 (Blaze, the room behind the boss): the lesson began
+  // on the threshold, put a drone back through the open doorway, the door
+  // shut behind Flux and the beam-out pedestal stayed dark for good.
+  it('a drone that ends up outside the lesson room is beamed back in front of Flux, asleep', () => {
+    const { d, host, enemies, room, map } = intoQuietRoom()
+    const stray = enemies[1]!
+    const away = map.rooms.find(r => r.id !== room.id)!
+    const [ax, az] = roomCenter(away)
+    Object.assign(stray, { x: ax, z: az, awake: true, hold: false, state: 'engage' })
+    run(d, host, DRONE_STRAY + 0.2)
+    expect(roomAt(map, stray.x, stray.z)).toBe(room.id)
+    expect(stray.hold).toBe(true)
+    expect(stray.state).toBe('idle')
+    expect(hasLineOfSight(host.nav, host.player.x, host.player.z, stray.x, stray.z)).toBe(true)
+    // ...and the lesson still finishes on it.
+    d.weaponFired()
+    for (const e of enemies) e.state = 'dead'
+    run(d, host, 0.1)
+    expect(d.weaponLearned).toBe('scrapBurst')
+  })
+
+  it('a stray drone with no spot to come back to is no longer waited on', () => {
+    const { d, host, enemies, room, map } = intoQuietRoom()
+    const stray = enemies[0]!
+    const away = map.rooms.find(r => r.id !== room.id)!
+    const [ax, az] = roomCenter(away)
+    stray.x = ax
+    stray.z = az
+    // Flux out of the room: no row can be placed in it from where he stands.
+    host.player.x = ax
+    host.player.z = az
+    d.weaponFired()
+    enemies[1]!.state = 'dead'
+    enemies[2]!.state = 'dead'
+    run(d, host, DRONE_STRAY + 0.2)
+    expect(stray.state).not.toBe('dead')
+    expect(d.weaponLearned).toBe('scrapBurst')
+  })
+
+  it('the taught lesson retries when no row fits for a beat, instead of stopping for good', () => {
+    const { d, host, enemies } = intoQuietRoom()
+    for (const e of enemies) e.state = 'dead'
+    run(d, host, 0.1)
+    // Nothing fits for now (every cell solid).
+    const nav = host.nav
+    const realSolid = nav.solid.slice()
+    nav.solid.fill(1)
+    run(d, host, 2)
+    expect(d.weaponLive).toBe(false)
+    nav.solid.set(realSolid)
+    run(d, host, 2)
+    expect(d.weaponLive).toBe(true)
+  })
+
   it('never without a slotted weapon', () => {
     profile.hero.slots = ['', '']
     const { d, enemies, taught } = intoQuietRoom()
@@ -579,6 +634,36 @@ describe('helpers', () => {
       }
     }
     throw new Error('no room fits a line of drones')
+  })
+
+  it('given its room, a row never leaves it, not even from the threshold back through the doorway', () => {
+    for (const s of ['blaze', 'cryo', 'volt', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor'] as const) {
+      for (const seed of [1, 2, 3]) {
+        const map = generateStage(s, seed)
+        const nav = createNav(map)
+        const ex = map.exit!
+        const door = map.doors[ex.door]!
+        const di = door.axis === 'x' ? door.dir : 0
+        const dj = door.axis === 'z' ? door.dir : 0
+        let tried = 0
+        for (let k = -0.5; k <= 3; k += 0.25) {
+          for (let lat = -0.45; lat <= 0.45; lat += 0.45) {
+            const px = cellCenter(door.i) + (di * k + (1 - Math.abs(di)) * lat) * CELL
+            const pz = cellCenter(door.j) + (dj * k + (1 - Math.abs(dj)) * lat) * CELL
+            if (roomAt(map, px, pz) !== ex.room) continue
+            for (let yaw = 0; yaw < Math.PI * 2; yaw += 0.4) {
+              for (const layout of ['fan', 'line'] as const) {
+                tried++
+                for (const [x, z] of droneRow(nav, map, px, pz, yaw, layout, 0, ex.room) ?? []) {
+                  expect(roomAt(map, x, z), `${s}#${seed}`).toBe(ex.room)
+                }
+              }
+            }
+          }
+        }
+        expect(tried, `${s}#${seed}`).toBeGreaterThan(0)
+      }
+    }
   })
 
   it('on a terrain map a row only ever stands over floor at the player\'s height', () => {

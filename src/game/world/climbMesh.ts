@@ -1,9 +1,10 @@
-import { BufferGeometry, Group, Mesh, Color, type BufferAttribute, type Object3D } from 'three'
-import { CELL, WALL_H, Cell, Ramp, pitKindOf, type MapData, type Door, type Terrain } from './levelGen'
+import { BufferGeometry, ExtrudeGeometry, Group, Mesh, Color, Shape, Vector2, type BufferAttribute, type Object3D } from 'three'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
+import { CELL, WALL_H, Cell, Ramp, pitKindOf, type MapData, type Door, type Terrain, type Ladder, type SignPost } from './levelGen'
 import type { Theme } from './themes'
 import { levelAtlas } from './textures'
 import { toonVCMap, toonVC, glowVC, outlineMat } from '../models/toon'
-import { rcyl, rcone, cap, rbox, xform, paint, paintBy, merge, sph, torus } from '../models/kit'
+import { rcyl, rcone, cap, rbox, xform, paint, paintBy, merge, sph, torus, stripUv } from '../models/kit'
 import { mulberry32 } from './rng'
 import { noSlice, type Slice } from '../engine/slicer'
 import {
@@ -527,20 +528,9 @@ export const buildClimbLevel = async (
     const o = owner[k]!
     if (o < 0) continue
     if (L.kick) {
-      // A wall-kick shaft: no rungs, a column of glowing kick pads up the
-      // wall, a hand's width apart, and a neon strip either side.
-      const kx = L.di ? (L.di > 0 ? (L.i + 1) * CELL : L.i * CELL) : (L.i + 0.5) * CELL
-      const kz = L.dj ? (L.dj > 0 ? (L.j + 1) * CELL : L.j * CELL) : (L.j + 0.5) * CELL
-      const nx = -L.di
-      const nz = -L.dj
-      const ax = L.dj ? 1 : 0
-      const az = L.di ? 1 : 0
-      for (let y = L.y0 + 0.9; y < L.y1; y += 1.6) {
-        glows[o]!.push(xform(paint(rbox(ax ? 0.9 : 0.08, 0.14, az ? 0.9 : 0.08, 0.3), theme.accent), [kx + nx * 0.06, y, kz + nz * 0.06]))
-      }
-      for (const s of [-0.62, 0.62]) {
-        glows[o]!.push(xform(paint(cap(0.035, L.y1 - L.y0, 6, 2), theme.hazard), [kx + nx * 0.07 + ax * s, (L.y0 + L.y1) / 2, kz + nz * 0.07 + az * s]))
-      }
+      const parts = kickShaftParts(L, theme)
+      decor[o]!.push(...parts.toon)
+      glows[o]!.push(...parts.glow)
       continue
     }
     // The face line and the normal toward the foot.
@@ -677,6 +667,18 @@ export const buildClimbLevel = async (
     }
   }
 
+  // ── A shortcut's signpost: back to the challenge door it lets out past ──
+  for (const c of t.climbs ?? []) {
+    const sg = c.shortcut?.sign
+    if (!sg) continue
+    const k = K(Math.floor(sg.x / CELL), Math.floor(sg.z / CELL))
+    const o = owner[k]!
+    if (o < 0) continue
+    const parts = signPostParts(sg, t.floor[k]!, theme)
+    decor[o]!.push(...parts.toon)
+    glows[o]!.push(...parts.glow)
+  }
+
   // ── Reward ledges: a pad that glows under the prize ──
   // (A borrowed-weapon capsule stands on an emitter plate of its own, in its
   // weapon's colour: `models/weaponCapsule.ts`.)
@@ -809,6 +811,86 @@ export const dropRun = (geo: BufferGeometry | null, [start, count]: [number, num
 }
 /** Where a dropped run's vertices go (m): far below every floor. */
 const DROP_Y = -500
+
+/** Every part of a wall-kick shaft stands at least this far off its wall (m):
+ *  clear of the face it is bolted to at any range (never coplanar). */
+export const HOLD_GAP = 0.05
+
+/**
+ * A wall-kick shaft's parts (`Ladder.kick`): one hold a kick apart up the
+ * face — where each kick lands — and a strip either side. The Blackout
+ * Boulevard's are bars of neon; every other sector's (the wall climbs,
+ * `world/climbFeature.ts`) a block of its trim with a lit lip, so the
+ * shaft reads in the sector's own materials. Every piece sits HOLD_GAP or
+ * more off the wall.
+ */
+export const kickShaftParts = (L: Pick<Ladder, 'i' | 'j' | 'di' | 'dj' | 'y0' | 'y1'>, theme: Theme): { toon: BufferGeometry[]; glow: BufferGeometry[] } => {
+  const toon: BufferGeometry[] = []
+  const glow: BufferGeometry[] = []
+  const kx = L.di ? (L.di > 0 ? (L.i + 1) * CELL : L.i * CELL) : (L.i + 0.5) * CELL
+  const kz = L.dj ? (L.dj > 0 ? (L.j + 1) * CELL : L.j * CELL) : (L.j + 0.5) * CELL
+  const nx = -L.di
+  const nz = -L.dj
+  const ax = L.dj ? 1 : 0
+  const az = L.di ? 1 : 0
+  /** A box `w` along the wall, `h` high, `d` deep, its back HOLD_GAP + `gap` off it. */
+  const block = (w: number, h: number, d: number, y: number, gap = 0): BufferGeometry => {
+    const off = HOLD_GAP + gap + d / 2
+    return xform(rbox(ax ? w : d, h, az ? w : d, 0.3), [kx + nx * off, y, kz + nz * off])
+  }
+  const neon = theme.id === 'neon'
+  for (let y = L.y0 + 0.9; y < L.y1; y += 1.6) {
+    if (neon) glow.push(paint(block(0.9, 0.14, 0.08, y), theme.accent))
+    else {
+      toon.push(paint(block(0.8, 0.2, 0.22, y), theme.trim))
+      // The lit lip rides over the block, a hand above its top: never touching it.
+      glow.push(paint(block(0.6, 0.05, 0.05, y + 0.15, 0.12), theme.accent))
+    }
+  }
+  const h = L.y1 - L.y0
+  for (const s of [-0.62, 0.62]) {
+    const off = HOLD_GAP + 0.04
+    glow.push(xform(paint(cap(0.035, h, 6, 2), neon ? theme.hazard : theme.accent), [kx + nx * off + ax * s, (L.y0 + L.y1) / 2, kz + nz * off + az * s]))
+  }
+  return { toon, glow }
+}
+
+/** The signpost's arrow: its middle over the post this high (m). */
+export const SIGN_ARROW_Y = 3.6
+/** The signpost arrow's plates' thickness (m). */
+const SIGN_PLATE = 0.08
+/** The signpost arrow's outline, pointing +X from the post: a shaft 0.24 m
+ *  wide, a head 0.84 m wide and 0.7 m long (m). */
+const SIGN_ARROW = new Shape([
+  [-0.7, -0.12], [0.35, -0.12], [0.35, -0.42], [1.05, 0], [0.35, 0.42], [0.35, 0.12], [-0.7, 0.12]
+].map(([x, y]) => new Vector2(x, y)))
+/**
+ * A signpost (`ClimbSpot.shortcut.sign`): a post of the sector's trim up
+ * from the floor (its foot sunk under it, no face on the floor's plane) and
+ * a lit arrow across its top, pointing along (dx, dz) — no words, only the
+ * arrow and the trail's gold. Round pieces only: nothing flat against
+ * anything.
+ */
+export const signPostParts = (sg: SignPost, y: number, theme: Theme): { toon: BufferGeometry[]; glow: BufferGeometry[] } => {
+  const yaw = Math.atan2(sg.dx, sg.dz)
+  const ay = y + SIGN_ARROW_Y
+  const post = xform(paint(rcyl(0.09, SIGN_ARROW_Y + 0.1, 0.04, 10), theme.trim), [sg.x, y + (SIGN_ARROW_Y + 0.1) / 2 - 0.1, sg.z])
+  const knob = xform(paint(sph(0.16, 12, 8), theme.trim), [sg.x, ay, sg.z])
+  // The arrow: one flat arrow plate standing up and one lying flat, crossed
+  // along its axis, so it reads as an arrow from the side, from below and
+  // from behind. Each plate is SIGN_PLATE thick, the two cross at right
+  // angles: no face of one lies in a face of the other. Built pointing +X,
+  // turned to local +Z, then to (dx, dz), and set on the post.
+  const plate = (lie: boolean) => {
+    const g = mergeVertices(stripUv(new ExtrudeGeometry(SIGN_ARROW, { depth: SIGN_PLATE, bevelEnabled: false })))
+    g.translate(0, 0, -SIGN_PLATE / 2)
+    // The lying plate a little smaller: its tail end never in the standing one's plane.
+    if (lie) g.scale(0.92, 0.92, 1).rotateX(Math.PI / 2)
+    g.rotateY(-Math.PI / 2)
+    return xform(paint(g, '#ffd84a'), [sg.x, ay, sg.z], [0, yaw, 0])
+  }
+  return { toon: [post, knob], glow: [plate(false), plate(true)] }
+}
 
 /** A door frame (rounded striped lintel, two posts, floor stripes) standing
  *  on the corridor floor at `y` — the labyrinth's frame, lifted. */

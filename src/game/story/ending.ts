@@ -15,7 +15,7 @@ import { tickLabScreens } from '../models/labConsole'
 import { Particles } from '../fx/particles'
 import { tickHud } from '../state/hud'
 import { sfx } from '../audio/sfx'
-import { playVoice, prefetchVoice, stopVoice } from '../audio/voice'
+import { playVoiceSoon, prefetchVoice, stopVoice } from '../audio/voice'
 import { Scene as StoryScene, prefetchScene } from './vexScene'
 import { stingBeats } from './vexScenes'
 import { setMusicTrack } from '@/use/useSound'
@@ -120,7 +120,7 @@ export class EndingMode implements GameMode {
     Object.assign(endingUi, { on: true, t: 0, caption: '', speaker: '', credits: false, card: false, roll: 0, sting: false })
     prefetchScene(stingBeats())
     setMusicTrack('intro')
-    // The spoken captions (Gauss, Atlas): fetched now, played as each shows.
+    // The spoken captions (Pip, Gauss, Atlas): fetched now, played as each shows.
     for (const c of CAPTIONS) if (c.speaker) prefetchVoice(`ending.${c.key}`)
     try { getRenderer().compile(this.scene, this.camera) } catch { /* compiles on first draw */ }
   }
@@ -177,9 +177,15 @@ export class EndingMode implements GameMode {
       endingUi.speaker = c?.speaker ?? ''
       if (key) endingUi.seq++
       // A spoken caption speaks (`ending.<key>` in the voice catalog); a new one cuts the last.
+      // One still loading is played once it lands (within a moment), never skipped.
       stopVoice()
-      if (c?.speaker) playVoice(`ending.${key}`)
+      if (c?.speaker) playVoiceSoon(`ending.${key}`, 1.5)
     }
+    // The next spoken caption is fetched ahead. The fetch in enter() comes to
+    // nothing while the audio is still locked or paused (the interstitial
+    // before the ending holds it): every caption then fell silent.
+    const next = CAPTIONS.find(n => n.at > t && n.speaker)
+    if (next) prefetchVoice(`ending.${next.key}`)
     endingUi.t = t
     endingUi.credits = t >= CREDITS_FROM && t < CARD_FROM
     endingUi.roll = ramp(CREDITS_FROM, CARD_FROM, t)

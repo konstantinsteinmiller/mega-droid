@@ -114,6 +114,9 @@ export const reservedCells = (map: MapData, spotsFree: readonly number[] = []): 
     for (let s = 0; s <= n; s++) cellAt(ax + (bx - ax) * s / n, az + (bz - az) * s / n)
   }
   for (const l of t.ladders) { ij(l.i, l.j); ij(l.i + l.di, l.j + l.dj) }
+  // A wall climb's tower (`world/climbFeature.ts`): its ledges and the
+  // floor in front of its shafts stay bare.
+  for (const c of t.climbs ?? []) for (const k of c.cells) out.add(k)
   for (const l of t.lifts) seg(l.ax, l.az, l.bx, l.bz)
   for (const c of t.crushers) box(c.i, c.j, c.i, c.j, 1)
   for (const l of t.lanes) seg(l.x - l.dx * CELL, l.z - l.dz * CELL, l.x + l.dx * (l.len + CELL), l.z + l.dz * (l.len + CELL))
@@ -187,7 +190,7 @@ export const secretWallFaces = (t: Terrain, W: number): Set<string> => {
 /**
  * Every wall face a thing the player must SEE or SHOOT hangs on: a secret's
  * buttons and hint panel, a neon switch, a sluice valve, a magnet rail's
- * polarity panel. Nothing of the dressing goes on them — no prop, and the
+ * polarity panel, a wall climb's tower. Nothing of the dressing goes on them — no prop, and the
  * level mesh draws no pipe or light strip there (`climbMesh.ts`): a Polarity
  * Works pipe ran right across a polarity panel (playtest 2026-10-08), as a
  * Sky Docks pipe once hid a blue button.
@@ -210,6 +213,13 @@ export const wallThingFaces = (t: Terrain, W: number): Set<string> => {
     }
   }
   for (const m of t.magnets ?? []) if (m.panel) side(m.panel.i, m.panel.j, m.panel.side)
+  // A wall climb's tower (`world/climbFeature.ts`): every wall of its cells
+  // (its back wall over the top ledge too) and of each shaft's foot — no
+  // pipe, strip or prop over a hold, its prize or where it is kicked from.
+  for (const c of t.climbs ?? []) {
+    const feet = c.ladders.map(n => t.ladders[n]!).map(L => L.j * W + L.i)
+    for (const k of [...c.cells, ...feet]) for (const [di, dj] of DIRS) out.add(`${k}:${di},${dj}`)
+  }
   return out
 }
 

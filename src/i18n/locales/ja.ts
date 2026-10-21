@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '残り{s}秒、ドローンあと{n}機',
     'tink': 'カキン！',
+    'getClear': '離れろ！',
+    'lockLost': 'ロック解除！',
     'perfect': 'パーフェクト！',
     'parry': 'パリィ！',
     'guardBreak': 'ガードブレイク！',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'チャレンジの扉',
     'challengeN': 'チャレンジの扉 {n}',
     'actLevelUp': 'レベルアップ演出を再生',
-    'actObjective': '目標達成演出を再生'
+    'actObjective': '目標達成演出を再生',
+    'climbs': 'クライムへジャンプ',
+    'practice': '練習用の壁',
+    'climbN': 'クライム {n}（{h} m）',
+    'shortcutStart': '近道のスタート',
+    'battleRoom': 'バトルルーム'
   },
 
   'quest': {

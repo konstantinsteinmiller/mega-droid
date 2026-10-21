@@ -8,6 +8,7 @@ import {
   GAIT, TAU, HOP_H, bump, frac, fidgetEnv, fidgetP, gaitAmp, smoothstep, type EnemyMotion
 } from './motion'
 import { legL, legR, gaitDir, gaitLegs, stanceDrop, poseLegs } from './gait'
+import { actBlock, actHit, actShot, applyTrooperAct, newTrooperAct, resetTrooperAct } from './trooperAct'
 
 /**
  * ─── Machine enemies ─────────────────────────────────────────────────────────
@@ -335,7 +336,18 @@ const animateTrooper = (rig: Rig, guard: number, aim: number, t: number, m: Enem
   const bobS = (0.03 * br * still + 0.04 * wk * Math.abs(Math.sin(TAU * u)) + sX * fe) * guard
   pose(rig, 'shoulderL', mix(D.x, U.x, guard) + bobS, mix(D.y, U.y, guard), mix(D.z, U.z, guard))
   pose(rig, 'elbowL', mix(D.elbow, U.elbow, guard), 0, 0)
+  // The acting on top (`models/trooperAct.ts`), from the sim's real events:
+  // the last hit (on the shield: the shield arm driven back), the last shot's
+  // kick, and the brace while the gun is up for a burst.
+  const a = resetTrooperAct(_act)
+  const hA = t - m.hitT
+  if (m.hitBlock) actBlock(a, hA, m.hitK, m.hitTwist)
+  else actHit(a, hA, m.hitK, m.hitTwist)
+  actShot(a, t - m.shotT)
+  a.crouch += 0.15 * aim * (1 - calm)
+  applyTrooperAct(rig, a)
 }
+const _act = newTrooperAct()
 
 /** guard: 1 = shield raised in front. aim: 1 = gun arm raised to fire. With `m`, the motion layer. */
 export const poseTrooper = (rig: Rig, guard: number, aim: number, t: number, walk: number, m?: EnemyMotion): void => {
@@ -491,14 +503,23 @@ export const buildMole = (c: EnemyColors = BASE_COLORS.mole): Rig => {
   return b.build({ outline: 0.015, height: 0.9 })
 }
 
-export const poseMole = (rig: Rig, rise: number, spin: number, t: number, m?: EnemyMotion): void => {
+/** `lunge` -1..1, laid over the rise and the idle: below 0 it coils (rears
+ *  back on its haunches, squat, paws drawn in — the lunge's wind-up, and the
+ *  landing's squash), above 0 it stretches long along its drill (the dash). */
+export const poseMole = (rig: Rig, rise: number, spin: number, t: number, m?: EnemyMotion, lunge = 0): void => {
   const sink = -1.0 * (1 - rise)
-  nudge(rig, 'body', 0, sink + 0.03 * Math.sin(t * 3), 0)
-  pose(rig, 'body', 0.35 * (1 - rise) + 0.04 * Math.sin(t * 2), m ? 0.3 * m.look * m.calm : 0, 0)
-  pose(rig, 'drill', 0, 0, spin)
+  const coil = Math.max(0, -lunge)
+  const reach = Math.max(0, lunge)
+  // Coiled it shivers, a tell that it is about to go.
+  const shiver = 0.025 * coil * Math.sin(t * 60)
+  nudge(rig, 'body', shiver, sink + 0.03 * Math.sin(t * 3) - 0.08 * coil, -0.18 * coil + 0.12 * reach)
+  pose(rig, 'body', 0.35 * (1 - rise) + 0.04 * Math.sin(t * 2) - 0.32 * coil + 0.18 * reach, m ? 0.3 * m.look * m.calm : 0, 0)
+  scaleBone(rig, 'body', 1 + 0.1 * coil - 0.12 * reach, 1 - 0.2 * coil - 0.1 * reach, 1 - 0.08 * coil + 0.38 * reach)
+  pose(rig, 'drill', 0, 0, spin * (1 + reach))
   const dig = Math.sin(t * 9) * 0.5 * (1 - rise)
-  pose(rig, 'pawL', -0.3 + dig, 0, 0.2)
-  pose(rig, 'pawR', -0.3 - dig, 0, -0.2)
+  const paw = -0.3 + 0.7 * coil - 0.9 * reach
+  pose(rig, 'pawL', paw + dig, 0, 0.2 + 0.3 * coil)
+  pose(rig, 'pawR', paw - dig, 0, -0.2 - 0.3 * coil)
 }
 
 // ─── Puffer Mine ─────────────────────────────────────────────────────────────

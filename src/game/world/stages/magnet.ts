@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift, type MagnetRail } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Polarity Works (the magnet sector's story stage) ───────────────────────
@@ -241,6 +242,8 @@ export const generatePolarityWorks = (seed: number): MapData => {
   // past the trench — the door in the north wall faces Flux across the gap
   // as he leaps it; the way on is west.
   b.challengeRoom(6, { mouth: { i: 11, j: 20, di: 0, dj: -1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'magnet', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

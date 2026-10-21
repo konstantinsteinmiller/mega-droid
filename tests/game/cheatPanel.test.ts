@@ -169,3 +169,40 @@ describe('door jumps on every story map', () => {
     expect(challenges).toBeGreaterThan(0)
   })
 })
+
+describe('climb jumps on every story map (#Climb1)', () => {
+  it('lists each climb and each shortcut (start + battle room); each warp stands on walkable floor facing its wall', async () => {
+    const cp = await import('@/game/cheatPanel')
+    let shortcuts = 0
+    let practice = 0
+    for (const s of SECTORS) {
+      const map = levelMap(cp.storyQuestFor(s.id))
+      const nav = createNav(map)
+      const climbs = map.terrain?.climbs ?? []
+      const warps = cp.climbWarps(map, nav)
+      const sc = climbs.filter(c => c.shortcut).length
+      expect(warps.length, `${s.id} warps`).toBe(climbs.length + sc)
+      expect(cp.storyClimbs(s.id)).toEqual(warps.map(({ kind, n, h }) => ({ kind, n, h })))
+      shortcuts += sc
+      practice += warps.filter(w => w.kind === 'practice').length
+      for (const [k, w] of warps.entries()) {
+        const tag = `${s.id} warp ${k} (${w.kind})`
+        const { x, z, y, yaw } = w.spot
+        expect(isSolidAt(nav, x, z), `${tag} walkable`).toBe(false)
+        expect(Number.isFinite(y), `${tag} floor`).toBe(true)
+        expect(y).toBe(floorAt(nav, x, z))
+        const fx = -Math.sin(yaw)
+        const fz = -Math.cos(yaw)
+        if (w.kind === 'battle') {
+          // On the balcony, facing the drop onto the battle room's low floor.
+          expect(floorAt(nav, x + fx * CELL, z + fz * CELL), `${tag} drop`).toBeLessThan(y)
+        } else {
+          // At the shaft's foot, the raised wall right ahead.
+          expect(floorAt(nav, x + fx * CELL, z + fz * CELL), `${tag} wall ahead`).toBeGreaterThan(y + 1)
+        }
+      }
+    }
+    expect(practice).toBe(1)
+    expect(shortcuts).toBe(2)
+  })
+})

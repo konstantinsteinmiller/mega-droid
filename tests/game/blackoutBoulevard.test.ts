@@ -28,6 +28,8 @@ import type { AtlasLine } from '@/game/sim/atlas'
 const SEEDS = Array.from({ length: 32 }, (_, i) => (i * 2654435761 + 1013904223) >>> 0)
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const
 const idx = (m: MapData, x: number, z: number) => Math.floor(z / CELL) * m.w + Math.floor(x / CELL)
+/** The wall climbs' shortcut battle rooms (`world/climbFeature.ts`): added after the arena, off the route. */
+const shortcuts = (m: MapData) => (m.terrain!.climbs ?? []).filter(c => c.shortcut).length
 
 /** Standable for the route: a floor cell, or a pit cell under a bridge of
  *  light (lit at some point: every bridge is). */
@@ -102,14 +104,15 @@ describe('generateBlackoutBoulevard', () => {
     for (const seed of SEEDS) {
       const m = generateBlackoutBoulevard(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) - shortcuts(m) || undefined)).toEqual(
         ['dock', 'islands', 'hall', 'islands', 'descent', 'hall', 'islands', 'hall', 'islands', 'descent', 'islands', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0))).toBe(STAGE_LENGTH.neon)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0) + shortcuts(m))).toBe(STAGE_LENGTH.neon)
       expect(t.clouds).toBe(true)
       mirrored.add(m.start.x > m.w * CELL / 2)
       blinks.add(Math.round(t.neon!.find(n => n.period)!.period! * 100))
       expect(t.neonSwitches!.length).toBe(2)
-      expect(t.ladders.filter(l => l.kick).length).toBe(1)
+      // Its own shaft; the wall climbs' (`Terrain.climbs`) are theirs.
+      expect(t.ladders.filter(l => l.kick && !(t.climbs ?? []).some(c => c.ladders.includes(t.ladders.indexOf(l)))).length).toBe(1)
     }
     expect(mirrored.size).toBe(2)
     expect(blinks.size).toBeGreaterThan(4)

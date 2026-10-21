@@ -11,22 +11,32 @@
     data-celebrate="levelUp"
     data-zone="celebrate"
   )
-    svg(viewBox="0 -44 120 168" xmlns="http://www.w3.org/2000/svg")
-      defs
-        clipPath#lvl-dome
-          path(d="M16 80 A44 42 0 0 1 104 80 Z")
+    svg(viewBox="6 -44 120 168" xmlns="http://www.w3.org/2000/svg")
       g.hop
-        //- Feet, body, face.
-        ellipse(cx="43" cy="114" rx="13" ry="7" fill="#ff7a1f" :stroke="INK" stroke-width="3")
-        ellipse(cx="77" cy="114" rx="13" ry="7" fill="#ff7a1f" :stroke="INK" stroke-width="3")
-        ellipse(cx="60" cy="94" rx="31" ry="21" fill="#4a5570" :stroke="INK" stroke-width="3")
+        //- After models/enemies.ts buildHardhat in a three-quarter turn, the
+        //- same drawing as the loader mini-game's hard hat (public/js/mini-game.js):
+        //- the slate body, the orange feet, two eyes, the orange muzzle ring.
+        ellipse(cx="63.4" cy="93.7" rx="30.7" ry="27.3" fill="#2f3850")
+        ellipse(cx="60.3" cy="90.4" rx="27.0" ry="23.5" fill="#4a5570")
+        ellipse(cx="52.7" cy="80.6" rx="10.4" ry="5.5" fill="#5d6a85")
+        ellipse(cx="63.4" cy="93.7" rx="30.7" ry="27.3" fill="none" :stroke="INK" stroke-width="3")
+        ellipse(cx="39.5" cy="113.7" rx="15.1" ry="7.3" fill="#c25a00")
+        ellipse(cx="38.0" cy="112.8" rx="13.3" ry="6.3" fill="#ff7a1f")
+        ellipse(cx="39.5" cy="113.7" rx="15.1" ry="7.3" fill="none" :stroke="INK" stroke-width="3")
+        ellipse(cx="68.6" cy="113.7" rx="16.9" ry="8.3" fill="#c25a00")
+        ellipse(cx="66.9" cy="112.7" rx="14.9" ry="7.2" fill="#ff7a1f")
+        ellipse(cx="62.7" cy="109.7" rx="5.7" ry="1.7" fill="#ffa060")
+        ellipse(cx="68.6" cy="113.7" rx="16.9" ry="8.3" fill="none" :stroke="INK" stroke-width="3")
         g.eyes
-          ellipse(cx="49" cy="90" rx="7.5" ry="8.5" fill="#fff" :stroke="INK" stroke-width="2")
-          ellipse(cx="71" cy="90" rx="7.5" ry="8.5" fill="#fff" :stroke="INK" stroke-width="2")
+          ellipse(cx="33.8" cy="82.8" rx="6.2" ry="9.6" fill="#eef0f4" :stroke="INK" stroke-width="2")
+          ellipse(cx="49.9" cy="82.8" rx="8.3" ry="9.6" fill="#eef0f4" :stroke="INK" stroke-width="2")
           g.pupils
-            circle(cx="50" cy="91" r="3.6" :fill="INK")
-            circle(cx="70" cy="91" r="3.6" :fill="INK")
-        circle(cx="60" cy="104" r="6" fill="#2a3042" stroke="#ff7a1f" stroke-width="2.6")
+            ellipse(cx="31.9" cy="84.1" rx="3.1" ry="5.5" fill="#0b1433")
+            ellipse(cx="30.6" cy="81.5" rx="1.4" ry="1.6" fill="#fff")
+            ellipse(cx="47.4" cy="84.1" rx="4.2" ry="5.5" fill="#0b1433")
+            ellipse(cx="45.7" cy="81.5" rx="1.4" ry="1.6" fill="#fff")
+        ellipse(cx="34.8" cy="101.9" rx="7.5" ry="9.4" fill="#ff7a1f" :stroke="INK" stroke-width="2.6")
+        ellipse(cx="34.0" cy="101.9" rx="3.6" ry="5.5" fill="#2a3042")
         //- The prize: a green up-arrow badge, kept under the helmet until it
         //- comes out.
         g.prize
@@ -37,13 +47,24 @@
           circle(cx="60" cy="0" r="19" fill="#2fd25a" :stroke="INK" stroke-width="3")
           circle(cx="60" cy="0" r="14.5" fill="none" stroke="#b6ffb0" stroke-width="2" opacity="0.7")
           path(d="M60 -11 L71 1 H64.5 V11 H55.5 V1 H49 Z" fill="#fff" :stroke="INK" stroke-width="2" stroke-linejoin="round")
-        //- The helmet: yellow dome, the deep stripe, brim and knob.
+        //- The helmet: the yellow dome on its rolled brim (the far half behind
+        //- the dome, the near half over it), the knob.
         g.helmet
-          path(d="M16 80 A44 42 0 0 1 104 80 Z" fill="#ffc21a")
-          rect(x="53" y="36" width="14" height="46" fill="#e08a00" clip-path="url(#lvl-dome)")
-          path(d="M16 80 A44 42 0 0 1 104 80 Z" fill="none" :stroke="INK" stroke-width="3")
-          rect(x="11" y="76" width="98" height="10" rx="5" fill="#e08a00" :stroke="INK" stroke-width="3")
-          circle(cx="60" cy="38" r="6" fill="#e08a00" :stroke="INK" stroke-width="3")
+          g(transform="translate(1 -6.5) rotate(14 71 70)")
+            ellipse(cx="69.9" cy="71.3" rx="44.2" ry="7.5" fill="#262b3a")
+            path(d="M22.3 71.9 A48.9 9.4 0 0 1 120.1 71.9" fill="none" :stroke="INK" stroke-width="15.6" stroke-linecap="round")
+            path(d="M22.3 71.9 A48.9 9.4 0 0 1 120.1 71.9" fill="none" stroke="#e39a0c" stroke-width="9.9" stroke-linecap="round")
+            path(d="M22.3 69.8 A48.9 9.4 0 0 1 120.1 69.8" fill="none" stroke="#f4bf40" stroke-width="2.6" stroke-linecap="round")
+            path(d="M25.7 70.3 A45.5 46.8 0 0 1 116.7 70.3 Z" fill="#c98600")
+            path(d="M27.0 69.5 A40.6 44.2 0 0 1 108.1 69.5 Z" fill="#e6a614")
+            ellipse(cx="53.0" cy="39.1" rx="11.4" ry="6.2" fill="#ffd866")
+            path(d="M25.7 70.3 A45.5 46.8 0 0 1 116.7 70.3 Z" fill="none" :stroke="INK" stroke-width="3")
+            path(d="M22.3 71.9 A48.9 9.4 0 0 0 120.1 71.9" fill="none" :stroke="INK" stroke-width="15.6" stroke-linecap="round")
+            path(d="M22.3 71.9 A48.9 9.4 0 0 0 120.1 71.9" fill="none" stroke="#e39a0c" stroke-width="9.9" stroke-linecap="round")
+            path(d="M22.3 69.8 A48.9 9.4 0 0 0 120.1 69.8" fill="none" stroke="#f4bf40" stroke-width="2.6" stroke-linecap="round")
+            ellipse(cx="71.2" cy="23.5" rx="7.8" ry="6.8" fill="#b06a00")
+            ellipse(cx="70.4" cy="22.7" rx="6.9" ry="5.8" fill="#e39a0c")
+            ellipse(cx="71.2" cy="23.5" rx="7.8" ry="6.8" fill="none" :stroke="INK" stroke-width="3")
 </template>
 
 <script setup lang="ts">
@@ -100,7 +121,7 @@ onUnmounted(() => off?.())
   transform-origin: 50% 100%
   animation: lvl-hop var(--dur) linear both
 .helmet
-  transform-origin: 0% 100%
+  transform-origin: 100% 100%
   animation: lvl-helmet var(--dur) ease-in-out both
 .prize
   transform-origin: 50% 50%
@@ -146,11 +167,11 @@ onUnmounted(() => off?.())
   0%, 16%
     transform: translate(0, 0) rotate(0deg)
   24%
-    transform: translate(-4%, -22%) rotate(-30deg)
+    transform: translate(18%, -24%) rotate(30deg)
   30%, 72%
-    transform: translate(-6%, -18%) rotate(-24deg)
+    transform: translate(20%, -20%) rotate(24deg)
   80%
-    transform: translate(0, 2%) rotate(3deg)
+    transform: translate(0, 2%) rotate(-3deg)
   84%, 100%
     transform: translate(0, 0) rotate(0deg)
 @keyframes lvl-prize
@@ -208,7 +229,7 @@ onUnmounted(() => off?.())
     animation: lvl-fade var(--dur) ease-in-out both
   .helmet
     animation: none
-    transform: translate(-6%, -18%) rotate(-24deg)
+    transform: translate(20%, -20%) rotate(24deg)
   .prize
     animation: none
   .sparks

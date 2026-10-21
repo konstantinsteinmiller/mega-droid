@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} másodperc van hátra, még {n} drón',
     'tink': 'TINK!',
+    'getClear': 'TŰNJ ONNAN!',
+    'lockLost': 'CÉL ELVESZTVE!',
     'perfect': 'TÖKÉLETES!',
     'parry': 'HÁRÍTÁS!',
     'guardBreak': 'VÉDELEM ÁTTÖRVE!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Kihívásajtó',
     'challengeN': 'Kihívásajtó {n}',
     'actLevelUp': 'Szintlépés-jelenet lejátszása',
-    'actObjective': 'Teljesített cél jelenet lejátszása'
+    'actObjective': 'Teljesített cél jelenet lejátszása',
+    'climbs': 'Ugrás egy mászáshoz',
+    'practice': 'Gyakorlófal',
+    'climbN': 'Mászás {n} ({h} m)',
+    'shortcutStart': 'Rövidítés kezdete',
+    'battleRoom': 'Harci terem'
   },
 
   'quest': {

@@ -376,7 +376,12 @@ export const STORM_HORNET_QUEEN_AI: MiniBossBehaviour<QueenMem> = {
             w.sfx('stomp', m.tx, m.tz)
             if (near(w, m.tx, m.tz, DIVE_R)) {
               m.struck = true
-              w.hitPlayer(e, Math.round(e.dmg * 1.25), { blockable: false, fromX: m.tx, fromZ: m.tz, kind: 'melee' })
+              // A perfect block, facing her, knocks her up off the sting and stuns her (#189).
+              if (w.hitPlayer(e, Math.round(e.dmg * 1.25), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') {
+                m.stuck = false
+                e.y = hover + 0.6
+                break
+              }
             }
           }
         } else {

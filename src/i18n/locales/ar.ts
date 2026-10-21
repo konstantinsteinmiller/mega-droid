@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'الثواني المتبقية: {s}، المسيّرات المتبقية: {n}',
     'tink': 'طِنّ!',
+    'getClear': 'ابتعد!',
+    'lockLost': 'فُقد التتبّع!',
     'perfect': 'مثالي!',
     'parry': 'صدّ!',
     'guardBreak': 'كسر الدفاع!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'باب التحدي',
     'challengeN': 'باب التحدي {n}',
     'actLevelUp': 'شغّل مشهد رفع المستوى',
-    'actObjective': 'شغّل مشهد إنجاز الهدف'
+    'actObjective': 'شغّل مشهد إنجاز الهدف',
+    'climbs': 'انتقل إلى تسلّق',
+    'practice': 'جدار التدريب',
+    'climbN': 'تسلّق {n} ({h} م)',
+    'shortcutStart': 'بداية الطريق المختصر',
+    'battleRoom': 'غرفة المعركة'
   },
 
   'quest': {

@@ -53,7 +53,7 @@ import { hud, hudLive, tickHud, pushHud } from '../state/hud'
 import { feedDamage } from '../state/damageFeed'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, blockCut, type CombatHost } from './combat'
-import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, keepClear, spotWarning, drowse, keepBigOffPlayer, markerOwnerGone, hopperLeapTime } from './enemies'
+import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, shove, keepClear, spotWarning, drowse, keepBigOffPlayer, markerOwnerGone, hopperLeapTime } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
 import { baseStats, chargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
@@ -64,7 +64,8 @@ import { sfx } from '../audio/sfx'
 import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
 import { LessonDirector, roomAt, type LessonTick } from './lessons'
-import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, roomHoloSpot, type HoloSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed } from './walkthrough'
+import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, roomHoloSpot, type HoloSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed, STRAGGLE_AFTER } from './walkthrough'
+import { exitStalled, strayGuards } from './lockSafety'
 import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt'
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
@@ -389,6 +390,8 @@ const SLIDE_CD_MIN = 1
 /** After a parry the shield stays down this long (s) with block still held:
  *  the counter window, inside the parried machine's stun (1.6 s and up). */
 const RIPOSTE = 1.2
+/** How far a parried dash bounces its dasher back off the shield (m, #189). */
+const PARRY_BOUNCE = 1.1
 
 const angDiff = (a: number, b: number): number => {
   let d = a - b
@@ -691,6 +694,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private exitWeapon: WeaponId | null = null
   private exitLit = false
   private exitStarted = false
+  /** Since when the exit room's weapon lesson has had nothing to shoot (-1). */
+  private exitIdleFrom = -1
   private exitShut = false
   private armHolo: ArmHologram | null = null
   /** Where the chevrons lead after the boss (#110), reused. */
@@ -963,6 +968,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         if (e.boss) { e.tempo = ngTempo(ng); e.followUp = ngFollowUp(ng) }
       }
     }
+    // The tutorial's Core Master saves its charged blast and homing salvo
+    // for phase 2, with a longer charge (#188: a first-timer's first boss).
+    if (this.boss && this.setup.tutorial) this.boss.onboard = true
     this.setupChallenge(ng)
     if (this.boss && this.bossRoom) this.arena = new BossArena(this, this.bossRoom, (setup.quest?.seed ?? 1) ^ 0x51ab)
     // The Scrapper fights under his magnet crane (#108).
@@ -1258,6 +1266,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.system.fireOrb(e, x, y, z, speed, dmg)
   }
 
+  fireMissile(e: Enemy, x: number, y: number, z: number, dx: number, dz: number, speed: number, turn: number, dmg: number, color: string): void {
+    this.system.fireMissile(e, x, y, z, dx, dz, speed, turn, dmg, color)
+  }
+
   pull(x: number, z: number, speed: number, dur: number): void {
     this.pullX = x
     this.pullZ = z
@@ -1296,7 +1308,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return parryWindow(this.input.device, this.stats.parryBonus)
   }
 
-  hitPlayer(e: Enemy | null, dmg: number, o: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string }): 'hit' | 'block' | 'parry' | 'miss' {
+  hitPlayer(e: Enemy | null, dmg: number, o: { blockable: boolean; parryable?: boolean; fromX: number; fromZ: number; kind: 'melee' | 'aoe' | 'shot'; hazard?: string; noChip?: boolean; blast?: boolean }): 'hit' | 'block' | 'parry' | 'miss' {
     const c = this.combat
     const p = this.player
     if (c.dead || hud.phase !== 'play') return 'miss'
@@ -1318,7 +1330,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // the parry's own i-frames and the shield it lowered for the counter.
     const pr = this.parried
     const chained = !!pr && !!e && e === pr.e && o.kind === 'shot' && o.blockable && frontal && this.time - pr.at <= win
-    if (c.iframes > 0 && !chained) return 'miss'
+    // A Master's charged blast (#188) is not slid through: only out of reach.
+    if (c.iframes > 0 && !chained && !(o.blast && c.slideT > 0)) return 'miss'
     if (this.climb && this.offLevel(e, o.kind, o.fromX, o.fromZ)) return 'miss'
     // The block lesson's volley: every round of it is a perfect block.
     const v = this.blockVolley
@@ -1343,6 +1356,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           e.stunT = 1.6 + this.stats.parryStunBonus
           e.ring.visible = false
           e.flash = 1
+          // A parried dash bounces off the shield, back the way it came (#189).
+          if (o.parryable) {
+            const l = Math.hypot(e.x - p.x, e.z - p.z) || 1
+            shove(this, e, (e.x - p.x) / l * PARRY_BOUNCE, (e.z - p.z) / l * PARRY_BOUNCE)
+          }
         }
         c.iframes = Math.max(c.iframes, 0.2)
         if (e && o.kind === 'shot') this.parried = { e, at: this.time }
@@ -1365,7 +1383,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         return 'parry'
       }
       // ── BLOCK ──
-      const taken = Math.max(1, Math.round(dmg * (1 - cut) * this.stats.blockDmgMul))
+      // A Master's homing missile (`noChip`, #188): the shield takes it whole.
+      const taken = o.noChip ? 0 : Math.max(1, Math.round(dmg * (1 - cut) * this.stats.blockDmgMul))
       c.power -= dmg * 0.45 * this.stats.blockCostMul
       c.powerDelay = 0.9
       c.hp -= taken
@@ -1373,7 +1392,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.shake(0.1)
       sfx('block')
       if (c.power > 0) this.vm.barrier.impact('block')
-      pushHud({ t: 'damage', x: p.x - Math.sin(p.yaw) * 1.2, y: p.y + EYE_H - 0.1, z: p.z - Math.cos(p.yaw) * 1.2, amount: taken, crit: false, weak: false, toPlayer: true })
+      if (taken > 0) pushHud({ t: 'damage', x: p.x - Math.sin(p.yaw) * 1.2, y: p.y + EYE_H - 0.1, z: p.z - Math.cos(p.yaw) * 1.2, amount: taken, crit: false, weak: false, toPlayer: true })
       if (this.stats.reflectPct > 0 && e) {
         this.system.damageEnemy(e, Math.round(dmg * this.stats.reflectPct), { crit: false, charge: 0, fromX: p.x, fromZ: p.z, x: e.x, y: e.y + e.def.aimY, z: e.z, color: '#7ff4ff' })
       }
@@ -2865,6 +2884,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     c.charging = false
     c.blocking = false
     this.fumble.reset()
+    // Nothing hostile left flying through the cutscene.
+    this.system?.clearHostile()
     const p = this.player
     p.path = null
     p.vx = p.vz = 0
@@ -3780,6 +3801,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.setupGuards()
     this.setupExitRoom()
     this.setupLava()
+    this.setupKickLesson()
     const walk = this.walk
     if (!walk) return
     for (const g of walk.plan.gates) {
@@ -3807,6 +3829,25 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** The challenge room's runtime (`sim/challenge.ts`), when the map has one. */
   challenge: ChallengeRun | null = null
 
+  /**
+   * The wall-kick lesson (the Blaze practice wall, `world/climbFeature.ts`
+   * tier 0): a hologram Flux a cell in front of the low wall kicks up the
+   * real face on a loop, the slide's glyph lit at the kick, while Flux is in
+   * its room — until he has kicked up any wall this mission. Nothing waits
+   * on it: no door holds, the climb after it is optional, so ignoring it
+   * never locks a thing.
+   */
+  private setupKickLesson(): void {
+    const t = this.map.terrain
+    const c = t?.climbs?.find(x => x.tier === 0)
+    const L = c ? t!.ladders[c.ladders[0]!] : undefined
+    if (!c || !L) return
+    // In front of the tower's other cell: the face it kicks up is the real one.
+    const i = c.top.i - L.di
+    const j = c.top.j - L.dj
+    this.addHolo('kick', c.room, cellCenter(i), cellCenter(j), Math.atan2(-L.dj, L.di))
+  }
+
   /** The guard rooms' exits, held at the start (`Terrain.guards`). */
   private guardDoors: Array<{ room: number; door: number }> = []
 
@@ -3821,10 +3862,25 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
   }
 
+  /** Since when a guard room's machine has stood outside it (-1: none). */
+  private guardStrayFrom = -1
+  private guardWaived = new WeakSet<Enemy>()
+
   private stepGuards(): void {
+    // A held room never waits on a machine that left it (a flyer through the
+    // doorway before it shut, a chaser down the corridor): once Flux has been
+    // in the room STRAGGLE_AFTER with one outside, it is beamed back in view.
+    const strays = strayGuards(this.map, this.enemies, this.guardDoors, roomAt(this.map, this.player.x, this.player.z))
+    if (!strays.length) this.guardStrayFrom = -1
+    else if (this.guardStrayFrom < 0) this.guardStrayFrom = this.time
+    else if (this.time - this.guardStrayFrom >= STRAGGLE_AFTER) {
+      this.guardStrayFrom = -1
+      // No spot to beam it to: the room stops waiting on it.
+      for (const e of strays) if (!this.recall(e, e.room)) this.guardWaived.add(e)
+    }
     for (let n = this.guardDoors.length - 1; n >= 0; n--) {
       const g = this.guardDoors[n]!
-      if (this.enemies.some(e => e.room === g.room && e.state !== 'dead' && !e.offstage)) continue
+      if (this.enemies.some(e => e.room === g.room && e.state !== 'dead' && !e.offstage && !this.guardWaived.has(e))) continue
       // Spawned and all down (a room still waiting on its spawns has none).
       if (!this.enemies.some(e => e.room === g.room)) continue
       this.guardDoors.splice(n, 1)
@@ -4012,7 +4068,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const p = this.player
     const at = pad.root.position
     const dist = Math.hypot(p.x - at.x, p.z - at.z)
-    pad.setBeamView(dist, this.exitLit, dt)
+    // Lit, the column shines from afar; standing in it, it is no wall of
+    // light over the whole view (it lights fully again for the exit).
+    pad.setBeamView(dist, this.exitLit && (dist > PAD_R || hud.phase === 'beamOut'), dt)
     pad.ring.rotation.y += dt * 0.6
     const id = this.exitWeapon
     if (!id || !playing) return
@@ -4039,6 +4097,15 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       else if (tr.id === 'weapon' && !inRoom) tr.leave()
       const d = this.lessons.weaponDronesAt
       this.trainSpot = d ? { x: d.x, y: d.y, z: d.z } : null
+      // The beam-out room never locks for good: a lesson with nothing to
+      // shoot for EXIT_STALL (no row fits, its drones gone) lights the
+      // pedestal anyway.
+      this.exitIdleFrom = d ? -1 : this.exitIdleFrom < 0 ? this.time : this.exitIdleFrom
+      if (exitStalled(this.exitIdleFrom, this.time)) {
+        this.exitIdleFrom = -1
+        tr.leave()
+        this.lightExit()
+      }
       this.combat.we = Math.max(this.combat.we, Math.min(this.combat.maxWe, this.weaponCost(id) * 2))
       if (this.lessons.weaponLearned === id) {
         markTip(`train:weapon:${id}`)
@@ -4047,8 +4114,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
         this.lightExit()
       }
     }
-    // Onto the lit pedestal: the quadcopter, as B does.
-    if (this.exitLit && dist < PAD_R && p.ground && hud.phase === 'play' && !hud.combat) this.beamOut()
+    // Onto the lit pedestal: the quadcopter, as B does. A lit pedestal is
+    // the way out, whatever still flies or stands about: it always takes him.
+    if (this.exitLit && dist < PAD_R && p.ground && hud.phase === 'play') this.beamOut()
   }
 
   /** Wall a door's corridor off from its room: a wall like the ones beside
@@ -4918,6 +4986,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // surprise slide a second later.
     // A wall-kick shaft takes the slide as a kick (at its foot or on it).
     const kicked = first && inp.slideQueued && !!this.climb && !this.fumble.stunned && this.flatT <= 0 && this.climb.kick(p)
+    // Done once: the practice wall's hologram folds away (`setupKickLesson`).
+    if (kicked) this.learnedHere.add('kick')
     if (first && inp.slideQueued && this.climb && p.ladder >= 0 && !kicked) this.climb.letGo(p)
     // The missed-leap cue's slide must happen: no cooldown or empty power
     // can eat it (as the held leap's, `stepFreeze`).
@@ -5288,13 +5358,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const arena = this.arenaRooms
     const sealed = this.bossStarted && this.doors.some(d => d.locked && arena.includes(d.to))
     const here = sealed ? roomAt(this.map, p.x, p.z) : -1
+    // The same behind the weapon lesson room's shut door: a machine outside
+    // it never gets in, so it holds neither B nor the pedestal (a chaser
+    // woken on the way, or one on another floor of a stage, kept the beam-out
+    // shut for good after the boss).
+    const exitRoom = this.exitShut && this.map.exit ? this.map.exit.room : -1
+    const inExit = exitRoom >= 0 && roomAt(this.map, p.x, p.z) === exitRoom
     for (const e of this.enemies) {
       // A golem asleep is a crate: no lock, no target frame, no fire glyph
       if (e.state === 'dead' || e.offstage || e.dormant) continue
       const d = Math.hypot(e.x - p.x, e.z - p.z)
       const ang = Math.abs(angDiff(Math.atan2(-(e.x - p.x), -(e.z - p.z)), p.yaw))
       if (e === c.target) targetAng = ang
-      if (e.awake && d < 22 && !(sealed && shutOut(sealed, arena, here, roomAt(this.map, e.x, e.z)))) {
+      if (e.awake && d < 22 && !(sealed && shutOut(sealed, arena, here, roomAt(this.map, e.x, e.z))) &&
+        !(inExit && roomAt(this.map, e.x, e.z) !== exitRoom)) {
         engaged++
         if (!fight && (d < FIGHT_NEAR || this.time - e.hurtAt < FIGHT_HURT || hasLineOfSight(this.nav, p.x, p.z, e.x, e.z))) fight = true
       }

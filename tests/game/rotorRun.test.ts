@@ -18,7 +18,7 @@ import { STAGE_LENGTH } from '@/game/world/stages'
 import { THEMES } from '@/game/world/themes'
 import { SECTOR_BY_ID } from '@/game/data/regions'
 import { ClimbRun, type ClimbBody, type ClimbHost } from '@/game/sim/climb'
-import { RailFeature, REST_LIFT, BOARD_BEAT } from '@/game/sim/stages/rail'
+import { RailFeature, REST_LIFT, BOARD_BEAT, TURN_RATE, BANK_MAX } from '@/game/sim/stages/rail'
 import { QUAD_ROTOR_Y, quadcopterParts } from '@/game/models/stageProps/rail'
 import { coplanarOverlaps } from './coplanar'
 import type { AtlasLine } from '@/game/sim/atlas'
@@ -26,6 +26,8 @@ import type { AtlasLine } from '@/game/sim/atlas'
 const SEEDS = Array.from({ length: 32 }, (_, i) => (i * 2654435761 + 1013904223) >>> 0)
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const
 const idx = (m: MapData, x: number, z: number) => Math.floor(z / CELL) * m.w + Math.floor(x / CELL)
+/** The wall climbs' shortcut battle rooms (`world/climbFeature.ts`): added after the arena, off the route. */
+const shortcuts = (m: MapData) => (m.terrain!.climbs ?? []).filter(c => c.shortcut).length
 const standable = (m: MapData, k: number) => m.cell[k] !== Cell.Void && !m.terrain!.pit[k] && !m.navBlock[k]
 
 /** The route with the verbs, the lifts and the flight (its link is a hop). */
@@ -104,9 +106,9 @@ describe('generateRotorRun', () => {
     for (const seed of SEEDS) {
       const m = generateRotorRun(seed)
       const t = m.terrain!
-      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) || undefined)).toEqual(
+      expect(t.sections.slice(0, (m.beam ? -1 : 0) + (m.exit ? -1 : 0) + (m.challenge ? -1 : 0) - shortcuts(m) || undefined)).toEqual(
         ['dock', 'islands', 'shuttle', 'hall', 'lift', 'cart', 'rail', 'wind', 'hall', 'islands', 'descent', 'hall', 'hall', 'arena'])
-      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0))).toBe(STAGE_LENGTH.rotor)
+      expect(t.sections.length - 1 - ((m.beam ? 1 : 0) + (m.exit ? 1 : 0) + (m.challenge ? 1 : 0) + shortcuts(m))).toBe(STAGE_LENGTH.rotor)
       expect(t.clouds).toBe(true)
       expect(t.waves!.every(w => w.kind === 'hornet')).toBe(true)
       mirrored.add(m.start.x > m.w * CELL / 2)
@@ -197,6 +199,54 @@ describe('the quadcopter', () => {
         run.stepBody(p, out, 0, 0, dt, false)
       }
       expect(f.state, `seed ${seed}`).toBe('ride')
+    }
+  })
+
+  it('flies round its corners: heading turns continuously under the turn-rate cap, banks into turns, and still lands on its stop', () => {
+    for (const seed of SEEDS.slice(0, 6)) {
+      const map = generateRotorRun(seed)
+      const def = map.terrain!.rails![0]!
+      const f = new RailFeature(hostFor(map), def)
+      const span = map.rooms[def.room]!
+      // The rounded course keeps both ends and stays inside the open span.
+      expect(f.points[0]).toEqual(def.points[0])
+      expect(f.points[f.points.length - 1]).toEqual(def.points[def.points.length - 1])
+      for (const q of f.points) {
+        expect(q.x - span.x0 * CELL).toBeGreaterThan(2.9)
+        expect((span.x0 + span.w) * CELL - q.x).toBeGreaterThan(2.9)
+        expect(q.z - span.z0 * CELL).toBeGreaterThan(1.4)
+        expect((span.z0 + span.h) * CELL - q.z).toBeGreaterThan(2.9)
+      }
+      const p: ClimbBody = {
+        x: f.x, z: f.z, y: f.y, vx: 0, vz: 0, vy: 0, yaw: 0, ground: true, ladder: -1, plat: -1, air: 0, safeY: f.y, mantle: 0, mx: 0, mz: 0, path: null
+      }
+      const dt = 1 / 60
+      const out: [number, number] = [0, 0]
+      let yaw = Math.atan2(-f.dirX, -f.dirZ)
+      let worst = 0
+      let bankMax = 0
+      let n = 0
+      for (; n < 60 * 120 && f.state !== 'done'; n++) {
+        f.update(dt, n * dt, p, true)
+        if (f.carry(p, out, dt)) {
+          p.x = out[0]
+          p.z = out[1]
+        }
+        const now = Math.atan2(-f.dirX, -f.dirZ)
+        const d = Math.abs(Math.atan2(Math.sin(now - yaw), Math.cos(now - yaw)))
+        worst = Math.max(worst, d / dt)
+        bankMax = Math.max(bankMax, Math.abs(f.bank))
+        yaw = now
+      }
+      expect(f.state, `seed ${seed}: reaches its stop`).toBe('done')
+      expect(Math.floor(p.x / CELL)).toBe(def.exitAt.i)
+      expect(Math.floor(p.z / CELL)).toBe(def.exitAt.j)
+      // No snap at a corner: the heading never turns faster than the cap
+      // (a little over it for the read-ahead), frame by frame.
+      expect(worst, `seed ${seed}: turn rate`).toBeLessThan(TURN_RATE * 1.25)
+      expect(bankMax, `seed ${seed}: banks into turns`).toBeGreaterThan(0.05)
+      expect(bankMax).toBeLessThanOrEqual(BANK_MAX + 1e-6)
+      expect(Math.abs(f.bank), 'level at the stop').toBe(0)
     }
   })
 

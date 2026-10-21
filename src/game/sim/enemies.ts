@@ -16,7 +16,7 @@ import { pushHud } from '../state/hud'
 import type { Theme } from '../world/themes'
 import type { Input } from '../engine/input'
 import {
-  newMotion, rand, swingA, cycleLen, hopSquash, GAIT, BOSS_GAIT, FIDGET_LEN, BOSS_FIDGET_LEN, TAU, HOP_H, ROLLER_R,
+  newMotion, noteShot, rand, swingA, cycleLen, hopSquash, GAIT, BOSS_GAIT, FIDGET_LEN, BOSS_FIDGET_LEN, TAU, HOP_H, ROLLER_R,
   type GaitSpec
 } from '../models/motion'
 
@@ -333,6 +333,25 @@ export const MOLE_DIG = 0.4
 export const MOLE_STRIKE = 6
 export const MOLE_REACH = 1.6
 export const MOLE_OUT = 1.8
+/** Out of the ground, the Mole Driller LUNGES at a Flux this close (m): a
+ *  short coil (s, red ring, its eyes flare), then a straight dash of a fixed
+ *  run (m) at a speed (m/s) at where he stood when the coil ended — a
+ *  sidestep or a slide at the flare dodges it, a perfect block parries it
+ *  (stunned, bounced back). It bites lightly (a share of its damage), once a
+ *  lunge, and not again for a while (s, min..max). It waits a beat after it
+ *  surfaces (s), and two moles never launch within a stagger (s). */
+export const MOLE_LUNGE_R = 4.6
+export const MOLE_LUNGE_TELE = 0.35
+export const MOLE_LUNGE_DIST = 4
+export const MOLE_LUNGE_SPEED = 20
+export const MOLE_LUNGE_DMG = 0.65
+export const MOLE_LUNGE_CD: readonly [number, number] = [2.5, 3.8]
+export const MOLE_LUNGE_SETTLE = 0.3
+export const MOLE_LUNGE_STAGGER = 0.15
+/** How long it lands and gathers itself after a lunge (s). */
+export const MOLE_LUNGE_RECOVER = 0.55
+/** Its bite reaches this far round its middle (m, plus Flux's radius). */
+export const MOLE_LUNGE_HIT = 0.6
 
 /** The Polar Pup's shell: shut this long (shots TINK), then open (s). */
 export const POLAR_SHUT = 2.6
@@ -370,7 +389,11 @@ export const createEnemy = (
     guardBreakT: 0, hurtAt: -10, bossId: null, phase2: false, burnT: 0, burnDps: 0, frozenT: 0, lastWeapon: ''
   }
   // A Mole Driller waits half dug in until it wakes and digs under.
-  if (kind === 'mole') e.a = 0.75
+  if (kind === 'mole') {
+    e.a = 0.75
+    // Its lunge clock starts a little apart from its warren-mates'.
+    e.b = Math.random() * 0.6
+  }
   // A Searchlight Drone's beam hangs under its root (drawn and culled with it).
   if (kind === 'spotter') {
     const beam = makeSearchBeam()
@@ -795,6 +818,15 @@ const rollerLunge = (w: World, e: Enemy, dt: number): number => {
   }
   e.y = ROLLER_LUNGE_HOP * Math.sin(Math.PI * k)
   return frac
+}
+
+/** Another Mole Driller just began its lunge's coil: this one waits a beat,
+ *  so a warren never launches on the same frame. */
+const moleLaunching = (w: World, e: Enemy): boolean => {
+  for (const o of w.enemies) {
+    if (o !== e && o.kind === 'mole' && o.state === 'tele' && o.attack === 'lunge' && o.st < MOLE_LUNGE_STAGGER) return true
+  }
+  return false
 }
 
 const startTele = (e: Enemy, attack: string, dur: number, red: boolean): void => {
@@ -1292,6 +1324,23 @@ export const updateEnemy = (w: World, e: Enemy, dt: number): void => {
   stepMotion(e, dt)
 }
 
+/** The Mole Driller's lunge pose (`poseMole`'s `lunge`): -1 coiled … 0 rest
+ *  … 1 stretched. The coil eases in (anticipation), the dash is a full
+ *  stretch, the landing a squash that settles back to rest. */
+const moleLungePose = (e: Enemy): number => {
+  if (e.attack !== 'lunge') return 0
+  if (e.state === 'tele') {
+    const k = Math.min(1, e.st / e.teleDur)
+    return -(1 - (1 - k) * (1 - k))
+  }
+  if (e.state === 'act') return 1
+  if (e.state === 'recover') {
+    const k = Math.min(1, e.st / MOLE_LUNGE_RECOVER)
+    return -0.7 * (1 - k) * (1 - k)
+  }
+  return 0
+}
+
 // ─── Motion channels (models/motion.ts), one tick ─────────────────────────────
 
 /** Below this share of top speed, a body is standing (separation jitter). */
@@ -1696,6 +1745,7 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           const dy = (1.1 - 1.08) / Math.max(1, d)
           w.fireEnemyShot(e, ox, 1.08, oz, Math.sin(a), dy, Math.cos(a), 12.5, e.dmg)
           w.sfx('enemyShot', e.x, e.z)
+          noteShot(e.mo, e.anim)
           e.step++
         }
         if (e.st > 0.55) enterState(e, 'recover')
@@ -1864,7 +1914,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.a += dt * 40
         if (!e.hitPlayer && Math.hypot(w.player.x - e.x, w.player.z - e.z) < e.def.radius + PLAYER_R + 0.2) {
           e.hitPlayer = true
-          w.hitPlayer(e, e.dmg, { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+          // A perfect block stops it cold: the parry stuns it (#189).
+          if (w.hitPlayer(e, e.dmg, { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
         }
         if (frac < 0.4 && e.st > 0.06) {
           // Into a wall or a ledge: it drops short and shakes it off
@@ -1883,7 +1934,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         e.a += dt * 40
         if (!e.hitPlayer && Math.hypot(w.player.x - e.x, w.player.z - e.z) < e.def.radius + PLAYER_R + 0.15) {
           e.hitPlayer = true
-          w.hitPlayer(e, e.dmg, { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+          // A perfect block stops it cold: the parry stuns it (#189).
+          if (w.hitPlayer(e, e.dmg, { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
         }
         if (frac < 0.4 && e.st > 0.1) {
           // Hit a wall: dizzy
@@ -1994,7 +2046,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         if (!e.hitPlayer && Math.hypot(w.player.x - e.x, w.player.z - e.z) < def.radius + PLAYER_R + 0.2) {
           e.hitPlayer = true
           w.shake(0.35)
-          w.hitPlayer(e, Math.round(e.dmg * 1.1), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'melee' })
+          // A perfect block stops the rush cold: the parry stuns it (#189).
+          if (w.hitPlayer(e, Math.round(e.dmg * 1.1), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
           enterState(e, 'recover')
         } else if (frac < 0.4 && e.st > 0.08) {
           // Into a wall: it staggers — the opening for dodging it well.
@@ -2440,6 +2493,8 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
     //    under Flux on a red marker, stays out a while (open to fire),
     //    digs back in ──
     case 'mole': {
+      // e.b: the lunge's own cooldown (s)
+      e.b = Math.max(0, e.b - dt)
       if (e.state === 'engage') {
         if (!e.buried) {
           // Just woken, or back from a surfacing: dig in.
@@ -2459,6 +2514,46 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
           e.tz = pz
           w.markers.spawn(px, pz, MOLE_REACH, def.tele + 0.25, e)
           w.sfx('alert', e.x, e.z)
+        }
+      } else if (e.state === 'tele' && e.attack === 'lunge') {
+        // The coil: it rears back, tracking him; the aim locks as it ends.
+        faceTo(e, px, pz, 9, dt)
+        if (e.st >= e.teleDur) {
+          const dx = px - e.x
+          const dz = pz - e.z
+          const l = Math.hypot(dx, dz) || 1
+          e.tx = dx / l
+          e.tz = dz / l
+          e.yaw = Math.atan2(e.tx, e.tz)
+          e.hitPlayer = false
+          enterState(e, 'act')
+          w.sfx('dash', e.x, e.z)
+        }
+      } else if (e.state === 'act' && e.attack === 'lunge') {
+        // The lunge: very fast, straight, a fixed run; a wall stops it.
+        const frac = step(w, e, e.tx * MOLE_LUNGE_SPEED * dt, e.tz * MOLE_LUNGE_SPEED * dt)
+        if (!e.hitPlayer && Math.hypot(px - e.x, pz - e.z) < MOLE_LUNGE_HIT + PLAYER_R) {
+          e.hitPlayer = true
+          // A perfect block stops it cold: the parry stuns and bounces it (#189).
+          if (w.hitPlayer(e, Math.max(1, Math.round(e.dmg * MOLE_LUNGE_DMG)), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break
+        }
+        if (frac < 0.4 && e.st > 0.02) {
+          // Nose into a wall: it bonks and shakes it off
+          w.fx.sparks(e.x + e.tx * 0.6, (e.floor ?? 0) + 0.5, e.z + e.tz * 0.6, '#ffe07a', 10, 5)
+          w.sfx('bonk', e.x, e.z)
+          e.stunT = 0.6
+          enterState(e, 'stun')
+        } else if (e.st * MOLE_LUNGE_SPEED >= MOLE_LUNGE_DIST) {
+          w.fx.sparks(e.x, (e.floor ?? 0) + 0.1, e.z, '#b8a088', 8, 4, 0.18)
+          enterState(e, 'recover')
+        }
+      } else if (e.state === 'recover') {
+        // Landed: squashed flat, then up again — open to fire — and digs in.
+        faceTo(e, px, pz, 3, dt)
+        if (e.st > MOLE_LUNGE_RECOVER) {
+          e.attack = ''
+          e.cd = cooldown()
+          enterState(e, 'engage')
         }
       } else if (e.state === 'tele') {
         // Tunnels in under the marked spot.
@@ -2482,7 +2577,14 @@ const runArchetype = (w: World, e: Enemy, dt: number, d: number): void => {
         // Out of the ground, drill spinning: the window to hit it.
         e.a = Math.min(1, e.a + dt / 0.25)
         faceTo(e, px, pz, 5, dt)
-        if (e.st > MOLE_OUT) {
+        if (e.st > MOLE_LUNGE_SETTLE && e.b <= 0 && d < MOLE_LUNGE_R && seesPlayer(w, e) && !moleLaunching(w, e)) {
+          e.b = MOLE_LUNGE_CD[0] + Math.random() * (MOLE_LUNGE_CD[1] - MOLE_LUNGE_CD[0])
+          startTele(e, 'lunge', MOLE_LUNGE_TELE, true)
+          // Its eyes flare and it chitters; a small red patch under it.
+          w.fx.sparks(e.x + Math.sin(e.yaw) * 0.36, (e.floor ?? 0) + 0.58, e.z + Math.cos(e.yaw) * 0.36, '#ff6a2a', 8, 3, 0.16)
+          w.markers.spawn(e.x, e.z, 0.9, MOLE_LUNGE_TELE, e)
+          w.sfx('alert', e.x, e.z)
+        } else if (e.st > MOLE_OUT) {
           e.cd = cooldown()
           enterState(e, 'engage')
         }
@@ -2641,7 +2743,7 @@ export const syncEnemyVisual = (e: Enemy, alpha: number, time: number): void => 
       break
     }
     case 'mole':
-      poseMole(r, e.buried ? 0 : e.state === 'idle' || e.state === 'alert' ? 0.75 : e.a, t * (e.state === 'act' ? 28 : 8), t, m)
+      poseMole(r, e.buried ? 0 : e.state === 'idle' || e.state === 'alert' ? 0.75 : e.a, t * (e.state === 'act' ? 28 : 8), t, m, moleLungePose(e))
       break
     case 'heli':
       // m.tilt: the state's tilt, eased (no pops at tele/act), plus airspeed

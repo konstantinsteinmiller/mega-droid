@@ -316,7 +316,8 @@ export const walkStep = (map: MapData, ai: number, aj: number, bi: number, bj: n
   return edgeHeight(map, bi, bj, -di, -dj) - edgeHeight(map, ai, aj, di, dj) <= STEP_UP
 }
 
-/** The hops a walk cannot make, per cell: ladders both ways, each lift
+/** The hops a walk cannot make, per cell: ladders both ways (not a wall
+ *  climb's way onto a shortcut: the trail keeps to the route), each lift
  *  from the cells beside one stop to the cells beside the other, and the
  *  map's own links. */
 const terrainLinks = (map: MapData): Map<number, number[]> => {
@@ -329,6 +330,7 @@ const terrainLinks = (map: MapData): Map<number, number[]> => {
     if (l) { if (!l.includes(b)) l.push(b) } else links.set(a, [b])
   }
   for (const L of t.ladders) {
+    if (L.branch) continue
     const foot = L.j * W + L.i
     const top = (L.j + L.dj) * W + L.i + L.di
     add(foot, top)

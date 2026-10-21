@@ -15,6 +15,9 @@
 //   --sign-in         a browser-driven engine (elevenlabs, aistudio): open its sign-in window
 //   --retry [n]       only the lines with no passing take: n more takes each
 //                     (default 2) with new seeds; extra takes on disk always count
+//   --rejected [n]    only the lines rejected on the review page (voice:review,
+//                     voice-over-approvals.md): n new takes each (default 2), the
+//                     listener's note added to the direction; the old takes never ship again
 //
 // Engines: tools/voice/engines/<name>.mjs. Work files: vo-src/gen/<engine>/
 // (raw takes, masters, results.json); designed voices: vo-src/refs/.
@@ -22,7 +25,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { ROOT, VO_SRC, args } from './lib.mjs'
+import { APPROVALS, REVIEW_LANGS, ROOT, VOICE_OUT, VO_SRC, args } from './lib.mjs'
+import { currentVoiceFiles, readApprovals, reconcile, rejectedJobs, rejectedLines, writeApprovals } from './approvals.mjs'
 import { processTake, encode } from './post.mjs'
 import { judge, pickBest } from './qa.mjs'
 import { styleFor } from './style.mjs'
@@ -43,7 +47,12 @@ const resultsFile = join(work0, `${mode}-results.json`)
 const before = existsSync(resultsFile) ? JSON.parse(readFileSync(resultsFile, 'utf8')).results : []
 const retry = a.retry ? (a.retry === true ? 2 : +a.retry) : 0
 const failing = new Set(before.filter(r => r.best == null).map(r => r.job.id))
-const jobs = all.filter(j => (!only || only.test(j.key)) && (!a.lang || j.lang === a.lang) && (!retry || failing.has(j.id)))
+const rejectedN = a.rejected ? (a.rejected === true ? 2 : +a.rejected) : 0
+const keyOfFile = new Map(all.map(j => [j.file, j.key]))
+const shippedNow = () => currentVoiceFiles(VOICE_OUT, [...new Set([...REVIEW_LANGS, ...all.map(j => j.lang)])], f => keyOfFile.get(f) ?? null)
+const picked = rejectedN ? rejectedJobs(all, rejectedLines(readApprovals(APPROVALS), shippedNow())) : all
+const jobs = picked.filter(j => (!only || only.test(j.key)) && (!a.lang || j.lang === a.lang) && (!retry || failing.has(j.id)))
+if (rejectedN) console.log(`--rejected: ${jobs.length} line(s) rejected on the review page`)
 
 const engine = (await import(pathToFileURL(join(ROOT, 'tools', 'voice', 'engines', `${engineName}.mjs`)).href)).default
 // A browser-driven engine signs in once, in a plain window of its own profile.
@@ -77,8 +86,10 @@ const takeOf = (j, t) => ({ raw: join(work, j.lang, `${j.file}.t${t}.wav`), mast
 const takesFor = (j) => {
   let n = takes
   while (existsSync(takeOf(j, n + 1).raw)) n++
-  return n + retry
+  return n + (retry || rejectedN)
 }
+/** A rejected line ships only one of its new takes: the takes on disk before this run are the rejected ones. */
+const firstTake = new Map(rejectedN ? jobs.map(j => [j.id, takesFor(j) - rejectedN + 1]) : [])
 /** A seed per line as well as per take: the three takes of one bark must not come out the same. */
 const seedOf = (id) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7)
 const todo = []
@@ -103,7 +114,7 @@ for (const j of jobs) {
   const ts = []
   for (let t = 1; existsSync(takeOf(j, t).raw) || t <= takes; t++) {
     const { raw, master } = takeOf(j, t)
-    if (!existsSync(raw)) continue
+    if (!existsSync(raw) || t < (firstTake.get(j.id) ?? 1)) continue
     try {
       const m = await processTake({ raw, master, ogg: null, speaker: j.speaker, key: j.key, max: j.max })
       ts.push({ take: t, master, text: j.text, lang: j.lang, ...(j.loose ? { loose: true } : {}), ...m })
@@ -151,6 +162,8 @@ if (ship) {
   // The to-do list follows every ship: what is voiced now, what is missing.
   const { writeVoiceTodo } = await import('./todo.mjs')
   writeVoiceTodo()
+  // A re-recorded file is "not yet approved" again (its old verdict kept as history).
+  if (existsSync(APPROVALS)) writeApprovals(APPROVALS, reconcile(readApprovals(APPROVALS), shippedNow()), REVIEW_LANGS)
 }
 
 // A partial run (--only, --lang, --retry) updates its lines and keeps the rest.

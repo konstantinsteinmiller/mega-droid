@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice-over review</title>
+<style>
+  :root { --bg: #f6f6f4; --card: #fff; --ink: #1d1d1b; --mute: #6b6b66; --line: #ddd; --ok: #1f8a4c; --bad: #c0392b; --wait: #b7791f; --sel: #e8f0fe; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #1f1f1d; --ink: #ecece8; --mute: #9a9a93; --line: #333; --sel: #23324a; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  select, input, button, textarea { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+  button { cursor: pointer; }
+  #search { flex: 1; min-width: 160px; }
+  #counts { color: var(--mute); width: 100%; }
+  main { padding: 12px 16px 80px; max-width: 1100px; margin: 0 auto; }
+  .row { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .row.sel { outline: 2px solid #4a7fd8; background: var(--sel); }
+  .meta { color: var(--mute); font-size: 12px; }
+  .meta code { color: var(--ink); }
+  .text { font-size: 16px; }
+  .en { color: var(--mute); }
+  .dir { color: var(--mute); font-size: 12px; font-style: italic; }
+  .acts { display: flex; gap: 6px; align-items: start; flex-wrap: wrap; justify-content: end; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; }
+  .s-approved { background: var(--ok); } .s-rejected { background: var(--bad); } .s-wait { background: var(--wait); }
+  .note { grid-column: 1 / -1; width: 100%; min-height: 34px; }
+  .hist { grid-column: 1 / -1; color: var(--mute); font-size: 12px; }
+  .help { color: var(--mute); font-size: 12px; }
+  #err { color: var(--bad); }
+  @media (max-width: 640px) { .row { grid-template-columns: 1fr; } .acts { justify-content: start; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Voice-over review</h1>
+  <select id="lang"><option value="">All languages</option></select>
+  <select id="speaker"><option value="">All speakers</option></select>
+  <select id="status">
+    <option value="">Any status</option>
+    <option value="not yet approved">Not yet approved</option>
+    <option value="approved">Approved</option>
+    <option value="rejected">Rejected</option>
+  </select>
+  <input id="search" type="search" placeholder="Search key or text">
+  <span class="help">Space play · A approve · R reject · ←/→ or J/K move</span>
+  <div id="counts"></div>
+  <div id="err"></div>
+</header>
+<main id="list"></main>
+<script>
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+let rows = []
+let shown = []
+let sel = 0
+const player = new Audio()
+
+const load = async () => {
+  const r = await fetch('/api/lines').then(x => x.json())
+  rows = r.rows
+  for (const [id, values] of [['lang', r.langs.filter(g => rows.some(x => x.lang === g))], ['speaker', [...new Set(rows.map(x => x.speaker))].sort()]]) {
+    const el = $(id)
+    const keep = el.value
+    el.length = 1
+    for (const v of values) el.add(new Option(v, v))
+    el.value = keep
+  }
+  render()
+}
+
+const filter = () => {
+  const lang = $('lang').value, speaker = $('speaker').value, status = $('status').value
+  const q = $('search').value.trim().toLowerCase()
+  return rows.filter(r => (!lang || r.lang === lang) && (!speaker || r.speaker === speaker) && (!status || r.status === status) &&
+    (!q || `${r.key} ${r.text} ${r.en ?? ''}`.toLowerCase().includes(q)))
+}
+
+const badge = (s) => `<span class="badge ${s === 'approved' ? 's-approved' : s === 'rejected' ? 's-rejected' : 's-wait'}">${esc(s)}</span>`
+
+const render = () => {
+  const keep = shown[sel] && `${shown[sel].lang}/${shown[sel].key}`
+  shown = filter()
+  const i = shown.findIndex(r => `${r.lang}/${r.key}` === keep)
+  sel = Math.max(0, Math.min(i < 0 ? sel : i, shown.length - 1))
+  const n = (s, list = rows) => list.filter(r => r.status === s).length
+  const per = [...new Set(rows.map(r => r.lang))].map(g => { const m = rows.filter(r => r.lang === g); return `${g}: ${n('approved', m)}/${m.length}` }).join(' · ')
+  $('counts').textContent = `${rows.length} files: ${n('approved')} approved, ${n('rejected')} rejected, ${n('not yet approved')} not yet approved (${per}). Showing ${shown.length}.`
+  $('list').innerHTML = shown.map((r, k) => `
+    <div class="row${k === sel ? ' sel' : ''}" data-k="${k}">
+      <div>
+        <div class="meta"><code>${esc(r.key)}</code> · ${esc(r.speaker)} · ${esc(r.lang)} · ${badge(r.status)}</div>
+        <div class="text">${esc(r.text)}</div>
+        ${r.en ? `<div class="en">EN: ${esc(r.en)}</div>` : ''}
+        <div class="dir">${esc(r.direction)}${r.situation ? ` — ${esc(r.situation)}` : ''}</div>
+      </div>
+      <div class="acts">
+        <button data-act="play">Play</button>
+        <button data-act="approved">Approve</button>
+        <button data-act="rejected">Reject</button>
+        <button data-act="not yet approved" title="Back to not yet approved">Reset</button>
+      </div>
+      <textarea class="note" data-note placeholder="Rejection note: what is wrong (fed back into voice:gen --rejected)">${esc(r.note)}</textarea>
+      ${r.history ? `<div class="hist">Earlier: ${esc(r.history)}</div>` : ''}
+    </div>`).join('')
+}
+
+const play = (k = sel) => { const r = shown[k]; if (!r) return; player.pause(); player.src = r.audio; player.currentTime = 0; void player.play() }
+
+const verdict = async (k, status) => {
+  const r = shown[k]
+  if (!r) return
+  const note = document.querySelector(`.row[data-k="${k}"] [data-note]`)?.value ?? ''
+  const res = await fetch('/api/verdict', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang: r.lang, key: r.key, hash: r.hash, status, note }) })
+  const out = await res.json()
+  if (!res.ok) { $('err').textContent = out.error; await load(); return }
+  $('err').textContent = ''
+  Object.assign(rows.find(x => x.lang === r.lang && x.key === r.key), out)
+  render()
+}
+
+const move = (d) => {
+  sel = Math.max(0, Math.min(sel + d, shown.length - 1))
+  render()
+  document.querySelector('.row.sel')?.scrollIntoView({ block: 'nearest' })
+}
+
+$('list').addEventListener('click', (e) => {
+  const row = e.target.closest('.row')
+  if (!row) return
+  const k = +row.dataset.k
+  const act = e.target.dataset.act
+  if (k !== sel && !e.target.matches('textarea')) { sel = k; if (!act) render() }
+  else if (e.target.matches('textarea')) sel = k
+  if (act === 'play') play(k)
+  else if (act) void verdict(k, act)
+})
+for (const id of ['lang', 'speaker', 'status', 'search']) $(id).addEventListener('input', () => { sel = 0; render() })
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea, select')) { if (e.key === 'Escape') e.target.blur(); return }
+  const k = e.key.toLowerCase()
+  if (k === ' ') { e.preventDefault(); play() }
+  else if (k === 'a') void verdict(sel, 'approved').then(() => move(1))
+  else if (k === 'r') {
+    // Reject asks for the note first: type it, then Enter.
+    const note = document.querySelector('.row.sel [data-note]')
+    if (note && !note.value.trim()) { note.focus(); note.onkeydown = (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); note.blur(); void verdict(sel, 'rejected').then(() => move(1)) } } }
+    else void verdict(sel, 'rejected').then(() => move(1))
+  }
+  else if (k === 'arrowdown' || k === 'arrowright' || k === 'j') { e.preventDefault(); move(1) }
+  else if (k === 'arrowup' || k === 'arrowleft' || k === 'k') { e.preventDefault(); move(-1) }
+})
+
+// The heartbeat: the server stops a while after this page is closed.
+setInterval(() => { void fetch('/api/ping', { method: 'POST' }).catch(() => { $('err').textContent = 'The review server has stopped: run pnpm voice:review again.' }) }, 5000)
+// A hand edit of the .md shows up when the window comes back.
+window.addEventListener('focus', () => { void load() })
+void load()
+</script>
+</body>
+</html>

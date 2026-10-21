@@ -34,6 +34,9 @@ export const TEXTURE_FILES = byName(overrides.textures, 'images/textures')
  * underscores (`atlas_lowHp.ogg`, see `audio/voiceCatalog.ts`); a dotted name
  * (`atlas.lowHp.ogg`) still works. Only files that exist are listed, so a
  * line without one is never requested: it just shows its speech bubble.
+ * The build lists each with its content hash (`<lang>/<file>.ogg?v=<hash>`,
+ * tools/voice/hash.mjs) and the URL keeps it: a re-voiced line is a new URL,
+ * so no cache serves the old take.
  */
 export const voiceFiles = (list: readonly string[] = overrides.voice ?? []): Map<string, Map<string, string>> => {
   const base = import.meta.env.BASE_URL
@@ -42,7 +45,8 @@ export const voiceFiles = (list: readonly string[] = overrides.voice ?? []): Map
     const slash = entry.indexOf('/')
     if (slash < 0) continue
     const lang = entry.slice(0, slash)
-    const file = entry.slice(slash + 1)
+    const q = entry.indexOf('?')
+    const file = entry.slice(slash + 1, q < 0 ? undefined : q)
     const id = file.slice(0, file.lastIndexOf('.')).replace(/_/g, '.')
     let m = out.get(lang)
     if (!m) out.set(lang, (m = new Map()))

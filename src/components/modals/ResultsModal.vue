@@ -276,6 +276,8 @@ const done = () => {
 .free-label
   display: inline-grid
   justify-items: center
+  // The taller offer copy sets the cell's height; the word sits in its middle.
+  align-items: center
   > *
     grid-area: 1 / 1
 .sizer

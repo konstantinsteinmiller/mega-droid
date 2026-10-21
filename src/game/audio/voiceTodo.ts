@@ -21,6 +21,8 @@ export interface VoiceTodoInput {
   /** The file names (without extension) present per language. */
   files: Readonly<Record<string, ReadonlySet<string>>>
   fileName: (key: string) => string
+  /** Per language, a line that plays its twin's file → that twin (`voiceAliases.ts`). */
+  aliases?: Readonly<Record<string, Readonly<Record<string, string>>>>
 }
 
 const at = (o: unknown, key: string): unknown => key.split('.').reduce<unknown>((x, k) => (x as Record<string, unknown> | undefined)?.[k], o)
@@ -28,7 +30,7 @@ const cell = (s: unknown): string => String(s ?? '—').replace(/\|/g, '\\|').re
 const NAMES: Record<string, string> = { atlas: 'Atlas', vex: 'Vex', flux: 'Flux', gauss: 'Gauss', pip: 'Pip' }
 const LANG_NAMES: Record<string, string> = { en: 'English', de: 'German', es: 'Spanish', zh: 'Chinese', fr: 'French' }
 
-export const renderVoiceTodo = ({ lines, langs, locales, shipped, files, fileName }: VoiceTodoInput): string => {
+export const renderVoiceTodo = ({ lines, langs, locales, shipped, files, fileName, aliases = {} }: VoiceTodoInput): string => {
   const live = lines.filter(l => l.status === 'live')
   const src = langs[0]!
   const fill = (s: string, params: VoiceLine['params'], loc: unknown) =>
@@ -44,6 +46,8 @@ export const renderVoiceTodo = ({ lines, langs, locales, shipped, files, fileNam
   }
   const state = (l: VoiceLine, lang: string): string | null => {
     if (l.neutral && lang !== src) return 'en file'
+    const twin = aliases[lang]?.[l.key]
+    if (twin) return files[lang]?.has(fileName(twin)) ? `= ${fileName(twin)}` : null
     const f = fileName(l.key)
     if (!files[lang]?.has(f)) return null
     return shipped[`${lang}/${f}`]?.engine ?? 'by hand'

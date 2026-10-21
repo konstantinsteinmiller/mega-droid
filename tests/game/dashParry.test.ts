@@ -51,7 +51,7 @@ const rig = () => {
     m.player.x = m.player.z = mid
   }
   // A boss charging in from straight ahead (yaw 0 faces −z).
-  const boss = { x: mid, z: mid - 1.5, y: 0, boss: true, kind: 'boss', state: 'act', st: 0, stunT: 0, ring: { visible: true }, flash: 0 } as unknown as Enemy
+  const boss = { x: mid, z: mid - 1.5, y: 0, boss: true, kind: 'boss', state: 'act', st: 0, stunT: 0, ring: { visible: true }, flash: 0, def: { speed: 3, radius: 1 } } as unknown as Enemy
   const charge = (parryable = true) =>
     m.hitPlayer(boss, 20, { blockable: false, parryable, fromX: boss.x, fromZ: boss.z, kind: 'melee' })
   return { m, input, step, boss, charge, mid }
@@ -77,6 +77,36 @@ describe('perfect block vs a dash (#172)', () => {
     for (let k = 0; k < 60; k++) step()
     const hp = m.combat.hp
     expect(charge()).toBe('block')
+    expect(boss.state).toBe('act')
+    expect(m.combat.hp).toBeLessThan(hp)
+  })
+
+  it('a parried dash bounces the dasher back off the shield (#189)', () => {
+    const { input, step, boss, charge, mid } = rig()
+    input.blockHeld = true
+    input.blockPressed = true
+    step()
+    const z0 = boss.z
+    expect(charge()).toBe('parry')
+    expect(boss.z).toBeLessThan(z0)
+    expect(Math.hypot(boss.x - mid, boss.z - mid)).toBeGreaterThan(1.5)
+  })
+
+  it('no block: the dash lands in full', () => {
+    const { m, charge } = rig()
+    const hp = m.combat.hp
+    expect(charge()).toBe('hit')
+    expect(m.combat.hp).toBeLessThan(hp)
+  })
+
+  it('a perfect block facing away does not count, as for every attack (#189)', () => {
+    const { m, input, step, boss, charge } = rig()
+    m.player.yaw = Math.PI
+    input.blockHeld = true
+    input.blockPressed = true
+    step()
+    const hp = m.combat.hp
+    expect(charge()).toBe('hit')
     expect(boss.state).toBe('act')
     expect(m.combat.hp).toBeLessThan(hp)
   })

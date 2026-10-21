@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Preostalo sekundi: {s}, dronova: {n}',
     'tink': 'DZING!',
+    'getClear': 'BJEŽI!',
+    'lockLost': 'META IZGUBLJENA!',
     'perfect': 'SAVRŠENO!',
     'parry': 'PARIRANJE!',
     'guardBreak': 'GARD SLOMLJEN!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Vrata izazova',
     'challengeN': 'Vrata izazova {n}',
     'actLevelUp': 'Pokreni scenu novog nivoa',
-    'actObjective': 'Pokreni scenu ispunjenog cilja'
+    'actObjective': 'Pokreni scenu ispunjenog cilja',
+    'climbs': 'Skok do penjanja',
+    'practice': 'Zid za vježbu',
+    'climbN': 'Penjanje {n} ({h} m)',
+    'shortcutStart': 'Početak prečaca',
+    'battleRoom': 'Borbena soba'
   },
 
   'quest': {

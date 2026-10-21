@@ -6,10 +6,10 @@ import { firstInReach, ANYWHERE } from '../attackReach'
 import type { MiniBossBehaviour, MiniBossSpec } from './types'
 import {
   buildPufferMatriarch, posePufferMatriarch, newPufferPose, buildMatriarchMine, MATRIARCH_COLORS, MATRIARCH_ESCORTS,
-  MATRIARCH_R, MATRIARCH_SCALE, type PufferPose
+  MATRIARCH_R, MATRIARCH_SCALE, MATRIARCH_SPINE_TIP, type PufferPose
 } from '../../models/miniBoss/pufferMatriarch'
 import { posePuffer } from '../../models/enemies'
-import { TAU, faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, inCone, near, ease, sprung, type PoseVel } from './kit'
+import { TAU, angDiff, faceTo, moveBody, distToPlayer, keepInRoom, roomBox, teleRing, inCone, near, ease, sprung, type PoseVel } from './kit'
 import { PLAYER_R } from '../constants'
 import { pushHud } from '../../state/hud'
 
@@ -54,6 +54,14 @@ const HOP_LEN = 3.2
 const BOUNCE_MAX = 30
 /** Her swollen radius (m) — on the floor at the bottom of a hop. */
 const SWOLLEN_R = MATRIARCH_R * 1.5 * MATRIARCH_SCALE
+/** The bounce's contact reach from her middle (m): three quarters of the way
+ *  out along her swollen spines, so a spine that visibly stabs Flux lands
+ *  (#189 the parry still stops it). The route's floor marks are this wide. */
+export const BOUNCE_HIT_R = SWOLLEN_R + 0.75 * (MATRIARCH_SPINE_TIP * 1.5 * MATRIARCH_SCALE - SWOLLEN_R)
+/** How fast her drawn heading swings onto a new leg of the bounce (1/s),
+ *  and its top speed (rad/s): even a full about-turn takes a breath. */
+const BOUNCE_TURN = 14
+const BOUNCE_TURN_MAX = 12
 /** The mines: wind-up (s), at most this many at once, drift (m/s), the reach
  *  that stops one (m), its fuse (s), its swell and its burst (s, m). */
 export const MINE_TELE = 0.8
@@ -176,7 +184,7 @@ const plan = (w: World, e: Enemy, m: PufferMem, room: Room): void => {
   // The route on the floor: a red mark every 1.5 m, each gone as she passes it.
   for (let s = 1.2; s < total; s += 1.5) {
     const [px, pz] = at(m, s)
-    w.markers.spawn(px, pz, 1.0, BOUNCE_TELE + s / BOUNCE_SPEED + 0.1, e)
+    w.markers.spawn(px, pz, BOUNCE_HIT_R, BOUNCE_TELE + s / BOUNCE_SPEED + 0.1, e)
   }
 }
 
@@ -458,7 +466,8 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
           const [x, z, h] = at(m, m.run)
           e.x = x
           e.z = z
-          e.yaw = h
+          // A short smooth turn onto each new leg, not a snap (the hit is by distance).
+          e.yaw += Math.max(-BOUNCE_TURN_MAX * dt, Math.min(BOUNCE_TURN_MAX * dt, angDiff(h, e.yaw) * Math.min(1, BOUNCE_TURN * dt)))
           const hop = Math.abs(Math.sin((Math.PI * m.run) / HOP_LEN))
           y = SWOLLEN_R + HOP_H * hop
           p.roll += ((m.run - was) / SWOLLEN_R)
@@ -468,7 +477,7 @@ export const PUFFER_MATRIARCH_AI: MiniBossBehaviour<PufferMem> = {
             w.shake(0.15)
             w.sfx('bonk', x, z)
           }
-          if (!e.hitPlayer && d < SWOLLEN_R * 0.9 + PLAYER_R) {
+          if (!e.hitPlayer && d < BOUNCE_HIT_R + PLAYER_R) {
             e.hitPlayer = true
             // A perfect block stops the bounce cold: the parry stuns her (#172).
             if (w.hitPlayer(e, Math.round(e.dmg * 1.3), { blockable: false, parryable: true, fromX: e.x, fromZ: e.z, kind: 'melee' }) === 'parry') break

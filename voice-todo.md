@@ -21,14 +21,14 @@ itself, so a new line shows up here as missing until it is voiced.
 | Vex | 33 | 33 | 33 | 33 | 33 | 33 |
 | Flux | 45 | 45 | 45 | 45 | 45 | 45 |
 | Gauss | 2 | 2 | 2 | 2 | 2 | 2 |
-| Pip | 52 | 52 | 52 | 52 | 52 | 52 |
-| **All** | **348** | **348** | **348** | **348** | **348** | **348** |
+| Pip | 56 | 56 | 56 | 56 | 56 | 56 |
+| **All** | **352** | **352** | **352** | **352** | **352** | **352** |
 
 ## Missing (0)
 
 Nothing: every line has its recordings.
 
-## Every line (348)
+## Every line (352)
 
 | File | Who | Plays when | English | German | Spanish | Chinese | French | EN | DE | ES | ZH | FR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -295,6 +295,10 @@ Nothing: every line has its recordings.
 | `ending_gauss` | Gauss | The ending: Gauss steps out of her capsule | Flux... you did it. You brought them all back. | Flux... du hast es geschafft. Du hast sie alle zurückgebracht. | Flux... lo lograste. Los trajiste a todos de vuelta. | Flux……你做到了。你把大家都带回来了。 | Flux... tu as réussi. Tu les as tous ramenés. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
 | `ending_atlas` | Atlas | The ending: Atlas and the empty Spire | The Spire is empty. I could run this city now. I won't. It's theirs. | Der Turm ist leer. Ich könnte diese Stadt jetzt lenken. Tu ich nicht. Sie gehört ihnen. | La Aguja está vacía. Podría gobernar esta ciudad. No lo haré. Es suya. | 尖塔已经空了。现在我可以掌管这座城市。但我不会。它属于他们。 | La Flèche est vide. Je pourrais diriger cette ville. Je ne le ferai pas. Elle est à eux. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
 | `ending_spark` | Gauss | The ending: the sunrise, the last line | Flux... did you see that spark? | Flux... hast du den Funken gesehen? | Flux... ¿viste esa chispa? | Flux……你看到那道火花了吗？ | Flux... tu as vu cette étincelle ? | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
+| `ending_fall` | Pip | The ending: the Grand Master falls | The Grand Master falls. Vex's Red Signal dies with it. | Der Großmeister fällt. Vex' Rotes Signal erlischt mit ihm. | El Gran Maestro cae. La Señal Roja de Vex muere con él. | 至尊大师倒下了。Vex的红色信号也随之消逝。 | Le Grand Maître tombe. Le Signal Rouge de Vex s'éteint avec lui. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
+| `ending_relays` | Pip | The ending: the relays light up over the city | One by one, the relays come home, each in its own colour. | Ein Relais nach dem anderen kehrt heim, jedes in seiner eigenen Farbe. | Uno a uno, los relés vuelven a casa, cada uno con su propio color. | 中继站一个接一个回家，各自亮起自己的颜色。 | Un à un, les relais reviennent, chacun dans sa propre couleur. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
+| `ending_thaw` | Pip | The ending: Gauss's capsule thaws | In the lab, the ice lets go. | Im Labor gibt das Eis nach. | En el laboratorio, el hielo cede. | 实验室里，冰层渐渐消融。 | Au labo, la glace cède. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
+| `ending_morning` | Pip | The ending: sunrise over Cyber City | Cyber City wakes to its first free morning. | Cyber City erwacht zu ihrem ersten freien Morgen. | Cyber City despierta en su primera mañana libre. | Cyber City迎来了第一个自由的早晨。 | Cyber City s'éveille à son premier matin libre. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
 | `pip_debrief_hello` | Pip | The first debrief: Pip greets Flux over the valley | Welcome back, Flux! Look at the valley. | Willkommen zurück, Flux! Schau dir das Tal an. | ¡Bienvenido de vuelta, Flux! Mira el valle. | 欢迎回来，Flux！快看看山谷。 | Te revoilà, Flux ! Regarde la vallée. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
 | `pip_debrief_scrapyard_won` | Pip | Debrief after Scrapyard: what the win changed | The old crane is sorting scrap again. | Der alte Kran sortiert wieder Schrott. | La vieja grúa vuelve a clasificar chatarra. | 老吊车又开始分拣废铁了。 | La vieille grue trie à nouveau la ferraille. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |
 | `pip_debrief_scrapyard_weapon` | Pip | Debrief after Scrapyard: the copied weapon's card | You copied Scrap Burst. It sprays three ways. | Du hast die Schrottsalve kopiert. Sie streut in drei Richtungen. | Has copiado la Ráfaga de chatarra. Dispara en tres direcciones. | 你复制了废铁爆散，它会朝三个方向散射。 | Tu as copié la Rafale de ferraille. Elle tire dans trois directions. | elevenlabs | elevenlabs | chatterbox | chatterbox | chatterbox |

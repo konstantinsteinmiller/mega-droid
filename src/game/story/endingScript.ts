@@ -50,12 +50,12 @@ export interface Caption {
 
 /** The lines, in order (keys under `ending.`). */
 export const CAPTIONS: readonly Caption[] = [
-  { at: 1.5, key: 'fall', speaker: '' },
-  { at: 9, key: 'relays', speaker: '' },
-  { at: 18, key: 'thaw', speaker: '' },
+  { at: 1.5, key: 'fall', speaker: 'pip' },
+  { at: 9, key: 'relays', speaker: 'pip' },
+  { at: 18, key: 'thaw', speaker: 'pip' },
   { at: 27, key: 'gauss', speaker: 'gauss' },
   { at: 33.5, key: 'atlas', speaker: 'atlas' },
-  { at: 42, key: 'morning', speaker: '' },
+  { at: 42, key: 'morning', speaker: 'pip' },
   { at: 50, key: 'spark', speaker: 'gauss' }
 ]
 

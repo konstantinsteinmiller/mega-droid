@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} секунд қалды, тағы {n} дрон',
     'tink': 'ДЫҢ!',
+    'getClear': 'ҚАШ!',
+    'lockLost': 'НЫСАНА ЖОҒАЛДЫ!',
     'perfect': 'МІНСІЗ!',
     'parry': 'ТОЙТАРЫС!',
     'guardBreak': 'ҚОРҒАНЫС БҰЗЫЛДЫ!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Сынақ есігі',
     'challengeN': 'Сынақ есігі {n}',
     'actLevelUp': 'Деңгей көтеру сахнасын ойнату',
-    'actObjective': 'Мақсат орындалды сахнасын ойнату'
+    'actObjective': 'Мақсат орындалды сахнасын ойнату',
+    'climbs': 'Өрмелеуге өту',
+    'practice': 'Жаттығу қабырғасы',
+    'climbN': 'Өрмелеу {n} ({h} м)',
+    'shortcutStart': 'Төте жолдың басы',
+    'battleRoom': 'Шайқас бөлмесі'
   },
 
   'quest': {

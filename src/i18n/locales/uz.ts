@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} soniya qoldi, yana {n} ta dron',
     'tink': 'JARANG!',
+    'getClear': 'QOCH!',
+    'lockLost': 'NISHON YOʻQOLDI!',
     'perfect': 'MUKAMMAL!',
     'parry': 'QAYTARILDI!',
     'guardBreak': 'HIMOYA SINDI!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Sinov eshigi',
     'challengeN': 'Sinov eshigi {n}',
     'actLevelUp': 'Daraja oshishi sahnasini qo‘yish',
-    'actObjective': 'Maqsad bajarildi sahnasini qo‘yish'
+    'actObjective': 'Maqsad bajarildi sahnasini qo‘yish',
+    'climbs': 'Tirmanishga o‘tish',
+    'practice': 'Mashq devori',
+    'climbN': 'Tirmanish {n} ({h} m)',
+    'shortcutStart': 'Qisqa yo‘l boshi',
+    'battleRoom': 'Jang xonasi'
   },
 
   'quest': {

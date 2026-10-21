@@ -2,6 +2,7 @@ import { CELL, Ramp, cellCenter, type MapData, type Lift } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
 import { railCourse } from './volt'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Rotor Run (the rotor sector's story stage) ──────────────────────────────
@@ -248,6 +249,8 @@ export const generateRotorRun = (seed: number): MapData => {
   // floor, a hangar bay at its level — its door ahead of Flux at the foot
   // of the drop; the way on is north.
   b.challengeRoom(10, { mouth: { i: 39, j: 42, di: 1, dj: 0 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'rotor', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open sky under the airfield: a fall is the rescue's.
   map.terrain!.clouds = true

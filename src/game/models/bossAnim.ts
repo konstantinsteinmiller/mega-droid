@@ -55,7 +55,8 @@ export const ATTACK_STYLE: Readonly<Record<string, BossStyle>> = {
   flameRing: 'nova', voltRing: 'nova', roar: 'nova',
   whirlpool: 'channel', polePull: 'channel', downdraft: 'channel',
   charge: 'ram', dashSlash: 'rush', magnetPunch: 'rush',
-  stomp: 'leap', leapSlam: 'leap', dive: 'dive', blink: 'blink', burrow: 'burrow'
+  stomp: 'leap', leapSlam: 'leap', dive: 'dive', blink: 'blink', burrow: 'burrow',
+  chargedBlast: 'channel', homingSalvo: 'shoot'
 }
 
 export const styleOf = (attack: string): BossStyle => ATTACK_STYLE[attack] ?? 'shoot'

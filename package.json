@@ -1,6 +1,6 @@
 {
   "name": "mega-droid",
-  "version": "0.10.2",
+  "version": "0.11.2",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -51,6 +51,7 @@
     "voice:gen": "node --experimental-strip-types --no-warnings tools/voice/generate.mjs",
     "voice:compare": "node --experimental-strip-types --no-warnings tools/voice/compare.mjs",
     "voice:setup": "node --experimental-strip-types --no-warnings tools/voice/setup.mjs",
+    "voice:review": "node --experimental-strip-types --no-warnings tools/voice/review.mjs",
     "art:desk": "node tools/art-desk/server.mjs",
     "art:comic": "node tools/art-comic.mjs",
     "art:promotion": "node tools/art-promotion.mjs",

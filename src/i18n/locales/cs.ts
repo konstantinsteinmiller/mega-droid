@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Zbývá sekund: {s}, dronů: {n}',
     'tink': 'CINK!',
+    'getClear': 'UTEČ!',
+    'lockLost': 'CÍL ZTRACEN!',
     'perfect': 'PERFEKTNÍ!',
     'parry': 'VYKRYTÍ!',
     'guardBreak': 'KRYT PROLOMEN!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Dveře výzvy',
     'challengeN': 'Dveře výzvy {n}',
     'actLevelUp': 'Přehrát scénu nové úrovně',
-    'actObjective': 'Přehrát scénu splněného cíle'
+    'actObjective': 'Přehrát scénu splněného cíle',
+    'climbs': 'Skok ke šplhání',
+    'practice': 'Cvičná stěna',
+    'climbN': 'Šplhání {n} ({h} m)',
+    'shortcutStart': 'Začátek zkratky',
+    'battleRoom': 'Bojová místnost'
   },
 
   'quest': {

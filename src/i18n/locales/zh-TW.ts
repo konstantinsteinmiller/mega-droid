@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '剩餘 {s} 秒，還有 {n} 架無人機',
     'tink': '叮！',
+    'getClear': '快閃開！',
+    'lockLost': '鎖定失效！',
     'perfect': '完美！',
     'parry': '彈反！',
     'guardBreak': '破防！',
@@ -196,7 +198,12 @@ export default {
     'challenge': '挑戰之門',
     'challengeN': '挑戰之門 {n}',
     'actLevelUp': '播放升級動畫',
-    'actObjective': '播放目標完成動畫'
+    'actObjective': '播放目標完成動畫',
+    'climbs': '跳到攀爬點',
+    'practice': '練習牆',
+    'climbN': '攀爬 {n}（{h} 公尺）',
+    'shortcutStart': '捷徑起點',
+    'battleRoom': '戰鬥室'
   },
 
   'quest': {

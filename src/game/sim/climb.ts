@@ -1,6 +1,6 @@
 import { Group, Color, type MeshBasicMaterial, type Object3D, type Scene } from 'three'
 import {
-  CELL, Cell, pitKindOf, type MapData, type Terrain, type Ladder, type Lift, type Crusher, type RollerLane, type RewardSpot, type SecretSpec
+  CELL, Cell, cellCenter, pitKindOf, type MapData, type Terrain, type Ladder, type Lift, type Crusher, type RollerLane, type RewardSpot, type SecretSpec
 } from '../world/levelGen'
 import { floorAt, groundAt, moveBody, platUnder, STEP_UP, type Nav, type Plat, type Slab } from '../world/nav'
 import { groundUnder, tooTallFor } from './enemies'
@@ -11,6 +11,7 @@ import {
   buildLift, buildCrusher, buildScrapBall, buildEmberBarrel, buildLaneLamp, type LiftMesh, type CrusherMesh, type BallMesh
 } from '../models/climbProps'
 import { buildBolt, buildCapsule } from '../models/props'
+import { buildPrize } from '../models/secretProps'
 import type { Theme } from '../world/themes'
 import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import type { Particles } from '../fx/particles'
@@ -388,6 +389,12 @@ export class ClimbRun {
         this.cues.push(new AtlasCue(host, 'warn.ladder', ex + nx * 1.4, ez + nz * 1.4, L.y0))
       }
     }
+    // A stage's first wall climb (`world/climbFeature.ts`; the Blaze practice
+    // wall): the wall-kick's one line at its foot, as the Blackout
+    // Boulevard's shaft has it (Atlas says it once a mission).
+    const wc = t.climbs?.[0]
+    const wl = wc ? t.ladders[wc.ladders[0]!] : undefined
+    if (wl) this.cues.push(new AtlasCue(host, 'hint.neon.kick', cellCenter(wl.i), cellCenter(wl.j), wl.y0, 4))
     for (const lf of t.lifts) {
       const mesh = buildLift(th, lf.hw, lf.hd, lf.kind === 'v')
       const plat: Plat = { x0: 0, z0: 0, x1: 0, z1: 0, top: lf.ay, dx: 0, dz: 0 }
@@ -451,6 +458,9 @@ export class ClimbRun {
           b.root.position.set(Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35)
           root.add(b.root)
         }
+      } else if (r.kind === 'tank') {
+        // A wall climb's Repair Gel (`world/climbFeature.ts`): a secret's kit.
+        root.add(buildPrize('tank'))
       } else {
         root.add(buildCapsule(r.kind === 'hp' ? 'hp' : 'we', true).root)
       }
@@ -815,8 +825,10 @@ export class ClimbRun {
     if (d.kind === 'bolts') {
       const v = 12 + this.level * 5
       for (let n = 0; n < 3; n++) this.host.onPickup('bolt', v)
+    } else if (d.kind === 'tank' && this.host.secretPrize) {
+      this.host.secretPrize('tank', d.x, d.y, d.z)
     } else {
-      this.host.onPickup(d.kind === 'hp' ? 'hpBig' : 'weBig', 0)
+      this.host.onPickup(d.kind === 'hp' || d.kind === 'tank' ? 'hpBig' : 'weBig', 0)
     }
   }
 

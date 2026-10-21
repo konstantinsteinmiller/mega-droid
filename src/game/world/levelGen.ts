@@ -60,6 +60,9 @@ export interface Door {
   /** The door of a challenge room (`MapData.challenge`): its own look
    *  (`buildDoor`'s challenge door), shut behind Flux until the mini-boss falls. */
   challenge?: boolean
+  /** A shortcut's way out of its battle room into a route room further on
+   *  (`world/climbFeature.ts`): not the room's door in (`Room.door`). */
+  shortcut?: boolean
 }
 
 export interface Pillar {
@@ -150,6 +153,9 @@ export interface Ladder {
   /** A wall-kick shaft (the Blackout Boulevard's secret), not a ladder:
    *  slide at its foot facing the wall to kick up, and again, and again. */
   kick?: boolean
+  /** A climb's way onto a shortcut (`Terrain.climbs`): no hop for the
+   *  objective trail, which keeps to the main route. */
+  branch?: boolean
 }
 
 /** A moving platform. `v` waits at its lower stop and rides up once stood
@@ -225,7 +231,9 @@ export interface RewardSpot {
   z: number
   y: number
   room: number
-  kind: 'hp' | 'we' | 'bolts' | 'weapon'
+  /** `tank`: a Repair Gel, past the pack's cap like a secret's (a climb's
+   *  prize, `world/climbFeature.ts`). */
+  kind: 'hp' | 'we' | 'bolts' | 'weapon' | 'tank'
 }
 
 /** A machine's post in the climb: what kind of slot it is, where it stands,
@@ -272,6 +280,9 @@ export interface ChestSpot {
    *  must not hand out a legendary for nothing): its rarity and slot, and
    *  the key that makes it drop once per save. */
   loot?: ChestLoot
+  /** On a climb's top ledge: a shot opens it only with Flux up there (a
+   *  shot from the floor below stops on it). */
+  ledge?: boolean
 }
 
 export interface ChestLoot {
@@ -530,6 +541,33 @@ export interface SecretSpec {
   once?: string
 }
 
+/**
+ * A wall climb (`world/climbFeature.ts`): a tower raised in a room, its
+ * faces wall-kick shafts (`Ladder.kick`), a prize on its top ledge — or, for
+ * a shortcut, a corridor off the top into a locked battle room that lets
+ * out further down the route.
+ */
+/** A signpost on the floor (`ClimbSpot.shortcut.sign`). */
+export interface SignPost { x: number; z: number; dx: number; dz: number }
+
+export interface ClimbSpot {
+  room: number
+  /** 0 the Blaze practice wall, then 1..3 rising by sector. */
+  tier: number
+  /** The tower's cells (map keys), every one raised over the room floor. */
+  cells: number[]
+  /** Its shafts (indices into `Terrain.ladders`), bottom pitch first. */
+  ladders: number[]
+  reward: 'bolts' | 'weapon' | 'tank' | 'chest' | 'shortcut'
+  /** The top ledge's prize cell and its floor (m). */
+  top: { i: number; j: number; y: number }
+  /** A shortcut's battle room, its doors in and out, the route room it
+   *  lets out into and the route rooms it skips. `sign`: where it lets out
+   *  past the challenge door, a signpost by the way out (x, z: its post;
+   *  dx, dz: the way its arrow points, to that door). */
+  shortcut?: { room: number; doorIn: number; doorOut: number; to: number; skips: number[]; sign?: SignPost }
+}
+
 export interface Terrain {
   /** Floor height per cell (m); a ramp's height at its low edge. */
   floor: Float32Array
@@ -565,6 +603,8 @@ export interface Terrain {
   magnets?: MagnetRail[]
   /** Water: tides, locks and currents (the Tidewater Locks). */
   water?: WaterZone[]
+  /** Wall climbs (`world/climbFeature.ts`). */
+  climbs?: ClimbSpot[]
   /** Guard rooms (the Fortress's mini-boss halls): the way out of each
    *  stays shut until every machine in it is down. */
   guards?: number[]

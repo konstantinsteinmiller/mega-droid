@@ -2,6 +2,7 @@ import { CELL, Ramp, cellCenter, type MapData, type SecretSpec } from '../levelG
 import { mulberry32, shuffle } from '../rng'
 import { STOREY } from '../climbGen'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Glacier Run (the cryo sector's story stage) ────────────────────────────
@@ -217,6 +218,8 @@ export const generateGlacier = (seed: number): MapData => {
   // slippery stairs, its door at the end of the landing Flux steps onto
   // from the icicle hall — in view before he turns down the ice.
   b.challengeRoom(5, { mouth: { i: 9, j: 15, di: -1, dj: 0 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'cryo', seed)
   const map = finish(b, start, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

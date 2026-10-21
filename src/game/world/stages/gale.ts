@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Sky Docks (the gale sector's story stage) ──────────────────────────────
@@ -269,6 +270,8 @@ export const generateSkyDocks = (seed: number): MapData => {
   // the door is in front of Flux as he comes up the ladder; the way on is
   // west.
   b.challengeRoom(5, { mouth: { i: 15, j: 19, di: 0, dj: -1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'gale', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   map.terrain!.clouds = true
   return rng() < 0.5 ? mirrorX(map) : map

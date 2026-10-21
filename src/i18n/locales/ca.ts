@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Queden {s} segons, falten {n} drons',
     'tink': 'CLINC!',
+    'getClear': 'FUIG RÀPID!',
+    'lockLost': 'BLANC PERDUT!',
     'perfect': 'PERFECTE!',
     'parry': 'PARADA!',
     'guardBreak': 'GUÀRDIA TRENCADA!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Porta del repte',
     'challengeN': 'Porta del repte {n}',
     'actLevelUp': "Reprodueix l'escena de pujada de nivell",
-    'actObjective': "Reprodueix l'escena d'objectiu complert"
+    'actObjective': "Reprodueix l'escena d'objectiu complert",
+    'climbs': 'Salta a una escalada',
+    'practice': 'Paret de pràctica',
+    'climbN': 'Escalada {n} ({h} m)',
+    'shortcutStart': 'Inici de la drecera',
+    'battleRoom': 'Sala de combat'
   },
 
   'quest': {

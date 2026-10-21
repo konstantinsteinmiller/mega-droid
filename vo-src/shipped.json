@@ -851,13 +851,29 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/ending_fall": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
   "de/ending_gauss": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "de/ending_morning": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
+  "de/ending_relays": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
   "de/ending_spark": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "de/ending_thaw": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
   },
   "de/flux_fumble_1": {
     "engine": "elevenlabs",
@@ -2075,13 +2091,29 @@
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/ending_fall": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
   "en/ending_gauss": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
   },
+  "en/ending_morning": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
+  "en/ending_relays": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
+  },
   "en/ending_spark": {
     "engine": "elevenlabs",
     "at": "2026-10-03"
+  },
+  "en/ending_thaw": {
+    "engine": "elevenlabs",
+    "at": "2026-10-20"
   },
   "en/flux_fumble_1": {
     "engine": "elevenlabs",
@@ -3467,13 +3499,29 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "es/ending_fall": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "es/ending_gauss": {
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "es/ending_morning": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
+  "es/ending_relays": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "es/ending_spark": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "es/ending_thaw": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
   },
   "es/flux_fumble_1": {
     "engine": "chatterbox",
@@ -4691,13 +4739,29 @@
     "engine": "chatterbox",
     "at": "2026-10-08"
   },
+  "fr/ending_fall": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "fr/ending_gauss": {
     "engine": "chatterbox",
     "at": "2026-10-08"
   },
+  "fr/ending_morning": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
+  "fr/ending_relays": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "fr/ending_spark": {
     "engine": "chatterbox",
     "at": "2026-10-08"
+  },
+  "fr/ending_thaw": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
   },
   "fr/flux_fumble_1": {
     "engine": "chatterbox",
@@ -5915,13 +5979,29 @@
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "zh/ending_fall": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "zh/ending_gauss": {
     "engine": "chatterbox",
     "at": "2026-10-06"
   },
+  "zh/ending_morning": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
+  "zh/ending_relays": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
+  },
   "zh/ending_spark": {
     "engine": "chatterbox",
     "at": "2026-10-06"
+  },
+  "zh/ending_thaw": {
+    "engine": "chatterbox",
+    "at": "2026-10-20"
   },
   "zh/flux_fumble_1": {
     "engine": "chatterbox",

@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Còn {s} giây, còn {n} drone nữa',
     'tink': 'KENG!',
+    'getClear': 'TRÁNH RA!',
+    'lockLost': 'MẤT DẤU!',
     'perfect': 'HOÀN HẢO!',
     'parry': 'GẠT ĐÒN!',
     'guardBreak': 'PHÁ THỦ!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Cửa thử thách',
     'challengeN': 'Cửa thử thách {n}',
     'actLevelUp': 'Phát cảnh lên cấp',
-    'actObjective': 'Phát cảnh hoàn thành mục tiêu'
+    'actObjective': 'Phát cảnh hoàn thành mục tiêu',
+    'climbs': 'Nhảy tới điểm leo',
+    'practice': 'Tường tập',
+    'climbN': 'Điểm leo {n} ({h} m)',
+    'shortcutStart': 'Đầu lối tắt',
+    'battleRoom': 'Phòng chiến đấu'
   },
 
   'quest': {

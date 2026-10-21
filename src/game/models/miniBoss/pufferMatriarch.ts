@@ -1,4 +1,4 @@
-import { Color } from 'three'
+import { Color, Euler, Quaternion, Vector3 } from 'three'
 import { RigBuilder, sph, ell, torus, rcone, pose, nudge, scaleBone, type Rig } from '../kit'
 import { buildPuffer, type EnemyColors } from '../enemies'
 import { newPhase, phaseAt, type Phase } from '../spring'
@@ -95,6 +95,28 @@ for (const [pitch, n] of [[-0.75, 9], [-0.25, 13], [0.25, 13], [0.7, 10]] as con
   }
 }
 
+/** A spine's outward direction (unit, in the body's frame): the normal of
+ *  her skin where it is rooted. */
+export const spineDir = (yaw: number, pitch: number): [number, number, number] =>
+  [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)]
+
+/** How many spines ring her (each sits on a bone of its own: `sp<i>`). */
+export const MATRIARCH_SPINES = SPINES.length
+
+/** The spine's length at build size (m) and how deep its root sits in the skin. */
+const SPINE_H = 0.3
+const SPINE_ROOT = 0.06
+/** How far each spine grows with the swell (its length's share added at 1). */
+const SPINE_GROW = 0.35
+/** Her spines' tips from her middle at full swell, in the body's frame at
+ *  build size (the body bone's own swell scale goes on top). */
+export const MATRIARCH_SPINE_TIP = MATRIARCH_R - SPINE_ROOT + SPINE_H * (1 + SPINE_GROW)
+
+const _up = new Vector3(0, 1, 0)
+const _dir = new Vector3()
+const _sq = new Quaternion()
+const _se = new Euler()
+
 /** Her rig, its parts laid on its bones, not yet built (the z-fighting
  *  test reads its parts). */
 export const pufferMatriarchParts = (c = MATRIARCH_COLORS): RigBuilder => {
@@ -102,7 +124,6 @@ export const pufferMatriarchParts = (c = MATRIARCH_COLORS): RigBuilder => {
   const b = new RigBuilder()
   b.bone('root', null, [0, 0, 0])
     .bone('body', 'root', [0, 0, 0])
-    .bone('spines', 'body', [0, 0, 0])
     .bone('crown', 'body', [0, R * 0.86, -0.05])
     .bone('lips', 'body', [0, -0.18, R * 0.95])
     .bone('finL', 'body', [-R * 0.95, -0.05, -0.05])
@@ -132,12 +153,17 @@ export const pufferMatriarchParts = (c = MATRIARCH_COLORS): RigBuilder => {
   b.part('lips', torus(0.13, 0.065, 8, 16), c.lips, { p: [0, 0, 0.04] })
   b.part('lips', ell(0.1, 0.1, 0.05), '#3a1a22', { p: [0, 0, 0.02], outline: false })
   // ── The spines ──
-  for (const [yaw, pitch] of SPINES) {
-    const x = Math.sin(yaw) * Math.cos(pitch) * R
-    const y = Math.sin(pitch) * R
-    const z = Math.cos(yaw) * Math.cos(pitch) * R
-    b.part('spines', rcone(0.075, 0.008, 0.3, 0.008, 6), c.spike, { p: [x, y, z], r: [Math.PI / 2 - pitch, yaw, 0] })
-  }
+  // Each is rooted in the skin on a bone of its own, its axis along the skin's
+  // normal there: the spines ride the body rigidly (they tumble with her
+  // roll), and the swell grows each one out of its root along that normal.
+  SPINES.forEach(([yaw, pitch], i) => {
+    const [dx, dy, dz] = spineDir(yaw, pitch)
+    _sq.setFromUnitVectors(_up, _dir.set(dx, dy, dz))
+    _se.setFromQuaternion(_sq)
+    const r = R - SPINE_ROOT
+    b.bone(`sp${i}`, 'body', [dx * r, dy * r, dz * r], [_se.x, _se.y, _se.z])
+    b.part(`sp${i}`, rcone(0.075, 0.008, SPINE_H, 0.008, 6), c.spike, { p: [0, SPINE_H / 2, 0] })
+  })
   // ── The crown: a gold band, tall spines, a gem at the foot of each ──
   b.part('crown', torus(0.36, 0.06, 8, 22), c.gold, { r: [Math.PI / 2, 0, 0] })
   const CROWN = 7
@@ -182,7 +208,9 @@ export const posePufferMatriarch = (rig: Rig, p: PufferPose): void => {
   const shiver = swell > 0.6 ? Math.sin(T * 38) * 0.03 * swell : 0
   const sq = 1 - 0.12 * p.pucker + 0.06 * p.jet
   scaleBone(rig, 'body', (1 + 0.5 * swell) * sq + shiver, (1 + 0.5 * swell) * (1 + 0.05 * p.pucker) - shiver, (1 + 0.5 * swell) * (1 + 0.08 * p.pucker))
-  scaleBone(rig, 'spines', 1 + 0.3 * swell)
+  // Each spine grows out of its own root (uniformly, so it keeps pointing
+  // straight out of the skin): with the body's swell, about twice as long.
+  for (let i = 0; i < MATRIARCH_SPINES; i++) scaleBone(rig, `sp${i}`, 1 + SPINE_GROW * swell)
   nudge(rig, 'body', 0, 0.06 * Math.sin(T * 1.7) * (1 - p.dying), -0.18 * p.jet)
   pose(rig, 'body',
     p.roll - 0.35 * p.cough + 0.15 * p.pucker + 0.5 * p.dying,

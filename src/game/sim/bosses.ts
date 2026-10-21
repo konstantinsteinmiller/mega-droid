@@ -1,6 +1,6 @@
 import { NG_FOLLOW_CD } from './ngPlus'
 import { bossCanStart } from './attackReach'
-import { Group } from 'three'
+import { AdditiveBlending, Color, Group, Mesh, MeshBasicMaterial, SphereGeometry } from 'three'
 import type { Enemy, World } from './world'
 import { BOSSES, type BossDef } from '../data/bosses'
 import { buildBossRig, poseBoss, type BossId } from '../models/bosses'
@@ -118,7 +118,48 @@ const PATTERN: Record<string, { tele: number; red: boolean }> = {
   laserGrid: { tele: 0.9, red: true },
   droneSwarm: { tele: 0.6, red: false },
   downdraft: { tele: 0.8, red: true },
-  rotorStorm: { tele: 0.8, red: false }
+  rotorStorm: { tele: 0.8, red: false },
+  // #188 Every Master's two charged attacks (`bossSpecial`)
+  chargedBlast: { tele: 0.35, red: true },
+  homingSalvo: { tele: 0.7, red: false }
+}
+
+/**
+ * #188 The charged blast: the Master stops in a shield bubble (untouchable,
+ * shots TINK off it) for BLAST_CHARGE s while the ring on the floor fills —
+ * then it bursts, BLAST_DMG × its damage on anyone inside its `blast.r`.
+ * Neither the shield nor a slide takes it: only running clear does. The
+ * tutorial's Master charges BLAST_ONBOARD × longer.
+ */
+export const BLAST_CHARGE = 3
+export const BLAST_ONBOARD = 1.5
+export const BLAST_DMG = 1.8
+/** The homing salvo's missiles: their spacing (s) and damage (× the Master's). */
+const SALVO_GAP = 0.22
+/** The share of the widest launch its turn can still bring onto him
+ *  (an arc of its turning radius through him) that a salvo goes out at. */
+const SALVO_ARC = 0.8
+const SALVO_DMG = 0.9
+
+/**
+ * #188 Which charged attack the Master's `n`-th attack is (counting from 1),
+ * or null for one of its own patterns: the blast every `blast.every`-th, the
+ * homing salvo every `homing.every`-th (from the third on; on a clash the
+ * blast wins). Every Master's homing cadence is slower than any one of its
+ * own patterns comes up, so the cone volleys stay the common shot. The
+ * tutorial's Master (`onboard`) keeps both for phase 2.
+ */
+/** #188 The blast is only committed with Flux this far into its ring
+ *  (× `blast.r`): no blast is ever started that cannot reach him. */
+export const BLAST_COMMIT = 0.85
+export const blastCommitR = (def: BossDef): number => def.blast.r * BLAST_COMMIT
+export const blastReaches = (def: BossDef, d: number): boolean => d <= blastCommitR(def)
+
+export const bossSpecial = (def: BossDef, n: number, phase2: boolean, onboard: boolean): 'chargedBlast' | 'homingSalvo' | null => {
+  if (onboard && !phase2) return null
+  if (n % def.blast.every === 0) return 'chargedBlast'
+  if (n % def.homing.every === 3) return 'homingSalvo'
+  return null
 }
 
 /** The Rotor Master's downdraft: it blows Flux away (m/s, s). */
@@ -240,6 +281,8 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
     }
     return
   }
+  // The bubble only ever holds through its own charge (#188)
+  if (e.bossShield && (e.state !== 'act' || e.attack !== 'chargedBlast')) e.bossShield = 0
   e.stunAge += dt
   e.stunImmune = Math.max(0, e.stunImmune - dt)
   if (e.state === 'stun') {
@@ -268,8 +311,13 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
     case 'engage': {
       e.y += (fly + Math.sin(e.anim * 2) * (fly > 0 ? 0.25 : 0) - e.y) * Math.min(1, dt * 4)
       faceTo(e, w.player.x, w.player.z, 5, dt)
-      // Hold mid range with a lazy strafe
-      const [lo, hi] = def.range
+      // The next attack is its charged blast (#188): it walks in until Flux
+      // is well inside the ring before it commits (`blastReaches`).
+      const next = bossSpecial(def, (e.bossN ?? 0) + 1, e.phase2, !!e.onboard)
+      const blastDue = next === 'chargedBlast'
+      // Hold mid range with a lazy strafe (closer while its blast waits)
+      const lo = blastDue ? 0 : def.range[0]
+      const hi = blastDue ? Math.min(def.range[1], blastCommitR(def) * 0.8) : def.range[1]
       const px = w.player.x
       const pz = w.player.z
       const nx = (e.x - px) / (d || 1)
@@ -286,12 +334,18 @@ const bossTick = (w: World, e: Enemy, dt: number, room: Room | null): void => {
         step(w, e, (mx / ml) * def.speed * dt, (mz / ml) * def.speed * dt)
       }
       e.cd -= dt
+      // Every few attacks a charged one (#188). A blast only when he is
+      // inside its ring: out of it, it stays due (the count waits) and an
+      // ordinary pattern comes meanwhile, which does not count either.
+      const blastWaits = blastDue && !blastReaches(def, d)
+      const special = e.cd <= 0 && !blastWaits ? next : null
       // Only a pattern that reaches him from here (#180): none does, and it
       // keeps closing in (the strafe above walks it into its band).
-      const pool = e.cd <= 0 ? (e.phase2 ? [...def.patterns, ...def.patterns2] : def.patterns).filter(a => bossCanStart(w, e.x, e.z, a, d)) : []
-      if (pool.length) {
-        let pick = pool[Math.floor(Math.random() * pool.length)]!
-        if (pick === e.attack && pool.length > 1) pick = pool[(pool.indexOf(pick) + 1) % pool.length]!
+      const pool = e.cd <= 0 && !special ? (e.phase2 ? [...def.patterns, ...def.patterns2] : def.patterns).filter(a => bossCanStart(w, e.x, e.z, a, d)) : []
+      if (special || pool.length) {
+        let pick = special ?? pool[Math.floor(Math.random() * pool.length)]!
+        if (!special && pick === e.attack && pool.length > 1) pick = pool[(pool.indexOf(pick) + 1) % pool.length]!
+        if (!blastWaits) e.bossN = (e.bossN ?? 0) + 1
         const meta = PATTERN[pick] ?? { tele: 0.8, red: false }
         e.attack = pick
         e.teleDur = meta.tele * (e.phase2 ? 0.85 : 1) * (e.tempo ?? 1)
@@ -386,6 +440,9 @@ const melee = (w: World, e: Enemy, reach: number, dmgMul: number): void => {
     w.hitPlayer(e, Math.round(e.dmg * dmgMul), { blockable: true, fromX: e.x, fromZ: e.z, kind: 'melee' })
   }
 }
+
+/** Scratch for the blast ring's colour (no allocation per blast). */
+const _blastCol = new Color()
 
 const lightning = (w: World, ax: number, ay: number, az: number, bx: number, by: number, bz: number, color: string): void => {
   const n = Math.max(6, Math.round(Math.hypot(bx - ax, bz - az) * 2.5))
@@ -818,6 +875,63 @@ const runPattern = (w: World, e: Enemy, dt: number, d: number, room: Room | null
       }
       return e.st > 1.7
     }
+    case 'chargedBlast': {
+      // #188 It stops in its bubble, energy drawn in off the floor as the
+      // ring fills; then the burst. Only out of the ring is safe.
+      const charge = BLAST_CHARGE * (e.onboard ? BLAST_ONBOARD : 1)
+      const r = def.blast.r
+      if (e.step === 0) {
+        e.step = 1
+        e.bossShield = charge
+        w.markers.spawn(e.x, e.z, r, charge, e, _blastCol.set(def.color))
+        pushHud({ t: 'text', x: e.x, y: e.y + e.rig.height * s + 0.9, z: e.z, key: 'combat.getClear', color: def.color })
+        w.sfx('alert', e.x, e.z)
+      }
+      if (e.step === 1) {
+        e.bossShield = Math.max(0, charge - e.st)
+        if (Math.random() < 0.8) {
+          const a = Math.random() * Math.PI * 2
+          const rr = r * (0.55 + Math.random() * 0.45)
+          w.fx.emit({ x: e.x + Math.sin(a) * rr, y: 0.25 + Math.random() * 1.4, z: e.z + Math.cos(a) * rr, vx: -Math.sin(a) * rr * 1.6, vz: -Math.cos(a) * rr * 1.6, color: def.color, size: 0.4, sizeEnd: 0.05, life: 0.55 })
+        }
+        // A throb that quickens toward the burst
+        e.flash = 0.3 + 0.3 * Math.sin(e.st * (6 + e.st * 7))
+        if (e.st >= charge) {
+          e.step = 2
+          e.bossShield = 0
+          w.shocks.spawn(e.x, 0.05, e.z, r, def.color, 0.5)
+          w.fx.orbBurst(e.x, 1.2 * s, e.z, def.color, 2.2)
+          w.fx.sparks(e.x, 0.6, e.z, def.color, 30, 11, 0.3)
+          if (def.fly === 0) landDust(w, e.x, e.z, r * 0.6)
+          pushHud({ t: 'flash', color: def.color, strength: 0.3 })
+          w.shake(0.75)
+          w.sfx('explode', e.x, e.z)
+          if (d < r + PLAYER_R) w.hitPlayer(e, Math.round(e.dmg * BLAST_DMG), { blockable: false, fromX: e.x, fromZ: e.z, kind: 'aoe', blast: true })
+        }
+        return false
+      }
+      return e.st > charge + 0.6
+    }
+    case 'homingSalvo': {
+      // #188 Missiles launched wide either side, curving in after Flux:
+      // block them (the shield takes all of it), or slide through one late
+      // to break its lock.
+      const H = def.homing
+      if (e.step < H.n && e.st >= e.step * SALVO_GAP) {
+        const side = e.step % 2 ? 1 : -1
+        // Never wider than its turn can bring it round onto him: launched
+        // 0.9 rad off at close range (inside its turning circle), a missile
+        // looped past a Flux who stood still until it burnt out — the Drill
+        // Master's (8.5 m/s, 2 rad/s) at its usual 4-5 m never once hit.
+        const reach = Math.max(0, Math.hypot(p.x - e.x, p.z - e.z) - s) / (2 * H.speed / H.turn)
+        const wide = Math.min(0.9 + 0.25 * Math.floor(e.step / 2), SALVO_ARC * Math.asin(Math.min(1, reach)))
+        const a = Math.atan2(p.x - e.x, p.z - e.z) + side * wide
+        w.fireMissile?.(e, e.x + Math.sin(a) * s, 1.6 * s, e.z + Math.cos(a) * s, Math.sin(a), Math.cos(a), H.speed, H.turn, Math.round(e.dmg * SALVO_DMG), def.color)
+        w.sfx('enemyShot', e.x, e.z)
+        e.step++
+      }
+      return e.st > H.n * SALVO_GAP + 0.4
+    }
     case 'dive': {
       if (e.step === 0) {
         const k = Math.min(1, e.st / 0.45)
@@ -879,7 +993,31 @@ export const syncBossVisual = (e: Enemy, alpha: number): void => {
   m.phase = m.pstride + (m.stride - m.pstride) * alpha
   poseBoss(e.rig, id, e.anim, act, k, m, e)
   if (a) placeRoot(e)
+  syncShield(e)
   if (e.ring.visible) e.ring.position.set(x, y + e.rig.height * bdef(e).scale + 0.6, z)
+}
+
+/** The charged blast's shield bubble (#188): one per Master, made on its
+ *  first charge, round its body; it throbs, brightening toward the burst. */
+const bubbleGeo = new SphereGeometry(1, 24, 16)
+const syncShield = (e: Enemy): void => {
+  const on = (e.bossShield ?? 0) > 0
+  if (!on && !e.shieldMesh) return
+  if (!e.shieldMesh) {
+    const def = bdef(e)
+    const mat = new MeshBasicMaterial({ color: new Color(def.color), transparent: true, opacity: 0.3, blending: AdditiveBlending, depthWrite: false, toneMapped: false })
+    const sm = new Mesh(bubbleGeo, mat)
+    const h = e.rig.height * def.scale
+    sm.scale.setScalar(Math.max(h * 0.62, def.radius * 1.5))
+    sm.position.y = h * 0.5
+    sm.renderOrder = 5
+    e.root.add(sm)
+    e.shieldMesh = sm
+  }
+  const sm = e.shieldMesh
+  sm.visible = on
+  if (!on) return
+  ;(sm.material as MeshBasicMaterial).opacity = 0.22 + 0.12 * Math.sin(e.anim * 9) + 0.2 * Math.max(0, 1 - (e.bossShield ?? 0))
 }
 
 /**

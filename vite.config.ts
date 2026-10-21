@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { scanVoiceFiles } from './tools/voice/hash.mjs'
 
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 
@@ -106,20 +107,13 @@ const OVERRIDE_DIRS = {
   textures: { dir: 'public/images/textures', exts: ['.webp', '.png', '.jpg'] }
 } as const
 /** Voice-overs: public/audio/voice/<lang>/<line file>.ogg, one folder per
- *  voiced language (see `src/game/audio/voice.ts` and voice-todo.md). */
+ *  voiced language (see `src/game/audio/voice.ts` and voice-todo.md). Each is
+ *  listed with its content hash (`?v=`, tools/voice/hash.mjs): a re-voiced
+ *  line gets a new URL, so no cache plays the old take. */
 const VOICE_DIR = 'public/audio/voice'
-const VOICE_EXTS = ['.ogg', '.mp3', '.m4a']
 const scanOverrides = (): Record<keyof typeof OVERRIDE_DIRS | 'voice', string[]> => {
   const out = { sfx: [] as string[], music: [] as string[], textures: [] as string[], voice: [] as string[] }
-  const voiceAbs = fileURLToPath(new URL(`./${VOICE_DIR}`, import.meta.url))
-  if (existsSync(voiceAbs)) {
-    for (const lang of readdirSync(voiceAbs).filter(d => /^[a-z]{2}$/.test(d)).sort()) {
-      const files = readdirSync(`${voiceAbs}/${lang}`)
-        .filter(f => VOICE_EXTS.includes(f.slice(f.lastIndexOf('.')).toLowerCase()))
-        .sort()
-      for (const f of files) out.voice.push(`${lang}/${f}`)
-    }
-  }
+  out.voice = scanVoiceFiles(fileURLToPath(new URL(`./${VOICE_DIR}`, import.meta.url)))
   for (const [key, { dir, exts }] of Object.entries(OVERRIDE_DIRS)) {
     const abs = fileURLToPath(new URL(`./${dir}`, import.meta.url))
     if (!existsSync(abs)) continue
@@ -147,6 +141,8 @@ const assetOverridesPlugin = (): Plugin => {
       }
       server.watcher.on('add', onChange)
       server.watcher.on('unlink', onChange)
+      // A re-voiced line keeps its name but gets a new hash, so a new URL.
+      server.watcher.on('change', (file: string) => { if (file.includes('voice')) onChange(file) })
     }
   }
 }

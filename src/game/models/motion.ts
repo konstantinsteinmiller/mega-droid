@@ -103,6 +103,22 @@ export interface EnemyMotion {
   grip: number
   /** 0..1: the boulder it hauls out of itself for the lob (gone at the release). */
   boulder: number
+  // ── Hit / shot events (view-only: set by the sim, read by the poses) ──
+  /** Enemy clock (`Enemy.anim`) at the last hit it took (−99: none). */
+  hitT: number
+  /** That hit's strength: ~0.3 a chip shot … 1 a full charge / guard break. */
+  hitK: number
+  /** The side it came from in the body frame: −1 (−X) … 1 (+X). */
+  hitSide: number
+  /** How far the chest twists away (`hitSide`, plus a small bias whose side
+   *  alternates hit by hit, so a head-on hit still turns it a little). */
+  hitTwist: number
+  /** Hits taken so far (picks the head-on bias's side). */
+  hitN: number
+  /** 1 when it struck the raised guard and was deflected, else 0. */
+  hitBlock: number
+  /** Enemy clock at its last shot fired (−99: none). */
+  shotT: number
   // ── Bosses ──
   /** A boss in the game: its motion layer's springs (`models/bossAnim.ts`,
    *  stepped by `updateBoss`). Absent, a boss rig keeps the first layer. */
@@ -126,7 +142,8 @@ export const newMotion = (seed: number, kind?: EnemyKind): EnemyMotion => {
     calm: 1, startle: 0, tempo: 1, fid: 0, fidT: 0, fidCd: 0, look: 0, lookTo: 0, lookT: 0,
     rng: (Math.imul(seed | 0, 2654435761) >>> 0) || 1,
     tilt: kind === 'heli' ? 0.08 : kind === 'roller' ? 0.2 : 0, armL: 0, armR: 0, slam: 0, air: 0, daze: 0,
-    brace: 0, grip: 0, boulder: 0
+    brace: 0, grip: 0, boulder: 0,
+    hitT: -99, hitK: 0, hitSide: 0, hitTwist: 0, hitN: 0, hitBlock: 0, shotT: -99
   }
   m.tempo = 0.88 + 0.24 * rand(m)
   m.fidCd = 0.5 + 5.5 * rand(m)
@@ -135,6 +152,25 @@ export const newMotion = (seed: number, kind?: EnemyKind): EnemyMotion => {
   m.pstride = m.stride
   m.phase = m.stride
   return m
+}
+
+/**
+ * Record a hit for the poses (view-only, never read by the AI): `t` the
+ * enemy's clock, `fromX/fromZ` where it came from, the body at `x, z` facing
+ * `yaw`, `blocked` when the guard deflected it.
+ */
+export const noteHit = (m: EnemyMotion, t: number, k: number, x: number, z: number, yaw: number, fromX: number, fromZ: number, blocked: boolean): void => {
+  m.hitT = t
+  m.hitK = k
+  m.hitSide = Math.sin(Math.atan2(fromX - x, fromZ - z) - yaw)
+  m.hitN++
+  m.hitTwist = m.hitSide + (m.hitN & 1 ? 0.35 : -0.35) * (1 - Math.abs(m.hitSide))
+  m.hitBlock = blocked ? 1 : 0
+}
+
+/** Record a shot it fired (view-only). */
+export const noteShot = (m: EnemyMotion, t: number): void => {
+  m.shotT = t
 }
 
 // ─── Gait ─────────────────────────────────────────────────────────────────────

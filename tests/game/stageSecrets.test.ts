@@ -14,6 +14,8 @@ import { CELL } from '@/game/world/levelGen'
 import { initialState, press, pressCount, solved } from '@/game/sim/secrets'
 import type { SecretSpec } from '@/game/world/levelGen'
 import type { SectorId } from '@/game/world/themes'
+import { mirrorX } from '@/game/world/stages/builder'
+import { climbProblems } from './climbCheck'
 
 const STAGES: SectorId[] = ['blaze', 'cryo', 'volt', 'gale', 'magnet', 'drill', 'tide', 'neon', 'rotor', 'fortress']
 
@@ -86,4 +88,20 @@ describe('stage secrets are fair puzzles', () => {
       expect(['lights', 'color', 'cycle'], s).toContain(generateStage(s, 1).terrain!.secrets![0]!.kind)
     }
   })
+})
+
+// The wall climbs are fair puzzles too (`world/climbFeature.ts`): every
+// shaft kicked up with the game's own body (`ClimbRun`: KICK_UP, the slip
+// between kicks, the mantle) at a quick beat and a slow one, pitch after
+// pitch to the prize — many seeds, both mirror sides.
+describe('stage wall climbs are fair puzzles', () => {
+  for (const sector of STAGES) {
+    it(`${sector}: every seed's climb can be climbed`, () => {
+      for (let seed = 0; seed < 16; seed++) {
+        const m = generateStage(sector, seed)
+        expect(climbProblems(m, sector, `${sector} #${seed}`, true)).toEqual([])
+        expect(climbProblems(mirrorX(m), sector, `${sector} #${seed} mirrored`, true)).toEqual([])
+      }
+    })
+  }
 })

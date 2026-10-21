@@ -8,7 +8,9 @@
     role="img"
     :aria-label="state === 'locked' ? t('hud.bossUnknown') : t(`boss.${id}`)"
   )
-    img(:src="src" alt="" draggable="false" loading="lazy" decoding="async")
+    //- Eager: lazy let the loading beam's boss splash (mounted mid-build, its
+    //- portrait striking in from off-frame) show an empty ring.
+    img(:src="src" alt="" draggable="false")
     span.q(v-if="state === 'locked'" aria-hidden="true") ?
     span.tick(v-if="state === 'beaten'" aria-hidden="true")
       GameIcon(name="check")
@@ -22,6 +24,21 @@ import { MASTER_COLOR } from '@/game/data/signature'
 import type { BossId } from '@/game/models/bosses'
 import type { PortraitState } from './portraitState'
 
+
+/** Every Master's portrait, fetched once when the browser is idle (eleven
+ *  ~3 KB files): the boss splash on the mission loader mounts while the
+ *  sector builds and the main thread is busy, too late to fetch its face. */
+let preloaded = false
+const preloadPortraits = (): void => {
+  if (preloaded || typeof window === 'undefined') return
+  preloaded = true
+  const go = (): void => {
+    for (const id of Object.keys(MASTER_COLOR)) new Image().src = `${import.meta.env.BASE_URL}images/masters/${id}.webp`
+  }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 3000 })
+  else setTimeout(go, 1500)
+}
+preloadPortraits()
 
 const props = withDefaults(defineProps<{ id: BossId; state?: PortraitState; size?: number }>(), {
   state: 'plain',

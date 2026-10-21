@@ -6,6 +6,7 @@
 // its lines are the voice catalog's, and the Vex scene that Master had in the
 // Lab plays inside it and counts as seen.
 
+import { CAPTIONS } from '@/game/story/endingScript'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SECTORS } from '@/game/data/regions'
 import { WEAPONS } from '@/game/data/weapons'
@@ -76,7 +77,9 @@ describe('the debrief script', () => {
         for (const [, name] of text.matchAll(/\{(\w+)\}/g)) expect(typeof at(en, b.params![name!]!), `${b.pip} {${name}}`).toBe('string')
       }
     }
-    // Nothing recorded that no debrief plays.
+    // The ending's narration is Pip's too (its debrief after the last mission).
+    for (const c of CAPTIONS) if (c.speaker === 'pip') used.add(`ending.${c.key}`)
+    // Nothing recorded that no debrief or the ending plays.
     expect([...live.keys()].sort()).toEqual([...used].sort())
   })
 })

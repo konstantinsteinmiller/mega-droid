@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} sekunder tilbage, {n} droner mangler',
     'tink': 'PLING!',
+    'getClear': 'KOM VÆK!',
+    'lockLost': 'MÅL TABT!',
     'perfect': 'PERFEKT!',
     'parry': 'PARERET!',
     'guardBreak': 'GARDEN BRUDT!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Udfordringsdør',
     'challengeN': 'Udfordringsdør {n}',
     'actLevelUp': 'Afspil niveau-op-scenen',
-    'actObjective': 'Afspil mål-nået-scenen'
+    'actObjective': 'Afspil mål-nået-scenen',
+    'climbs': 'Hop til en klatring',
+    'practice': 'Øvevæg',
+    'climbN': 'Klatring {n} ({h} m)',
+    'shortcutStart': 'Genvejens start',
+    'battleRoom': 'Kamprum'
   },
 
   'quest': {

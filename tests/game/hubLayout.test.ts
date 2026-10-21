@@ -7,19 +7,19 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-  BAY, BRIEF_SPOT, CAP_TO_PAD, FLUX_CAP_AT, GAUSS_CAP_AT, HERO_R, HOME_PAD, LAB_POSTS, LAB_WALK_R, PAD_POSTS, POIS, POI_BY_ID, POSTS, WALLS, fenceOf, openGateWalls, poiAt, rayHit, rayHitPosts,
-  resolveCircle, routeTo, spawnOnPad, zoneAt, type Poi, type Seg
+  BAY, BRIEF_SPOT, CAP_TO_PAD, GAUSS_AWAKE_AT, GAUSS_POST, POSTS_AWAKE, FLUX_CAP_AT, GAUSS_CAP_AT, HERO_R, HOME_PAD, LAB_POSTS, LAB_WALK_R, PAD_POSTS, POIS, POI_BY_ID, POSTS, WALLS, fenceOf, openGateWalls, poiAt, rayHit, rayHitPosts,
+  resolveCircle, routeTo, spawnOnPad, zoneAt, type Poi, type Post, type Seg
 } from '@/game/world/hubLayout'
 import { newWalker, stepWalker, walkRoute } from '@/game/sim/hubWalk'
 
 const OPEN: readonly Seg[] = [...WALLS, ...openGateWalls()]
 
 /** Walk the tap's route from (x, z) to `to`; the result and where he ended. */
-const walk = (x: number, z: number, to: Poi, walls: readonly Seg[] = OPEN) => {
+const walk = (x: number, z: number, to: Poi, walls: readonly Seg[] = OPEN, posts: readonly Post[] = POSTS) => {
   const w = newWalker(x, z, 0)
   walkRoute(w, routeTo(x, z, to), to.yaw + Math.PI)
   for (let i = 0; i < 60 * 40; i++) {
-    stepWalker(w, { moveX: 0, moveY: 0, camYaw: 0, free: true }, 1 / 60, walls, POSTS)
+    stepWalker(w, { moveX: 0, moveY: 0, camYaw: 0, free: true }, 1 / 60, walls, posts)
     if (w.arrived) return { arrived: true, w }
     if (w.cancelled) return { arrived: false, w }
   }
@@ -148,5 +148,38 @@ describe('the camera keeps in front of things', () => {
     // It starts in his capsule and ends on the pad.
     expect(Math.hypot(CAP_TO_PAD[0]![0] - FLUX_CAP_AT.x, CAP_TO_PAD[0]![1] - FLUX_CAP_AT.z)).toBeLessThan(0.62)
     expect(CAP_TO_PAD.at(-1)).toEqual([HOME_PAD.x, HOME_PAD.z])
+  })
+})
+
+describe('Dr. Gauss awake in the lab (New Game+)', () => {
+  it('is solid: Flux walking straight at her stops at her coat, not inside her', () => {
+    expect(GAUSS_POST.x).toBe(GAUSS_AWAKE_AT.x)
+    expect(GAUSS_POST.z).toBe(GAUSS_AWAKE_AT.z)
+    expect(POSTS_AWAKE).toContain(GAUSS_POST)
+    const w = newWalker(GAUSS_AWAKE_AT.x, GAUSS_AWAKE_AT.z + 2, Math.PI)
+    for (let i = 0; i < 60 * 3; i++) {
+      stepWalker(w, { moveX: 0, moveY: 1, camYaw: Math.PI, free: true }, 1 / 60, OPEN, POSTS_AWAKE)
+    }
+    // He walked up to her (and would have walked through her without the post).
+    expect(w.z).toBeLessThan(GAUSS_AWAKE_AT.z + 1.2)
+    expect(Math.hypot(w.x - GAUSS_AWAKE_AT.x, w.z - GAUSS_AWAKE_AT.z)).toBeGreaterThanOrEqual(GAUSS_POST.r + HERO_R - 0.01)
+  })
+
+  it('stands clear of the other props and of every walkway in the lab', () => {
+    for (const o of [...LAB_POSTS, ...PAD_POSTS]) {
+      expect(Math.hypot(o.x - GAUSS_POST.x, o.z - GAUSS_POST.z) - o.r - GAUSS_POST.r, `${o.x},${o.z}`).toBeGreaterThan(0)
+    }
+    const body = [{ ...GAUSS_POST, r: GAUSS_POST.r + HERO_R }]
+    expect(rayHitPosts(0, 0, BRIEF_SPOT.x, BRIEF_SPOT.z, body)).toBe(1)
+    expect(rayHitPosts(0, 0, 0, 8, body)).toBe(1)
+    const out: [number, number] = [0, 0]
+    for (const s of [HOME_PAD, BRIEF_SPOT, ...POIS.filter(p => p.kind !== 'station').map(spawnOnPad)]) {
+      resolveCircle(s.x, s.z, HERO_R, OPEN, POSTS_AWAKE, out)
+      expect(Math.hypot(out[0] - s.x, out[1] - s.z)).toBeLessThan(1e-6)
+    }
+    for (const t of [POI_BY_ID.table, POI_BY_ID.hero, POI_BY_ID.workshop, POI_BY_ID.job2]) {
+      expect(walk(HOME_PAD.x, HOME_PAD.z, t, OPEN, POSTS_AWAKE).arrived, t.id).toBe(true)
+      expect(walk(BRIEF_SPOT.x, BRIEF_SPOT.z, t, OPEN, POSTS_AWAKE).arrived, t.id).toBe(true)
+    }
   })
 })

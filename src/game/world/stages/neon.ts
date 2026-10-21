@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Blackout Boulevard (the neon sector's story stage) ──────────────────────
@@ -49,7 +50,7 @@ import { Builder, finish, mirrorX, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './buil
  */
 
 const GRID_W = 34
-const GRID_H = 49
+const GRID_H = 53
 const ROOF_Y = 12
 const STOREY = 3
 /** Vents and billboards stand this high over a roof (m). */
@@ -213,46 +214,46 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   b.checkpoint(29, 32, YAW_PZ, cells(26, 32, 31, 32))
   b.foe('ground', 30, 30, YAW_NZ, [25, 29, 32, 30], undefined, 'stalker')
   b.foe('turret', 32, 25, YAW_NX, [32, 25, 32, 25])
-  b.corridor(28, 33, 0, 1, 2, LOW)
+  b.corridor(28, 33, 0, 1, 6, LOW)
 
   // ── 11 Gutter leaps ───────────────────────────────────────────────────────
-  b.addRoom(23, 35, 10, 4, 'combat', 'islands', LOW)
-  b.pits(23, 35, 32, 38)
-  island(28, 35, 32, 38, LOW)
-  island(25, 35, 26, 38, LOW)
-  island(23, 35, 23, 38, LOW)
-  leaps(28, 0, -1, 0, [36, 37])
-  leaps(25, 0, -1, 0, [36, 37])
-  b.checkpoint(30, 36, YAW_NX, cells(29, 35, 32, 38))
-  b.checkpoint(25, 36, YAW_NX, cells(25, 36, 26, 37))
-  b.foe('flyer', 27, 37, YAW_NX, [23, 35, 32, 38], [LOW, LOW + 2])
-  b.corridor(22, 36, -1, 0, 2, LOW)
+  b.addRoom(23, 39, 10, 4, 'combat', 'islands', LOW)
+  b.pits(23, 39, 32, 42)
+  island(28, 39, 32, 42, LOW)
+  island(25, 39, 26, 42, LOW)
+  island(23, 39, 23, 42, LOW)
+  leaps(28, 0, -1, 0, [41, 42])
+  leaps(25, 0, -1, 0, [41, 42])
+  b.checkpoint(30, 40, YAW_NX, cells(29, 39, 32, 42))
+  b.checkpoint(25, 40, YAW_NX, cells(25, 40, 26, 41))
+  b.foe('flyer', 27, 41, YAW_NX, [23, 39, 32, 42], [LOW, LOW + 2])
+  b.corridor(22, 40, -1, 0, 2, LOW)
 
   // ── 12 Sign shop ──────────────────────────────────────────────────────────
   // Behind the north wall, a secret alcove (shoot the buttons).
-  b.addRoom(12, 34, 9, 5, 'combat', 'hall', LOW)
-  b.chest(20, 34, YAW_PX)
-  b.checkpoint(19, 36, YAW_NX, cells(19, 35, 20, 37))
-  b.foe('ground', 16, 36, YAW_PX, [13, 34, 18, 38], undefined, 'stalker')
+  b.addRoom(12, 38, 9, 5, 'combat', 'hall', LOW)
+  b.chest(20, 38, YAW_PX)
+  b.checkpoint(19, 40, YAW_NX, cells(19, 39, 20, 41))
+  b.foe('ground', 16, 40, YAW_PX, [13, 38, 18, 42], undefined, 'stalker')
   // A beam from the east wall, three mirrors to the target by the false
   // wall, each found once the one before it is turned (#143).
-  b.secret(11, 'mirror', [12, 33, 13, 33], { i: 13, j: 33, axis: 'z' }, [], [], 'tank', undefined,
-    { emitter: [20, 38, 'e'], mirrors: [[17, 38, 1], [17, 35, 1], [14, 35, 1]] })
-  b.corridor(11, 36, -1, 0, 2, LOW)
+  b.secret(11, 'mirror', [12, 37, 13, 37], { i: 13, j: 37, axis: 'z' }, [], [], 'tank', undefined,
+    { emitter: [20, 42, 'e'], mirrors: [[17, 42, 1], [17, 39, 1], [14, 39, 1]] })
+  b.corridor(11, 40, -1, 0, 2, LOW)
 
   // ── 13 Approach ───────────────────────────────────────────────────────────
-  b.addRoom(1, 34, 9, 5, 'combat', 'hall', 0)
-  b.level(6, 34, 9, 38, LOW)
-  for (let j = 34; j <= 38; j++) b.stair(5, j, Ramp.PX, 0, LOW)
-  b.checkpoint(8, 36, YAW_NX, cells(7, 35, 9, 37))
-  b.checkpoint(2, 37, YAW_PZ, cells(1, 36, 3, 38))
-  b.foe('ground', 2, 35, YAW_PZ, [1, 34, 4, 38], undefined, 'stalker')
-  b.foe('flyer', 7, 37, YAW_NX, [1, 34, 9, 38], [0, LOW])
-  b.foe('flyer', 3, 37, YAW_PX, [1, 34, 9, 38], [0, LOW], 'spotter')
-  b.corridor(3, 39, 0, 1, 2, 0, true)
+  b.addRoom(1, 38, 9, 5, 'combat', 'hall', 0)
+  b.level(6, 38, 9, 42, LOW)
+  for (let j = 38; j <= 42; j++) b.stair(5, j, Ramp.PX, 0, LOW)
+  b.checkpoint(8, 40, YAW_NX, cells(7, 39, 9, 41))
+  b.checkpoint(2, 41, YAW_PZ, cells(1, 40, 3, 42))
+  b.foe('ground', 2, 39, YAW_PZ, [1, 38, 4, 42], undefined, 'stalker')
+  b.foe('flyer', 7, 41, YAW_NX, [1, 38, 9, 42], [0, LOW])
+  b.foe('flyer', 3, 41, YAW_PX, [1, 38, 9, 42], [0, LOW], 'spotter')
+  b.corridor(3, 43, 0, 1, 2, 0, true)
 
   // ── 14 Arena ──────────────────────────────────────────────────────────────
-  b.addRoom(1, 41, 7, 7, 'boss', 'arena', 0)
+  b.addRoom(1, 45, 7, 7, 'boss', 'arena', 0)
 
   // The beam-in room: south of the pad, its door into it.
   b.beamRoom(3, 7, 4, 3, 5, 6, 0, -1, 1)
@@ -261,7 +262,9 @@ export const generateBlackoutBoulevard = (seed: number): MapData => {
   // The challenge room (`sim/challenge.ts`): south off the gutter leaps'
   // first roof, a walled rooftop hall at its height — the door is beside
   // Flux as he comes down the fire escape; the way on is west, over the gaps.
-  b.challengeRoom(10, { mouth: { i: 29, j: 38, di: 0, dj: 1 } })
+  b.challengeRoom(10, { mouth: { i: 29, j: 42, di: 0, dj: 1 } })
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'neon', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   // Open air under the roofs: a fall is the rescue's, not a spike pit.
   map.terrain!.clouds = true

@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': 'Secunde rămase: {s}, drone rămase: {n}',
     'tink': 'TINK!',
+    'getClear': 'FUGI!',
+    'lockLost': 'ȚINTĂ PIERDUTĂ!',
     'perfect': 'PERFECT!',
     'parry': 'PARADĂ!',
     'guardBreak': 'GARDĂ SPARTĂ!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Ușa provocării',
     'challengeN': 'Ușa provocării {n}',
     'actLevelUp': 'Redă scena de avansare în nivel',
-    'actObjective': 'Redă scena de obiectiv îndeplinit'
+    'actObjective': 'Redă scena de obiectiv îndeplinit',
+    'climbs': 'Salt la o cățărare',
+    'practice': 'Perete de exersare',
+    'climbN': 'Cățărare {n} ({h} m)',
+    'shortcutStart': 'Începutul scurtăturii',
+    'battleRoom': 'Sala de luptă'
   },
 
   'quest': {

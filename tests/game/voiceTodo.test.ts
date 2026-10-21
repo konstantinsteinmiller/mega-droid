@@ -10,6 +10,7 @@ import { resolve } from 'node:path'
 import { renderVoiceTodo } from '@/game/audio/voiceTodo'
 import { VOICE_LINES } from '@/game/audio/voiceLines'
 import { fileName } from '@/game/audio/voiceCatalog'
+import { VOICE_ALIASES } from '@/game/audio/voiceAliases'
 import en from '@/i18n/locales/en'
 import de from '@/i18n/locales/de'
 import es from '@/i18n/locales/es'
@@ -32,7 +33,8 @@ describe('voice-todo.md', () => {
     locales: { en, de, es, zh, fr },
     shipped: existsSync(shippedFile) ? JSON.parse(readFileSync(shippedFile, 'utf8')) : {},
     files: Object.fromEntries(LANGS.map(l => [l, filesOf(l)])),
-    fileName
+    fileName,
+    aliases: VOICE_ALIASES
   })
 
   it('is current (run `pnpm voice:script` when it is not)', () => {

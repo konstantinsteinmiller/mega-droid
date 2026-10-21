@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} sekuntia jäljellä, vielä {n} droonia',
     'tink': 'KLING!',
+    'getClear': 'POIS ALTA!',
+    'lockLost': 'LUKITUS MENETETTY!',
     'perfect': 'TÄYDELLINEN!',
     'parry': 'TORJUNTA!',
     'guardBreak': 'SUOJA MURTUI!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Haasteovi',
     'challengeN': 'Haasteovi {n}',
     'actLevelUp': 'Toista tasonnousukohtaus',
-    'actObjective': 'Toista tavoite suoritettu -kohtaus'
+    'actObjective': 'Toista tavoite suoritettu -kohtaus',
+    'climbs': 'Hyppää kiipeilyyn',
+    'practice': 'Harjoitusseinä',
+    'climbN': 'Kiipeily {n} ({h} m)',
+    'shortcutStart': 'Oikotien alku',
+    'battleRoom': 'Taisteluhuone'
   },
 
   'quest': {

@@ -32,6 +32,8 @@ export default {
     // The sky shoot's clock, read out (#178): seconds left, drones to go.
     'skyClock': '{s} saniyə qaldı, daha {n} dron',
     'tink': 'ÇIN!',
+    'getClear': 'UZAQLAŞ!',
+    'lockLost': 'HƏDƏF İTDİ!',
     'perfect': 'MÜKƏMMƏL!',
     'parry': 'DƏF EDİLDİ!',
     'guardBreak': 'MÜDAFİƏ QIRILDI!',
@@ -196,7 +198,12 @@ export default {
     'challenge': 'Sınaq qapısı',
     'challengeN': 'Sınaq qapısı {n}',
     'actLevelUp': 'Səviyyə artımı səhnəsini oynat',
-    'actObjective': 'Hədəf tamamlandı səhnəsini oynat'
+    'actObjective': 'Hədəf tamamlandı səhnəsini oynat',
+    'climbs': 'Dırmanmaya keç',
+    'practice': 'Məşq divarı',
+    'climbN': 'Dırmanma {n} ({h} m)',
+    'shortcutStart': 'Qısa yolun başlanğıcı',
+    'battleRoom': 'Döyüş otağı'
   },
 
   'quest': {

@@ -1,6 +1,7 @@
 import { CELL, Ramp, cellCenter, type MapData, type Lift, type MagnetRail, type WaterZone } from '../levelGen'
 import { mulberry32 } from '../rng'
 import { Builder, finish, mirrorX, POOL_FREEBOARD, YAW_PX, YAW_NX, YAW_PZ, YAW_NZ } from './builder'
+import { placeClimbs } from '../climbFeature'
 
 /**
  * ─── Vex Fortress (the last story stage) ─────────────────────────────────────
@@ -361,6 +362,8 @@ export const generateVexFortress = (seed: number): MapData => {
     b.coverPillar(cr.x0 + 1, cr.z0 + 2)
     b.coverPillar(cr.x0 + cr.w - 2, cr.z0 + cr.h - 2)
   }
+  // The wall climbs (`world/climbFeature.ts`), last: nothing above moves.
+  placeClimbs(b, 'fortress', seed)
   const map = finish(b, { x: cellCenter(4) + CELL / 2, z: cellCenter(8), yaw: YAW_NZ }, seed)
   return rng() < 0.5 ? mirrorX(map) : map
 }

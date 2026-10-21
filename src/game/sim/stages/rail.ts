@@ -48,6 +48,69 @@ const DECK_HW = 1.25
 const DECK_HL = 1.3
 /** Where the deck's platform waits while it flies (m): out of the level. */
 const PARK = -1e4
+/** The quadcopter flies its course with rounded corners: each corner is a
+ *  curve this wide (m), cut short to under half of either leg, drawn as
+ *  this many short chords (a cart's track keeps its sharp corners). */
+const ROUND_R = 4.2
+const ROUND_LEG = 0.45
+const ROUND_STEPS = 16
+/** It eases into a turn: sideways pull (m/s²) and turn rate (rad/s) it
+ *  never goes over, braking ahead of the corner as it would before a stop. */
+const TURN_PULL = 7
+export const TURN_RATE = 1.6
+/** Its heading and slope are read over this stretch of the course (m), so
+ *  they turn through a corner instead of stepping chord by chord. */
+const LOOK = 0.9
+/** The bank into a turn: as a quadcopter tilts into its pull, at most this
+ *  much (rad), eased in and out at this rate (1/s). */
+export const BANK_MAX = 0.32
+const BANK_EASE = 5
+const G = 9.8
+
+type P3 = { x: number; y: number; z: number }
+
+/**
+ * The flight's course: the polyline with each corner replaced by a
+ * quadratic curve from a point on the leg before it, through the corner's
+ * pull, to a point on the leg after it. Start and end stay where they are;
+ * the curve lies inside the corner, never out past the polyline.
+ */
+export function roundCourse(P: ReadonlyArray<P3>): P3[] {
+  if (P.length < 3) return P.map(p => ({ x: p.x, y: p.y, z: p.z }))
+  const out: P3[] = [{ x: P[0]!.x, y: P[0]!.y, z: P[0]!.z }]
+  for (let n = 1; n < P.length - 1; n++) {
+    const a = P[n - 1]!
+    const c = P[n]!
+    const e = P[n + 1]!
+    const la = Math.hypot(c.x - a.x, c.y - a.y, c.z - a.z)
+    const le = Math.hypot(e.x - c.x, e.y - c.y, e.z - c.z)
+    const ha = Math.hypot(c.x - a.x, c.z - a.z) || 1
+    const he = Math.hypot(e.x - c.x, e.z - c.z) || 1
+    const dot = ((c.x - a.x) * (e.x - c.x) + (c.z - a.z) * (e.z - c.z)) / (ha * he)
+    const turn = Math.acos(Math.max(-1, Math.min(1, dot)))
+    if (turn < 1e-3 || la < 1e-6 || le < 1e-6) {
+      out.push({ x: c.x, y: c.y, z: c.z })
+      continue
+    }
+    const cut = Math.min(ROUND_R * Math.tan(turn / 2), ROUND_LEG * la, ROUND_LEG * le)
+    const ka = 1 - cut / la
+    const ke = cut / le
+    const b0 = { x: a.x + (c.x - a.x) * ka, y: a.y + (c.y - a.y) * ka, z: a.z + (c.z - a.z) * ka }
+    const b2 = { x: c.x + (e.x - c.x) * ke, y: c.y + (e.y - c.y) * ke, z: c.z + (e.z - c.z) * ke }
+    for (let k = 0; k <= ROUND_STEPS; k++) {
+      const t = k / ROUND_STEPS
+      const m0 = (1 - t) * (1 - t)
+      const m1 = 2 * t * (1 - t)
+      const m2 = t * t
+      out.push({ x: m0 * b0.x + m1 * c.x + m2 * b2.x, y: m0 * b0.y + m1 * c.y + m2 * b2.y, z: m0 * b0.z + m1 * c.z + m2 * b2.z })
+    }
+  }
+  const z = P[P.length - 1]!
+  out.push({ x: z.x, y: z.y, z: z.z })
+  return out
+}
+
+const wrap = (a: number): number => Math.atan2(Math.sin(a), Math.cos(a))
 
 export type RailState = 'wait' | 'board' | 'ride' | 'done'
 
@@ -74,6 +137,15 @@ export class RailFeature implements StageFeature {
   /** Distance along the rail at each point (m), and the whole length. */
   private readonly cum: Float32Array
   readonly length: number
+  /** The course flown: the rail's points, or (the quadcopter) its rounded
+   *  course. */
+  readonly points: ReadonlyArray<P3>
+  /** Per point: the signed turn there (rad/m, left positive; 0 on a cart),
+   *  and the fastest it may pass it (m/s), braking ahead of every turn. */
+  private readonly bend: Float32Array
+  private readonly vmax: Float32Array
+  /** The quadcopter's bank now (rad, into the turn). */
+  bank = 0
   state: RailState = 'wait'
   /** Distance along the rail (m) and speed (m/s). */
   s = 0
@@ -113,7 +185,8 @@ export class RailFeature implements StageFeature {
   constructor(host: ClimbHost, def: RailSpec) {
     this.host = host
     this.def = def
-    const P = def.points
+    const P = host.theme.id === 'rotor' ? roundCourse(def.points) : def.points
+    this.points = P
     this.cum = new Float32Array(P.length)
     for (let n = 1; n < P.length; n++) {
       const a = P[n - 1]!
@@ -121,6 +194,24 @@ export class RailFeature implements StageFeature {
       this.cum[n] = this.cum[n - 1]! + Math.hypot(c.x - a.x, c.y - a.y, c.z - a.z)
     }
     this.length = this.cum[P.length - 1] ?? 0
+    // The turn at each point, and from it a speed profile: under the pull
+    // and the turn rate in the turn, braking back from every one of them.
+    this.bend = new Float32Array(P.length)
+    this.vmax = new Float32Array(P.length).fill(def.speed)
+    if (host.theme.id === 'rotor') {
+      const yaw = (n: number) => Math.atan2(-(P[n + 1]!.x - P[n]!.x), -(P[n + 1]!.z - P[n]!.z))
+      for (let n = 1; n < P.length - 1; n++) {
+        const ds = (this.cum[n + 1]! - this.cum[n - 1]!) / 2
+        const k = ds > 1e-6 ? wrap(yaw(n) - yaw(n - 1)) / ds : 0
+        this.bend[n] = k
+        const ak = Math.abs(k)
+        if (ak > 1e-4) this.vmax[n] = Math.min(def.speed, Math.sqrt(TURN_PULL / ak), TURN_RATE / ak)
+      }
+      for (let n = P.length - 2; n >= 0; n--) {
+        const ds = this.cum[n + 1]! - this.cum[n]!
+        this.vmax[n] = Math.min(this.vmax[n]!, Math.sqrt(this.vmax[n + 1]! ** 2 + 2 * BRAKE * ds))
+      }
+    }
     this.bi = def.boardAt.i
     this.bj = def.boardAt.j
     const map = host.map
@@ -183,25 +274,33 @@ export class RailFeature implements StageFeature {
    * waves ask it for the rail ahead).
    */
   sample(s: number, out: RailPoint): void {
-    const P = this.def.points
-    const cum = this.cum
-    const last = P.length - 1
+    const P = this.points
     s = Math.max(0, Math.min(this.length, s))
-    let lo = 0
-    let hi = Math.max(0, last - 1)
-    while (lo < hi) {
-      const m = (lo + hi + 1) >> 1
-      if (cum[m]! <= s) lo = m
-      else hi = m - 1
+    const lo = this.seg(s)
+    this.lerp(lo, s, out)
+    if (this.air && this.length > 2 * LOOK) {
+      // The heading and slope over a short stretch: they turn smoothly
+      // through a rounded corner rather than stepping at each chord.
+      const s0 = Math.max(0, Math.min(this.length - 2 * LOOK, s - LOOK))
+      const o = this.scratch
+      this.lerp(this.seg(s0), s0, o)
+      const ax = o.x
+      const ay = o.y
+      const az = o.z
+      this.lerp(this.seg(s0 + 2 * LOOK), s0 + 2 * LOOK, o)
+      const hx = o.x - ax
+      const hz = o.z - az
+      const h = Math.hypot(hx, hz)
+      if (h > 1e-6) {
+        out.dx = hx / h
+        out.dz = hz / h
+        out.pitch = Math.atan2(o.y - ay, h)
+      }
+      return
     }
-    const n1 = Math.min(last, lo + 1)
+    const n1 = Math.min(P.length - 1, lo + 1)
     const a = P[lo]!
     const c = P[n1]!
-    const span = cum[n1]! - cum[lo]!
-    const k = span > 1e-6 ? (s - cum[lo]!) / span : 0
-    out.x = a.x + (c.x - a.x) * k
-    out.y = a.y + (c.y - a.y) * k
-    out.z = a.z + (c.z - a.z) * k
     const hx = c.x - a.x
     const hz = c.z - a.z
     const h = Math.hypot(hx, hz)
@@ -210,6 +309,57 @@ export class RailFeature implements StageFeature {
       out.dz = hz / h
       out.pitch = Math.atan2(c.y - a.y, h)
     }
+  }
+
+  private readonly scratch: RailPoint = { x: 0, y: 0, z: 0, dx: 0, dz: 1, pitch: 0 }
+
+  /** The point index the stretch of course holding `s` starts at. */
+  private seg(s: number): number {
+    const cum = this.cum
+    let lo = 0
+    let hi = Math.max(0, this.points.length - 2)
+    while (lo < hi) {
+      const m = (lo + hi + 1) >> 1
+      if (cum[m]! <= s) lo = m
+      else hi = m - 1
+    }
+    return lo
+  }
+
+  /** The position `s` m along the course, on the stretch from point `lo`. */
+  private lerp(lo: number, s: number, out: RailPoint): void {
+    const P = this.points
+    const cum = this.cum
+    const last = P.length - 1
+    const n1 = Math.min(last, lo + 1)
+    const a = P[lo]!
+    const c = P[n1]!
+    const span = cum[n1]! - cum[lo]!
+    const k = span > 1e-6 ? (s - cum[lo]!) / span : 0
+    out.x = a.x + (c.x - a.x) * k
+    out.y = a.y + (c.y - a.y) * k
+    out.z = a.z + (c.z - a.z) * k
+  }
+
+  /** Between the two points round `s`: their share of it (0..1). */
+  private along(s: number): [number, number, number] {
+    const n = this.seg(Math.max(0, Math.min(this.length, s)))
+    const n1 = Math.min(this.points.length - 1, n + 1)
+    const span = this.cum[n1]! - this.cum[n]!
+    return [n, n1, span > 1e-6 ? Math.max(0, Math.min(1, (s - this.cum[n]!) / span)) : 0]
+  }
+
+  /** The fastest the quadcopter may fly at `s` (m/s): its speed profile
+   *  (the rail's own speed on a cart). */
+  maxSpeedAt(s: number): number {
+    const [n, n1, k] = this.along(s)
+    return this.vmax[n]! + (this.vmax[n1]! - this.vmax[n]!) * k
+  }
+
+  /** The signed turn at `s` (rad/m, left positive). */
+  private bendAt(s: number): number {
+    const [n, n1, k] = this.along(s)
+    return this.bend[n]! + (this.bend[n1]! - this.bend[n]!) * k
   }
 
   /** The cart at `s` along the rail: position, heading, and the mesh. */
@@ -240,6 +390,15 @@ export class RailFeature implements StageFeature {
     root.rotation.order = 'YXZ'
     root.rotation.y = Math.atan2(-q.dx, -q.dz)
     root.rotation.x = q.pitch
+    root.rotation.z = this.bank
+  }
+
+  /** The quadcopter tilts into its turn as its pull asks (v²·turn / g),
+   *  eased, and levels out on the straights and at rest. */
+  private tilt(dt: number): void {
+    if (!this.air) return
+    const want = Math.max(-BANK_MAX, Math.min(BANK_MAX, Math.atan(this.v * this.v * this.bendAt(this.s) / G)))
+    this.bank += (want - this.bank) * Math.min(1, BANK_EASE * dt)
   }
 
   /**
@@ -264,6 +423,7 @@ export class RailFeature implements StageFeature {
   reset(): void {
     this.state = 'wait'
     this.v = 0
+    this.bank = 0
     this.beat = 0
     this.place(0)
     this.cart.padMat.color.set(this.host.theme.pipe)
@@ -288,8 +448,9 @@ export class RailFeature implements StageFeature {
         return
       }
       const rem = this.length - this.s
-      const cap = Math.max(CRAWL, Math.sqrt(2 * BRAKE * rem))
+      const cap = Math.max(CRAWL, Math.min(Math.sqrt(2 * BRAKE * rem), this.maxSpeedAt(this.s)))
       this.v = Math.min(this.def.speed, cap, this.v + ACCEL * dt)
+      this.tilt(dt)
       this.place(this.s + this.v * dt)
       if (this.s >= this.length - 1e-3) this.arrive(p)
     }
@@ -336,6 +497,7 @@ export class RailFeature implements StageFeature {
   private arrive(p: ClimbBody): void {
     this.state = 'done'
     this.v = 0
+    this.bank = 0
     this.place(this.length)
     p.x = this.x
     p.z = this.z

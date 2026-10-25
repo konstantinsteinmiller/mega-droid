@@ -1,4 +1,5 @@
 import { ngHpMul, ngTempo, ngFollowUp } from './ngPlus'
+import { bossTempoMul, nextBossTempo, tempoExempt } from './bossTempo'
 import { planDecor } from '../world/decor'
 import { breakDecor, decorTargets, decorHit, DECOR_BOLTS, type DecorDrop, type DecorTarget } from './decorBreak'
 import { RoomCrane, CRANE_G } from './roomCrane'
@@ -499,6 +500,8 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private sky: SkyShoot | null = null
   private boss: Enemy | null = null
   private bossStarted = false
+  /** Mission time the Core Master fight began (`sim/bossTempo.ts`), -1 before. */
+  private bossFightAt = -1
   /** The first boss's free reboot has been taken (`freeBossReboot`). */
   private freeRebootUsed = false
   /** A voiced story scene running (`story/vexScene.ts`, #117), if any. */
@@ -955,6 +958,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       this.boss.maxHp = Math.round(this.boss.maxHp * mul)
       this.boss.hp = this.boss.maxHp
       if (this.runMul) this.boss.dmg = Math.round(this.boss.dmg * this.runMul.dmg)
+      // Boss tempo (#191): the last Core Master fell fast, this one is tougher.
+      if (!setup.tutorial && !tempoExempt(this.boss.bossId)) {
+        const t = bossTempoMul(profile.world.bossTempo ?? 0)
+        this.boss.maxHp = Math.round(this.boss.maxHp * t.hp)
+        this.boss.hp = this.boss.maxHp
+        this.boss.dmg = Math.round(this.boss.dmg * t.dmg)
+      }
     }
     for (const e of this.enemies) if (!e.boss) this.toughen(e)
     // New Game+ (`sim/ngPlus.ts`): every machine and boss a cycle tougher,
@@ -1791,6 +1801,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
           if (beats.length) this.playScene(beats, 'top', null)
           else this.atlas?.event('bossDown')
           this.onBossDownWeapon(e)
+          // Boss tempo (#191): how fast it fell sets the next one's step
+          // (the intro is not the player's time).
+          if (!this.setup.tutorial && !tempoExempt(e.bossId) && this.bossFightAt >= 0) {
+            const secs = this.time - this.bossFightAt - BOSS_INTRO_T
+            profile.world.bossTempo = nextBossTempo(profile.world.bossTempo ?? 0, secs)
+            saveProfile()
+          }
         }
       }
     }
@@ -1812,6 +1829,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // A resume after the kill restores the boss dead: no second entrance.
     if (!b || this.bossStarted || b.state === 'dead') return
     this.bossStarted = true
+    this.bossFightAt = this.time
     startBossIntro(b)
     const d = this.bossDoor()
     if (d) {

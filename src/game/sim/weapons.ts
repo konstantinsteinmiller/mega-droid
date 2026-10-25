@@ -28,6 +28,8 @@ import { pushHud } from '../state/hud'
 /** Aim pitch (the aim vector's y) above which a floor weapon — Flame Wave,
  *  Bubble Lance, the thrown Gale leaves — leaves the floor and flies along
  *  the aim instead (about 3°: a level or downward aim still rolls). */
+/** #191: every special weapon costs 60% more Weapon Energy, so 1-2-3 spam runs dry. */
+export const SPECIAL_COST_MUL = 1.6
 export const RISE_AIM = 0.05
 
 export interface WeaponHost {
@@ -95,7 +97,7 @@ export class WeaponSystem {
   }
 
   cost(id: WeaponId): number {
-    return Math.max(1, Math.round(WEAPONS[id].cost * this.host.stats.weCostMul))
+    return Math.max(1, Math.round(WEAPONS[id].cost * SPECIAL_COST_MUL * this.host.stats.weCostMul))
   }
 
   /**

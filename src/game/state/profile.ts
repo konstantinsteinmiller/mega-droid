@@ -68,6 +68,8 @@ export interface WorldSave {
   tutorialDone: boolean
   /** New Game+ cycle: 0 on the first run (`sim/ngPlus.ts`). */
   ngPlus: number
+  /** Boss tempo step 0..2 (`sim/bossTempo.ts`, #191): set by how fast the last Core Master fell. */
+  bossTempo?: number
   selected: SectorId
   /** Story beats already shown (`story.md` § What this changes: `intro`, and
    *  later `relay:<sector>`, `vex:<boss>`, `blueprint`, `breach`, `ending`). */

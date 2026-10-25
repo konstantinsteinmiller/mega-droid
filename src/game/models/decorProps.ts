@@ -1,5 +1,5 @@
-import type { BufferGeometry } from 'three'
-import { cap, dome, lathe, paint, paintBy, rbox, rcone, rcyl, rock, sph, torus, xform, type V3 } from './kit'
+import { CatmullRomCurve3, TubeGeometry, Vector3, type BufferGeometry } from 'three'
+import { cap, dome, lathe, paint, paintBy, rbox, rcone, rcyl, rock, sph, stripUv, torus, xform, type V3 } from './kit'
 import type { SectorId } from '../world/themes'
 
 /**
@@ -433,6 +433,19 @@ const dish = (): DecorParts => P([
   at(paint(cap(0.02, 0.5, 4, 2), IRON), [0, 1.3, 0.2], [0.7, 0, 0])
 ])
 
+/** The heart's centre line (m, in the sign's plane): x = 16 sin³t,
+ *  y = 13 cos t − 5 cos 2t − 2 cos 3t − cos 4t, scaled to ~0.6 m wide. */
+const HEART = Array.from({ length: 64 }, (_, n) => {
+  const t = (n / 64) * Math.PI * 2
+  const k = 0.019
+  return new Vector3(
+    16 * Math.sin(t) ** 3 * k,
+    (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * k,
+    0
+  )
+})
+const NEON_BOLT = [[0.06, 0.32], [-0.05, 0.04], [0.05, 0.02], [-0.07, -0.3]].map(([x, y]) => new Vector3(x, y, 0))
+
 /** A neon sign on the wall: a backing plate and a lit heart-and-bolt tube. */
 const neonSign = (): DecorParts => {
   const y = 3.2
@@ -443,13 +456,11 @@ const neonSign = (): DecorParts => {
       ...bracket(y + 0.6, 0.06, -0.4), ...bracket(y + 0.6, 0.06, 0.4)
     ],
     [
-      at(paint(torus(0.18, 0.035, 6, 16, Math.PI * 1.1), '#ff3fd2'), [-0.17, y + 0.08, z + 0.07], [0, 0, -0.15]),
-      // The heart's halves meet in its middle: each tube a little proud of
-      // the other there (no shared plane).
-      at(paint(torus(0.18, 0.035, 6, 16, Math.PI * 1.1), '#ff3fd2'), [0.17, y + 0.08, z + 0.082], [0, Math.PI, -0.15]),
-      at(paint(cap(0.035, 0.42, 6, 2), '#ff3fd2'), [-0.15, y - 0.13, z + 0.094], [0, 0, 0.75]),
-      at(paint(cap(0.035, 0.42, 6, 2), '#ff3fd2'), [0.15, y - 0.13, z + 0.106], [0, 0, -0.75]),
-      at(paint(cap(0.03, 0.5, 6, 2), '#7ff4ff'), [0.48, y, z + 0.07], [0, 0, 0.4])
+      // One unbroken tube along the classic heart curve, so the halves flow
+      // into the dip and the point instead of meeting as separate sticks.
+      at(paint(stripUv(new TubeGeometry(new CatmullRomCurve3(HEART, true), 96, 0.032, 6, true)), '#ff3fd2'), [-0.1, y + 0.02, z + 0.08]),
+      // A zig-zag bolt beside it, the same tube style.
+      at(paint(stripUv(new TubeGeometry(new CatmullRomCurve3(NEON_BOLT, false, 'catmullrom', 0.1), 48, 0.028, 6, false)), '#7ff4ff'), [0.46, y, z + 0.08])
     ]
   )
 }

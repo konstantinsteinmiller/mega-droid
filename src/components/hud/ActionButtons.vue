@@ -33,6 +33,7 @@
         span.cue-arrow(v-for="i in 3" :key="i" :class="`a${i}`")
     button.act.block(
       type="button"
+      data-spot="block"
       :class="[{ held: hud.blockHeld, cue: hud.blockCue }, demoClass('block')]"
       :aria-label="t('combat.block')"
       @pointerdown.prevent.stop="blockDown"
@@ -54,6 +55,7 @@
     button.act.slide(
       ref="slideBtn"
       type="button"
+      data-spot="slide"
       :class="[{ cooling: slideCooling, low: hud.slidePowerLow, ready: slideFlash, cue: hud.slideCue }, demoClass('slide')]"
       :aria-label="t('combat.slide')"
       @pointerdown.prevent.stop="slide"

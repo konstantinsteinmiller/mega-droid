@@ -31,6 +31,7 @@
       TutorialChecklist
       LessonPointer
       LessonGlyph
+      FreezeSpotlight
       InputCue
     HubScreen(v-else-if="flow.screen === 'hub'" @options="optionsOpen = true")
     CutsceneLayer(v-else-if="flow.screen === 'intro'")
@@ -124,6 +125,7 @@ import TutorialChecklist from '@/components/hud/TutorialChecklist.vue'
 import LessonPointer from '@/components/hud/LessonPointer.vue'
 import LessonGlyph from '@/components/hud/LessonGlyph.vue'
 import InputCue from '@/components/hud/InputCue.vue'
+import FreezeSpotlight from '@/components/hud/FreezeSpotlight.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
 import ResultsModal from '@/components/modals/ResultsModal.vue'
 import DefeatModal from '@/components/modals/DefeatModal.vue'
@@ -294,7 +296,18 @@ watch(() => [isGamePaused.value, flow.screen] as const, ([paused, screen]) => {
 })
 watch(() => flow.modal, (m, prev) => {
   if (flow.abandoning) { flow.abandoning = false; return }
-  if (!m && prev && flow.screen === 'mission' && input.device === 'mouse' && hud.phase === 'play') requestPointerLock(input)
+  if (!m && prev && flow.screen === 'mission' && input.device === 'mouse' && hud.phase === 'play') {
+    requestPointerLock(input)
+    // Esc closed the menu (no gesture, so no capture: Wavedash): play must
+    // not run on under a free mouse that turns nothing. The click veil asks
+    // for the click a capture needs (#192).
+    setTimeout(() => {
+      if (isPointerLocked() || input.lockRefused || flow.modal || hud.phase !== 'play' ||
+        flow.screen !== 'mission' || relockVeil.value) return
+      relockVeil.value = true
+      relockRelease = acquireAppPause()
+    }, 250)
+  }
 })
 
 // Live play without a capture (the lock refused or lost, a portal iframe

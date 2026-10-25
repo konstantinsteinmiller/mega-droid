@@ -259,8 +259,16 @@ export const requestPointerLock = (input: Input): void => {
   }
 }
 
+const MOVE_ACTIONS = new Set<Action>(['forward', 'back', 'left', 'right', 'turnLeft', 'turnRight'])
+/** A held movement key that has sent no keydown for this long, when another
+ *  movement key goes down, is taken as released (its keyup was lost). */
+const STALE_KEY_MS = 1500
+
 export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptions): (() => void) => {
   const keys = new Set<string>()
+  /** When each key last sent a keydown (a held key repeats every ~33 ms). */
+  const keyAt = new Map<string, number>()
+  let lastCtrlAt = -1e9
   const joyR = opts.joyRadius ?? 56
   let joyId: number | null = null
   let lookId: number | null = null
@@ -470,6 +478,8 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     input.touched = true
     input.device = 'mouse'
     input.anyPressed = true
+    // A mouse press: a stick left behind by a lost touch release lets go.
+    if (input.joyActive) { input.joyActive = false; joyId = null; updateKeysMove() }
     // The middle button (the wheel click) blocks too, untaught: an
     // alternative for players whose right button fights a gesture browser.
     // Its press is also what stops autoscroll.
@@ -572,11 +582,15 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     }
     input.blockHeld = false
     blockButtons = 0
-    const asked = releasing
+    // Ctrl+Esc (Strg+Esc): the player only wants the mouse back, no pause.
+    const asked = releasing || ctrlHeld()
     releasing = false
     opts.onLockChange?.(false, asked)
     if (!asked) opts.onLockLost?.()
   }
+
+  const ctrlHeld = () => keys.has('ControlLeft') || keys.has('ControlRight') ||
+    performance.now() - lastCtrlAt < 600
 
   const onLockError = () => {
     if (requestCounts && !isPointerLocked()) input.lockRefused = true
@@ -589,11 +603,37 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     if (!touchOnly) input.device = 'mouse'
     // Every real key teaches the layout its label (`keyLabels.ts`).
     if (!touchOnly) observeKey(e)
+    if (e.code === 'ControlLeft' || e.code === 'ControlRight') lastCtrlAt = performance.now()
+    if (e.code === 'Escape' && e.ctrlKey) {
+      // Ctrl+Esc hands the mouse back without the pause menu (#192).
+      if (isPointerLocked()) releasePointerLock()
+      e.preventDefault()
+      return
+    }
+    const act = actionForCode(e.code)
+    if (!e.repeat && act && !touchOnly) {
+      // A key of the game is a fresh start for the movement: a stick whose
+      // finger never came up, or a key whose release the browser swallowed,
+      // must not keep Flux walking (#192 stuck walk).
+      if (input.joyActive) { input.joyActive = false; joyId = null }
+      // A movement key pressed while another has sent nothing for a while
+      // drops that one: a real hold either repeats or was just pressed
+      // (W held, then A for the diagonal, keeps W). Any other game key
+      // only drops orphaned non-movement keys, so W+A then Space still runs.
+      const moving = MOVE_ACTIONS.has(act)
+      const now = performance.now()
+      for (const c of [...keys]) {
+        const a = actionForCode(c)
+        if (!a || !MOVE_ACTIONS.has(a)) keys.delete(c)
+        else if (moving && c !== e.code && now - (keyAt.get(c) ?? 0) > STALE_KEY_MS) keys.delete(c)
+      }
+    }
+    keyAt.set(e.code, performance.now())
     if (e.repeat && keys.has(e.code)) return
     keys.add(e.code)
     if (!e.repeat && !NOT_A_PRESS.has(e.code)) input.anyPressed = true
     // Through the bindings (`keyBindings.ts`): physical keys, rebindable.
-    switch (actionForCode(e.code)) {
+    switch (act) {
       case 'slide':
         input.slideQueued = true
         e.preventDefault()
@@ -645,6 +685,9 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     updateKeysMove()
   }
 
+  const onVisibility = () => { if (document.hidden) onBlur() }
+  const onLostCapture = (e: PointerEvent) => { if (e.pointerId === joyId || e.pointerId === lookId) onUp(e) }
+
   const onBlur = () => {
     keys.clear()
     input.moveX = 0
@@ -677,6 +720,8 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
   window.addEventListener('blur', onBlur)
+  document.addEventListener('visibilitychange', onVisibility)
+  surface.addEventListener('lostpointercapture', onLostCapture)
 
   return () => {
     releasePointerLock()
@@ -694,6 +739,8 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
     window.removeEventListener('keydown', onKeyDown)
     window.removeEventListener('keyup', onKeyUp)
     window.removeEventListener('blur', onBlur)
+    document.removeEventListener('visibilitychange', onVisibility)
+    surface.removeEventListener('lostpointercapture', onLostCapture)
   }
 }
 

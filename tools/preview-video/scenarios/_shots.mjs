@@ -28,7 +28,7 @@ const until = async (ctx, fn, arg, ms = 30_000) => {
   }
 }
 
-const PILOT = { fire: 'mix', chargeS: 0.9, strafe: 0.55, strafePeriod: 2.6, closeTo: 0 }
+const PILOT = { fire: 'mix', chargeS: 0.9, strafe: 0.55, strafePeriod: 2.6, closeTo: 5 }
 
 /**
  * A Core Master mid-fight, caught as it winds up one of `attacks`: Flux walks
@@ -36,19 +36,32 @@ const PILOT = { fire: 'mix', chargeS: 0.9, strafe: 0.55, strafePeriod: 2.6, clos
  * the Master's health is set to `hp` (below half = its phase-2 moves), and
  * the take starts on the wind-up with Flux `dist` m from it.
  */
-const masterShot = (sector, { attacks, hp = 0.45, weapons = ['iceLance', 'neonBlade'], pilot = {}, dist = 5 }) => ({
+const masterShot = (sector, { attacks, hp = 0.45, weapons = ['iceLance', 'neonBlade'], pilot = {}, dist = 5, killAt = 0 }) => ({
   async stage(ctx) {
     await enterMaster(ctx, sector, weapons)
     await T(ctx, (f) => window.__trailer.bossHp(f), hp)
-    await T(ctx, (p) => window.__trailer.auto(p), { ...PILOT, weapon: 1, weaponEvery: 3.2, ...pilot })
+    await T(ctx, (p) => window.__trailer.auto(p), { ...PILOT, weapon: 4, weaponEvery: 1.1, ...pilot })
     await settle(ctx, 2500)
     await T(ctx, () => window.__trailer.clearAdds())
     await until(ctx, (a) => window.__trailer.bossDoing(a, ['tele']), attacks, 45_000)
-    await T(ctx, (d) => { window.__trailer.approach(['boss'], d); window.__trailer.clearAdds() }, dist)
+    // On the open side of the Master: the bearing from it to its room's middle, no wall at his back.
+    await T(ctx, (d) => {
+      const t = window.__trailer
+      const r = t.bossRoom()
+      const b = t.m().boss
+      t.approach(['boss'], d, r ? Math.atan2(r.cx - b.x, r.cz - b.z) : 0)
+      t.clearAdds()
+    }, dist)
     await logState(ctx, 'wind-up')
   },
   async play(ctx) {
-    await play(ctx, 900)
+    if (killAt) {
+      // The fight runs, then the last charged shot breaks the Master apart.
+      await play(ctx, killAt)
+      await T(ctx, () => { window.__trailer.bossHp(0.001); window.__trailer.auto({ fire: 'charge', chargeS: 0.9 }) })
+      await play(ctx, 1500)
+      await T(ctx, () => window.__trailer.auto({ fire: 'none' }))
+    } else await play(ctx, 900)
     await logState(ctx, 'mid')
   }
 })
@@ -84,7 +97,10 @@ const rideShot = (sector, { at = 0.35, lead = 2200 } = {}) => ({
       return true
     }, at)
     if (!ok) ctx.log.warn('ride: no rail feature on this stage')
-    await T(ctx, () => window.__trailer.auto({ fire: 'mix', chargeS: 0.7, strafe: 0, closeTo: 0 }))
+    await T(ctx, () => {
+      window.__trailer.arm(['thunderArc', 'droneSwarm'])
+      window.__trailer.auto({ fire: 'mix', chargeS: 0.7, strafe: 0, closeTo: 0, weapon: 2, weaponEvery: 1.4 })
+    })
     // The flyer waves rise a moment after the ride enters their room.
     await settle(ctx, lead)
     await T(ctx, () => window.__trailer.soften(0.3, 40))
@@ -161,6 +177,31 @@ export const SHOTS = {
     }
   },
 
+  /** A machine winds up and Flux meets it with the shield: block, then the parry. */
+  parry: {
+    async stage(ctx) {
+      await boot(ctx, { level: 'stage', sector: 'magnet' })
+      const ok = await T(ctx, () => {
+        const t = window.__trailer
+        if (!t.approach(['trooper'], 4.5) && !t.approach(['hardhat'], 4.5)) return false
+        t.wake(14)
+        t.arm(['thunderArc', 'droneSwarm'])
+        t.soften(0.5, 14)
+        t.auto({ fire: 'none', strafe: 0.2, closeTo: 4.5, shield: true })
+        return true
+      })
+      if (!ok) ctx.log.warn('parry: no melee machine near the start')
+      await settle(ctx, 800)
+      await logState(ctx, 'parry')
+    },
+    async play(ctx) {
+      // The block and the parry first, then the counter.
+      await play(ctx, 1600)
+      await T(ctx, () => window.__trailer.auto({ fire: 'mix', chargeS: 0.7, weapon: 4, weaponEvery: 1.6, breakP: 0.7 }))
+      await logState(ctx, 'counter')
+    }
+  },
+
   /** Wake-Up Call: the beam-in on the Scrapyard pad, then Flux's first look round. */
   beamin: {
     async stage(ctx) {
@@ -195,7 +236,8 @@ export const SHOTS = {
         t.approach(undefined, 3.8)
         t.wake(18)
         t.soften(0.2)
-        t.auto({ fire: 'mix', chargeS: 0.6, strafe: 0.6, strafePeriod: 2.0, closeTo: 4 })
+        t.arm(['flameWave', 'iceLance'])
+        t.auto({ fire: 'mix', chargeS: 0.6, strafe: 0.6, strafePeriod: 2.0, closeTo: 4, weapon: 4, weaponEvery: 0.9, breakP: 0.6 })
       })
       await settle(ctx, 500)
       await logState(ctx, 'staged')
@@ -270,7 +312,13 @@ export const SHOTS = {
           if (!g) return false
           window.__golem = g
           // In clear sight of it, 6 m out; nothing else of the room's in the way.
-          if (!t.approach(g, 4.5)) return false
+          // Out of the corridor's corner: the crate is set down on its room's open middle.
+          const room = t.m().map.rooms[g.room]
+          if (room) {
+            g.x = g.px = (room.x0 + room.w / 2) * 3
+            g.z = g.pz = (room.z0 + room.h / 2) * 3
+          }
+          if (!t.approach(g, 6)) return false
           t.face(g.x, g.z)
           t.m().player.pitch = -0.08
           return true
@@ -358,9 +406,13 @@ export const SHOTS = {
         const t = window.__trailer
         t.m().input.moveY = 0
         t.approach((t.m().enemies.find((e) => e.mini)), 7)
-        t.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.7, strafePeriod: 2.2, closeTo: 6, weapon: 1, weaponEvery: 2.6 })
+        t.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.7, strafePeriod: 2.2, closeTo: 6, weapon: 4, weaponEvery: 1.2 })
       })
-      await settle(ctx, 600)
+      // Caught on a move that throws something (the Lodestone's field pull has
+      // no projectile and read as a wave in the air, #193): a fling or a slam.
+      await T(ctx, () => window.__trailer.arm(['thunderArc', 'droneSwarm']))
+      await until(ctx, () => window.__trailer.m().enemies.some((e) => e.mini && e.state === 'tele' && e.attack !== 'pull'), undefined, 40_000)
+      await settle(ctx, 300)
       await logState(ctx, 'challenge')
     },
     async play(ctx) { await play(ctx, 1500) }
@@ -414,6 +466,7 @@ export const SHOTS = {
         const m = t.m()
         const c = m.borrowed?.capsules?.find((k) => !k.taken)
         if (!c) return false
+        window.__cap = c
         const v = c.view.root.position.clone()
         c.view.root.getWorldPosition(v)
         // 4 m out on the open side (the capsule sits against the stage's edge).
@@ -427,8 +480,11 @@ export const SHOTS = {
       await settle(ctx, 300)
     },
     async play(ctx) {
-      await play(ctx, 200)
-      await T(ctx, () => { window.__trailer.m().input.moveY = 1 })
+      await T(ctx, () => { window.__trailer.m().input.moveY = 0.8 })
+      // Stop the moment the capsule is his: a player does not walk on into the wall behind it.
+      await ctx.stepUntil(() => window.__cap?.taken, { timeoutMs: 1100 })
+      await T(ctx, () => { window.__trailer.m().input.moveY = 0 })
+      await play(ctx, 300)
     }
   },
 
@@ -467,9 +523,9 @@ export const SHOTS = {
     }
   },
 
-  blaze: masterShot('blaze', { attacks: ['fireWave', 'flameRing', 'leapSlam'] }),
+  blaze: masterShot('blaze', { attacks: ['fireWave', 'flameRing', 'leapSlam'], hp: 0.5, killAt: 3200, dist: 7 }),
   volt: masterShot('volt', { attacks: ['chainBolt', 'orbStorm', 'voltRing'], weapons: ['iceLance', 'droneSwarm'] }),
-  neonboss: masterShot('neon', { attacks: ['laserGrid', 'bladeBoomerang'], weapons: ['bubbleLance', 'neonBlade'] }),
+  neonboss: masterShot('neon', { attacks: ['laserGrid', 'bladeBoomerang'], weapons: ['bubbleLance', 'neonBlade'], pilot: { shield: true }, dist: 6 }),
   rotorboss: masterShot('rotor', { attacks: ['droneSwarm', 'rotorStorm', 'dive'], weapons: ['neonBlade', 'droneSwarm'] }),
 
   // ── C: a Master falls, the Fortress, Vex ───────────────────────────────
@@ -483,19 +539,25 @@ export const SHOTS = {
       await T(ctx, () => window.__trailer.auto({ fire: 'rapid', strafe: 0 }))
       await settle(ctx, 3500)
       await T(ctx, () => window.__trailer.clearAdds())
-      await T(ctx, () => window.__trailer.approach(['boss'], 5.5))
-      // A full charge, held for the take.
-      await T(ctx, () => window.__trailer.auto({ fire: 'charge', chargeS: 99, strafe: 0, closeTo: 0 }))
-      await settle(ctx, 1600)
-      await logState(ctx, 'charged')
+      await T(ctx, () => {
+        const t = window.__trailer
+        const r = t.bossRoom()
+        const b = t.m().boss
+        t.approach(['boss'], 6, r ? Math.atan2(r.cx - b.x, r.cz - b.z) : 0)
+        // A player's fight: shots, a charge released on the beat, a weapon, a dash from its attacks.
+        t.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.6, strafePeriod: 2.2, closeTo: 5, weapon: 4, weaponEvery: 1.0, shield: false })
+      })
+      await settle(ctx, 600)
+      await logState(ctx, 'fight')
     },
     async play(ctx) {
-      await play(ctx, 200)
+      await play(ctx, 1700)
+      // The last shot, a short charge released at once: the Master breaks apart.
       await T(ctx, () => {
         window.__trailer.bossHp(0.001)
-        window.__trailer.auto({ chargeS: 0 })
+        window.__trailer.auto({ fire: 'charge', chargeS: 0.5, weapon: 0 })
       })
-      await play(ctx, 400)
+      await play(ctx, 1300)
       await T(ctx, () => window.__trailer.auto({ fire: 'none' }))
       await logState(ctx, 'down')
     }
@@ -576,7 +638,7 @@ export const SHOTS = {
   prism: {
     async stage(ctx) {
       await enterGrandMaster(ctx, [0, 0, -1, 0, 0, 0.7])
-      await T(ctx, () => window.__trailer.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.5, strafePeriod: 2.4, weapon: 2, weaponEvery: 2.2 }))
+      await T(ctx, () => window.__trailer.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.6, strafePeriod: 2.4, closeTo: 0, slideEvery: 3.4, weapon: 4, weaponEvery: 1.2 }))
       await settle(ctx, 800)
       await T(ctx, () => { window.__trailer.m().finale.prismT = 0.15 })
       await logState(ctx, 'prism')
@@ -587,7 +649,7 @@ export const SHOTS = {
   gmcore: {
     async stage(ctx) {
       await enterGrandMaster(ctx, [0, 0, 0.8, 0, 0, 0])
-      await T(ctx, () => window.__trailer.auto({ fire: 'charge', chargeS: 0.7, strafe: 0.6, strafePeriod: 2.0, weapon: 1, weaponEvery: 1.6 }))
+      await T(ctx, () => window.__trailer.auto({ fire: 'charge', chargeS: 0.7, strafe: 0.6, strafePeriod: 2.0, closeTo: 0, slideEvery: 3.6, weapon: 4, weaponEvery: 1.1 }))
       await settle(ctx, 1200)
       await logState(ctx, 'core')
     }

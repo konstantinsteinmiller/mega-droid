@@ -526,6 +526,9 @@ export const loadSfxOverrides = (): void => {
   }
 }
 
+/** How many drop-in files are decoded and ready (the trailer's sound render waits on it). */
+export const sfxFilesReady = (): number => fileBuffers.size
+
 const playFile = (buf: AudioBuffer, pan: number, gain: number): void => {
   const a = audio()
   if (!a) return
@@ -601,11 +604,41 @@ let humLfoGain: GainNode | null = null
 let humTap: ((k01: number | null, full: boolean, over: boolean) => void) | null = null
 export const setChargeHumTap = (t: typeof humTap): void => { if (import.meta.env.DEV) humTap = t }
 
+/** The overcharged state's looped sound (the drop-in `overcharge` file), while it plays. */
+let overSrc: AudioBufferSourceNode | null = null
+let overGain: GainNode | null = null
+
+const stopOver = (t: number): void => {
+  if (!overSrc) return
+  overGain?.gain.setTargetAtTime(0, t, 0.04)
+  try { overSrc.stop(t + 0.3) } catch { /* stopped */ }
+  overSrc = null
+  overGain = null
+}
+
 export const chargeHum = (k01: number | null, full = false, over = false): void => {
   if (import.meta.env.DEV) humTap?.(k01, full, over)
   const a = audio()
   if (!a) return
   const t = a.ctx.currentTime
+  // Overcharged: a recorded loop in place of the oscillator's pulse, when the file is there.
+  const overBuf = fileBuffers.get('overcharge')
+  if (k01 !== null && over && overBuf && canPlay()) {
+    if (!overSrc) {
+      overSrc = a.ctx.createBufferSource()
+      overSrc.buffer = overBuf
+      overSrc.loop = true
+      overGain = a.ctx.createGain()
+      overGain.gain.value = 0
+      overGain.gain.setTargetAtTime(FILE_GAIN, t, 0.05)
+      overSrc.connect(overGain).connect(a.sfx)
+      overSrc.start(t)
+      registerOneShotSource(overSrc)
+    }
+    if (humGain) humGain.gain.setTargetAtTime(0, t, 0.03)
+    return
+  }
+  stopOver(t)
   if (k01 === null || !canPlay()) {
     if (humGain) {
       humGain.gain.setTargetAtTime(0, t, 0.02)

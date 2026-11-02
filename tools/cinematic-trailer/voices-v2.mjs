@@ -13,19 +13,19 @@ const { apiKey, speakApi } = await import(pathToFileURL(join(HERE, '../voice/eng
 
 const ADAM = 'pNInz6obpgDQGcFmaJgB'
 const LIAM = 'TX3LPaxmHKxFdv7VOQHJ'
-const NARR = '[deep, intense, cinematic trailer narrator, slow] '
+const NARR = '[playful, dramatic movie-trailer narrator, tongue-in-cheek] '
 const FLUX = '[young, confident, determined] '
 
 export const LINES_V2 = {
-  n1: [ADAM, NARR + 'In a world of scrap and steel... one small robot refuses to fall.'],
-  n2: [ADAM, NARR + 'Ten sectors. Ten Core Masters. One impossible mission.'],
-  n3: [ADAM, NARR + 'Upgrade. Adapt. Become unstoppable.'],
-  n4: [ADAM, NARR + 'Take their power... and turn it against them.'],
-  n5: [ADAM, NARR + 'And at the end of the war... waits the Grand Master.'],
-  n6: [ADAM, NARR + 'Mega Droid. Play now.'],
-  f1: [LIAM, FLUX + "Systems online. Let's go!"],
-  f2: [LIAM, FLUX + 'Bring it on!'],
-  f3: [LIAM, FLUX + "Time to end this!"]
+  n1: [ADAM, NARR + 'Cybercity was having a lovely day... until Doctor Vex showed up with a very bad idea.'],
+  n2: [ADAM, NARR + 'Ten sectors. Ten giant robots. And one very small hero with a very big gun.'],
+  n3: [ADAM, NARR + 'Upgrade. Grab a snack. Borrow their best moves.'],
+  n4: [ADAM, NARR + 'Beat a boss, steal his weapon, and use it on his friends!'],
+  n5: [ADAM, NARR + 'Vex wants to turn Cybercity into scrap. Flux says... not today.'],
+  n6: [ADAM, NARR + 'Mega Droid. Play now. Cybercity is counting on you!'],
+  f1: [LIAM, FLUX + "Cybercity, I'm on it!"],
+  f2: [LIAM, FLUX + 'Bring it on, tin cans!'],
+  f3: [LIAM, FLUX + "Vex, you're scrap!"]
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {

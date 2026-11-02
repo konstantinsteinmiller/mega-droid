@@ -56,7 +56,7 @@ import type { CombatPlayer, Enemy, PickupKind, Shot } from './world'
 import { CombatSystem, blockCut, type CombatHost } from './combat'
 import { updateEnemy, syncEnemyVisual, parryWindow, wake, wakeGolem, createEnemy, frozenDt, settle, shove, keepClear, spotWarning, drowse, keepBigOffPlayer, markerOwnerGone, hopperLeapTime } from './enemies'
 import { spawnEncounters, spawnTutorial, type EncounterTable } from './spawn'
-import { baseStats, chargeInfo, type PlayerStats } from './stats'
+import { baseStats, chargeInfo, type ChargeInfo, type PlayerStats } from './stats'
 import { ChargeShow, showHoldFor } from './chargeShow'
 import { Particles } from '../fx/particles'
 import { FloorMarkers, ShockRings, makeBlobShadow } from '../fx/markers'
@@ -5313,7 +5313,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.shotOpensDoor(dx, dz)
     c.fireCd = 0.2
     c.recoil = Math.min(1, c.recoil + 0.45)
-    this.fx.flash(m[0] + dx * 0.5, m[1] + dy * 0.5, m[2] + dz * 0.5, '#fff39a', 0.22, 0.06)
+    // Juice (#trailer-8): a bright muzzle flash, a spit of sparks, a small kick.
+    this.fx.flash(m[0] + dx * 0.5, m[1] + dy * 0.5, m[2] + dz * 0.5, '#fff39a', 0.4, 0.08)
+    this.fx.sparks(m[0] + dx * 0.5, m[1] + dy * 0.5, m[2] + dz * 0.5, '#ffe36a', 5, 5, 0.08)
+    this.shake(0.03)
     sfx('shoot')
     if (!stray) this.coach.use('fire')
     // Shooting at a sleeping enemy in view wakes it.
@@ -5345,10 +5348,11 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.shotOpensDoor(dx, dz)
     c.fireCd = 0.25
     c.recoil = 1
-    this.shake(level >= 2 ? 0.16 : 0.06)
-    this.fx.flash(m[0] + dx * 0.6, m[1] + dy * 0.6, m[2] + dz * 0.6, level >= 2 ? '#7ff4ff' : '#c8ff7a', level >= 2 ? 0.5 : 0.32, 0.1)
-    // A full charge leaves the buster in a burst of sparks
-    if (level >= 2) this.fx.sparks(m[0] + dx * 0.6, m[1] + dy * 0.6, m[2] + dz * 0.6, crit ? '#ffd84a' : level === 3 ? '#ff5fd8' : '#7ff4ff', 8, 4, 0.1)
+    this.shake(level === 3 ? 0.3 : level >= 2 ? 0.2 : 0.08)
+    this.fx.flash(m[0] + dx * 0.6, m[1] + dy * 0.6, m[2] + dz * 0.6, level >= 2 ? '#7ff4ff' : '#c8ff7a', level === 3 ? 1.1 : level >= 2 ? 0.75 : 0.45, 0.14)
+    // A full charge leaves the buster in a burst of sparks and a ring of shock (#trailer-8)
+    if (level >= 2) this.fx.sparks(m[0] + dx * 0.6, m[1] + dy * 0.6, m[2] + dz * 0.6, crit ? '#ffd84a' : level === 3 ? '#ff5fd8' : '#7ff4ff', level === 3 ? 26 : 14, 6, 0.14)
+    if (level === 3) this.shocks.spawn(m[0] + dx * 0.8, m[1] + dy * 0.8, m[2] + dz * 0.8, 1.6, '#7ff4ff', 0.25)
     if (perfect) {
       pushHud({ t: 'flash', color: '#ffd84a', strength: 0.25 })
       pushHud({ t: 'text', x: m[0] + dx * 3, y: m[1] + 0.4, z: m[2] + dz * 3, key: 'combat.perfect', color: '#ffd84a' })
@@ -6450,6 +6454,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     const info = chargeInfo(c.charging ? c.charge : 0, this.stats)
     if (c.charging && info.toL1 > 0.2 && hud.phase === 'play') chargeHum(info.toL1 * 0.5 + info.toL2 * 0.5, info.level >= 2, info.level === 3)
     else chargeHum(null)
+    this.chargeSparks(info, c.charging && hud.phase === 'play' && fl <= 0, dt)
     const coreMat = this.vm.coreMat
     const haloMat = this.vm.haloMat
     if (fl > 0) {
@@ -6491,6 +6496,48 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     }
     // The block barrier: raised while guarding, warmer as Power runs out.
     this.vm.barrier.update(dt, c.blocking && hud.phase === 'play', c.power / Math.max(1, c.maxPower), this.time)
+  }
+
+  private chargeLevelSeen = 0
+
+  /**
+   * Plasma gathering at the muzzle while a charge is held (#trailer-8): sparks
+   * drawn in from a ring round the cannon, more and brighter with every level,
+   * and a pulse (flash, ring) as each level is reached, so a held charge looks
+   * as powerful as the shot it will become.
+   */
+  private chargeSparks(info: ChargeInfo, on: boolean, dt: number): void {
+    if (!on || info.toL1 < 0.12) {
+      this.chargeLevelSeen = 0
+      return
+    }
+    const lvl = info.level
+    // 0..1 across the whole charge: the first level a third, the second two thirds, the Overload all.
+    const k = lvl === 0 ? info.toL1 * 0.33 : lvl === 1 ? 0.33 + info.toL2 * 0.34 : lvl === 2 ? 0.67 : 0.8 + info.toL3 * 0.2
+    const color = lvl >= 3 ? '#d38bff' : lvl === 2 ? '#7ff4ff' : lvl === 1 ? '#c8ff7a' : '#9dffb0'
+    const m = this.muzzle()
+    const n = (3 + k * 14) * dt * 60 * 0.5
+    for (let i = 0; i < Math.floor(n) + (Math.random() < n % 1 ? 1 : 0); i++) {
+      const a = Math.random() * Math.PI * 2
+      const b = (Math.random() - 0.5) * Math.PI
+      const rad = 0.18 + k * 0.28
+      const dx = Math.cos(a) * Math.cos(b)
+      const dy = Math.sin(b)
+      const dz = Math.sin(a) * Math.cos(b)
+      this.fx.emit({
+        x: m[0] + dx * rad, y: m[1] + dy * rad, z: m[2] + dz * rad,
+        // Drawn into the cannon's mouth, a little swirl on top
+        vx: -dx * (1.4 + k * 2) + dz * 0.8, vy: -dy * (1.4 + k * 2), vz: -dz * (1.4 + k * 2) - dx * 0.8,
+        color, size: 0.05 + k * 0.07, sizeEnd: 0.01, life: 0.16 + k * 0.1
+      })
+    }
+    if (lvl > this.chargeLevelSeen) {
+      // A level reached: a flash and a ring of shock at the muzzle.
+      this.fx.flash(m[0], m[1], m[2], color, 0.5 + lvl * 0.3, 0.12)
+      this.fx.sparks(m[0], m[1], m[2], color, 6 + lvl * 4, 4, 0.1)
+      if (lvl >= 2) this.shocks.spawn(m[0], m[1], m[2], 0.8 + lvl * 0.3, color, 0.2)
+      this.chargeLevelSeen = lvl
+    }
   }
 
   /** Project a world point to CSS pixels on the canvas (for the HUD). */

@@ -157,7 +157,9 @@ try {
 
 // ── 3. Music: the boss theme ("Overload", 140 BPM), from bar 0 ──
 const musicDir = join(WORK, 'music')
-if (!existsSync(join(musicDir, 'boss.wav'))) {
+const V2_SCORE = join(ROOT, 'tools/cinematic-trailer/music-v2/trailer140.wav')
+if (V2 && existsSync(V2_SCORE)) { /* the v2 score: ElevenLabs Music, stretched to the bar grid */ }
+else if (!existsSync(join(musicDir, 'boss.wav'))) {
   await run(process.execPath, [join(ROOT, 'tools/music-render.mjs'), '--out', musicDir, '--wav', '--seconds', String(Math.ceil(TOTAL_S + 4)), 'boss'])
 }
 
@@ -191,7 +193,7 @@ for (const s of [...timeline, { startFrame: frameAt(cardStart), vo: CUT.endCard.
   }
 }
 // The score: render starts its first step 50 ms in; bar 0 lands on frame 0.
-const music = decode(join(musicDir, 'boss.wav')).subarray(Math.round(0.05 * SR) * 2)
+const music = V2 && existsSync(V2_SCORE) ? decode(V2_SCORE) : decode(join(musicDir, 'boss.wav')).subarray(Math.round(0.05 * SR) * 2)
 place(musicBus, music, 0, N)
 // Duck the score under every line (the game's own −7 dB, 50 ms down, 400 ms back),
 // and fade it out over the end card's last bars.
@@ -208,6 +210,10 @@ for (let i = 0; i < N; i++) {
   if (t > fadeFrom) g *= Math.max(0, 1 - (t - fadeFrom) / (TOTAL_S - fadeFrom))
   musicBus[2 * i] *= g
   musicBus[2 * i + 1] *= g
+  // The effects give way too: a line of speech is never fought by an impact.
+  const gx = 1 - (1 - g) * 0.75
+  sfxBus[2 * i] *= gx
+  sfxBus[2 * i + 1] *= gx
 }
 const gm = dbGain(CUT.levels.music - lufs(musicBus))
 const gs = dbGain(CUT.levels.sfx - lufs(sfxBus))

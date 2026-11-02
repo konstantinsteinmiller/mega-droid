@@ -39,11 +39,15 @@ export interface AutoPilot {
   /** A slide every this many seconds (0 = never). */
   slideEvery: number
   /** Fire special weapon slot 1/2 (or 3 = the borrowed one) every N seconds. */
-  weapon: 0 | 1 | 2 | 3
+  weapon: 0 | 1 | 2 | 3 | 4
   weaponEvery: number
   /** A player's hands, not a metronome: wandering strafe, back-pedalling, uneven
    *  charges and pauses, and a dash away from every wind-up (default on). */
   human: boolean
+  /** Meet a wind-up with the shield, and parry it on the beat (hits are live for it). */
+  shield?: boolean
+  /** The share of full-charge shots that finish an ordinary machine. */
+  breakP?: number
 }
 
 const OFF: AutoPilot = {
@@ -67,6 +71,7 @@ export const installTrailerSeam = (): void => {
   let pellets = 0
   let slideT = 0
   let weaponT = 0
+  let altW = 1
   let last = 0
   // The human pilot's state: a seeded roll (a take is the same every time), the
   // current wander, the pause before the next shot, and a dodge in flight.
@@ -89,6 +94,10 @@ export const installTrailerSeam = (): void => {
   // A leash: a player circles his target, he does not walk into the wall behind him.
   let anchor: [number, number] | null = null
   let leashD = 0
+  // A shield beat: a held block timed to a wind-up, live hits for its length.
+  let shieldFoe: Enemy | null = null
+  let shieldHold = 0
+  let shieldDone = 0
 
   // ── The sound log ──
   let logging = false
@@ -145,7 +154,12 @@ export const installTrailerSeam = (): void => {
     const p = m.player
     const t = targetOf(m)
     // ── Move: strafe across the target, close in when far ──
-    const d = t ? Math.hypot(t.x - p.x, t.z - p.z) : 0
+    // The Grand Master is no enemy of the list: its middle stands in for a target,
+    // so Flux moves round it like round any boss (face it, keep his distance).
+    const fin = !t && m.finale?.root && m.finale.state === 'fight' ? m.finale.root.position : null
+    const foe = t ?? (fin ? { x: fin.x, z: fin.z } : null)
+    const d = foe ? Math.hypot(foe.x - p.x, foe.z - p.z) : 0
+    if (fin && !t) api.face(fin.x, fin.z)
     if (pilot.human && pilot.strafe > 0) {
       wanderT -= dt
       if (wanderT <= 0) {
@@ -162,7 +176,7 @@ export const installTrailerSeam = (): void => {
       if (away > (pilot.closeTo > 0 ? 6 : 2.6) && away > leashD && dodgeT <= 0) { wanderX = -wanderX || 0.7; wanderT = 0.9 }
       leashD = away
       // Too far: walk in. Too close: back-pedal while still shooting. Between: wander.
-      const fwd = !t ? 0 : pilot.closeTo <= 0 ? wanderY * 0.4 : d > want + 3 ? 0.9 : d < want - 2.2 ? -0.85 : wanderY
+      const fwd = !foe ? 0 : pilot.closeTo <= 0 ? wanderY * 0.4 : d > want + 3 ? 0.9 : d < want - 2.2 ? -0.85 : wanderY
       dodgeT = Math.max(0, dodgeT - dt)
       dodgeCd = Math.max(0, dodgeCd - dt)
       // A wind-up in reach: react a beat late (never frame-perfect), then dash sideways.
@@ -174,19 +188,41 @@ export const installTrailerSeam = (): void => {
         reactT -= dt
         if (reactT < 0) { i.slideQueued = true; dodgeT = 0.4; dodgeCd = 1.3 + roll() * 1.2; reactT = -1 }
       }
-      i.moveX = dodgeT > 0 ? reactSide : t ? wanderX * Math.min(1, 0.55 + pilot.strafe * 0.5) : 0
+      i.moveX = dodgeT > 0 ? reactSide : foe ? wanderX * Math.min(1, 0.55 + pilot.strafe * 0.5) : 0
       i.moveY = dodgeT > 0 ? 0 : fwd
     } else {
       i.moveX = pilot.strafe * Math.sin((pilotT * Math.PI * 2) / pilot.strafePeriod)
       i.moveY = t && pilot.closeTo > 0 && d > pilot.closeTo ? 0.85 : 0
     }
+    // ── Shield: a wind-up in reach is met square, the block pressed a beat before it lands ──
+    if (pilot.shield) {
+      const c = m.combat
+      if (!shieldFoe && shieldDone <= 0) {
+        const f = (m.enemies as Enemy[]).concat(m.boss ? [m.boss as Enemy] : []).find(e => e.state === 'tele' && !e.teleRed && !e.challenge && e.st < 0.25 && Math.hypot(e.x - p.x, e.z - p.z) < 9)
+        if (f) { shieldFoe = f; shieldHold = 0; c.iframes = 0; c.hp = c.maxHp }
+      }
+      shieldDone = Math.max(0, shieldDone - dt)
+      if (shieldFoe) {
+        const f = shieldFoe
+        api.face(f.x, f.z)
+        i.moveX = 0
+        i.moveY = 0
+        if (shieldHold <= 0 && f.state === 'tele' && f.teleDur - f.st <= 0.1) { i.blockPressed = true; shieldHold = 0.6 }
+        if (shieldHold > 0) { i.blockHeld = true; shieldHold -= dt; if (shieldHold <= 0) shieldDone = 1.4 }
+        if (f.state === 'dead' || (shieldHold <= 0 && f.state !== 'tele' && f.st > 0.4 && shieldDone > 0)) { shieldFoe = null; c.iframes = 1e9 }
+        if (shieldFoe && f.state !== 'tele' && shieldHold <= 0 && f.st > 1.2) { shieldFoe = null; c.iframes = 1e9; shieldDone = 1 }
+      }
+    }
     // ── Fire ──
-    if (pilot.fire !== 'none' && t) {
+    if (pilot.fire !== 'none' && t && !(pilot.shield && shieldFoe)) {
       const wantCharge = pilot.fire === 'charge' || (pilot.fire === 'mix' && pellets >= (pilot.human ? 1 + Math.floor(roll() * 3) : 2))
       restT = Math.max(0, restT - dt)
       if (charging) {
         chargeT += dt
         if (chargeT >= chargeFor) {
+          // About 3 in 10 super charged shots finish a machine: it breaks apart
+          // (the shot does the killing, the game's own shatter shows it, #193).
+          if (chargeFor >= 0.55 && roll() < (pilot.breakP ?? 0.45) && !t.boss && !t.challenge && !t.mini) t.hp = Math.min(t.hp, 1)
           i.fireHeld = false
           i.fireReleased = true
           charging = false
@@ -216,7 +252,7 @@ export const installTrailerSeam = (): void => {
     }
     if (pilot.weapon && pilot.weaponEvery > 0 && t) {
       weaponT += dt
-      if (weaponT >= pilot.weaponEvery * (pilot.human ? 0.8 + roll() * 0.5 : 1)) { weaponT = 0; i.weaponQueued = pilot.weapon }
+      if (weaponT >= pilot.weaponEvery * (pilot.human ? 0.8 + roll() * 0.5 : 1)) { weaponT = 0; i.weaponQueued = pilot.weapon === 4 ? (altW = 3 - altW) : pilot.weapon }
     }
   }
   last = performance.now() / 1000
@@ -403,6 +439,8 @@ export const installTrailerSeam = (): void => {
       if (!o) { pilot = { ...OFF }; releaseAll(); return }
       pilot = { ...pilot, ...o }
       pilotT = 0
+      // The first special weapon goes off soon after the take opens.
+      weaponT = (pilot.weaponEvery || 0) * 0.55
       rng = 1234567
       anchor = null
     },

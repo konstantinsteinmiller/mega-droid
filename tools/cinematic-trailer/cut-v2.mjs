@@ -23,33 +23,29 @@ const vo = (id, beat = 0, gain = 1) => ({ file: `tools/cinematic-trailer/vo-v2/$
 
 export const CUT = {
   shots: [
-    // ── intro ──
-    { id: 'hall', bars: 4, vo: [vo('n1', 1), vo('f1', 14.5)] },
-    // ── A ──
-    { id: 'brawl', bars: 2, flash: 0.12 },
-    { id: 'rotor', bars: 2, vo: [vo('n2', 2)] },
+    // ── intro: the hook, then the order alternates platforming/traversal and
+    // fights so a boss is never two cuts away from a stage (#193) ──
+    { id: 'hall', bars: 4, vo: [vo('n1', 1)] },
+    { id: 'brawl', bars: 2, flash: 0.12, vo: [vo('f1', 2)] },
+    { id: 'blaze', bars: 3, flash: 0.08, vo: [vo('n2', 1)] },
+    { id: 'rotor', bars: 2 },
     { id: 'forge', bars: 1 },
+    { id: 'lab', bars: 2, flash: 0.1, vo: [vo('n3', 1.5)] },
+    { id: 'neonboss', bars: 3 },
     { id: 'glacier', bars: 1 },
-    { id: 'golem', bars: 2 },
-    // ── the lab ──
-    { id: 'lab', bars: 2, flash: 0.1, vo: [vo('n3', 1)] },
-    // ── B ──
     { id: 'secret', bars: 1, flash: 0.1 },
-    { id: 'capsule', bars: 1 },
     { id: 'challenge', bars: 2, flash: 0.1, vo: [vo('f2', 2)] },
-    // ── the Masters ──
-    { id: 'blaze', bars: 1, flash: 0.08 },
-    { id: 'volt', bars: 1 },
-    { id: 'neonboss', bars: 1 },
+    { id: 'capsule', bars: 1 },
     { id: 'shatter', bars: 2, flash: 0.12 },
+    { id: 'golem', bars: 2 },
     // ── C ──
     { id: 'fortress', bars: 2, vo: [vo('n4', 0)] },
-    { id: 'vex', bars: 2 },
-    { id: 'gmrise', bars: 2, vo: [vo('n5', 1), { line: 'vex_laugh_maniacal', beat: 0, gain: 0.7 }] },
+    { id: 'vex', bars: 3 },
+    { id: 'gmrise', bars: 2, vo: [vo('n5', 3), { line: 'vex_laugh_maniacal', beat: 0, gain: 0.7 }] },
     // ── A2: the Grand Master, last ──
     { id: 'prism', bars: 2, flash: 0.12 },
     { id: 'gmcore', bars: 2, vo: [vo('f3', 1)], whiteOut: 0.35 }
   ],
   endCard: { bars: 3, fadeBars: 2, vo: [vo('n6', 2)] },
-  levels: { music: -20, sfx: -19, voice: -15, master: -14, duckDb: 7 }
+  levels: { music: -23, sfx: -16, voice: -15, master: -14, duckDb: 7 }
 }

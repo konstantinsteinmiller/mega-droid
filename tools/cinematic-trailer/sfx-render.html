@@ -32,10 +32,14 @@ window.renderSfx = async (events, seconds) => {
   })
   window.AudioContext = function () { return view }
   window.webkitAudioContext = undefined
-  const { installSynth, chargeHum } = await import('/src/game/audio/synth.ts')
+  const { installSynth, chargeHum, loadSfxOverrides, sfxFilesReady } = await import('/src/game/audio/synth.ts')
   const { sfx } = await import('/src/game/audio/sfx.ts')
   const { audio } = await import('/src/game/audio/engine.ts')
   installSynth()
+  // The game's ElevenLabs drop-in sounds (public/audio/sfx), decoded before the replay.
+  loadSfxOverrides()
+  await new Promise((r) => setTimeout(r, 4000))
+  window.sfxFiles = sfxFilesReady()
   if (!audio()) throw new Error('the engine refused the offline context')
 
   // Group by render quantum: one suspend per 128-frame block.

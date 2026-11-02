@@ -517,7 +517,15 @@ Wait for my "go" to start implementation, ask to review the decisions first.
   Done: every special weapon costs 60% more Weapon Energy (rounded per weapon), so a 1-2-3 spam runs the bar dry. Boss tempo: a Core Master that fell in under 15 s (timed after its intro) makes the next one +30% health and +15% damage; under 30 s at least +15% / +7%; within a minute the step holds; longer eases back one step. Saved in the profile. Dr. Vex, the Grand Master and the tutorial's Core Master are outside it. Tests: tests/game/bossTempo.test.ts.
 - [x] #192 Add STRG + ESC to lose pointerlock without opening the Pause menu. On Wavedash clicking ESC to close the Pause menu does not regain the pointerlock, making the game feel broken. Also: the neon heart wall sign's tubes do not flow together; Flux sometimes keeps walking on his own (Opera swipes) and WASD does not stop it.
   Done: Ctrl+Esc (Strg+Esc) hands the mouse back without the pause menu. Closing the pause menu with Esc (no gesture, so no capture) now shows the click-to-continue veil instead of play running on under a free mouse. The neon sign's heart is one unbroken tube along the classic heart curve, with a zig-zag bolt beside it. Stuck walking: any game key or a mouse press lets go of a touch stick whose release was lost (that stick also blocked WASD), a movement key drops another movement key that has sent nothing for 1.5 s, other game keys drop orphaned non-movement keys, and a hidden tab or a lost pointer capture clears all holds like a window blur.
-- [ ] #193
+- [ ] #193 The cinematic trailer was posted in r/DestroyMyGame and got valid criticism:
+  Please use the logged in elevenlabs account to generate mind-blowingly fantastic sounding sound effects for this game that replace the synthesized game sounds, especially the plasma cannon blaster must sound awesome and exciting to use adhering to the Mega Android fantasy.
+  In the cinematic trailer, Flux is shooting things, but none gets destroyed, which is very boring, make ~ 30 percent of the shot enemies break apart after a super charged shot.
+  Also in the cinematic trailer the player only uses the blaster cannon and never his copied special weapons attacks which are the cool part of this game. Same for the bosses, they dont show their special weapon projectiles at all. The magnetic mini-boss does one attack that spawns no projectile at all looking like a fool that waves in the air.
+  One valid point was that the gun in the cinematic trailer has no "juice" (no visual and sound cues that excite the player). 
+  Another criticism on the trailer was: "Very serious tone for very unserious setting :) Neither voice nor writing matches content.", though I like the narrator, maybe the tone of the storytelling must change to reflect on Vex and how he threatens Cybercity. 
+  Also generate new fitting music for the cinematic trailer before you start recording new scenes with projectile use of bosses.
+  Another valid critisism is: "I think it could be good to mix up the order of some of the trailer clips. The first half shows some traversal/action segments with a bit of platforming, and then the 2nd half is all boss fights, so you have both side of the Megaman gameplay. But by the end of the trailer seeing boss after boss, I had kind of forgotten that earlier stuff, and was almost like 'is it just a boss rush game?' And someone who is there for the bosses might click off the trailer before it gets to them, if they don't see anything bigger and more exciting in the first half.", fix it to make the next trailer optimally spaced.
+  
 - [ ] #194
 - [ ] #195
 
@@ -537,9 +545,16 @@ Wait for my "go" to start implementation, ask to review the decisions first.
   the mini-games attacks
 
 
-- [ ] #X1  Create a cinematic trailer using the gameplay-preview-pipeline (but use a separate package.json script called "cinematic-trailer" with the file name called trailer to battlecross-cinematic-trailer.mp4) which shows off the correct in game behaviour to the watching audience and make it epic with epic fights (e.g. bosses) and win scenarios and epic loot findings, the most actionable scenes with edgy video cuts to make it appeal to a 10-15 year old. Let the player speak a few of his cool lines in english(no text bubbles in the video). Show of the coolest features of the game and the coolest enemies and locations, all enemies and the player must behave like in the game, no weird robotic player walk camera work please.
+- [x] ✅ #X1  Create a cinematic trailer using the gameplay-preview-pipeline (but use a separate package.json script called "cinematic-trailer" with the file name called trailer to battlecross-cinematic-trailer.mp4) which shows off the correct in game behaviour to the watching audience and make it epic with epic fights (e.g. bosses) and win scenarios and epic loot findings, the most actionable scenes with edgy video cuts to make it appeal to a 10-15 year old. Let the player speak a few of his cool lines in english(no text bubbles in the video). Show of the coolest features of the game and the coolest enemies and locations, all enemies and the player must behave like in the game, no weird robotic player walk camera work please.
   Include an epic and atmospheric story and gameplay narrator in order to hype the player to play the game.  The english elevenlabs narrator must fit the cinematic trailer, the overall game design and art style, so lets try the first line in five voices you suggest, then I rate and you can finish after I decided on a voice.
-  No subtitles for the narration.
+  No subtitles for the narration. or recreate the trailer, but prevent clean AI like   
+  movement into walls, or weird strafe walking or just walk in a straight line, make the      
+  scenes look like it was recorded by a human playing the game, with dashing    
+  to dodge away from attacks, moving around in all direction, while facing the  
+  enemy, charging for perfect blaster shots, showing off special weapons, the   
+  3d lab, the boss and challenge fights, showing Pip and Atlas, the endboss and grandmaster bot comes last. I want to      
+  post that cinematic trailer to a MegaMan community on reddit, and it must look like human made trailer.
+  Done: `pnpm cinematic-trailer --v2` (61.7 s, 1080p): a human-style pilot (wandering circle-strafe, back-pedalling, uneven charges, late dashes from wind-ups, a leash so Flux never walks into walls), ElevenLabs narrator "Adam" (picked by ear), Flux's own new lines, the 3D lab with Pip, a challenge-door fight, the Grand Master last. -14.6 LUFS, peak -1.2 dBFS, sharpness SHARP. Mix not auditioned by ear.
 
 
 - [x] #Cheat1 Add a cheat to jump to open a modal, that can unlock all story missions, and that can jump you infront of the challenge doors and in front of the boss doors of each story level map

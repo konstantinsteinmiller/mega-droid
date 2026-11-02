@@ -9,6 +9,7 @@ import { floorAt, hasLineOfSight } from './world/nav'
 import type { Enemy, World } from './sim/world'
 import { wakeGolem } from './sim/enemies'
 import { app } from './engine/app'
+import { SECTORS } from './data/regions'
 
 /**
  * ─── The trailer seam (DEV only) ────────────────────────────────────────────
@@ -40,10 +41,13 @@ export interface AutoPilot {
   /** Fire special weapon slot 1/2 (or 3 = the borrowed one) every N seconds. */
   weapon: 0 | 1 | 2 | 3
   weaponEvery: number
+  /** A player's hands, not a metronome: wandering strafe, back-pedalling, uneven
+   *  charges and pauses, and a dash away from every wind-up (default on). */
+  human: boolean
 }
 
 const OFF: AutoPilot = {
-  fire: 'none', chargeS: 1.2, strafe: 0, strafePeriod: 2.4, closeTo: 0, slideEvery: 0, weapon: 0, weaponEvery: 0
+  fire: 'none', chargeS: 1.2, strafe: 0, strafePeriod: 2.4, closeTo: 0, slideEvery: 0, weapon: 0, weaponEvery: 0, human: true
 }
 
 /** The mission with its private fields in reach: this seam stages shots from outside. */
@@ -64,6 +68,27 @@ export const installTrailerSeam = (): void => {
   let slideT = 0
   let weaponT = 0
   let last = 0
+  // The human pilot's state: a seeded roll (a take is the same every time), the
+  // current wander, the pause before the next shot, and a dodge in flight.
+  let rng = 1
+  const roll = (): number => {
+    rng = (rng + 0x6d2b79f5) | 0
+    let t = Math.imul(rng ^ (rng >>> 15), 1 | rng)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  let wanderT = 0
+  let wanderX = 0
+  let wanderY = 0
+  let restT = 0
+  let chargeFor = 0
+  let reactT = -1
+  let reactSide = 1
+  let dodgeT = 0
+  let dodgeCd = 0
+  // A leash: a player circles his target, he does not walk into the wall behind him.
+  let anchor: [number, number] | null = null
+  let leashD = 0
 
   // ── The sound log ──
   let logging = false
@@ -121,29 +146,67 @@ export const installTrailerSeam = (): void => {
     const t = targetOf(m)
     // ── Move: strafe across the target, close in when far ──
     const d = t ? Math.hypot(t.x - p.x, t.z - p.z) : 0
-    i.moveX = pilot.strafe * Math.sin((pilotT * Math.PI * 2) / pilot.strafePeriod)
-    i.moveY = t && pilot.closeTo > 0 && d > pilot.closeTo ? 0.85 : 0
+    if (pilot.human && pilot.strafe > 0) {
+      wanderT -= dt
+      if (wanderT <= 0) {
+        wanderT = 0.45 + roll() * 1.1
+        // Mostly keep circling the way he was going; now and then reverse or stop.
+        const r = roll()
+        wanderX = r < 0.12 ? 0 : (r < 0.35 ? -Math.sign(wanderX || 1) : Math.sign(wanderX || (roll() < 0.5 ? -1 : 1))) * (0.55 + roll() * 0.45)
+        wanderY = (roll() - 0.55) * 0.7
+      }
+      const want = pilot.closeTo > 0 ? pilot.closeTo : 6
+      anchor ??= [p.x, p.z]
+      const away = Math.hypot(p.x - anchor[0], p.z - anchor[1])
+      // Past the leash and still going out: turn round (a dodge may go further).
+      if (away > (pilot.closeTo > 0 ? 6 : 2.6) && away > leashD && dodgeT <= 0) { wanderX = -wanderX || 0.7; wanderT = 0.9 }
+      leashD = away
+      // Too far: walk in. Too close: back-pedal while still shooting. Between: wander.
+      const fwd = !t ? 0 : pilot.closeTo <= 0 ? wanderY * 0.4 : d > want + 3 ? 0.9 : d < want - 2.2 ? -0.85 : wanderY
+      dodgeT = Math.max(0, dodgeT - dt)
+      dodgeCd = Math.max(0, dodgeCd - dt)
+      // A wind-up in reach: react a beat late (never frame-perfect), then dash sideways.
+      if (t && reactT < 0 && dodgeCd <= 0 && (m.enemies as Enemy[]).concat(m.boss ? [m.boss as Enemy] : []).some(e => e.state === 'tele' && Math.hypot(e.x - p.x, e.z - p.z) < 16)) {
+        reactT = 0.14 + roll() * 0.18
+        reactSide = roll() < 0.5 ? -1 : 1
+      }
+      if (reactT >= 0) {
+        reactT -= dt
+        if (reactT < 0) { i.slideQueued = true; dodgeT = 0.4; dodgeCd = 1.3 + roll() * 1.2; reactT = -1 }
+      }
+      i.moveX = dodgeT > 0 ? reactSide : t ? wanderX * Math.min(1, 0.55 + pilot.strafe * 0.5) : 0
+      i.moveY = dodgeT > 0 ? 0 : fwd
+    } else {
+      i.moveX = pilot.strafe * Math.sin((pilotT * Math.PI * 2) / pilot.strafePeriod)
+      i.moveY = t && pilot.closeTo > 0 && d > pilot.closeTo ? 0.85 : 0
+    }
     // ── Fire ──
     if (pilot.fire !== 'none' && t) {
-      const wantCharge = pilot.fire === 'charge' || (pilot.fire === 'mix' && pellets >= 2)
+      const wantCharge = pilot.fire === 'charge' || (pilot.fire === 'mix' && pellets >= (pilot.human ? 1 + Math.floor(roll() * 3) : 2))
+      restT = Math.max(0, restT - dt)
       if (charging) {
         chargeT += dt
-        if (chargeT >= pilot.chargeS) {
+        if (chargeT >= chargeFor) {
           i.fireHeld = false
           i.fireReleased = true
           charging = false
           pellets = 0
+          if (pilot.human) restT = 0.15 + roll() * 0.4
         }
+      } else if (restT > 0) {
+        // A beat to look at what he hit.
       } else if (wantCharge) {
         i.fireHeld = true
         i.firePressed = true
         charging = true
         chargeT = 0
+        chargeFor = pilot.human ? pilot.chargeS * (0.8 + roll() * 0.45) : pilot.chargeS
       } else if (m.combat.fireCd <= 0) {
         // A pellet: press and release on one step.
         i.firePressed = true
         i.fireReleased = true
         pellets++
+        if (pilot.human && roll() < 0.18) restT = 0.2 + roll() * 0.35
       }
     }
     // ── Slide and special weapons ──
@@ -153,7 +216,7 @@ export const installTrailerSeam = (): void => {
     }
     if (pilot.weapon && pilot.weaponEvery > 0 && t) {
       weaponT += dt
-      if (weaponT >= pilot.weaponEvery) { weaponT = 0; i.weaponQueued = pilot.weapon }
+      if (weaponT >= pilot.weaponEvery * (pilot.human ? 0.8 + roll() * 0.5 : 1)) { weaponT = 0; i.weaponQueued = pilot.weapon }
     }
   }
   last = performance.now() / 1000
@@ -180,6 +243,23 @@ export const installTrailerSeam = (): void => {
       if (m) m.combat.iframes = 1e9
     },
     phase: (): string => hud.phase,
+    /** The save of a player at the story's end for the lab shot: every sector
+     *  open, every Core Master beaten (their pedestals lit), Vex's gate open. */
+    lateSave(): void {
+      profile.world.unlocked = SECTORS.map(s => s.id)
+      profile.world.bosses = SECTORS.filter(s => s.id !== 'fortress').map(s => s.boss)
+    },
+    /** Put Flux in the lab's hall at `z`, heading down it (+z), the camera
+     *  snapped behind. The hall's walk is the game's own (`HubMode`). */
+    hallAt(z: number): void {
+      // HubMode keeps these private; this is a DEV seam.
+      const h = app.mode as unknown as { walker: { x: number; z: number; yaw: number }; prevX: number; prevZ: number; prevYaw: number; camYaw: number }
+      if (!h?.walker) return
+      h.walker.x = h.prevX = 0
+      h.walker.z = h.prevZ = z
+      h.walker.yaw = h.prevYaw = 0
+      h.camYaw = 0
+    },
     /** Where things are, for the recorder's log lines. */
     state(): Record<string, unknown> {
       const m = mission()
@@ -293,7 +373,7 @@ export const installTrailerSeam = (): void => {
       if (!m) return
       const p = m.player
       for (const e of m.enemies as Enemy[]) {
-        if (e.boss || e.state === 'dead' || Math.hypot(e.x - p.x, e.z - p.z) > r) continue
+        if (e.boss || e.challenge || e.state === 'dead' || Math.hypot(e.x - p.x, e.z - p.z) > r) continue
         m.system.killEnemy(e)
       }
       if (m.boss && m.boss.state !== 'dead') m.combat.target = m.boss
@@ -323,6 +403,8 @@ export const installTrailerSeam = (): void => {
       if (!o) { pilot = { ...OFF }; releaseAll(); return }
       pilot = { ...pilot, ...o }
       pilotT = 0
+      rng = 1234567
+      anchor = null
     },
     /** A fixed camera (world): from (x, y, z) looking at (lx, ly, lz); null = Flux's eyes. */
     cam(c: Pose | null): void {

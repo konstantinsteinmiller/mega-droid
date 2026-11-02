@@ -5,10 +5,9 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
  * ─── "Wake-Up Call": the first mission as a built stage ─────────────────────
  *
  * The tutorial used to be a labyrinth from a hand-picked seed. Playtests
- * wanted things a labyrinth cannot give: a gap to leap in the first mission,
- * the rooms in a fixed teaching order with the slide right before the boss,
+ * wanted things a labyrinth cannot give: the rooms in a fixed teaching order with the slide right before the boss,
  * and a first door that is no door at all until the first lesson is done.
- * So it is a stage now (the scrapyard theme, flat but for one spiked gap),
+ * So it is a stage now (the scrapyard theme, flat),
  * and the walkthrough (`sim/walkthrough.ts`) reads its lessons per room from
  * `walkSteps`:
  *
@@ -19,8 +18,8 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
  *                      others until the charged shot pops the player's drone
  *   1 Salvage bay      a Hardhat, then the glowing crate (charge's second use)
  *   2 Shield hall      the Shield Trooper: block (and the perfect block)
- *   3 The gap          a spiked gap across the room: walk off the edge and
- *                      the edge-leap carries Flux over (arrows mark it)
+ *   3 Crossing hall    a fighting room, no lesson (the gap lesson was cut):
+ *                      two Hardhats, a mortar turret, a Roller, a Guardroid
  *   4 Store room       a chest: open it
  *   5 Stomper yard     the Stomper's red ring: slide out of it
  *   6 Drone room       two rotor drones: lock on and shoot (a playtest ask:
@@ -35,7 +34,7 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
  *   Arena              the Scrapper, 7 × 7
  *
  * Three rows: east along the top, back west through the middle, east again
- * along the bottom. Every floor at y = 0 but the gap's pit. The seed changes
+ * along the bottom. Every floor at y = 0. The seed changes
  * nothing (a replay is the same lesson); it only names the map.
  */
 
@@ -46,11 +45,11 @@ const H = 27
 export const TUTORIAL_SECRET = 'tutorial-secret'
 
 export const TUTORIAL_STEPS: string[][] = [
-  ['charge'], ['crate'], ['block'], ['gap'], ['chest'], ['slide'], ['clear'], ['clear'], ['clear'], ['rest']
+  ['charge'], ['crate'], ['block'], ['clear'], ['chest'], ['slide'], ['clear'], ['clear'], ['clear'], ['rest']
 ]
 /** Who stands in each walkthrough room (by its place on the path), where the
  *  lesson's own teacher is not enough: the fighting rooms after the lessons. */
-export const TUTORIAL_CAST: string[][] = [[], [], [], [], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
+export const TUTORIAL_CAST: string[][] = [[], [], [], ['hardhat', 'hardhat', 'turret', 'roller', 'brute'], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
 
 /**
  * Every room its own look (#118): a wall colour, an accent and a wall prop it
@@ -63,7 +62,7 @@ export const TUTORIAL_ROOM_STYLE: RoomStyle[] = [
   { wall: '#6f8a5a', wallLow: '#4e6340', accent: '#ffcf5a', prop: 'cageLamp' },     // 0 the pad: the Scrapyard's green
   { wall: '#a0623a', wallLow: '#6e4127', accent: '#ffd27a', prop: 'wallFan' },      // 1 crate: rust
   { wall: '#5a7898', wallLow: '#3b5068', accent: '#7fd8ff', prop: 'breaker' },      // 2 shield: steel blue
-  { wall: '#4e8f88', wallLow: '#335f5a', accent: '#9ff5e6', prop: 'coolantPipe' },  // 3 gap: teal
+  { wall: '#4e8f88', wallLow: '#335f5a', accent: '#9ff5e6', prop: 'coolantPipe' },  // 3 crossing hall: teal
   { wall: '#7a5f9a', wallLow: '#523e6a', accent: '#ff7ad9', prop: 'neonSign' },     // 4 chest: purple neon
   { wall: '#a88a3a', wallLow: '#725d24', accent: '#ffe14d', prop: 'ventGrille' },   // 5 slide: hazard ochre
   { wall: '#5d86b0', wallLow: '#3e5c7c', accent: '#bfe9ff', prop: 'droneCradle' },  // 6 drones: sky blue
@@ -94,12 +93,8 @@ export const generateWakeUpCall = (seed: number): MapData => {
   b.checkpoint(18, 4, YAW_PX, [[17, 3], [17, 4], [17, 5], [18, 4]])
   b.corridor(24, 4, 1, 0, 2, y)
 
-  // ── 3 The gap ─────────────────────────────────────────────────────────────
-  // A one-cell spiked gap across the whole room: the edge-leap's own lesson.
+  // ── 3 Crossing hall ─────────────────────────────────────────────────────────────
   b.addRoom(26, 2, 8, 5, 'combat', 'hall', y)
-  b.pits(30, 2, 30, 6)
-  b.pitKind(3, 'spikes')
-  b.link([29, 4], [31, 4], 'leap')
   b.checkpoint(27, 4, YAW_PX, [[26, 3], [26, 4], [26, 5], [27, 4]])
   b.corridor(32, 7, 0, 1, 3, y)
 

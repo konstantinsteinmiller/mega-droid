@@ -30,16 +30,11 @@ describe('Wake-Up Call (the built tutorial)', () => {
     expect(map.doors[g.door]!.boss).toBeFalsy()
   })
 
-  it('has a spiked one-cell gap with a leap link across it', () => {
+  it('has no gap: the gap lesson was cut and every floor is level', () => {
     const t = map.terrain!
-    const link = t.links!.find(l => l.kind === 'leap')!
-    expect(link).toBeTruthy()
-    const nav = createNav(map)
-    const mid = [(link.from[0] + link.to[0]) / 2, link.from[1]] as const
-    expect(floorAt(nav, cellCenter(mid[0]), cellCenter(mid[1]))).toBe(-Infinity)
-    expect(floorAt(nav, cellCenter(link.from[0]), cellCenter(link.from[1]))).toBe(0)
-    expect(floorAt(nav, cellCenter(link.to[0]), cellCenter(link.to[1]))).toBe(0)
-    expect(t.pitKind![map.room[mid[1] * map.w + mid[0]]!]).toBe('spikes')
+    expect(t.links?.some(l => l.kind === 'leap') ?? false).toBe(false)
+    expect(t.pit.some(Boolean)).toBe(false)
+    expect(TUTORIAL_STEPS.flat()).not.toContain('gap')
   })
 
   it("walls the start room in: the false wall stands in its corridor's mouth, on the room's own wall line", () => {

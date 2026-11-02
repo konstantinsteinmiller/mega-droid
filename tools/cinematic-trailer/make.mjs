@@ -23,7 +23,6 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
-import { CUT, BAR_S, VOICE_DIR } from './cut.mjs'
 import { renderShotSfx } from './sfx-render.mjs'
 import { startServer, assertOwnServer, originFor } from '../preview-video/lib/server.mjs'
 import { launchBrowser } from '../preview-video/lib/browser.mjs'
@@ -38,6 +37,9 @@ const SR = 48000
 const argv = process.argv.slice(2)
 const has = (f) => argv.includes(f)
 const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : null }
+// --v2: the human-style cut (cut-v2.mjs): a narrator and Flux speak, the pilot plays like a player.
+const V2 = has('--v2')
+const { CUT, BAR_S, VOICE_DIR } = await import(V2 ? './cut-v2.mjs' : './cut.mjs')
 const DRAFT = has('--draft')
 const ASSEMBLE = has('--assemble')
 const SHEET = has('--sheet')
@@ -45,10 +47,10 @@ const ONLY = val('--shots')?.split(/[,+]/).filter(Boolean) ?? null
 const FPS = DRAFT ? 15 : 30
 const W = DRAFT ? 960 : 1920
 const H = DRAFT ? 540 : 1080
-const WORK = join(ROOT, 'preview-videos', DRAFT ? 'trailer-draft' : 'trailer')
+const WORK = join(ROOT, 'preview-videos', (V2 ? 'trailer-v2' : 'trailer') + (DRAFT ? '-draft' : ''))
 const FINAL = DRAFT
-  ? join(WORK, 'mega-droid-cinematic-trailer-draft.mp4')
-  : join(ROOT, 'preview-videos', 'mega-droid-cinematic-trailer.mp4')
+  ? join(WORK, `mega-droid-cinematic-trailer${V2 ? '-v2' : ''}-draft.mp4`)
+  : join(ROOT, 'preview-videos', `mega-droid-cinematic-trailer${V2 ? '-v2' : ''}.mp4`)
 
 const say = (...a) => console.log('[trailer]', ...a)
 const die = (m) => { console.error(`[trailer] ✗ ${m}`); process.exit(1) }
@@ -178,11 +180,11 @@ for (const s of timeline) {
   place(sfxBus, decode(join(WORK, 'shots', s.id, 'sfx.wav')), s.startFrame / FPS, Math.round(s.frames / FPS * SR))
 }
 place(sfxBus, decode(join(WORK, 'cut-hits.wav')), 0, N)
-// Atlas (and one laugh from Vex): each line levelled on its own, then placed.
+// Atlas / the narrator and Flux (and one laugh from Vex): each line levelled on its own, then placed.
 const voSpans = []
-for (const s of timeline) {
+for (const s of [...timeline, { startFrame: frameAt(cardStart), vo: CUT.endCard.vo }]) {
   for (const v of s.vo ?? []) {
-    const line = decode(join(ROOT, VOICE_DIR, `${v.line}.ogg`))
+    const line = decode(v.file ? join(ROOT, v.file) : join(ROOT, VOICE_DIR, `${v.line}.ogg`))
     const t = s.startFrame / FPS + (v.beat ?? 0) * (BAR_S / 4)
     place(voBus, line, t, undefined, dbGain(CUT.levels.voice - lufs(line)) * (v.gain ?? 1))
     voSpans.push([t, t + line.length / 2 / SR])

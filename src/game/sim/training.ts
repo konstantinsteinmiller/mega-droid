@@ -27,7 +27,7 @@ export type TrainId = 'charge' | 'block' | 'slide' | 'gel' | 'gap' | 'weapon'
 export type TrainPhase = 'off' | 'intro' | 'try' | 'done'
 
 /** The tutorial's lessons, in the order the checklist lists them. */
-export const TUTORIAL_TRAINING: readonly TrainId[] = ['charge', 'block', 'gap', 'slide', 'gel']
+export const TUTORIAL_TRAINING: readonly TrainId[] = ['charge', 'block', 'slide', 'gel']
 
 /** The charge lesson starts once Flux is this much closer to its drones than
  *  his pad is (m): one step. He has his bearings before time stops for the card. */

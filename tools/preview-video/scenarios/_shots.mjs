@@ -140,6 +140,27 @@ const faceGrandMaster = (ctx, dist, pitch) => T(ctx, ([dist, pitch]) => {
 export const SHOTS = {
   // ── intro ───────────────────────────────────────────────────────────────
 
+  /** The Deployment Hall at the story's end: Flux walks down it past the lit
+   *  Core Master pedestals toward the open gate to Vex's fortress. */
+  hall: {
+    async stage(ctx) {
+      await boot(ctx, { level: 'stage', sector: 'magnet' })
+      await T(ctx, () => window.__trailer.lateSave())
+      await T(ctx, () => window.__game.goHub())
+      await until(ctx, () => window.__game.flow.screen === 'hub', undefined, 30_000)
+      await settle(ctx, 4500)
+      await T(ctx, () => { window.__game.flow.modal = '' })
+      // In the hall by the first pedestals, facing the gate at its far end.
+      await T(ctx, () => window.__trailer.hallAt(29))
+      await settle(ctx, 1200)
+    },
+    async play(ctx) {
+      await T(ctx, () => { window.__game.input.moveY = 1 })
+      await play(ctx, 6800)
+      await T(ctx, () => { window.__game.input.moveY = 0 })
+    }
+  },
+
   /** Wake-Up Call: the beam-in on the Scrapyard pad, then Flux's first look round. */
   beamin: {
     async stage(ctx) {
@@ -274,6 +295,75 @@ export const SHOTS = {
         window.__trailer.auto({ fire: 'charge', chargeS: 0.6, strafe: 0.5, strafePeriod: 2.2 })
       })
     }
+  },
+
+  // ── the lab and a challenge door (v2) ───────────────────────────────────
+
+  /** The 3D lab: Flux back from a mission, walking its floor, Pip and Atlas about. */
+  lab: {
+    async stage(ctx) {
+      await boot(ctx, { level: 'stage', sector: 'magnet' })
+      await T(ctx, () => window.__game.goHub())
+      await until(ctx, () => window.__game.flow.screen === 'hub', undefined, 30_000)
+      // The arrival, the first panel and the camera settle off camera.
+      await settle(ctx, 4500)
+      await T(ctx, () => { window.__game.flow.modal = '' })
+    },
+    async play(ctx) {
+      await T(ctx, () => { window.__game.input.moveY = 0.7 })
+      await play(ctx, 1300)
+      await T(ctx, () => { window.__game.input.moveY = 0; window.__game.input.turn = 0.4 })
+    }
+  },
+
+  /** A challenge door: Flux walks in, the room seals, the mini-boss makes its entrance. */
+  challenge: {
+    async stage(ctx) {
+      let found = false
+      for (const sector of ['magnet', 'cryo', 'blaze', 'volt', 'neon']) {
+        await boot(ctx, { level: 'stage', sector })
+        found = await T(ctx, () => {
+          const t = window.__trailer
+          const m = t.m()
+          const k = m.map.doors.findIndex((d) => d.challenge)
+          if (k < 0) return false
+          const d = m.doors[k]
+          const room = m.map.rooms[m.map.doors[k].to] ?? m.map.rooms[m.map.doors[k].from]
+          const cx = (room.x0 + room.w / 2) * 3
+          const cz = (room.z0 + room.h / 2) * 3
+          // 6 m out from the door, on the side away from the room.
+          const dx = d.x - cx
+          const dz = d.z - cz
+          const l = Math.hypot(dx, dz) || 1
+          t.clearAdds(30)
+          t.tp(d.x + (dx / l) * 6, d.z + (dz / l) * 6)
+          t.face(cx, cz)
+          return true
+        })
+        if (found) break
+        ctx.log.warn(`challenge: no challenge door in ${sector}`)
+      }
+      await T(ctx, () => window.__trailer.arm(['iceLance', 'neonBlade']))
+      ctx.log.step('dbg ' + JSON.stringify(await T(ctx, () => {
+        const m = window.__trailer.m()
+        const k = m.map.doors.findIndex((d) => d.challenge)
+        const d = m.doors[k]
+        return { k, md: m.map.doors[k], d: d && { x: d.x, z: d.z, axis: d.axis, keys: Object.keys(d).slice(0, 14) }, mini: m.enemies.filter((e) => e.mini).map((e) => [e.x, e.z, e.state, e.offstage]), p: [m.player.x, m.player.z] }
+      })))
+      await T(ctx, () => { window.__trailer.m().input.moveY = 1 })
+      // In through the door and past the entrance: the fight is on.
+      await until(ctx, () => window.__trailer.m().enemies.some((e) => e.mini && !e.offstage && e.state !== 'dead'), undefined, 20_000)
+      await settle(ctx, 1500)
+      await T(ctx, () => {
+        const t = window.__trailer
+        t.m().input.moveY = 0
+        t.approach((t.m().enemies.find((e) => e.mini)), 7)
+        t.auto({ fire: 'mix', chargeS: 0.8, strafe: 0.7, strafePeriod: 2.2, closeTo: 6, weapon: 1, weaponEvery: 2.6 })
+      })
+      await settle(ctx, 600)
+      await logState(ctx, 'challenge')
+    },
+    async play(ctx) { await play(ctx, 1500) }
   },
 
   // ── B: loot, then the Masters ──────────────────────────────────────────

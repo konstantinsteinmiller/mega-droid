@@ -97,6 +97,7 @@ export async function openPage(browser, { variant, url, initScripts = [], onCons
     // A preview video is all motion — a `prefers-reduced-motion` default would
     // quietly flatten every animation the clip exists to show.
     reducedMotion: 'no-preference',
+    locale: variant.locale,
     colorScheme: 'dark'
   })
 

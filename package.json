@@ -1,6 +1,6 @@
 {
   "name": "mega-droid",
-  "version": "0.11.4",
+  "version": "1.0.2",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -43,6 +43,7 @@
     "compress-bench": "node scripts/image-compress-bench.mjs",
     "compress-folder-with-backup": "node scripts/compress-images.mjs public/images --max-effort --backup-dir public-backup",
     "preview:video": "node tools/preview-video/record.mjs",
+    "publish-trailer": "node tools/youtube/publish.mjs tools/youtube/trailer.json",
     "cinematic-trailer": "node tools/cinematic-trailer/make.mjs",
     "voice:script": "node --experimental-strip-types --no-warnings tools/voice-script.mjs",
     "voice:report": "node --experimental-strip-types --no-warnings tools/voice-report.mjs",

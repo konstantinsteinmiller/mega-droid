@@ -49,3 +49,6 @@ H uses Repair Gel, E interacts, B beams out and Tab switches target.
 ## Tags
 
 action, adventure, robots, shooter, first-person, rpg, loot, casual, 3d
+
+## Youtube hashtags
+#MegaDroid #IndieGame #ActionGame #BrowserGame #GameTrailer #megamanx #megaman #megaman-like #3d #fps #fpsgames #fpsgames #fpsgaming #action #rpg #rpggames #indiedev #oldschool #platformer #freegames #webgames #webgame #elderscrollsblades #mission 

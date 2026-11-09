@@ -576,3 +576,36 @@ Wait for my "go" to start implementation, ask to review the decisions first.
 
 - [x] #Climb1 Wall climbing (the Neon level's wall-kick shaft) as a standard element of every story stage except the tutorial, taught by a hologram in the Blaze Master's level; climbs lead to a temporary special-weapon capsule, a Repair Gel or a higher-value chest, and a few become shortcuts (~30 % of the platforming) that always run through a hard, locked multi-enemy battle room, without redesigning the existing layouts.
   Done: a seeded climb feature (`world/climbFeature.ts`) raises a tower in a plain room of every story stage (never a pushing/flooding/riding room, clear of every mechanic, post, prize and doorway, the room still walkable door to door), wall-kick shafts up its faces with holds in the sector's own trim and accent clear of the wall; tiers rise by sector (one 3 m pitch → two pitches round a step → a taller 4.5 m second pitch). Prizes rotate weapon capsule → Repair Gel → ledge chest (authored tuned/prototype gear, once per save; a ledge chest only opens to a shot from its ledge). Blaze gets a one-kick practice wall right before its first climb with a ghost-Flux hologram kicking up the real wall (slide glyph, Atlas's existing wall-kick line), folding away after the first kick; nothing is gated on it. Shortcuts in Blackout Boulevard (switch chasm → Roof Garden) and Rotor Run (Hangar → Parts Store): a one-cell tower out through the wall onto a balcony above a locked guard room (5–6 machines, one elite), its far door into a later route room; the objective trail keeps to the main route. Supply runs and tower climbs unchanged. Tests: tests/game/climbFeature.test.ts, puzzleAudit.test.ts, stageSecrets.test.ts (real-body kick sim, every stage, seeds, both mirrors, coplanar hold check).
+
+  - [ ] #PressRelease What are the best channels to promote free game press releases for a full launch game, e.g. for Steam + IOS + Android release, so magazines pick it up and start writing articles about it or youtubers find it and cover it. Is it possible to promote their without having gated access as an industry giant?
+  Yes, it is entirely possible to get coverage without an industry giant's budget or gated industry access. Gaming journalists, bloggers, and YouTubers are constantly looking for interesting new games to cover. However, simply emailing a press release to general outlets rarely works on its own—success comes from using free distribution channels combined with direct outreach.   
+  pressengine.net.
+  1. Free & Low-Cost Press Release Distribution Channels
+     Games Press (inbox@gamespress.com): The single most important hub for game PR. You can email your press release directly to their free inbox. Almost all major gaming journalists (from IGN to niche blogs) monitor Games Press feeds to see daily releases and assets.   
+     Games Press
+
+    IndieDB & ModDB: Great for PC/Steam games. You can create a free developer page, post news articles/press releases, and reach a massive audience of core gamers and indie journalists.
+    
+    Reddit (r/indiegames, r/playmygame, r/AndroidGaming, r/iosgaming, r/Steam): Reddit is often where journalists and YouTubers scout for hidden gems. Post video clips, gameplay GIFs, and honest release announcements following each subreddit's promo rules.
+    
+    TouchArcade Forums & Pocket Gamer (for iOS/Android): For mobile releases, TouchArcade's dedicated developer forum section ("Upcoming Games" and "New Games") is heavily monitored by mobile game reviewers and YouTubers.
+    
+  2. Platforms to Connect Direct with Content Creators & Reviewers
+       Rather than just sending a press release, offering free review keys to creators is often much more effective for getting YouTube and Twitch coverage:
+    
+    Keymailer: Free basic tiers allow indie developers to list their Steam/iOS/Android game and distribute review keys directly to verified content creators.
+    
+    Terminals.io: A dedicated media platform where game journalists and streamers request keys directly from indie developers.
+    
+    Lurkit / PressEngine: Platforms designed to match indie developers with content creators looking for games in specific genres.
+    
+  3. Direct Cold Outreach (The High-Yield Approach)
+       Press releases broadcast information, but direct emails get articles written.
+    
+    Build a Media Kit (presskit!! or Google Drive): Journalists rarely read long text blocks. Include high-res screenshots, a downloadable trailer link, your game’s pitch line, transparent PNG logos, and platform release links.
+    
+    Target Specific Journalists & Creators: Find writers who have recently reviewed games similar to yours on sites like TouchArcade, Pocket Gamer, Dorkly, or genre-specific YouTube channels.
+    
+    Keep Pitches Short: Keep the email under 150 words. Include a quick gameplay GIF embedded in the body, a clear 1-sentence hook ("what makes it unique"), store links, and a review key.   
+    Reverb Communications
+

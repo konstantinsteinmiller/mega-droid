@@ -41,3 +41,7 @@ Decisions (2026-11-13): id `com.hyperg8.megadroid` · audience teen 13+ (not Fam
 - Done: privacy URL, ads (yes), app access (nothing restricted), content rating (violence vs non-human, fantasy), target audience 13+/16+/18+, data safety (imported from Battlecross, deletion URL = Mega Droid policy), advertising ID (yes: analytics, advertising, fraud prevention), government/finance/health (no), trader status, category Action, contact email + website, default listing (name, short + full description, icon, feature graphic, 8 landscape screenshots), Alpha track countries (all) + tester group closed-test-pro-@googlegroups.com + feedback email, release 1000001 (1.0.2) uploaded as a draft.
 - NOT done: "send changes for review" (needs owner go-ahead), tablet screenshots, store translations.
 - Built locally: signed AAB, 55 MB, versionCode 1000001 uploaded; .env.tauri.remote now says 1000003 (the next build will use it). Opt-in link for testers: https://play.google.com/apps/testing/com.hyperg8.megadroid (works only after Google approves the release).
+
+## 2026-11-14 late
+- Play: listing screenshots replaced with the stores/ 1920x1080 set; 1 listing change waits on "Send for review" (Publishing overview). Release 1000001 (1.0.2) already shows "available to selected testers" on Alpha.
+- iOS: bootstrap signing run #2 green (macos-15; macos-14 is rejected by GitHub), iOS Build & Sign #1 green with TestFlight upload (10m47s). ASC session expired: owner must log in to attach the build, add the 2868x1320 / 2752x2064 screenshots, publish the privacy label and submit.

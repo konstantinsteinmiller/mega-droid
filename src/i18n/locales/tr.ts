@@ -1,5 +1,9 @@
 // Turkish locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Gizlilik politikası',
+    'settings': 'Gizlilik ayarları'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'İptal',
   'close': 'Kapat',

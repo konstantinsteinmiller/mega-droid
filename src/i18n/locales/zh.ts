@@ -1,5 +1,9 @@
 // Simplified Chinese locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': '隐私政策',
+    'settings': '隐私设置'
+  },
   'gameName': 'Mega Droid',
   'cancel': '取消',
   'close': '关闭',

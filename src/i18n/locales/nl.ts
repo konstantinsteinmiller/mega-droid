@@ -1,5 +1,9 @@
 // Dutch locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Privacybeleid',
+    'settings': 'Privacy-instellingen'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Annuleren',
   'close': 'Sluiten',

@@ -1,5 +1,9 @@
 // Romanian (ro) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Politica de confidențialitate',
+    'settings': 'Setări de confidențialitate'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Anulează',
   'close': 'Închide',

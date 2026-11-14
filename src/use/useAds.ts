@@ -68,6 +68,11 @@ export const isRewardedReady = computed(() =>
   provider.isRewardedReady.value && !isRewardedThrottled.value
 )
 export const isInterstitialReady = computed(() => provider.isInterstitialReady.value)
+/** The provider's consent platform wants a way back into the player's privacy
+ *  choice (LevelPlay + Google UMP, GDPR regions only) — the Options menu shows
+ *  a "Privacy settings" entry while this is true. */
+export const privacyOptionsRequired = computed(() => provider.privacyOptionsRequired?.value ?? false)
+export const showPrivacyOptions = (): Promise<void> => provider.showPrivacyOptions?.() ?? Promise.resolve()
 /** True once the active ad provider has detected a browser-extension
  *  ad-blocker (uBlock, AdGuard, Brave Shields, etc.). Drives the
  *  shared `AdsBlockedModal`. Always false on native builds. */

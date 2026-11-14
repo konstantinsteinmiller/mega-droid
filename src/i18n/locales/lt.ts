@@ -1,5 +1,9 @@
 // Lithuanian (lt) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Privatumo politika',
+    'settings': 'Privatumo nustatymai'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Atšaukti',
   'close': 'Uždaryti',

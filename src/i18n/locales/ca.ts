@@ -1,5 +1,9 @@
 // Catalan (ca) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Política de privadesa',
+    'settings': 'Configuració de privadesa'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Cancel·la',
   'close': 'Tanca',

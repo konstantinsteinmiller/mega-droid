@@ -1,5 +1,9 @@
 // French locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Politique de confidentialité',
+    'settings': 'Paramètres de confidentialité'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Annuler',
   'close': 'Fermer',

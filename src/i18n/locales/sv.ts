@@ -1,5 +1,9 @@
 // Swedish (sv) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Integritetspolicy',
+    'settings': 'Integritetsinställningar'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Avbryt',
   'close': 'Stäng',

@@ -1,5 +1,9 @@
 // Hungarian (hu) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Adatvédelmi irányelvek',
+    'settings': 'Adatvédelmi beállítások'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Mégse',
   'close': 'Bezárás',

@@ -70,6 +70,14 @@ export interface AdProvider {
    */
   readonly ownsAdBlockUi?: boolean
   /**
+   * Reactive, optional: the provider's consent platform says the player must
+   * be able to reopen their privacy choice (Google UMP in GDPR regions). The
+   * Options menu shows a "Privacy settings" entry while this is true.
+   */
+  readonly privacyOptionsRequired?: Ref<boolean>
+  /** Reopens the consent form. Only providers with a consent platform. */
+  showPrivacyOptions?: () => Promise<void>
+  /**
    * Opt-in: the provider mutes the game's audio + flips the pause gate
    * ITSELF, only once the interstitial genuinely opens — by invoking the
    * `onImpression` callback passed to `showMidgameAd`. Left falsy (the

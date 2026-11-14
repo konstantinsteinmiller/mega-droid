@@ -1,5 +1,9 @@
 // Norwegian Bokmål (nb) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Personvernerklæring',
+    'settings': 'Personverninnstillinger'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Avbryt',
   'close': 'Lukk',

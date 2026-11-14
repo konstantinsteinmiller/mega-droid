@@ -1,5 +1,9 @@
 // Russian locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Политика конфиденциальности',
+    'settings': 'Настройки конфиденциальности'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Отмена',
   'close': 'Закрыть',

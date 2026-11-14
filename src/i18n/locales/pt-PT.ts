@@ -1,5 +1,9 @@
 // European Portuguese (pt-PT) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Política de privacidade',
+    'settings': 'Definições de privacidade'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Cancelar',
   'close': 'Fechar',

@@ -1,0 +1,36 @@
+# Manual permissions for the framework-provided event-listener commands.
+# Tauri 2 mobile plugins that emit events via `self.trigger(...)` (Swift/
+# Kotlin) expose two extra commands automatically — `registerListener`
+# and `removeListener` — used by the JS `addPluginListener` API. The
+# `tauri_plugin::Builder` does NOT auto-generate ACL permissions for
+# them (it only generates from the COMMANDS array in build.rs), so a
+# default-config app fails at runtime with
+# "Command plugin:levelplay|registerListener not allowed by ACL"
+# whenever the JS side tries to subscribe to the rewarded-state /
+# interstitial-state events. Defining the permissions here and pulling
+# them into `default.toml` makes a `levelplay:default` capability
+# entry sufficient for consumers — no per-app capability tweaks needed.
+#
+# Ref: https://github.com/tauri-apps/tauri/issues/10196
+
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-registerListener"
+description = "Allows the webview to register event listeners for plugin-emitted events (rewarded-state, interstitial-state)."
+commands.allow = ["registerListener"]
+
+[[permission]]
+identifier = "deny-registerListener"
+description = "Denies the webview from registering event listeners."
+commands.deny = ["registerListener"]
+
+[[permission]]
+identifier = "allow-removeListener"
+description = "Allows the webview to remove previously-registered event listeners."
+commands.allow = ["removeListener"]
+
+[[permission]]
+identifier = "deny-removeListener"
+description = "Denies the webview from removing event listeners."
+commands.deny = ["removeListener"]

@@ -1,5 +1,9 @@
 // Vietnamese locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Chính sách quyền riêng tư',
+    'settings': 'Cài đặt quyền riêng tư'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Hủy',
   'close': 'Đóng',

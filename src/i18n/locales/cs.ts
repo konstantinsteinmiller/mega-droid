@@ -1,5 +1,9 @@
 // Czech (cs) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Zásady ochrany osobních údajů',
+    'settings': 'Nastavení soukromí'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Zrušit',
   'close': 'Zavřít',

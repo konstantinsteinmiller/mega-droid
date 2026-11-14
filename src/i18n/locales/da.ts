@@ -1,5 +1,9 @@
 // Danish (da) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Privatlivspolitik',
+    'settings': 'Privatlivsindstillinger'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Annuller',
   'close': 'Luk',

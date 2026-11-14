@@ -1,5 +1,9 @@
 // Uzbek locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Maxfiylik siyosati',
+    'settings': 'Maxfiylik sozlamalari'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Bekor qilish',
   'close': 'Yopish',

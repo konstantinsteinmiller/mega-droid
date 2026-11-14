@@ -3,6 +3,10 @@
 // this folder mirror the shape. Vite ships each non-English locale as its own
 // lazy chunk (see `src/i18n/index.ts`).
 export default {
+  'privacy': {
+    'policy': 'Privacy policy',
+    'settings': 'Privacy settings'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Cancel',
   'close': 'Close',

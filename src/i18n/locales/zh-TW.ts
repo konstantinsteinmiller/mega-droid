@@ -1,5 +1,9 @@
 // Traditional Chinese, Taiwan (zh-TW) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': '隱私權政策',
+    'settings': '隱私設定'
+  },
   'gameName': 'Mega Droid',
   'cancel': '取消',
   'close': '關閉',

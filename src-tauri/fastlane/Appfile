@@ -1,0 +1,4 @@
+app_identifier "com.hyperg8.megadroid"
+# apple_id "you@example.com"       # Optional — not needed when using App Store Connect API key
+# itc_team_id "YOUR_ITC_TEAM_ID"   # Optional
+# team_id "YOUR_DEV_PORTAL_TEAM"   # Optional when APPLE_TEAM_ID env var is set

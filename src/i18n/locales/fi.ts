@@ -1,5 +1,9 @@
 // Finnish (fi) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Tietosuojakäytäntö',
+    'settings': 'Tietosuoja-asetukset'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Peruuta',
   'close': 'Sulje',

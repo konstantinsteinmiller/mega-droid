@@ -7,6 +7,9 @@
 //
 //   node tools/promotion/screens.mjs                 all 20
 //   node tools/promotion/screens.mjs --only vex,lab  just these ids
+//   node tools/promotion/screens.mjs --stores        the store set (Google Play 1920x1080, App Store
+//                                                    iPhone 6.9" 2868x1320, iPad 13" 2752x2064) into
+//   src/assets/promotion/screens/stores/NN-id-WxH.png. Real viewport x dpr, never upscaled.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -24,6 +27,14 @@ const sharp = require('sharp')
 const OUT = join(ROOT, 'src/assets/promotion/screens')
 const RAW = process.env.SCREENS_RAW ?? join(ROOT, 'preview-videos', 'screens-raw')
 const log = createLogger('screens')
+const STORES = process.argv.includes('--stores')
+const STORE_IDS = ['brawl', 'glacier-run', 'weapon-capsule', 'blaze-master', 'volt-master', 'neon-master', 'grand-master-core', 'the-lab']
+const STORE_OUT = join(ROOT, 'src/assets/promotion/screens/stores')
+const STORE_VARIANTS = [
+  { cssWidth: 960, cssHeight: 540, width: 1920, height: 1080, dpr: 2 },
+  { cssWidth: 956, cssHeight: 440, width: 2868, height: 1320, dpr: 3 },
+  { cssWidth: 1376, cssHeight: 1032, width: 2752, height: 2064, dpr: 2 }
+].map((v) => ({ ...v, isMobile: false, hasTouch: false, locale: 'en-US' }))
 const only = (() => { const i = process.argv.indexOf('--only'); return i > 0 ? process.argv[i + 1].split(',') : null })()
 
 // A cart ride: the first rail feature of a stage, `at` of the way along.
@@ -94,11 +105,13 @@ try {
   for (const [id, spec] of LIST) {
     n++
     if (only && !only.includes(id)) continue
+    if (STORES && !STORE_IDS.includes(id)) continue
+    for (const v of (STORES ? STORE_VARIANTS : [variant])) {
     const name = `${String(n).padStart(2, '0')}-${id}`
-    log.step(name)
+    log.step(STORES ? `${name} ${v.width}x${v.height}` : name)
     const target = new URL('/', server.url)
     for (const [k, v] of Object.entries(config.urlParams ?? {})) target.searchParams.set(k, v)
-    const { page, cdp, close } = await openPage(browser.browser, { initScripts: [HIDE_HINTS], variant, url: target.href, muteSocketsTo: server.url, log })
+    const { page, cdp, close } = await openPage(browser.browser, { initScripts: [HIDE_HINTS], variant: v, url: target.href, muteSocketsTo: server.url, log })
     const ctx = {
       page, cdp, log, config, phase: 'setup', fps: 30,
       evaluate: (fn, arg) => page.evaluate(fn, arg),
@@ -119,6 +132,13 @@ try {
       const playing = spec.custom ? Promise.resolve() : (shot.play?.(ctx) ?? Promise.resolve()).catch((e) => log.warn(`play: ${e.message}`))
       await new Promise((r) => setTimeout(r, spec.snap))
       const png = await page.screenshot({ type: 'png', animations: 'allow', caret: 'hide' })
+      if (STORES) {
+        mkdirSync(STORE_OUT, { recursive: true })
+        writeFileSync(join(STORE_OUT, `${name}-${v.width}x${v.height}.png`), png)
+        log.ok(`${name} ${v.width}x${v.height}`)
+        await Promise.race([playing, new Promise((r) => setTimeout(r, 200))])
+        continue
+      }
       writeFileSync(join(RAW, `${name}.png`), png)
       const img = sharp(png)
       const jpg = await img.clone().jpeg({ quality: 82, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer()
@@ -132,6 +152,7 @@ try {
       log.error(`${name} failed: ${err.message}`)
     } finally {
       await close()
+    }
     }
   }
 } finally {

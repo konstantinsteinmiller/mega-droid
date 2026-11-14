@@ -1,5 +1,9 @@
 // Polish locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Polityka prywatności',
+    'settings': 'Ustawienia prywatności'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Anuluj',
   'close': 'Zamknij',

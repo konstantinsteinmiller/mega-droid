@@ -1,5 +1,9 @@
 // Japanese locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'プライバシーポリシー',
+    'settings': 'プライバシー設定'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'キャンセル',
   'close': '閉じる',

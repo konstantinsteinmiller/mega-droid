@@ -842,6 +842,11 @@ export default defineConfig(({ mode, command }) => {
         ...(env.VITE_APP_PLAYGAMA === 'true' ? {
           '@/use/analyticsSink': fileURLToPath(new URL('./src/use/analyticsSink.stub.ts', import.meta.url))
         } : {}),
+        // LevelPlay (Tauri plugin ids, ad-unit env, `plugin:levelplay|…` command
+        // strings) belongs in the native store build only.
+        ...(env.VITE_APP_NATIVE === 'true' ? {} : {
+          '@/use/ads/LevelPlayProvider': fileURLToPath(new URL('./src/use/ads/LevelPlayProvider.stub.ts', import.meta.url))
+        }),
         ...(env.VITE_APP_POKI === 'true' ? {} : {
           '@/use/ads/PokiProvider': fileURLToPath(new URL('./src/use/ads/PokiProvider.stub.ts', import.meta.url)),
           // pokiPlugin is STATICALLY imported by `useGameplayLifecycle.ts` (which

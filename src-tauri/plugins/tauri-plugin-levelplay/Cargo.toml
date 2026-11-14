@@ -1,0 +1,17 @@
+[package]
+name = "tauri-plugin-levelplay"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77.2"
+description = "Tauri plugin bridging Unity LevelPlay (ironSource) ads on Android & iOS"
+links = "tauri-plugin-levelplay"
+
+[dependencies]
+tauri = { version = "2.10.3", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+thiserror = "2"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

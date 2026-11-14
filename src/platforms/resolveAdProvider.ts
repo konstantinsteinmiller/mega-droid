@@ -36,6 +36,7 @@ import { createGamepixProvider } from '@/use/ads/GamepixProvider'
 import { createGameMonetizeProvider } from '@/use/ads/GameMonetizeProvider'
 import { createYandexProvider } from '@/use/ads/YandexProvider'
 import { createPokiProvider } from '@/use/ads/PokiProvider'
+import { createLevelPlayProvider } from '@/use/ads/LevelPlayProvider'
 import { createNoopProvider } from '@/use/ads/NoopProvider'
 import type { AdProvider } from '@/use/ads/types'
 import type { PlatformFlags } from './capabilities'
@@ -49,6 +50,12 @@ export interface AdResolverInput {
 }
 
 export const resolveAdProvider = (input: AdResolverInput): AdProvider => {
+  // Native store build: one mediator (LevelPlay) bids across ironSource, AdMob
+  // and Unity Ads. Platform flags are exclusive, so the order only matters for
+  // reading; the native arm is first because it is the only one with env gates.
+  if (import.meta.env.VITE_APP_NATIVE === 'true' && import.meta.env.VITE_APP_SHOW_MEDIATOR_ADS === 'true') {
+    return createLevelPlayProvider()
+  }
   if (import.meta.env.VITE_APP_CRAZY_WEB === 'true') return createCrazyGamesProvider()
   if (import.meta.env.VITE_APP_GAME_DISTRIBUTION === 'true') return createGameDistributionProvider()
   if (import.meta.env.VITE_APP_PLAYGAMA === 'true') return createPlaygamaProvider()

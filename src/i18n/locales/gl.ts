@@ -1,5 +1,9 @@
 // Galician (gl) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Política de privacidade',
+    'settings': 'Axustes de privacidade'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Cancelar',
   'close': 'Pechar',

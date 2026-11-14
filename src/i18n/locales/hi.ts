@@ -1,5 +1,9 @@
 // Hindi locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'गोपनीयता नीति',
+    'settings': 'गोपनीयता सेटिंग्स'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'रद्द करें',
   'close': 'बंद करें',

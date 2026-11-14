@@ -1,5 +1,9 @@
 // Arabic locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'سياسة الخصوصية',
+    'settings': 'إعدادات الخصوصية'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'إلغاء',
   'close': 'إغلاق',

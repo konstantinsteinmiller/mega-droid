@@ -121,6 +121,18 @@ const bootstrap = async () => {
     }
   }
 
+  // Android hardware back button → Escape, so menus/pause close the way they do on
+  // desktop. The import is behind the build-time literal, so web bundles drop it.
+  if (import.meta.env.VITE_APP_NATIVE === 'true') {
+    void import('@tauri-apps/api/app')
+      .then(({ onBackButtonPress }) =>
+        onBackButtonPress(() => {
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }))
+        })
+      )
+      .catch(() => { /* desktop shell or older runtime: no back button */ })
+  }
+
   // Platform SDK init — must happen before App loads. Each branch runs
   // its platform's adapter via DYNAMIC import so non-matching builds
   // never download the SDK glue. Captured `cgLocale` is read inside the

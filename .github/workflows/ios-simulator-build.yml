@@ -1,0 +1,208 @@
+name: iOS Simulator Build (Unsigned)
+
+# Builds an unsigned .app bundle for the iOS Simulator.
+# No Apple Developer Program / signing cert required.
+# Manual-only trigger — macos-15 minutes are 10x Linux, so never auto.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Simulator target"
+        required: true
+        default: "aarch64-sim"
+        type: choice
+        options:
+          - aarch64-sim   # Apple Silicon simulator (macos-15 runner default)
+          - x86_64        # Intel simulator
+      profile:
+        description: "Build profile"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+      device:
+        description: "Simulator device (must exist on the macos-15 / Xcode 26 runner)"
+        required: true
+        default: "iPhone 16 Pro"
+        type: choice
+        options:
+          - iPhone 16 Pro
+          - iPhone 16 Pro Max
+          - iPhone 16
+          - iPhone 16 Plus
+          - iPhone 16e
+          - iPhone SE (3rd generation)
+          - iPad Pro 11-inch (M4)
+          - iPad Air 11-inch (M2)
+      screenshot_delay:
+        description: "Seconds to wait after launch before screenshot"
+        required: true
+        default: "8"
+        type: string
+
+concurrency:
+  group: ios-simulator
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned simulator .app
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    env:
+      # Simulator builds skip code signing. A dummy value keeps `tauri ios init`
+      # happy when it scaffolds the Xcode project on first run.
+      APPLE_DEVELOPMENT_TEAM: "0000000000"
+      CI: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.0"
+
+      - name: Setup Rust (iOS simulator targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize Tauri iOS project (first run only)
+        run: |
+          if [ ! -d "src-tauri/gen/apple" ]; then
+            pnpm exec tauri ios init
+          fi
+
+      - name: Sync app icons into iOS asset catalog
+        run: pnpm exec tauri icon src-tauri/icons/icon.png
+
+      - name: Build simulator .app
+        run: |
+          ARGS="--target ${{ inputs.target }}"
+          if [ "${{ inputs.profile }}" = "debug" ]; then
+            ARGS="$ARGS --debug"
+          fi
+          pnpm exec tauri ios build $ARGS
+
+      - name: Locate built .app
+        id: findapp
+        run: |
+          APP_PATH=$(find src-tauri/gen/apple/build -type d -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::No .app bundle found under src-tauri/gen/apple/build"
+            find src-tauri/gen/apple/build -maxdepth 4 -type d
+            exit 1
+          fi
+          echo "Found: $APP_PATH"
+          echo "path=$APP_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload .app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-sim-${{ inputs.target }}-${{ inputs.profile }}
+          path: ${{ steps.findapp.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Read iOS bundle identifier
+        id: bundleid
+        run: |
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${{ steps.findapp.outputs.path }}/Info.plist")
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "id=$BUNDLE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Boot simulator
+        env:
+          DEVICE_NAME: ${{ inputs.device }}
+        run: |
+          # Prefer iOS 18.x runtime (matches Xcode 26 SDK the app was built against);
+          # fall back to any iOS runtime if 18.x isn't present.
+          # Note: write JSON to a temp file rather than piping into `python3 - <<'PY'` —
+          # the heredoc would replace stdin and shadow the pipe, leaving json.load() empty.
+          xcrun simctl list devices available --json > "$RUNNER_TEMP/sim-devices.json"
+          UDID=$(SIM_JSON_PATH="$RUNNER_TEMP/sim-devices.json" python3 <<'PY'
+          import json, os
+          with open(os.environ["SIM_JSON_PATH"]) as f:
+              data = json.load(f)["devices"]
+          name = os.environ["DEVICE_NAME"]
+          def pick(predicate):
+              for runtime, devices in data.items():
+                  if not predicate(runtime):
+                      continue
+                  for d in devices:
+                      if d.get("name") == name:
+                          return d["udid"]
+              return None
+          udid = pick(lambda r: "iOS-18" in r) or pick(lambda r: "iOS" in r)
+          print(udid or "")
+          PY
+          )
+          if [ -z "$UDID" ]; then
+            echo "::error::Device '$DEVICE_NAME' not found on runner"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "UDID: $UDID"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Install app into simulator
+        run: xcrun simctl install "$SIM_UDID" "${{ steps.findapp.outputs.path }}"
+
+      - name: Launch app
+        run: xcrun simctl launch "$SIM_UDID" "${{ steps.bundleid.outputs.id }}"
+
+      - name: Wait for first frame
+        run: sleep ${{ inputs.screenshot_delay }}
+
+      - name: Capture screenshot
+        run: |
+          mkdir -p "$RUNNER_TEMP/screenshots"
+          xcrun simctl io "$SIM_UDID" screenshot "$RUNNER_TEMP/screenshots/launch.png"
+
+      - name: Tail simulator logs (last 200 lines)
+        if: always()
+        run: |
+          xcrun simctl spawn "$SIM_UDID" log show \
+            --predicate 'processImagePath CONTAINS "Mega Droid"' \
+            --style compact --last 2m \
+            | tail -n 200 > "$RUNNER_TEMP/screenshots/simulator.log" || true
+
+      - name: Upload screenshot + log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-sim-screenshot-${{ inputs.target }}-${{ inputs.profile }}
+          path: ${{ runner.temp }}/screenshots/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Shut down simulator
+        if: always()
+        run: xcrun simctl shutdown "$SIM_UDID" || true

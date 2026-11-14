@@ -1,5 +1,9 @@
 // Thai locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'นโยบายความเป็นส่วนตัว',
+    'settings': 'การตั้งค่าความเป็นส่วนตัว'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'ยกเลิก',
   'close': 'ปิด',

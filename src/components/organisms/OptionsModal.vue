@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import useUser, { isMobileLandscape } from '@/use/useUser'
+import useUser, { isMobileLandscape, isNative } from '@/use/useUser'
 import { setI18nLocale } from '@/i18n'
+import { privacyOptionsRequired, showPrivacyOptions } from '@/use/useAds'
+import { openExternal } from '@/utils/openExternal'
 import FModal from '@/components/molecules/FModal.vue'
 import FButton from '@/components/atoms/FButton.vue'
 import FSlider from '@/components/atoms/FSlider.vue'
@@ -40,6 +42,15 @@ const {
   userMusicVolume,
   userMusicTrack
 } = useUser()
+
+// ─── Privacy (native builds) ───────────────────────────────────────────────
+// Google Play wants the privacy policy reachable from inside the app. "Privacy
+// settings" reopens the Google UMP consent form, only where it is required.
+const privacyPolicyUrl: string = import.meta.env.VITE_APP_PRIVACY_POLICY_URL ?? ''
+const showPrivacyLinks = computed(() => isNative && (!!privacyPolicyUrl || privacyOptionsRequired.value))
+const openPrivacyPolicy = () => {
+  if (privacyPolicyUrl) void openExternal(privacyPolicyUrl)
+}
 
 const currentTab = ref('general')
 
@@ -262,6 +273,8 @@ onUnmounted(stopCapture)
 
     template(#footer)
       div.flex.flex-wrap.items-center.justify-center.gap-2
+        FButton(v-if="showPrivacyLinks && privacyPolicyUrl" class="px-4 sm:px-6" type="secondary" @click="openPrivacyPolicy") {{ t('privacy.policy') }}
+        FButton(v-if="showPrivacyLinks && privacyOptionsRequired" class="px-4 sm:px-6" type="secondary" @click="showPrivacyOptions") {{ t('privacy.settings') }}
         FButton(v-if="canReplayIntro" class="px-4 sm:px-6" type="secondary" @click="emit('replayIntro')") {{ t('options.replayIntro') }}
         FButton(class="px-6 sm:px-8" @click="emit('close')") {{ t('options.close') }}
 </template>

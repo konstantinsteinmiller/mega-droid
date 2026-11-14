@@ -1,0 +1,13 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Default permissions for the LevelPlay plugin — exposes init plus rewarded and interstitial ad commands, the consent (privacy options) form, the LevelPlay Test Suite launcher, and the framework-provided event-listener commands needed for `addPluginListener` to subscribe to rewarded-state / interstitial-state."
+permissions = [
+  "allow-init",
+  "allow-show-rewarded",
+  "allow-show-interstitial",
+  "allow-show-privacy-options",
+  "allow-launch-test-suite",
+  "allow-registerListener",
+  "allow-removeListener"
+]

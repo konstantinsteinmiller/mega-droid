@@ -1,5 +1,9 @@
 // Kazakh locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Құпиялылық саясаты',
+    'settings': 'Құпиялылық параметрлері'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Болдырмау',
   'close': 'Жабу',

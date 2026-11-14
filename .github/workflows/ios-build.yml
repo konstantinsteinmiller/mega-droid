@@ -1,0 +1,719 @@
+name: iOS Build & Sign
+
+# This is the FULL iOS build workflow that includes the LevelPlay
+# (IronSource 9.4.x) + AdMob mediation pipeline. If your app doesn't
+# ship ads, use the leaner `ios-build.yml` template instead — it skips
+# the swiftCompatibility staging, vendor-framework download, xcodeproj
+# patching, GADApplicationIdentifier injection, and SKAdNetworkItems
+# steps that only matter once a vendored ad SDK is on the link line.
+#
+# Read companion docs before editing:
+#   - LEVELPLAY_NATIVE_ADS.md (skill root) — full architecture + pitfalls
+#   - PITFALLS.md → "Phase 4 (iOS build) — additional failures"
+#
+# Placeholders this template uses (substitute via SUBSTITUTIONS.md):
+#   megadroid        — used as the artifact name prefix
+#   tauri-plugin-levelplay    — defaults to `tauri-plugin-levelplay`; the dir
+#                        name under src-tauri/plugins/ where your
+#                        LevelPlay plugin lives.
+#
+# Pinned vendor SDK versions (bump together — they have inter-version
+# compatibility constraints):
+#   IronSource iOS:        9.4.0
+#   ISAdMobAdapter:        5.7.0
+#   GoogleMobileAds (SPM): 13.2.0
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_method:
+        description: "Xcode export method"
+        required: true
+        default: "app-store-connect"
+        type: choice
+        options:
+          - app-store-connect
+          - release-testing
+          - ad-hoc
+          - debugging
+      upload_testflight:
+        description: "Upload to TestFlight (only valid with app-store-connect)"
+        required: false
+        default: false
+        type: boolean
+      testflight_changelog:
+        description: "Optional changelog for the TestFlight build (What to Test)"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build signed IPA
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    env:
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+      APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+      APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FASTLANE_SKIP_UPDATE_CHECK: "1"
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+      # Xcode 26 on macos-15 runners ships a partial Metal cryptex
+      # toolchain that lacks the Swift 5.x compatibility libs (see the
+      # `/var/run/com.apple.security.cryptexd/.../Metal.xctoolchain/...`
+      # path the linker complains about). Pinning TOOLCHAINS forces the
+      # full XcodeDefault toolchain — which has libswiftCompatibility50.a
+      # and friends — so vendored frameworks built with older Swift
+      # (IronSource 9.4.0) link cleanly. In practice this *should* fix
+      # things but doesn't reliably override the cryptex selection in
+      # current images, so we also stage compat libs ourselves below.
+      # Ref: actions/runner-images#13135
+      TOOLCHAINS: com.apple.dt.toolchain.XcodeDefault
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26 (required for App Store uploads after 2026-04-28)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.0"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: src-tauri
+
+      - name: Initialize Tauri iOS project (first run only)
+        run: |
+          if [ ! -d "src-tauri/gen/apple" ]; then
+            pnpm exec tauri ios init
+          fi
+
+      - name: Install Pillow (for alpha-strip)
+        run: python3 -m pip install --quiet --user --break-system-packages Pillow || python3 -m pip install --quiet --user Pillow
+
+      - name: Pre-strip alpha from master icon (so tauri icon regenerates without transparency)
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          path = "src-tauri/icons/icon.png"
+          img = Image.open(path)
+          if img.mode != "RGB":
+              rgba = img.convert("RGBA")
+              bg = Image.new("RGB", img.size, (0, 0, 0))
+              bg.paste(rgba, mask=rgba.split()[3])
+              bg.save(path, "PNG")
+              print(f"Stripped alpha from master: {path}")
+          else:
+              print(f"Master already opaque: {path}")
+          PY
+
+      - name: Sync app icons into iOS asset catalog
+        run: pnpm exec tauri icon src-tauri/icons/icon.png
+
+      - name: Strip alpha from generated iOS icons (defense in depth — App Store rejects 1024x1024 with alpha)
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          import glob, os
+
+          patterns = [
+              "src-tauri/icons/ios/*.png",
+              "src-tauri/gen/apple/**/Assets.xcassets/AppIcon.appiconset/*.png",
+          ]
+          paths = []
+          for p in patterns:
+              paths.extend(glob.glob(p, recursive=True))
+          if not paths:
+              print("::warning::No iOS icon PNGs found to strip")
+          for path in paths:
+              img = Image.open(path)
+              if img.mode != "RGB":
+                  rgba = img.convert("RGBA")
+                  bg = Image.new("RGB", img.size, (0, 0, 0))
+                  bg.paste(rgba, mask=rgba.split()[3])
+                  bg.save(path, "PNG")
+                  print(f"Stripped: {path}")
+              else:
+                  print(f"OK: {path}")
+          PY
+
+      - name: Set CFBundleVersion to unique per-run build number
+        run: |
+          BUILD_NUMBER="${{ github.run_number }}"
+          # Tauri's iOS target Info.plist lives at gen/apple/<target>_iOS/Info.plist.
+          # Find it dynamically so we don't hardcode the normalized product name.
+          INFO_PLIST=$(find src-tauri/gen/apple -maxdepth 3 -name Info.plist -not -path '*/build/*' | head -n 1)
+          if [ -z "$INFO_PLIST" ]; then
+            echo "::error::Could not locate iOS Info.plist under src-tauri/gen/apple"
+            find src-tauri/gen/apple -maxdepth 4 -type f -name '*.plist'
+            exit 1
+          fi
+          echo "Patching $INFO_PLIST with CFBundleVersion=$BUILD_NUMBER"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUMBER" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST"
+
+      - name: Inject GADApplicationIdentifier (AdMob iOS App ID) into Info.plist
+        # AdMob's MobileAdsInitProvider equivalent on iOS crashes the
+        # app at launch if Info.plist lacks GADApplicationIdentifier —
+        # same failure mode we hit on Android with the missing meta-data
+        # tag, fixed there via manifest placeholder. iOS doesn't have a
+        # manifest-merger equivalent, so we patch the generated plist
+        # in place after `tauri ios init`.
+        #
+        # The value comes from a GitHub repository variable
+        # `ADMOB_IOS_APP_ID` (Settings → Secrets and variables →
+        # Actions → Variables). AdMob app IDs are public identifiers
+        # (they ship in the bundle anyway) so a Variable is the right
+        # fit, not a Secret. If the variable is missing we fall back
+        # to Google's documented iOS test app ID — benign, returns a
+        # static "Test Ad" placeholder, no account required, prevents
+        # the launch crash.
+        env:
+          ADMOB_IOS_APP_ID: ${{ vars.ADMOB_IOS_APP_ID }}
+        run: |
+          ADMOB_IOS_APP_ID="${ADMOB_IOS_APP_ID:-ca-app-pub-3940256099942544~1458002511}"
+          INFO_PLIST=$(find src-tauri/gen/apple -maxdepth 3 -name Info.plist -not -path '*/build/*' | head -n 1)
+          if [ -z "$INFO_PLIST" ]; then
+            echo "::error::Could not locate iOS Info.plist under src-tauri/gen/apple"
+            exit 1
+          fi
+          echo "Patching $INFO_PLIST with GADApplicationIdentifier=$ADMOB_IOS_APP_ID"
+          /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier $ADMOB_IOS_APP_ID" "$INFO_PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :GADApplicationIdentifier string $ADMOB_IOS_APP_ID" "$INFO_PLIST"
+          # Defense in depth: Apple's Kids Category forbids the ATT
+          # prompt, so we make sure NSUserTrackingUsageDescription is
+          # absent from the plist. If a future Tauri or SDK bump adds
+          # one transitively, this delete keeps us compliant. Failure
+          # is silent because the key may not be present, which is the
+          # desired state. Remove this line if your app is NOT in the
+          # Apple Kids Category.
+          /usr/libexec/PlistBuddy -c "Delete :NSUserTrackingUsageDescription" "$INFO_PLIST" 2>/dev/null || true
+          # Only standard TLS: answers the App Store Connect export-compliance question.
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$INFO_PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Print :GADApplicationIdentifier" "$INFO_PLIST"
+          # Landscape only on iPhone and iPad (owner decision 2026-11-14, same lock as Android).
+          for KEY in UISupportedInterfaceOrientations UISupportedInterfaceOrientations~ipad; do
+            /usr/libexec/PlistBuddy -c "Delete :$KEY" "$INFO_PLIST" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :$KEY array" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :$KEY:0 string UIInterfaceOrientationLandscapeLeft" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :$KEY:1 string UIInterfaceOrientationLandscapeRight" "$INFO_PLIST"
+          done
+          # Landscape-only iPad apps must opt out of multitasking or the upload is rejected.
+          /usr/libexec/PlistBuddy -c "Set :UIRequiresFullScreen true" "$INFO_PLIST"             || /usr/libexec/PlistBuddy -c "Add :UIRequiresFullScreen bool true" "$INFO_PLIST"
+
+      - name: Inject SKAdNetworkItems into Info.plist (iOS 14.5+ ad attribution)
+        # iOS 14.5+ requires apps to declare every SKAdNetwork identifier
+        # they intend to receive postbacks from. Without this list, ad
+        # impressions still serve but no attribution / install-source
+        # data flows back to the ad networks — they downrank the app's
+        # bid value as a result. Apple caps the list at 100 entries.
+        #
+        # The 50 IDs below are the union Google publishes for AdMob iOS
+        # mediation (https://developers.google.com/admob/ios/ios14),
+        # which already covers IronSource own demand
+        # (`su67r6k2v3`, `8s468mfl3y`) and UnityAds (`4dzt52r2t5`) plus
+        # every major bidder partner. When adding a new mediation
+        # network, append its required IDs from that network's own iOS
+        # SKAdNetwork docs.
+        #
+        # Idempotent: deletes any existing :SKAdNetworkItems array
+        # first, then rebuilds it. Re-running the step is safe.
+        run: |
+          INFO_PLIST=$(find src-tauri/gen/apple -maxdepth 3 -name Info.plist -not -path '*/build/*' | head -n 1)
+          if [ -z "$INFO_PLIST" ]; then
+            echo "::error::Could not locate iOS Info.plist under src-tauri/gen/apple"
+            exit 1
+          fi
+
+          IDS=(
+            cstr6suwn9.skadnetwork
+            4fzdc2evr5.skadnetwork
+            2fnua5tdw4.skadnetwork
+            ydx93a7ass.skadnetwork
+            p78axxw29g.skadnetwork
+            v72qych5uu.skadnetwork
+            ludvb6z3bs.skadnetwork
+            cp8zw746q7.skadnetwork
+            3sh42y64q3.skadnetwork
+            c6k4g5qg8m.skadnetwork
+            s39g8k73mm.skadnetwork
+            wg4vff78zm.skadnetwork
+            3qy4746246.skadnetwork
+            f38h382jlk.skadnetwork
+            hs6bdukanm.skadnetwork
+            mlmmfzh3r3.skadnetwork
+            v4nxqhlyqp.skadnetwork
+            wzmmz9fp6w.skadnetwork
+            su67r6k2v3.skadnetwork
+            yclnxrl5pm.skadnetwork
+            t38b2kh725.skadnetwork
+            7ug5zh24hu.skadnetwork
+            gta9lk7p23.skadnetwork
+            vutu7akeur.skadnetwork
+            y5ghdn5j9k.skadnetwork
+            v9wttpbfk9.skadnetwork
+            n38lu8286q.skadnetwork
+            47vhws6wlr.skadnetwork
+            kbd757ywx3.skadnetwork
+            9t245vhmpl.skadnetwork
+            a2p9lx4jpn.skadnetwork
+            22mmun2rn5.skadnetwork
+            44jx6755aq.skadnetwork
+            k674qkevps.skadnetwork
+            4468km3ulz.skadnetwork
+            2u9pt9hc89.skadnetwork
+            8s468mfl3y.skadnetwork
+            klf5c3l5u5.skadnetwork
+            ppxm28t8ap.skadnetwork
+            kbmxgpxpgc.skadnetwork
+            uw77j35x4d.skadnetwork
+            578prtvx9j.skadnetwork
+            4dzt52r2t5.skadnetwork
+            tl55sbb4fm.skadnetwork
+            c3frkrj4fj.skadnetwork
+            e5fvkxwrpn.skadnetwork
+            8c4e2ghe7u.skadnetwork
+            3rd42ekr43.skadnetwork
+            97r2b46745.skadnetwork
+            3qcr597p9d.skadnetwork
+          )
+
+          /usr/libexec/PlistBuddy -c "Delete :SKAdNetworkItems" "$INFO_PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :SKAdNetworkItems array" "$INFO_PLIST"
+          for i in "${!IDS[@]}"; do
+            /usr/libexec/PlistBuddy -c "Add :SKAdNetworkItems:$i dict" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :SKAdNetworkItems:$i:SKAdNetworkIdentifier string ${IDS[$i]}" "$INFO_PLIST"
+          done
+          echo "Injected ${#IDS[@]} SKAdNetworkIdentifier entries into $INFO_PLIST"
+
+      - name: Stage Swift 5.x compatibility libs (IronSource needs them; Xcode 26's Metal cryptex toolchain doesn't mount on this runner)
+        # IronSource 9.4.0 was built with an older Swift toolchain and
+        # embeds `__swift_FORCE_LOAD_$_swiftCompatibility{50,51,56,Concurrency,DynamicReplacements,Packs}`
+        # references. These satisfy from `libswiftCompatibility*.a`
+        # archives that ship with every Xcode toolchain. On Xcode 26.0.x
+        # macos-15 runners they're inside a Metal cryptex
+        # (`/var/run/com.apple.security.cryptexd/.../Metal.xctoolchain/`)
+        # which never gets mounted, so the linker prints
+        # "search path … not found" and the IronSource undefined
+        # symbols cascade. Setting TOOLCHAINS at the env level didn't
+        # convince xcodebuild to abandon the cryptex path.
+        #
+        # Workaround: copy the libs out of any other installed Xcode
+        # (the macos-15 image carries multiple Xcode versions
+        # side-by-side) and add their location to OTHER_LDFLAGS in the
+        # project-patch step below.
+        # Ref: actions/runner-images#13135
+        id: swift-compat
+        run: |
+          set -euo pipefail
+          DST="${GITHUB_WORKSPACE}/swift-compat-libs"
+          mkdir -p "$DST"
+
+          # Try Xcode 26's own toolchain first (rare best-case), then
+          # fall back to whatever older Xcode the runner has cached.
+          CANDIDATES=(
+            "/Applications/Xcode_26.0.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_26.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_16.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_16.2.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_16.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_16.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+            "/Applications/Xcode_15.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos"
+          )
+          SRC=""
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "$c/libswiftCompatibility50.a" ]; then
+              SRC="$c"
+              break
+            fi
+          done
+
+          if [ -z "$SRC" ]; then
+            echo "::error::No installed Xcode contains libswiftCompatibility50.a"
+            echo "Available Xcodes:"
+            ls /Applications | grep -i Xcode || true
+            echo ""
+            echo "Toolchain layouts probed:"
+            for c in "${CANDIDATES[@]}"; do
+              echo "  $c → $([ -d "$c" ] && echo present || echo missing)"
+            done
+            exit 1
+          fi
+
+          echo "Source toolchain: $SRC"
+          for lib in \
+            libswiftCompatibility50.a \
+            libswiftCompatibility51.a \
+            libswiftCompatibility56.a \
+            libswiftCompatibilityConcurrency.a \
+            libswiftCompatibilityDynamicReplacements.a \
+            libswiftCompatibilityPacks.a; do
+            if [ -f "$SRC/$lib" ]; then
+              cp "$SRC/$lib" "$DST/"
+              echo "  ✓ $lib"
+            else
+              echo "  - $lib (not in source toolchain — IronSource may not need it)"
+            fi
+          done
+          echo ""
+          echo "Staged at: $DST"
+          ls -la "$DST"
+          echo "SWIFT_COMPAT_LIBS=$DST" >> "$GITHUB_ENV"
+
+      - name: Pre-download IronSource + AdMob adapter xcframeworks
+        # The plugin's build.rs also downloads these into the same path,
+        # but Swatinem/rust-cache restores `src-tauri/target/` from a
+        # previous run, so cargo's fingerprint matches and build.rs is
+        # skipped — leaving the Frameworks/ directory empty. xcodebuild
+        # then warns "search path ... not found" and the link fails on
+        # `_OBJC_CLASS_$_LevelPlay` etc. undefined symbols. Doing the
+        # download here unconditionally sidesteps the cache. We then
+        # assert the device-arm64 slice is actually on disk so any
+        # silent failure aborts the workflow with a clear message
+        # instead of trickling down to the linker.
+        run: |
+          set -euo pipefail
+          PLUGIN_DIR="${GITHUB_WORKSPACE}/src-tauri/plugins/tauri-plugin-levelplay/ios"
+          FRAMEWORKS_DIR="${PLUGIN_DIR}/Frameworks"
+          mkdir -p "$FRAMEWORKS_DIR"
+
+          fetch_xcframework() {
+            local name=$1 url=$2 wrapper=$3
+            local target="$FRAMEWORKS_DIR/${name}.xcframework"
+            local slice="${target}/ios-arm64"
+            if [ -d "$slice" ]; then
+              echo "✓ ${name}.xcframework/ios-arm64 already present, skipping"
+              return
+            fi
+            # Wipe a partial extraction (e.g. xcframework dir exists but
+            # the device slice doesn't — leftover from a previously
+            # interrupted build).
+            rm -rf "$target"
+            local tmp_zip
+            tmp_zip=$(mktemp /tmp/${name}.XXXXXX.zip)
+            local tmp_dir
+            tmp_dir=$(mktemp -d /tmp/${name}.XXXXXX)
+            echo "Downloading $url"
+            curl -fsSL -o "$tmp_zip" "$url"
+            echo "Extracting into $tmp_dir"
+            unzip -q "$tmp_zip" -d "$tmp_dir"
+            if [ ! -d "${tmp_dir}/${wrapper}/${name}.xcframework" ]; then
+              echo "::error::Expected ${tmp_dir}/${wrapper}/${name}.xcframework after unzip; got:"
+              find "$tmp_dir" -maxdepth 4 -type d
+              exit 1
+            fi
+            mv "${tmp_dir}/${wrapper}/${name}.xcframework" "$target"
+            rm -rf "$tmp_zip" "$tmp_dir"
+            echo "✓ Fetched ${name}.xcframework"
+          }
+
+          # Variant: Google's SPM zip extracts the xcframework at the
+          # ARCHIVE ROOT (no wrapper folder), unlike IronSource's. The
+          # `fetch_xcframework_flat` helper handles that layout.
+          fetch_xcframework_flat() {
+            local name=$1 url=$2
+            local target="$FRAMEWORKS_DIR/${name}.xcframework"
+            local slice="${target}/ios-arm64"
+            if [ -d "$slice" ]; then
+              echo "✓ ${name}.xcframework/ios-arm64 already present, skipping"
+              return
+            fi
+            rm -rf "$target"
+            local tmp_zip
+            tmp_zip=$(mktemp /tmp/${name}.XXXXXX.zip)
+            local tmp_dir
+            tmp_dir=$(mktemp -d /tmp/${name}.XXXXXX)
+            echo "Downloading $url"
+            curl -fsSL -o "$tmp_zip" "$url"
+            echo "Extracting into $tmp_dir"
+            unzip -q "$tmp_zip" -d "$tmp_dir"
+            if [ ! -d "${tmp_dir}/${name}.xcframework" ]; then
+              echo "::error::Expected ${tmp_dir}/${name}.xcframework after unzip; got:"
+              find "$tmp_dir" -maxdepth 4 -type d
+              exit 1
+            fi
+            mv "${tmp_dir}/${name}.xcframework" "$target"
+            rm -rf "$tmp_zip" "$tmp_dir"
+            echo "✓ Fetched ${name}.xcframework"
+          }
+
+          fetch_xcframework IronSource \
+            https://raw.githubusercontent.com/ironsource-mobile/iOS-sdk/master/9.4.0/IronSource9.4.0.zip \
+            IronSource
+          fetch_xcframework ISAdMobAdapter \
+            https://raw.githubusercontent.com/ironsource-mobile/iOS-adapters/master/admob-adapter/5.7.0/ISAdMobAdapter5.7.0.zip \
+            ISAdMobAdapter
+          # GoogleMobileAds: SPM dep only puts referenced .o files into
+          # libapp.a at SPM-compile time, so symbols not used by any
+          # Swift code (e.g. `_GADAdLoaderAdTypeNative`, referenced by
+          # the force-loaded ISAdMobAdapter banner sub-adapter) are
+          # missing at the FINAL Xcode link. Downloading the same zip
+          # locally + adding -F + -framework in the patch step makes
+          # all symbols resolvable.
+          fetch_xcframework_flat GoogleMobileAds \
+            https://dl.google.com/googleadmobadssdk/448fc380973105a3/googlemobileadsios-spm-13.2.0.zip
+
+          echo ""
+          echo "=== Verifying device-arm64 slices ==="
+          for fw in IronSource ISAdMobAdapter GoogleMobileAds; do
+            slice="${FRAMEWORKS_DIR}/${fw}.xcframework/ios-arm64/${fw}.framework/${fw}"
+            if [ ! -f "$slice" ]; then
+              echo "::error::Missing $slice"
+              ls -la "${FRAMEWORKS_DIR}/${fw}.xcframework/" 2>&1 || true
+              exit 1
+            fi
+            file "$slice"
+          done
+
+      - name: Patch Xcode project to link IronSource + AdMob adapter frameworks
+        # Tauri's iOS build flow has SPM compile the Swift plugin into
+        # `libapp.a` (the cargo step), then xcodebuild does the FINAL
+        # link of the app binary. The IronSource and ISAdMobAdapter
+        # binaries live under
+        # `src-tauri/plugins/tauri-plugin-levelplay/ios/Frameworks/`
+        # (placed by the preceding download step), but the generated
+        # Xcode project doesn't know about them — so the final link
+        # fails with "framework 'IronSource' not found" and undefined
+        # `_OBJC_CLASS_$_LevelPlay` etc. symbols. Patch
+        # FRAMEWORK_SEARCH_PATHS into the iOS app target so xcodebuild
+        # can resolve the auto-link directives Swift embedded in the
+        # plugin's object files.
+        #
+        # Absolute paths: relative paths in xcodeproj resolve against
+        # the project file's directory at link time, but ld validates
+        # the search path BEFORE following it and a "not found" warning
+        # there propagates to the auto-link failure. Pinning to absolute
+        # paths via $GITHUB_WORKSPACE removes the ambiguity. Idempotent:
+        # safe to re-run. Uses the `xcodeproj` gem that ships
+        # transitively with fastlane, so no Gemfile change needed.
+        working-directory: src-tauri
+        env:
+          FRAMEWORKS_BASE: ${{ github.workspace }}/src-tauri/plugins/tauri-plugin-levelplay/ios/Frameworks
+        run: |
+          bundle exec ruby - <<'RUBY'
+          require 'xcodeproj'
+
+          project_path = Dir.glob('gen/apple/*.xcodeproj').first
+          raise "no .xcodeproj found under src-tauri/gen/apple" unless project_path
+
+          project = Xcodeproj::Project.open(project_path)
+          base = ENV.fetch('FRAMEWORKS_BASE')
+          # Frameworks that must be `-force_load`ed: the IronSource SDK
+          # discovers its mediation adapters via Objective-C `+load`
+          # methods that run at app start. Without -force_load the
+          # static linker only pulls symbols actually referenced by
+          # Swift code, the `+load` methods never run, and LevelPlay's
+          # Test Suite reports "Adapter Not found" for whichever
+          # adapter wasn't force-loaded.
+          force_load_frameworks = %w[IronSource ISAdMobAdapter]
+          # Frameworks that just need to be on the link line so undefined
+          # symbols resolve, without dragging every .o into the binary.
+          # GoogleMobileAds belongs here because force-loading the AdMob
+          # adapter pulls in references to `_GADAdLoaderAdTypeNative` and
+          # other GoogleMobileAds symbols whose backing .o files weren't
+          # statically pulled at SPM compile time. Listing the framework
+          # explicitly here lets the linker resolve them on demand.
+          link_only_frameworks = %w[GoogleMobileAds]
+          all_frameworks = force_load_frameworks + link_only_frameworks
+          force_load_bins = force_load_frameworks.map do |fw|
+            "#{base}/#{fw}.xcframework/ios-arm64/#{fw}.framework/#{fw}"
+          end
+          # Optional staging dir of swiftCompatibility*.a libs (preceding
+          # CI step). Adding -L<path> before the IronSource link makes
+          # the force-load symbols resolve against the staged archives.
+          swift_compat = ENV['SWIFT_COMPAT_LIBS']
+          patched = []
+
+          project.targets.each do |target|
+            next unless target.name.end_with?('_iOS')
+            target.build_configurations.each do |config|
+              # FRAMEWORK_SEARCH_PATHS: where xcodebuild looks for `.framework`
+              paths = config.build_settings['FRAMEWORK_SEARCH_PATHS']
+              paths = paths.is_a?(Array) ? paths.dup : (paths ? [paths] : ['$(inherited)'])
+              # Drop any prior relative-path entries from earlier patch
+              # runs so we don't leave broken paths in the project.
+              paths.reject! { |p| p.is_a?(String) && p.include?('plugins/tauri-plugin-levelplay/ios/Frameworks') && !p.start_with?('/') }
+              all_frameworks.each do |fw|
+                slice = "#{base}/#{fw}.xcframework/ios-arm64"
+                paths << slice unless paths.include?(slice)
+              end
+              config.build_settings['FRAMEWORK_SEARCH_PATHS'] = paths
+
+              # OTHER_LDFLAGS:
+              #   -force_load <IronSource binary>: pull every .o out of
+              #     the IronSource static framework so its Objective-C
+              #     categories are loaded. We previously used `-ObjC`,
+              #     which has the same intent but operates on every
+              #     static archive on the link line — that triggered
+              #     "323 duplicate symbols" because each Tauri plugin's
+              #     SPM build embeds a copy of the Tauri Swift target
+              #     (Invoke.swift.o etc.) into libapp.a. -force_load is
+              #     scoped to one specific archive, so the duplicate
+              #     copies of Tauri stay deduplicated by normal linker
+              #     selection. Same trick works for IronSource's
+              #     `_ObjC` category load that LevelPlay's docs warn
+              #     about, without the collateral damage.
+              #   -L<staged compat libs>: see comment above
+              ldflags = config.build_settings['OTHER_LDFLAGS']
+              ldflags = ldflags.is_a?(Array) ? ldflags.dup : (ldflags ? [ldflags] : ['$(inherited)'])
+              # Drop stale entries from prior runs.
+              ldflags.reject! { |f| f == '-ObjC' }
+              ldflags.reject! { |f| f.is_a?(String) && f.start_with?('-L') && f.include?('swift-compat-libs') }
+              # Strip prior `-force_load <path>` pairs and prior
+              # `-framework <name>` pairs whose name is in our
+              # link-only set, so the patch is idempotent across re-runs.
+              cleaned = []
+              i = 0
+              while i < ldflags.length
+                f = ldflags[i]
+                if f == '-force_load'
+                  i += 2
+                  next
+                end
+                if f == '-framework' && i + 1 < ldflags.length && link_only_frameworks.include?(ldflags[i + 1])
+                  i += 2
+                  next
+                end
+                cleaned << f
+                i += 1
+              end
+              ldflags = cleaned
+              force_load_bins.each do |bin|
+                ldflags << '-force_load' << bin
+              end
+              # `-framework <Name>` for the link-only set so the linker
+              # has those archives on its line and can resolve symbols
+              # referenced from force-loaded archives.
+              link_only_frameworks.each do |fw|
+                ldflags << '-framework' << fw
+              end
+              if swift_compat && !swift_compat.empty?
+                ldflags << "-L#{swift_compat}"
+              end
+              config.build_settings['OTHER_LDFLAGS'] = ldflags
+
+              patched << "#{target.name}/#{config.name}"
+            end
+          end
+
+          project.save
+          puts "Patched: #{patched.join(', ')}"
+          puts "FRAMEWORK_SEARCH_PATHS additions: #{all_frameworks.map { |fw| "#{base}/#{fw}.xcframework/ios-arm64" }.join(', ')}"
+          puts "OTHER_LDFLAGS additions: #{force_load_bins.map { |b| "-force_load #{b}" }.join(' ')} #{link_only_frameworks.map { |fw| "-framework #{fw}" }.join(' ')}#{swift_compat ? " -L#{swift_compat}" : ''}"
+          RUBY
+
+      - name: Install signing material via match
+        working-directory: src-tauri
+        run: |
+          if [ "${{ inputs.export_method }}" = "ad-hoc" ]; then
+            bundle exec fastlane ios adhoc_certificates
+          else
+            bundle exec fastlane ios certificates
+          fi
+
+      - name: Build signed IPA
+        # Vite picks up VITE_APP_* env vars from process.env at build
+        # time (in addition to .env files). On the local dev box those
+        # values come from .env.tauri loaded via dotenv-cli, but
+        # .env.tauri is gitignored — so on CI we source them from
+        # GitHub repository variables. None of these are sensitive
+        # (app keys + ad unit IDs ship in the bundle either way), so
+        # they go in `vars.*` not `secrets.*`. Set them once at
+        # Settings → Secrets and variables → Actions → Variables.
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APPLE_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/app_store_connect_api.p8
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          # Tauri build mode flags.
+          VITE_APP_NATIVE: "true"
+          # Free demo to the Goblin King + the one-time full-version purchase.
+          VITE_APP_IAP_UNLOCK: "false"
+          VITE_APP_SHOW_MEDIATOR_ADS: "true"
+          VITE_APP_DEMO: "false"
+          VITE_APP_DEBUG: "false"
+          VITE_APP_ADS_TEST_SUITE: "false"
+          # LevelPlay iOS — one app key, one rewarded unit ID, one
+          # interstitial unit ID. Same shape as the Android variables.
+          VITE_APP_LEVELPLAY_IOS_APP_ID: ${{ vars.VITE_APP_LEVELPLAY_IOS_APP_ID }}
+          VITE_APP_LEVELPLAY_IOS_REWARDED_ID: ${{ vars.VITE_APP_LEVELPLAY_IOS_REWARDED_ID }}
+          VITE_APP_LEVELPLAY_IOS_INTERSTITIAL_ID: ${{ vars.VITE_APP_LEVELPLAY_IOS_INTERSTITIAL_ID }}
+          # AdMob iOS — same one used for the Info.plist patch above.
+          VITE_APP_ADMOB_IOS_APP_ID: ${{ vars.VITE_APP_ADMOB_IOS_APP_ID }}
+        run: |
+          echo "${APP_STORE_CONNECT_API_KEY_KEY}" | base64 --decode > "$APPLE_API_KEY_PATH"
+          pnpm exec tauri ios build --export-method "${{ inputs.export_method }}"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: megadroid-ios-${{ inputs.export_method }}
+          path: src-tauri/gen/apple/build/**/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Locate built IPA
+        id: findipa
+        if: ${{ inputs.upload_testflight && inputs.export_method == 'app-store-connect' }}
+        run: |
+          IPA_PATH=$(find src-tauri/gen/apple/build -name '*.ipa' | head -n 1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "::error::No .ipa found under src-tauri/gen/apple/build"
+            exit 1
+          fi
+          echo "Found IPA: $IPA_PATH"
+          echo "path=$IPA_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.upload_testflight && inputs.export_method == 'app-store-connect' }}
+        working-directory: src-tauri
+        env:
+          IPA_PATH: ${{ github.workspace }}/${{ steps.findipa.outputs.path }}
+          TESTFLIGHT_CHANGELOG: ${{ inputs.testflight_changelog }}
+        run: bundle exec fastlane ios upload_testflight
+
+      - name: Warn if upload requested but export method is wrong
+        if: ${{ inputs.upload_testflight && inputs.export_method != 'app-store-connect' }}
+        run: |
+          echo "::warning::TestFlight upload skipped — export_method '${{ inputs.export_method }}' is not 'app-store-connect'. TestFlight only accepts App Store-signed IPAs."

@@ -1,5 +1,9 @@
 // Latvian (lv) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Privātuma politika',
+    'settings': 'Privātuma iestatījumi'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Atcelt',
   'close': 'Aizvērt',

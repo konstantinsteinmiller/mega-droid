@@ -1,5 +1,9 @@
 // Korean locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': '개인정보 처리방침',
+    'settings': '개인정보 설정'
+  },
   'gameName': 'Mega Droid',
   'cancel': '취소',
   'close': '닫기',

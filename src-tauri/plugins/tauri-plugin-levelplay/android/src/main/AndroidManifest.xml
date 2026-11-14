@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+  <!-- LevelPlay network fetches and connectivity probes. -->
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+  <!--
+    Advertising ID. The app targets 18+ and is not directed to children,
+    so the ad networks may read it (personalised ads still need consent in
+    the EEA/UK/CH — Google UMP collects it before the first ad loads).
+    Apps targeting Android 13+ must declare this permission explicitly,
+    and Play Console → App content → Advertising ID must say "yes,
+    advertising" to match.
+
+    The Android 13+ Privacy Sandbox ad permissions that play-services-ads
+    declares (ACCESS_ADSERVICES_*) are left to the manifest merger.
+
+    If the native build ever goes back into Google Play's Families
+    programme, all four must be removed again with tools:node="remove".
+  -->
+  <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+
+  <!--
+    Required by play-services-ads / AdMob: the SDK ships a
+    `MobileAdsInitProvider` ContentProvider that auto-registers from
+    the AdMob library's manifest and runs at process startup. It
+    crashes the whole app if it can't find this meta-data tag, even
+    when AdMob is not the winning bidder in the LevelPlay waterfall.
+    Google UMP reads the same tag to find the app's consent message.
+
+    The actual value is injected at build time via the manifest
+    placeholder `admobAppId`, defined in the consuming app's
+    build.gradle.kts and sourced from the `VITE_APP_ADMOB_ANDROID_APP_ID`
+    env var (see .env.tauri). When unset, the fallback is Google's
+    documented AdMob test app ID — benign, returns a static "Test Ad"
+    placeholder, no account required.
+
+    Format reminder: AdMob App ID uses TILDE (`~`) as separator.
+    A value with a slash (`/`) is an *ad unit* ID — wrong tag.
+  -->
+  <application>
+    <meta-data
+      android:name="com.google.android.gms.ads.APPLICATION_ID"
+      android:value="${admobAppId}"/>
+  </application>
+</manifest>

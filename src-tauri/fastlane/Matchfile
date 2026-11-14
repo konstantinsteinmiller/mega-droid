@@ -1,0 +1,7 @@
+# Private git repo that stores the encrypted certs + profiles.
+# Replace with your own — create an empty private repo first, then run
+#   bundle exec fastlane match appstore
+# locally once to populate it.
+git_url "https://github.com/konstantinsteinmiller/megadroid-signing"
+storage_mode "git"
+type "appstore"

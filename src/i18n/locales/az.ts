@@ -1,5 +1,9 @@
 // Azerbaijani (az) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Məxfilik siyasəti',
+    'settings': 'Məxfilik parametrləri'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Ləğv et',
   'close': 'Bağla',

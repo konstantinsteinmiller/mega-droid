@@ -1,5 +1,9 @@
 // Croatian (hr) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Pravila privatnosti',
+    'settings': 'Postavke privatnosti'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Odustani',
   'close': 'Zatvori',

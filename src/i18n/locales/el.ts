@@ -1,5 +1,9 @@
 // Greek (el) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Πολιτική απορρήτου',
+    'settings': 'Ρυθμίσεις απορρήτου'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Άκυρο',
   'close': 'Κλείσιμο',

@@ -1,5 +1,9 @@
 // Indonesian locale — mirrors the key shape of en.ts exactly.
 export default {
+  'privacy': {
+    'policy': 'Kebijakan privasi',
+    'settings': 'Pengaturan privasi'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Batal',
   'close': 'Tutup',

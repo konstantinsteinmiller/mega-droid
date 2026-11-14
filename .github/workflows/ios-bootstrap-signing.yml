@@ -1,0 +1,96 @@
+name: iOS Bootstrap Signing (match)
+
+# One-time (or rare) setup: generates distribution certs + provisioning profiles
+# in your Apple Developer account and pushes them encrypted to the match git
+# repo. After this runs successfully once, use the regular ios-build.yml
+# workflow — it runs match in readonly mode.
+#
+# Re-run this only when:
+#   - You've added a new app identifier / bundle ID to your Apple team
+#   - Certs are revoked or expired
+#   - You need to nuke and recreate everything
+#   - You've added new device UDIDs (re-run generate_adhoc)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "match action"
+        required: true
+        default: "generate"
+        type: choice
+        options:
+          - generate             # App Store: create cert/profile if missing (safe, default)
+          - force_recreate       # App Store: wipe and recreate the profile (keeps cert)
+          - force_recreate_certs # App Store: wipe and recreate BOTH cert + profile
+          - nuke_distribution    # App Store: revoke distribution cert + profile — destructive!
+          - generate_adhoc       # Ad Hoc: create cert/profile listing registered devices (re-run after adding a device)
+          - force_recreate_adhoc_certs # Ad Hoc: wipe and recreate BOTH cert + profile
+          - nuke_adhoc           # Ad Hoc: revoke cert + profile — destructive!
+
+concurrency:
+  group: ios-bootstrap
+  cancel-in-progress: false  # match is mid-push when cancelled → corrupt signing repo
+
+jobs:
+  bootstrap:
+    name: Run match (${{ inputs.action }})
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    env:
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+      APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+      APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FASTLANE_SKIP_UPDATE_CHECK: "1"
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: src-tauri
+
+      - name: Run match (generate)
+        if: inputs.action == 'generate'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios bootstrap
+
+      - name: Run match (force recreate profile)
+        if: inputs.action == 'force_recreate'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios bootstrap_force
+
+      - name: Run match (force recreate cert + profile)
+        if: inputs.action == 'force_recreate_certs'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios bootstrap_force_certs
+
+      - name: Run match (nuke distribution)
+        if: inputs.action == 'nuke_distribution'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios nuke_distribution
+
+      - name: Run match (ad-hoc generate)
+        if: inputs.action == 'generate_adhoc'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios bootstrap_adhoc
+
+      - name: Run match (ad-hoc force recreate cert + profile)
+        if: inputs.action == 'force_recreate_adhoc_certs'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios bootstrap_adhoc_force_certs
+
+      - name: Run match (nuke ad-hoc)
+        if: inputs.action == 'nuke_adhoc'
+        working-directory: src-tauri
+        run: bundle exec fastlane ios nuke_adhoc

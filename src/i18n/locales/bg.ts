@@ -1,5 +1,9 @@
 // Bulgarian (bg) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Политика за поверителност',
+    'settings': 'Настройки за поверителност'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Отказ',
   'close': 'Затвори',

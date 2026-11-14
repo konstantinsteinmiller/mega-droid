@@ -1,5 +1,9 @@
 // Esperanto (eo) bundle — mirrors en.ts.
 export default {
+  'privacy': {
+    'policy': 'Privateca politiko',
+    'settings': 'Privatecaj agordoj'
+  },
   'gameName': 'Mega Droid',
   'cancel': 'Nuligi',
   'close': 'Fermi',

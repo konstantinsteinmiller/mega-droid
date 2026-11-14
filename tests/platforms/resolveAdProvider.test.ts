@@ -158,4 +158,20 @@ describe('resolveAdProvider', () => {
     })
 
   })
+
+  describe('native store build (LevelPlay)', () => {
+    it('returns LevelPlay for NATIVE + SHOW_MEDIATOR_ADS', async () => {
+      vi.stubEnv('VITE_APP_NATIVE', 'true')
+      vi.stubEnv('VITE_APP_SHOW_MEDIATOR_ADS', 'true')
+      const resolveAdProvider = await loadResolver()
+      expect(resolveAdProvider({ flags: allOff, showMediatorAds: true, isNative: true }).name).toBe('levelplay')
+    })
+
+    it('stays Noop for NATIVE without SHOW_MEDIATOR_ADS', async () => {
+      vi.stubEnv('VITE_APP_NATIVE', 'true')
+      vi.stubEnv('VITE_APP_SHOW_MEDIATOR_ADS', 'false')
+      const resolveAdProvider = await loadResolver()
+      expect(resolveAdProvider({ flags: allOff, showMediatorAds: false, isNative: true }).name).toBe('noop')
+    })
+  })
 })

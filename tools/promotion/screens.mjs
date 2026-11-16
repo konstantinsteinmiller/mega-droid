@@ -33,8 +33,9 @@ const STORE_OUT = join(ROOT, 'src/assets/promotion/screens/stores')
 const STORE_VARIANTS = [
   { cssWidth: 960, cssHeight: 540, width: 1920, height: 1080, dpr: 2 },
   { cssWidth: 956, cssHeight: 440, width: 2868, height: 1320, dpr: 3 },
-  { cssWidth: 1376, cssHeight: 1032, width: 2752, height: 2064, dpr: 2 }
-].map((v) => ({ ...v, isMobile: false, hasTouch: false, locale: 'en-US' }))
+  { cssWidth: 1376, cssHeight: 1032, width: 2752, height: 2064, dpr: 2 },
+  { cssWidth: 874, cssHeight: 402, width: 2622, height: 1206, dpr: 3 }
+].filter((v) => { const i = process.argv.indexOf('--size'); return i < 0 || `${v.width}x${v.height}` === process.argv[i + 1] }).map((v) => ({ ...v, isMobile: false, hasTouch: false, locale: 'en-US' }))
 const only = (() => { const i = process.argv.indexOf('--only'); return i > 0 ? process.argv[i + 1].split(',') : null })()
 
 // A cart ride: the first rail feature of a stage, `at` of the way along.

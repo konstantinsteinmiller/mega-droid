@@ -4,6 +4,7 @@ import {
 } from '../world/levelGen'
 import { floorAt, groundAt, moveBody, platUnder, STEP_UP, type Nav, type Plat, type Slab } from '../world/nav'
 import { groundUnder, tooTallFor } from './enemies'
+import { keepOnRegion } from './roam'
 import { BALL_R } from '../world/climbGen'
 import { secretDoorFace } from '../world/stages/builder'
 import type { LevelMeshes } from '../world/levelMesh'
@@ -1129,8 +1130,10 @@ export class ClimbRun {
   /** The climb's machines stay on their own platform; a flyer rises and
    *  sinks through its band after the player. */
   tendFoe(e: Enemy, playerY: number, dt: number): void {
+    // A walker keeps to the flat floor it is connected to, corridors and all
+    // (#196); the rest (a turret, a flyer, a crate) to their own rectangle.
     const l = e.leash
-    if (l) {
+    if (l && !keepOnRegion(this.host.map, e)) {
       e.x = clamp(e.x, l[0], l[2])
       e.z = clamp(e.z, l[1], l[3])
     }

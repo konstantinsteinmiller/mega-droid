@@ -14,7 +14,8 @@
       div.actions(v-if="!confirming")
         FButton(type="primary" icon="play" :label="t('pause.resume')" @click="resume")
         FButton(type="secondary" icon="settings" :label="t('options.title')" @click="$emit('options')")
-        FButton(type="danger" icon="home" :label="t('pause.abandon')" @click="confirming = true")
+        FButton(v-if="inMission" type="danger" icon="home" :label="t('pause.abandon')" @click="confirming = true")
+        FButton(v-if="canExit" type="secondary" icon="fullscreen" :label="t('pause.exit')" @click="exit")
       div.confirm(v-else)
         p.ask {{ t(bossWon ? 'pause.abandonWon' : 'pause.abandonAsk') }}
         div.actions
@@ -33,6 +34,7 @@ import { currentMission } from '@/game/boot'
 import ControlsPanel from '@/components/hud/ControlsPanel.vue'
 import { resolveParams } from '@/game/state/i18nParams'
 import { SECTOR_BY_ID } from '@/game/data/regions'
+import { canExitGame, exitGame } from '@/utils/exitGame'
 
 defineEmits<{ options: [] }>()
 const { t } = useI18n()
@@ -49,6 +51,10 @@ const confirming = ref(false)
 const bossWon = computed(() => confirming.value && !!currentMission()?.bossWon)
 watch(open, (o) => { if (o) confirming.value = false })
 const resume = () => { flow.modal = '' }
+/** The lab has no mission to abandon: its menu is Resume, Options, Exit. */
+const inMission = computed(() => flow.screen === 'mission')
+const canExit = canExitGame()
+const exit = () => { void exitGame() }
 const abandon = () => {
   confirming.value = false
   // Leaving, not resuming: no capture of the mouse on the way out.

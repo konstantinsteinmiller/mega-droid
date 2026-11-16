@@ -30,7 +30,7 @@ textarea{width:100%;box-sizing:border-box;min-height:44px;background:#0003;color
 <div class="bar"><button id="exp">Download picks (sfx-picks.json)</button></div>
 ${rows.map(r => `<section data-n="${r.name}"><h2>${r.name}</h2><div class="vs">${r.vs.map(v => `<div class="v" data-v="${v.id}"><b>${v.id}</b><audio controls preload="none" src="${v.file}"></audio><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button data-s="${i}">★</button>`).join('')}</div><button class="pk">Pick this one</button><span class="m">${esc(v.prompt)}</span></div>`).join('')}</div><textarea placeholder="Feedback for ${r.name} (if none fits)"></textarea></section>`).join('')}
 <script>
-const K='sfx-picks-v3';let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
+const K='sfx-picks-v3-${ONLY.join('-')}';let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(st))}catch{}}
 document.querySelectorAll('section').forEach(sec=>{const n=sec.dataset.n;st[n]??={pick:'',note:'',stars:{}};const o=st[n];
 const paint=()=>{sec.querySelectorAll('.v').forEach(v=>{v.classList.toggle('pick',o.pick===v.dataset.v);const s=o.stars[v.dataset.v]||0;v.querySelectorAll('.stars button').forEach(b=>b.classList.toggle('on',+b.dataset.s<=s))})};
@@ -38,5 +38,5 @@ sec.querySelectorAll('.v').forEach(v=>{const id=v.dataset.v;v.querySelectorAll('
 const t=sec.querySelector('textarea');t.value=o.note;t.oninput=()=>{o.note=t.value;save()};paint()});
 document.getElementById('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(st,null,2)],{type:'application/json'}));a.download='sfx-picks.json';a.click()};
 </script>`
-writeFileSync(join(OUT, 'candidates.html'), html)
+writeFileSync(join(OUT, ONLY.length ? `candidates-${ONLY.join('-')}.html` : 'candidates.html'), html)
 console.log(rows.length, 'sounds')

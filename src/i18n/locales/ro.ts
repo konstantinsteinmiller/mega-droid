@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUZĂ',
     'resume': 'Continuă',
+    'exit': 'Ieși din joc',
+    'exit': 'Ieși din joc',
     'abandon': 'Abandonează misiunea',
     'abandonAsk': 'Părăsești misiunea? Va conta ca eșuată.',
     'abandonWon': 'Pleci acum? Victoria asupra bossului contează în continuare.',

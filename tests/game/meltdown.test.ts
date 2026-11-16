@@ -354,6 +354,48 @@ describe('generateMeltdown', () => {
     }
   })
 
+  it('the hammer room chest is the prize of the dangerous way: no walk joins it to the south walk (#200)', () => {
+    for (const seed of SEEDS) {
+      const m = generateMeltdown(seed)
+      const t = m.terrain!
+      const room = t.sections.indexOf('hammer')
+      const r = m.rooms[room]!
+      const chest = (t.chests ?? []).find(c => c.room === room)
+      expect(chest, `seed ${seed}: a chest in the hammer room`).toBeDefined()
+      const ck = idx(m, chest!.x, chest!.z)
+      const golem = t.foes.find(f => f.room === room && f.kind === 'golem')!
+      const cp = t.checkpoints.find(c => c.room === room)!
+      const hammers = new Set(t.crushers.map(c => c.j * m.w + c.i))
+      const flood = (block: Set<number>): Set<number> => {
+        const seen = new Set<number>()
+        const stack = [idx(m, cp.x, cp.z)]
+        while (stack.length) {
+          const k = stack.pop()!
+          if (seen.has(k) || block.has(k)) continue
+          seen.add(k)
+          const i = k % m.w
+          const j = (k - i) / m.w
+          for (const [di, dj] of DIRS) {
+            const ni = i + di
+            const nj = j + dj
+            if (ni < r.x0 || ni >= r.x0 + r.w || nj < r.z0 || nj >= r.z0 + r.h) continue
+            const nk = nj * m.w + ni
+            if (standable(m, nk) && t.floor[nk] === t.floor[k]) stack.push(nk)
+          }
+        }
+        return seen
+      }
+      // Along the hammer walkway it is reached…
+      expect(flood(new Set()).has(ck), `seed ${seed}: the walkway reaches it`).toBe(true)
+      // …but the south walk (the hammers shut out) never gets there.
+      expect(flood(hammers).has(ck), `seed ${seed}: the south walk does not`).toBe(false)
+      // The ledge holds the capsule too, on the same level.
+      const cap = t.rewards.find(rw => rw.room === room && rw.kind === 'hp')!
+      expect(flood(new Set()).has(idx(m, cap.x, cap.z))).toBe(true)
+      expect(golem).toBeDefined()
+    }
+  })
+
   it('its props agree with their floors: vents on walls, barrels on flat steps, hammers on the walkway', () => {
     for (const seed of SEEDS.slice(0, 16)) {
       const m = generateMeltdown(seed)

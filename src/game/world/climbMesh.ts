@@ -179,9 +179,13 @@ export const buildClimbLevel = async (
       const bands = Math.max(1, Math.ceil((hi - y0) / BAND - 0.05))
       for (let m = 0; m < bands; m++) {
         const ya = y0 + (hi - y0) * m / bands
-        const yb = m === bands - 1 ? -1 : y0 + (hi - y0) * (m + 1) / bands
-        const topA = yb < 0 ? ta : Math.min(ta, yb)
-        const topB = yb < 0 ? tb : Math.min(tb, yb)
+        // The last band runs to the top profile. (A height below zero is no
+        // sentinel: a pit's wall bands sit at negative heights, and each used
+        // to run on to the wall's top, over the bands above it — z-fighting, #201.)
+        const last = m === bands - 1
+        const yb = last ? Infinity : y0 + (hi - y0) * (m + 1) / bands
+        const topA = last ? ta : Math.min(ta, yb)
+        const topB = last ? tb : Math.min(tb, yb)
         if (topA <= ya + 0.01 && topB <= ya + 0.01) continue
         const cl0 = shade(lowC, ya, k).clone()
         const clA = shade(highC, topA, k).clone()
@@ -460,7 +464,9 @@ export const buildClimbLevel = async (
               const ix = -e.di * w
               const iz = -e.dj * w
               const cl = q & 1 ? cHazDark : cHaz
-              const y = fy + 0.012
+              // The stripes of a ledge's two edges cross in its corner square: one
+              // lies a hair higher than the other, never two faces in one plane (#201).
+              const y = fy + (alongX ? 0.012 : 0.024)
               const p0: V3 = [pax, y, paz]
               const p1: V3 = [pbx, y, pbz]
               const p2: V3 = [pbx + ix, y, pbz + iz]

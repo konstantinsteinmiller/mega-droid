@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': 'PAUZA',
     'resume': 'Davom etish',
+    'exit': 'Oʻyindan chiqish',
+    'exit': 'Oʻyindan chiqish',
     'abandon': 'Missiyani tark etish',
     'abandonAsk': 'Missiyani tark etasizmi? U muvaffaqiyatsiz hisoblanadi.',
     'abandonWon': 'Hozir chiqasizmi? Boss ustidan gʻalabangiz baribir hisoblanadi.',

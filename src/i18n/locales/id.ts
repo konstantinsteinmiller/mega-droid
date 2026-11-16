@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': 'JEDA',
     'resume': 'Lanjutkan',
+    'exit': 'Keluar dari game',
+    'exit': 'Keluar dari game',
     'abandon': 'Tinggalkan misi',
     'abandonAsk': 'Keluar dari misi? Akan dihitung gagal.',
     'abandonWon': 'Keluar sekarang? Kemenangan atas bos tetap dihitung.',

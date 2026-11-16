@@ -397,6 +397,7 @@ export default {
   'pause': {
     'title': '已暫停',
     'resume': '繼續',
+    'exit': '離開遊戲',
     'abandon': '放棄任務',
     'abandonAsk': '要離開任務嗎？將視為失敗。',
     'abandonWon': '現在離開嗎？擊敗頭目的勝利仍然算數。',

@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUSAT',
     'resume': 'Fortsätt',
+    'exit': 'Avsluta spelet',
+    'exit': 'Avsluta spelet',
     'abandon': 'Avbryt uppdraget',
     'abandonAsk': 'Lämna uppdraget? Det räknas som misslyckat.',
     'abandonWon': 'Lämna nu? Segern över bossen räknas ändå.',

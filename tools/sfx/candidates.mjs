@@ -48,6 +48,18 @@ export const CANDIDATES = {
     'Collecting a steel hex bolt, two quick clean metallic clinks with a tiny sparkle, video game pickup',
     'A metal bolt and nut sound, a heavy steel clink followed by a light high ting, pickup reward, not a coin',
     'Small steel screw rolling and clinking on metal, then a bright satisfying ting, short pickup'] },
+  // #198: the shipped bolt ting reads scratchy to some players. Ten soft, toon-like takes.
+  boltToon: { dur: 0.5, prompts: [
+    'A cute cartoon pickup, a single soft round bubbly bloop with a gentle rising pitch, friendly, warm and smooth, no harsh highs, short',
+    'A friendly toy xylophone note, one short rounded wooden mallet tone with a tiny sparkle, cheerful and cozy, video game collectible',
+    'Soft marimba pop, two quick warm notes rising a third, playful and gentle, children cartoon game pickup, smooth with no hiss',
+    'A little bouncy boing-ting, a soft springy blip followed by a tiny glass chime, cute and rounded, cartoon style',
+    'Gentle music box pluck, a single sweet bell-like note with a short soft tail, friendly, no sharpness, collectible sound',
+    'Synthesised here (ElevenLabs credits ran out): a round sine bloop that glides up, soft attack, no highs',
+    'Synthesised here: a marimba-style two-note pluck a third apart, warm and short',
+    'Synthesised here: a single music-box pluck, soft bell tone with a gentle tail',
+    'Synthesised here: a springy boing up into a tiny soft chime',
+    'Synthesised here: a glassy low-to-high blip-bleep, rounded, very short'] },
   levelUp: { dur: 3.0, prompts: [
     'Level up fanfare, a triumphant heroic rising brass and chime fanfare with a sparkling finish, about three seconds, video game',
     'Epic short victory jingle with a rising orchestral swell, shimmering bells and a bold final chord, three seconds',
@@ -56,7 +68,9 @@ export const CANDIDATES = {
 }
 if (process.argv[1]?.endsWith('candidates.mjs')) {
   const key = apiKey()
+  const only = (process.env.ONLY ?? '').split(',').filter(Boolean)
   for (const [name, c] of Object.entries(CANDIDATES)) {
+    if (only.length && !only.includes(name)) continue
     mkdirSync(join(ROOT, 'tools/sfx/candidates', name), { recursive: true })
     for (let i = 0; i < c.prompts.length; i++) {
       const f = join(ROOT, 'tools/sfx/candidates', name, `v${i + 1}.mp3`)

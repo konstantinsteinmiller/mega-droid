@@ -1089,6 +1089,21 @@ export class CombatSystem {
     }
   }
 
+  /** The Ice Lance lands: a white flash, a ring of frost and shards flying out of the hit. */
+  private freezeBurst(e: Enemy, s: Shot): void {
+    const fx = this.host.fx
+    const k = LOW_FX ? 0.5 : 1
+    const cy = e.y + (e.floor ?? 0) + e.def.aimY
+    fx.flash(e.x, cy, e.z, '#bff4ff', 2.2 * Math.max(0.8, e.def.radius), 0.16)
+    fx.riseRing(e.x, (e.floor ?? 0) + 0.1, e.z, '#dffbff', Math.max(0.7, e.def.radius * 1.3), Math.round(20 * k))
+    for (let n = 0, m = Math.round(22 * k); n < m; n++) {
+      const a = Math.random() * Math.PI * 2
+      const sp = 2 + Math.random() * 4
+      fx.emit({ x: s.x, y: s.y, z: s.z, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 3.5, vz: Math.sin(a) * sp, color: n % 3 === 0 ? '#ffffff' : n % 3 === 1 ? '#bff4ff' : '#6fd8ff', size: 0.2 + Math.random() * 0.16, sizeEnd: 0.03, life: 0.55 + Math.random() * 0.3, gravity: 7 })
+    }
+    this.host.sfx('tink', e.x, e.z)
+  }
+
   private hitEnemyWithShot(e: Enemy, s: Shot, weakSpot = false): void {
     if (s.kind === 'special') {
       this.specialImpact(s)
@@ -1098,7 +1113,11 @@ export class CombatSystem {
       if (e.state !== 'dead' && !golemShielded(e)) {
         if (s.burn > 0) { e.burnT = 3; e.burnDps = s.burn }
         // Ice is an element, not a stun: it slows (see `frozenDt`).
-        if (s.freeze > 0) e.frozenT = Math.max(e.frozenT, s.freeze)
+        if (s.freeze > 0) {
+          // A fresh freeze bursts into ice at the hit (#203); a refresh only tops the clock up.
+          if (e.frozenT <= 0) this.freezeBurst(e, s)
+          e.frozenT = Math.max(e.frozenT, s.freeze)
+        }
       }
       return
     }

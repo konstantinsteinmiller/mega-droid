@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUZE',
     'resume': 'Turpināt',
+    'exit': 'Iziet no spēles',
+    'exit': 'Iziet no spēles',
     'abandon': 'Pamest misiju',
     'abandonAsk': 'Pamest misiju? Tā tiks skaitīta kā neizdevusies.',
     'abandonWon': 'Pamest tagad? Uzvara pār bosu tik un tā tiks ieskaitīta.',

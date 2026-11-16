@@ -538,8 +538,23 @@ Wait for my "go" to start implementation, ask to review the decisions first.
   Also generate new fitting music for the cinematic trailer before you start recording new scenes with projectile use of bosses.
   Another valid criticism is: "I think it could be good to mix up the order of some of the trailer clips. The first half shows some traversal/action segments with a bit of platforming, and then the 2nd half is all boss fights, so you have both side of the Megaman gameplay. But by the end of the trailer seeing boss after boss, I had kind of forgotten that earlier stuff, and was almost like 'is it just a boss rush game?' And someone who is there for the bosses might click off the trailer before it gets to them, if they don't see anything bigger and more exciting in the first half.", fix it to make the next trailer optimally spaced.
   
-- [ ] #194 The crate golem clips into the wall in one of the scenes of the trailer.
-- [ ] #195
+- [x] #194 The crate golem clips into the wall in one of the scenes of the trailer.
+- [x] #195 The player can get into a movement deadlock if pressing multiple keys and e.g. releasing only 1 of them. check it thoroughly and fix the deadlock, after releasing any of the WASD or arrow keys, the other pressed keys should be still active and keep the player moving in those directions. This movement must be AAA game studio quality level. I assume that some players drop out of the game due to this bug.
+- [x] #196 Enemies cant move through connection corridors, that sucks as it allows the player to cheese every normal enemy by simply running away, especially on big guarddroids.
+- [x] #197 Add +stat value when selecting another equipment piece at the armory, so the player sees what changes when switching equipment.
+- [x] #198 The bolt pickup sound is perceived as scratchy and unpleasant by some players, make a toonishly, cut and friendly bolt pickup sound. you can use elevenlabs for it.
+  generate 10 different version and let me pick in a web browser report.
+- [x] #199 The blue rotor drone puzzle does not yield a reward sometimes, maybe if it was failed the first time and got restarted?
+- [x] #200 in the press hammer room of the blaze master level, remove the connections pathway between the crate golem path and the press hammer path and add a chest on a platform that is only reachable if the player goes past the pressing hammer puzzle, so get rewarded for doing the dangerous puzzle. 
+- [x] #201 In the blaze master level rooms there are some overlapping wall faces that create the typical flicker on movement/camera position change. FIX it for all levels and all rooms, there cannot be 2 planes occupying the same space, if its some detail texture, move the textures a bit forward/out(whatever is needed to make it look correct.). 
+- [x] #202 In the challenge rooms, after gaining an item, show it like a chest opening, so the player understands what he received.
+- [x] #203 show a freeze vfx on the target hit by the freeze special weapon skill to make it have some real visual impact.
+- [x] #204 the 3d lab does not allow to open the pause/esc menu. fix it. There is also no way to exit full screen in MegaDroid (tested on Wavedash), -> add a button to close/exit the game in the pause menu, which also closes full screen if active.
+- [ ] #20
+- [ ] #20
+- [ ] #20
+- [ ] #20
+- [ ] #20
 
 - [ ] #SPEEDRUN Ask MegaMan speedrunners and streamers to play Mega Droid. Ask Mega man youtube players/reviewers.
 

@@ -374,6 +374,8 @@ export default {
   'pause': {
     'title': 'DURAKLATILDI',
     'resume': 'Devam et',
+    'exit': 'Oyundan çık',
+    'exit': 'Oyundan çık',
     'abandon': 'Görevi bırak',
     'abandonAsk': 'Görevden çıkılsın mı? Başarısız sayılır.',
     'abandonWon': 'Şimdi çıkılsın mı? Patrona karşı zaferin yine de sayılır.',

@@ -143,7 +143,8 @@ const selected = computed(() => itemById(selId.value))
 const compareTo = computed(() => {
   const s = selected.value
   if (!s || isEquipped(s.id)) return null
-  return equipped(s.slot === 'chip' ? 'chip1' : s.slot as EquipSlot)
+  // The piece it would replace (a chip: the weaker socket), as the loot card.
+  return rivalFor(s, equipped)
 })
 const freshIn = (s: EquipSlot) => profile.inv.items.some(i => i.slot === slotKind(s) && profile.inv.fresh.includes(i.id))
 

@@ -260,14 +260,12 @@ export const requestPointerLock = (input: Input): void => {
 }
 
 const MOVE_ACTIONS = new Set<Action>(['forward', 'back', 'left', 'right', 'turnLeft', 'turnRight'])
-/** A held movement key that has sent no keydown for this long, when another
- *  movement key goes down, is taken as released (its keyup was lost). */
-const STALE_KEY_MS = 1500
-
 export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptions): (() => void) => {
   const keys = new Set<string>()
-  /** When each key last sent a keydown (a held key repeats every ~33 ms). */
-  const keyAt = new Map<string, number>()
+  /** The order the held keys went down in (a counter, not a clock: two keys can
+   *  share a millisecond). Drives "last pressed wins" and the lost-release check. */
+  const pressSeq = new Map<string, number>()
+  let seq = 0
   let lastCtrlAt = -1e9
   const joyR = opts.joyRadius ?? 56
   let joyId: number | null = null
@@ -295,18 +293,28 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
   const rect = () => surface.getBoundingClientRect()
   /** Any key bound to the action is down (see `keyBindings.ts`). */
   const held = (a: Action): boolean => codesFor(a).some(c => keys.has(c))
+  /** Press order of the newest held key bound to the action. */
+  const pressedAt = (a: Action): number =>
+    Math.max(-1, ...codesFor(a).filter(c => keys.has(c)).map(c => pressSeq.get(c) ?? -1))
 
   const updateKeysMove = () => {
     if (input.joyActive) return
     let x = 0
     let y = 0
-    if (held('left')) x -= 1
-    if (held('right')) x += 1
-    if (held('forward')) y += 1
-    if (held('back')) y -= 1
+    // Opposite keys: the one pressed LAST wins (hold A, tap D → right; let go
+    // of D → straight back to left). Cancelling to a stop made a held key feel
+    // dead whenever its opposite was touched.
+    const axis = (neg: Action, pos: Action): number => {
+      const n = held(neg)
+      const p = held(pos)
+      if (n && p) return pressedAt(pos) > pressedAt(neg) ? 1 : -1
+      return p ? 1 : n ? -1 : 0
+    }
+    x = axis('left', 'right')
+    y = axis('back', 'forward')
     // ← / → TURN: the keyboard-only way to look around (a trackpad player
     // who never finds the drag still has one).
-    input.turn = (held('turnRight') ? 1 : 0) - (held('turnLeft') ? 1 : 0)
+    input.turn = axis('turnLeft', 'turnRight')
     const l = Math.hypot(x, y)
     input.moveX = l > 0 ? x / l : 0
     input.moveY = l > 0 ? y / l : 0
@@ -616,19 +624,31 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
       // finger never came up, or a key whose release the browser swallowed,
       // must not keep Flux walking (#192 stuck walk).
       if (input.joyActive) { input.joyActive = false; joyId = null }
-      // A movement key pressed while another has sent nothing for a while
-      // drops that one: a real hold either repeats or was just pressed
-      // (W held, then A for the diagonal, keeps W). Any other game key
-      // only drops orphaned non-movement keys, so W+A then Space still runs.
-      const moving = MOVE_ACTIONS.has(act)
-      const now = performance.now()
+      // Only NON-movement keys are dropped here (so W+A then Space still runs
+      // and a movement key is never taken away by a guess): a held movement
+      // key stays held until ITS keyup, a blur, or the proof below.
       for (const c of [...keys]) {
         const a = actionForCode(c)
-        if (!a || !MOVE_ACTIONS.has(a)) keys.delete(c)
-        else if (moving && c !== e.code && now - (keyAt.get(c) ?? 0) > STALE_KEY_MS) keys.delete(c)
+        if (!a || !MOVE_ACTIONS.has(a)) { keys.delete(c); pressSeq.delete(c) }
       }
     }
-    keyAt.set(e.code, performance.now())
+    if (e.repeat) {
+      // The OS repeats only the key that went down LAST. A repeat of X while a
+      // key pressed AFTER X is still "held" proves that key's keyup was lost
+      // (swallowed by a shortcut, a focus flicker, an overlay): drop it. No
+      // timer, so a long genuine hold of W with A tapped on top is never touched.
+      const mine = pressSeq.get(e.code)
+      if (mine !== undefined) {
+        {
+          let dropped = false
+          for (const c of [...keys]) if (c !== e.code && (pressSeq.get(c) ?? -1) > mine) { keys.delete(c); pressSeq.delete(c); dropped = true }
+          if (dropped) updateKeysMove()
+        }
+      }
+    } else {
+      // A fresh press (of a key we thought held too: its keyup was lost).
+      pressSeq.set(e.code, ++seq)
+    }
     if (e.repeat && keys.has(e.code)) return
     keys.add(e.code)
     if (!e.repeat && !NOT_A_PRESS.has(e.code)) input.anyPressed = true
@@ -681,6 +701,10 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
 
   const onKeyUp = (e: KeyboardEvent) => {
     keys.delete(e.code)
+    pressSeq.delete(e.code)
+    // macOS never sends the keyup of a key released while Command is down:
+    // letting go of Command is the moment to forget every held key.
+    if (e.code === 'MetaLeft' || e.code === 'MetaRight') { keys.clear(); pressSeq.clear() }
     if (actionForCode(e.code) === 'block' && !held('block')) input.blockHeld = false
     updateKeysMove()
   }
@@ -690,6 +714,7 @@ export const attachInput = (surface: HTMLElement, input: Input, opts: InputOptio
 
   const onBlur = () => {
     keys.clear()
+    pressSeq.clear()
     input.moveX = 0
     input.moveY = 0
     input.turn = 0

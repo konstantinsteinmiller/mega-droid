@@ -86,6 +86,79 @@ describe('keys', () => {
   })
 })
 
+describe('movement keys never deadlock (#195)', () => {
+  const rep = (code: string) =>
+    window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true, repeat: true }))
+
+  it('releasing one of several held keys keeps the others walking', () => {
+    key('keydown', 'KeyW')
+    key('keydown', 'KeyA')
+    key('keydown', 'KeyD')
+    key('keyup', 'KeyD')
+    expect(input.moveY).toBeGreaterThan(0)
+    expect(input.moveX).toBeLessThan(0)
+    key('keyup', 'KeyW')
+    expect(input.moveY).toBe(0)
+    expect(input.moveX).toBe(-1)
+    key('keyup', 'KeyA')
+    expect(input.moveX).toBe(0)
+  })
+
+  it('the arrow keys move too and mix with WASD', () => {
+    key('keydown', 'ArrowUp')
+    key('keydown', 'KeyD')
+    key('keyup', 'ArrowUp')
+    expect(input.moveX).toBe(1)
+    expect(input.moveY).toBe(0)
+  })
+
+  it('a long hold of W is never taken away by a later key press', () => {
+    const real = performance.now
+    let t = 0
+    performance.now = () => t
+    try {
+      key('keydown', 'KeyW')
+      key('keydown', 'KeyA')
+      t += 10_000 // W stopped repeating when A went down: that is normal
+      rep('KeyA')
+      key('keydown', 'KeyD')
+      key('keyup', 'KeyD')
+      key('keyup', 'KeyA')
+      expect(input.moveY).toBe(1)
+      expect(input.moveX).toBe(0)
+    } finally { performance.now = real }
+  })
+
+  it('opposite keys: the last pressed wins, and the first returns on release', () => {
+    key('keydown', 'KeyA')
+    key('keydown', 'KeyD')
+    expect(input.moveX).toBe(1)
+    key('keyup', 'KeyD')
+    expect(input.moveX).toBe(-1)
+  })
+
+  it('a repeat of an older key proves a newer key lost its release', () => {
+    key('keydown', 'KeyW')
+    key('keydown', 'KeyA') // its keyup never arrives
+    rep('KeyW') // only the newest key repeats, so A is not down any more
+    expect(input.moveX).toBe(0)
+    expect(input.moveY).toBe(1)
+  })
+
+  it('letting go of Command forgets the keys macOS never released', () => {
+    key('keydown', 'KeyW')
+    key('keydown', 'MetaLeft')
+    key('keyup', 'MetaLeft')
+    expect(input.moveY).toBe(0)
+  })
+
+  it('a lost focus stops the walk', () => {
+    key('keydown', 'KeyW')
+    window.dispatchEvent(new Event('blur'))
+    expect(input.moveY).toBe(0)
+  })
+})
+
 describe('captured mouse', () => {
   beforeEach(() => { input.locked = true })
 

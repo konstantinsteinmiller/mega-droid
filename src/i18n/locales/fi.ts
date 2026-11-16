@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'TAUKO',
     'resume': 'Jatka',
+    'exit': 'Poistu pelistä',
+    'exit': 'Poistu pelistä',
     'abandon': 'Hylkää tehtävä',
     'abandonAsk': 'Poistutaanko tehtävästä? Se lasketaan epäonnistuneeksi.',
     'abandonWon': 'Poistutaanko nyt? Pomovoitto lasketaan silti.',

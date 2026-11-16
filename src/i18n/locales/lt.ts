@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUZĖ',
     'resume': 'Tęsti',
+    'exit': 'Išeiti iš žaidimo',
+    'exit': 'Išeiti iš žaidimo',
     'abandon': 'Palikti misiją',
     'abandonAsk': 'Palikti misiją? Ji bus laikoma nepavykusia.',
     'abandonWon': 'Palikti dabar? Pergalė prieš bosą vis tiek įskaitoma.',

@@ -121,9 +121,13 @@ export class SkyShoot {
       e.hold = true
       e.floor = this.spec.y
       e.y = e.py = y + DROP
-      e.hp = e.maxHp = skyHp(s, e.def.armor)
       this.drones.push(e)
       h.addEnemy(e)
+      // After it joins the cast: the mission's toughening (progress, run and
+      // stage multipliers, New Game+) must not touch it. A ring tougher than
+      // one half charge could not be cleared in the time, so the round only
+      // ever failed and paid nothing (#199).
+      e.hp = e.maxHp = skyHp(s, e.def.armor)
     }
     this.stateT = 0
     this.spawned = true

@@ -145,6 +145,9 @@ export interface Enemy {
   burnT: number
   burnDps: number
   frozenT: number
+  /** The Ice Lance's shell of ice and how far it has grown, 0..1 (`fx/iceShell.ts`). */
+  ice?: import('three').Group
+  iceK?: number
   /** Id of the special weapon that last hit (weapon XP on kill). */
   lastWeapon: string
   /** The climb (terrain maps): the height of the platform it stands on.
@@ -158,6 +161,8 @@ export interface Enemy {
    *  platform — and, for a flyer, the band of heights it follows the player
    *  through. */
   leash?: [number, number, number, number]
+  /** The climb: the flat region of floor a ground machine may walk (`sim/roam.ts`). */
+  roam?: number
   hover?: [number, number]
   /** Never steps from its spot (it still turns and fights): the tutorial's
    *  block teacher, which walked out of its lesson. */

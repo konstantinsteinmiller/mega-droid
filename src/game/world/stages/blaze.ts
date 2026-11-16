@@ -25,7 +25,8 @@ import { placeClimbs } from '../climbFeature'
  *                     Roller and a Rotor Drone, the barrels' payoff before
  *                     the hammers
  *   6 Forge hammers   a one-cell walkway over lava under two piston hammers,
- *                     a spur with a capsule between them; or the south walk
+ *                     a ledge with a chest and a capsule between them, only
+ *                     reachable along it; or the south walk
  *                     round them, past a crate golem (#168)
  *   7 The big drop    a shaft of staggered ledges, 9 → 6 → 3; from the
  *                     middle ledge a dash leap over the shaft reaches a side
@@ -172,14 +173,17 @@ export const generateMeltdown = (seed: number): MapData => {
 
   // ── 6 Forge hammers ───────────────────────────────────────────────────────
   // The entry platform, a one-cell walkway west over lava under piston
-  // hammers, a spur between two of them with a capsule, the far platform.
+  // hammers, a ledge between two of them with a chest, the far platform.
   // Never a hammer over the first walkway cell (the walk ahead in view).
   b.addRoom(28, 8, 10, 5, 'combat', 'hammer', L(3))
   b.pitKind(5, 'lava')
   b.pits(28, 8, 37, 12)
   floor(36, 8, 37, 10, L(3))
   floor(29, 10, 35, 10, L(3))
-  floor(33, 11, 33, 11, L(3))
+  // #200: a ledge off the walkway's north side, between the two hammers,
+  // with a chest and the capsule: reached only along the hammer walkway
+  // (nothing joins it to the golem's south walk), so the dangerous way pays.
+  floor(31, 8, 32, 9, L(3))
   floor(28, 9, 28, 12, L(3))
   // #168: the other way across, no hammers and no leaps: down the entry
   // platform's south end and along the room's south wall, a solid walk over
@@ -187,12 +191,13 @@ export const generateMeltdown = (seed: number): MapData => {
   // (the lane's one cell wide: it has to be fought, not passed).
   floor(36, 11, 37, 12, L(3))
   floor(29, 12, 35, 12, L(3))
-  // Two hammers (#177 took out the middle one), the spur's capsule between them.
+  // Two hammers (#177 took out the middle one), the ledge's chest between them.
   rng()
   const hammers = [34, 30]
   const swing = 2.4 + rng() * 0.5
   hammers.forEach((i, n) => b.crushers.push({ i, j: 10, y: L(3), period: swing, phase: (n * 0.5 + rng() * 0.2) * swing, room: 5 }))
-  b.rewards.push({ x: cellCenter(33), z: cellCenter(11), y: L(3), room: 5, kind: 'hp' })
+  b.rewards.push({ x: cellCenter(32), z: cellCenter(9), y: L(3), room: 5, kind: 'hp' })
+  b.chest(31, 8, YAW_NZ)
   b.checkpoint(37, 9, YAW_NX, [[36, 8], [37, 8], [36, 9], [37, 9], [36, 10], [37, 10]])
   b.foe('flyer', 28, 9, YAW_PX, [28, 8, 36, 12], [L(3), L(3) + 3])
   // #168: no mortar here any more (players died to its shells and the hammers

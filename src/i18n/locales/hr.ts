@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUZA',
     'resume': 'Nastavi',
+    'exit': 'Izađi iz igre',
+    'exit': 'Izađi iz igre',
     'abandon': 'Napusti misiju',
     'abandonAsk': 'Napustiti misiju? Računat će se kao neuspjeh.',
     'abandonWon': 'Napustiti sada? Pobjeda nad bossom i dalje se računa.',

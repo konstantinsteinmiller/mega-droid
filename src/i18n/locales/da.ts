@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUSE',
     'resume': 'Fortsæt',
+    'exit': 'Afslut spil',
+    'exit': 'Afslut spil',
     'abandon': 'Opgiv missionen',
     'abandonAsk': 'Forlad missionen? Den tæller som fejlet.',
     'abandonWon': 'Forlad nu? Sejren over bossen tæller stadig.',

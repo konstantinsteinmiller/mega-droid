@@ -298,6 +298,36 @@ export class MissionObjects {
     this.chests.push({ id: this.chests.length, x: cx, y, z: cz, yaw, mesh, opened: false, openT: 0, supply, rarity, navIdx, beam, ...(loot ? { loot } : {}), ...(ledge ? { ledge } : {}) })
   }
 
+  /**
+   * A prize that shows itself as a chest opening (#202): the challenge's
+   * mini-boss falls and its reward stands in a chest of the item's rarity
+   * where it went down, turned to Flux, lid thrown open under the rarity's
+   * light beam, a ring of motes and sparks. The player reads "I got this"
+   * from the same picture every chest gives. Never solid, never to be opened
+   * again: it is a stage for the prize, not a container.
+   */
+  prizeChest(x: number, y: number, z: number, rarity: Rarity, towardX: number, towardZ: number): void {
+    const h = this.host
+    const mesh = buildChest(h.theme, rarity)
+    // The front faces him (a chest's back is the wall side of `yaw`).
+    const yaw = Math.atan2(x - towardX, z - towardZ)
+    mesh.root.position.set(x, y, z)
+    mesh.root.rotation.y = yaw
+    const parent = h.propParent(x, z)
+    parent.add(mesh.root)
+    const navIdx = h.nav.props.length
+    h.nav.props.push({ x, z, r: 0.8, active: false })
+    const beam = new Mesh(
+      new CylinderGeometry(0.35, 0.6, 5, 16, 1, true),
+      new MeshBasicMaterial({ color: new Color(RARITY_COLOR[rarity]), transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false })
+    )
+    beam.position.set(x, y + 2.5, z)
+    parent.add(beam)
+    this.chests.push({ id: this.chests.length, x, y, z, yaw, mesh, opened: true, openT: 0, supply: false, rarity, navIdx, beam })
+    h.fx.riseRing(x, y + 0.4, z, RARITY_COLOR[rarity], 0.9, 18)
+    h.fx.sparks(x, y + 0.9, z, RARITY_COLOR[rarity], 16, 5)
+  }
+
   private place(): void {
     const h = this.host
     const map = h.map

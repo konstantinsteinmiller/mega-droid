@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUSA',
     'resume': 'Continuar',
+    'exit': 'Saír do xogo',
+    'exit': 'Saír do xogo',
     'abandon': 'Abandonar a misión',
     'abandonAsk': 'Saír da misión? Contará como fallida.',
     'abandonWon': 'Saír agora? A vitoria contra o xefe segue contando.',

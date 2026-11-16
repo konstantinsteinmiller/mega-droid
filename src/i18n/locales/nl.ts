@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': 'GEPAUZEERD',
     'resume': 'Hervatten',
+    'exit': 'Spel afsluiten',
+    'exit': 'Spel afsluiten',
     'abandon': 'Missie afbreken',
     'abandonAsk': 'Missie verlaten? Die telt als mislukt.',
     'abandonWon': 'Nu verlaten? Je zege op de baas telt nog steeds.',

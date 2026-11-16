@@ -105,6 +105,27 @@ describe('built for the charge shot', () => {
   })
 })
 
+describe('the toughening of the cast never reaches the ring (#199)', () => {
+  it('a host that toughens every machine it takes in still gets drones one half charge takes', () => {
+    const { host, added } = fakeHost()
+    // What the mission does in `addEnemy`: progress, run and stage multipliers.
+    const toughening: SkyHost = { ...host, addEnemy: (e) => { e.hp = e.maxHp = Math.round(e.maxHp * 3.4); host.addEnemy(e) } }
+    const sky = new SkyShoot(toughening, spec)
+    sky.update(0, true)
+    const want = skyHp(baseStats(), ENEMIES.heli.armor)
+    expect(added).toHaveLength(SKY_DRONES)
+    for (const e of added) {
+      expect(e.hp).toBe(want)
+      expect(e.maxHp).toBe(want)
+    }
+    // A failed round's fresh ring is the same.
+    down(sky, added[0]!)
+    for (let i = 0; i < (SKY_TIME + 0.2) * 60 + 120; i++) sky.update(1 / 60, true)
+    expect(added).toHaveLength(SKY_DRONES * 2)
+    for (const e of added.slice(SKY_DRONES)) expect(e.hp).toBe(want)
+  })
+})
+
 describe('the clock', () => {
   it('starts with the first drone down, on screen', () => {
     const { host, added, sounds } = fakeHost()

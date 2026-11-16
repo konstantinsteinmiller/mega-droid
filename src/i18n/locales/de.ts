@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': 'PAUSIERT',
     'resume': 'Fortsetzen',
+    'exit': 'Spiel beenden',
+    'exit': 'Spiel beenden',
     'abandon': 'Mission abbrechen',
     'abandonAsk': 'Mission verlassen? Sie gilt als gescheitert.',
     'abandonWon': 'Jetzt gehen? Dein Sieg über den Boss zählt trotzdem.',

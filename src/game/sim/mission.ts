@@ -125,6 +125,7 @@ import { buildWeaponCapsule } from '../models/weaponCapsule'
 import { loadBossCraneModule, loadFinaleModules } from '../lazy'
 import { beamRefusal, grandMasterUp, shutOut } from './beamGate'
 import { SkyShoot } from './skyShoot'
+import { buildIceShell, tickIceShell } from '../fx/iceShell'
 
 export interface MissionSetup {
   sector: SectorId
@@ -2340,8 +2341,36 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    *  Master beaten (never a boss, never twice); a board run's also follow
    *  Flux's kit (`runMul`); the Vex Fortress's own take more again
    *  (`stageFoeHpMul`, #144). */
+  /** The shell of ice round a chilled machine (`fx/iceShell.ts`): grown in, gone with the chill or the machine. */
+  private syncIce(e: Enemy, dt: number): void {
+    const on = e.frozenT > 0 && e.state !== 'dead'
+    if (!on && !e.ice) return
+    if (on && !e.ice) {
+      e.ice = buildIceShell(e.rig.height, e.def.hitR)
+      e.root.add(e.ice)
+      e.iceK = 0
+    }
+    const g = e.ice!
+    e.iceK = on ? Math.min(1, (e.iceK ?? 0) + dt * 5) : 0
+    if (on) tickIceShell(g, e.iceK, e.frozenT, this.time)
+    else g.visible = false
+  }
+
+  /** A thawed machine's shell breaks: chips of ice fall off it. */
+  private iceCrack(e: Enemy): void {
+    if (e.ice) e.ice.visible = false
+    if (e.state === 'dead') return
+    const cy = (e.floor ?? 0) + e.y + e.rig.height * 0.5
+    for (let n = 0; n < 12; n++) {
+      const a = Math.random() * Math.PI * 2
+      this.fx.emit({ x: e.x, y: cy + (Math.random() - 0.5) * e.rig.height * 0.6, z: e.z, vx: Math.cos(a) * (1 + Math.random() * 2), vy: 1 + Math.random() * 2, vz: Math.sin(a) * (1 + Math.random() * 2), color: n % 2 ? '#e9fcff' : '#8fe6ff', size: 0.16, sizeEnd: 0.03, life: 0.6, gravity: 8 })
+    }
+    this.sfx('tink', e.x, e.z)
+  }
+
   private toughen(e: Enemy): void {
-    if (e.boss || (e as { toughened?: boolean }).toughened) return
+    // A sky shoot's drone keeps its own health: built for one half charge (#199).
+    if (e.boss || e.sky || (e as { toughened?: boolean }).toughened) return
     ;(e as { toughened?: boolean }).toughened = true
     // New Game+: every Core Master was beaten once already.
     const beaten = profile.world.ngPlus > 0 ? Object.values(SECTOR_BY_ID).filter(s => s.boss !== 'vexMk1').length : profile.world.bosses.length
@@ -3240,7 +3269,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
             this.system.damageEnemy(e, Math.max(1, Math.round(e.burnDps * 0.5)), { crit: false, charge: 0, fromX: e.x, fromZ: e.z, x: e.x, y: e.y + e.def.aimY, z: e.z, color: '#ff7a2a', special: true })
           }
         }
-        if (e.frozenT > 0) e.frozenT -= dt
+        if (e.frozenT > 0) {
+          e.frozenT -= dt
+          // Frost mist off the ice.
+          if (Math.random() < 0.35) this.fx.emit({ x: e.x + (Math.random() - 0.5) * 0.9, y: (e.floor ?? 0) + e.y + Math.random() * e.rig.height, z: e.z + (Math.random() - 0.5) * 0.9, vy: 0.5, vx: (Math.random() - 0.5) * 0.4, color: '#dffbff', size: 0.3, sizeEnd: 0.7, life: 0.7 })
+          // The thaw: the shell cracks into chips of ice.
+          if (e.frozenT <= 0) this.iceCrack(e)
+        }
       }
     }
     // The big bodies held off Flux last, once everything has moved.
@@ -4496,6 +4531,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     profile.inv.items.push(it)
     profile.inv.fresh.push(it.id)
     this.itemsFound.push(it)
+    // The item comes out of a chest opening where the mini-boss fell, not out of thin air (#202).
+    this.objects.prizeChest(x, y, z, r.rarity, this.player.x, this.player.z)
+    sfx('chestOpen')
     pushHud({ t: 'loot', item: it })
     pushHud({ t: 'toast', key: 'challenge.cleared', params: { bolts: r.bolts }, color: '#ffd84a' })
     pushHud({ t: 'flash', color: '#ffd84a', strength: 0.3 })
@@ -6061,6 +6099,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
       // The eye inside a body (a corpse, a sleeping crate): it is not drawn.
       nearCut(e, cam.position.x, cam.position.y, cam.position.z)
+      this.syncIce(e, dt)
       if (e.frozenT > 0) e.rig.material.emissive.setRGB(0.15 + e.flash * 0.7, 0.4 + e.flash * 0.5, 0.75)
       // An enraged boss burns red (`sim/bossArena.ts`).
       else if (e.boss && this.arena?.enraged) e.rig.material.emissive.setRGB(0.55 + 0.25 * Math.sin(this.time * 9) + e.flash * 0.4, 0.06, 0.02)

@@ -397,6 +397,8 @@ export default {
   'pause': {
     'title': 'PAUZA',
     'resume': 'Pokračovat',
+    'exit': 'Ukončit hru',
+    'exit': 'Ukončit hru',
     'abandon': 'Opustit misi',
     'abandonAsk': 'Opustit misi? Bude se počítat jako neúspěch.',
     'abandonWon': 'Odejít teď? Výhra nad bossem se stále počítá.',

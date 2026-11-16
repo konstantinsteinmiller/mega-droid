@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': '일시정지',
     'resume': '계속하기',
+    'exit': '게임 종료',
+    'exit': '게임 종료',
     'abandon': '미션 포기',
     'abandonAsk': '미션을 떠날까요? 실패로 처리됩니다.',
     'abandonWon': '지금 떠날까요? 보스 승리는 그대로 인정됩니다.',

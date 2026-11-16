@@ -79,6 +79,8 @@ import {
 } from '@/game/engine/input'
 import { loadKeyboardLayout } from '@/game/engine/keyLabels'
 import { actionForCode } from '@/game/engine/keyBindings'
+import { hubTab } from '@/components/hub/hubLesson'
+import { hubDialog, hubUi } from '@/game/state/hubUi'
 import { input, adoptBootMode, currentMission, currentHub } from '@/game/boot'
 import { flow, startMission, storyFor, goHub, replayIntro, INTRO_ENABLED } from '@/game/flow'
 import { toggleHelp } from '@/game/help'
@@ -163,8 +165,14 @@ const onReplayIntro = () => {
   replayIntro()
 }
 
+/** The lab's walk, with no panel, dialog or film over it (#204). */
+const hubWalking = (): boolean => flow.screen === 'hub' && hubTab.value === 'missions' && !hubDialog.open && !hubUi.cine
+
 const openPause = () => {
-  if (flow.screen === 'mission' && hud.phase === 'play' && !flow.modal) flow.modal = 'pause'
+  if (flow.modal) return
+  if (flow.screen === 'mission' && hud.phase === 'play') flow.modal = 'pause'
+  // The 3D lab pauses too: it had no menu at all, and no way to leave.
+  else if (hubWalking()) flow.modal = 'pause'
 }
 
 /** A key typed into a form field is text, not a game key. */
@@ -222,6 +230,8 @@ const onKey = (e: KeyboardEvent) => {
   if (e.code === 'Escape' && (isPointerLocked() || unlockedRecently())) return
   // P pauses too, unless the player has bound it to an action (`keyBindings.ts`).
   if (e.code === 'Escape' || (e.code === 'KeyP' && !actionForCode('KeyP'))) {
+    // The hub's own Esc (closing a station's panel) has the key.
+    if (e.defaultPrevented) return
     if (flow.modal === 'pause') flow.modal = ''
     else openPause()
   }

@@ -372,6 +372,7 @@ export default {
   'pause': {
     'title': '已暂停',
     'resume': '继续',
+    'exit': '退出游戏',
     'abandon': '放弃任务',
     'abandonAsk': '要离开任务吗？将视为失败。',
     'abandonWon': '现在离开吗？击败首领的胜利仍然算数。',

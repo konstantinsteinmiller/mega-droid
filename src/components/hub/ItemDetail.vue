@@ -17,6 +17,11 @@
       li.implicit(v-if="base?.implicit") {{ affixText(base.implicit) }}
       li(v-for="(a, i) in item.affixes" :key="i") {{ affixText(a) }}
       li.none(v-if="!base?.implicit && !item.affixes.length") {{ t('gear.noAffixes') }}
+    //- What switching to this piece would change, every stat, gains first (#197).
+    div.vs(v-if="chips.length") {{ t('loot.vsEquipped') }}
+    ul.deltas(v-if="chips.length")
+      li(v-for="l in chips" :key="l.key")
+        span.chip(:class="l.delta > 0 ? 'plus' : 'minus'") {{ formatStatDelta(t, l.key, l.delta, locale) }}
     slot
 </template>
 
@@ -26,7 +31,8 @@ import { useI18n } from 'vue-i18n'
 import GameIcon from '@/components/icons/GameIcon.vue'
 import { BASE_BY_ID, mainStat, type Item, type Affix } from '@/game/data/items'
 import { RARITY_COLOR } from '@/game/models/palette'
-import { SLOT_ICON, formatAffix } from './gearFormat'
+import { compareItems } from '@/game/data/itemCompare'
+import { SLOT_ICON, formatAffix, formatStatDelta } from './gearFormat'
 
 /** An item card: name in rarity colour, main stat (with ▲/▼ vs. the equipped
  *  piece), implicit + rolled affixes, and a slot for action buttons. */
@@ -34,6 +40,12 @@ const props = defineProps<{ item: Item; compare?: Item | null }>()
 const { t, locale } = useI18n()
 const base = computed(() => BASE_BY_ID[props.item.base])
 const delta = computed(() => (props.compare ? mainStat(props.item) - mainStat(props.compare) : 0))
+/** Every stat the swap changes: the gains first, then the losses. */
+const chips = computed(() => {
+  if (!props.compare) return []
+  const lines = compareItems(props.item, props.compare).lines
+  return [...lines.filter(l => l.delta > 0), ...lines.filter(l => l.delta < 0)]
+})
 const affixText = (a: Affix) => formatAffix(t, a, locale.value)
 </script>
 
@@ -91,6 +103,30 @@ const affixText = (a: Affix) => formatAffix(t, a, locale.value)
       color: #8dff7a
     &.down
       color: #ff7a7a
+.vs
+  font-size: clamp(10px, 2.1vmin, 12px)
+  color: #9fb3d8
+  text-transform: uppercase
+  letter-spacing: 0.04em
+.deltas
+  display: flex
+  flex-wrap: wrap
+  gap: 4px
+  margin: 0
+  padding: 0
+  list-style: none
+  .chip
+    display: inline-block
+    padding: 1px 7px
+    border-radius: 8px
+    font-size: clamp(11px, 2.3vmin, 13px)
+    line-height: 1.5
+    background: rgba(0, 0, 0, 0.35)
+    white-space: nowrap
+  .plus
+    color: #8dff7a
+  .minus
+    color: #ff8a8a
 .affixes
   margin: 0
   padding-left: 16px

@@ -372,6 +372,7 @@ export default {
   'pause': {
     'title': 'TẠM DỪNG',
     'resume': 'Tiếp tục',
+    'exit': 'Thoát trò chơi',
     'abandon': 'Bỏ nhiệm vụ',
     'abandonAsk': 'Rời nhiệm vụ? Sẽ tính là thất bại.',
     'abandonWon': 'Rời đi ngay? Chiến thắng trước trùm vẫn được tính.',

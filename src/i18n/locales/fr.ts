@@ -372,6 +372,8 @@ export default {
   'pause': {
     'title': 'PAUSE',
     'resume': 'Reprendre',
+    'exit': 'Quitter le jeu',
+    'exit': 'Quitter le jeu',
     'abandon': 'Abandonner la mission',
     'abandonAsk': 'Quitter la mission ? Elle compte comme un échec.',
     'abandonWon': 'Quitter maintenant ? Ta victoire contre le boss compte toujours.',

@@ -241,7 +241,7 @@ const GDN = 'gdn.poki.com'
  *        `readProgress`    — a JSON-serialisable snapshot that must survive a reload
  */
 export const runInspectorQa = async (cdp, {
-  versionId, port = null, playMs = 45000, adWaitMs = 120000, hooks = {}, allowHosts = [], declares = {}, log = () => {},
+  versionId, port = null, playMs = 45000, adWaitMs = 120000, reloadIdleMs = 60000, hooks = {}, allowHosts = [], declares = {}, log = () => {},
 }) => {
   const ev = {}
   const set = (key, verdict, evidence) => { ev[key] = { verdict, evidence } }
@@ -571,6 +571,40 @@ export const runInspectorQa = async (cdp, {
   }
   set('incognito', 'unproven', 'needs a separate incognito context — run the build once in an incognito window')
 
+  // ── No gameplayStart after a reload with no input (sticky activation) ───
+  // Chrome keeps `navigator.userActivation.hasBeenActive` across a SAME-ORIGIN
+  // reload of an iframe. The harness has already clicked this frame, so a build
+  // whose gesture gate trusts sticky activation boots "already activated" and
+  // fires gameplayStart ~720 ms after load with nobody touching it — the exact
+  // "gameplayStart without player interaction" rejection merge-idle-war got
+  // (2026-10-01). A top-level reload does not carry the flag, so only this
+  // in-frame reload shows it. Reload, then dispatch NOTHING for `reloadIdleMs`.
+  if (reloadIdleMs > 0) {
+    const reloadedIdle = await reloadFrame()
+    if (!reloadedIdle) {
+      log('could not reload the game frame for the idle-after-reload check')
+      if (ev.gameplayStart) ev.gameplayStart.evidence += '; idle-after-reload check NOT run (the frame did not come back)'
+    } else {
+      log(`idle ${Math.round(reloadIdleMs / 1000)} s after an iframe reload — no input…`)
+      await sleep(reloadIdleMs)
+      const idleLog = await events()
+      // The Inspector may or may not clear its log on a frame reload; either
+      // way the reloaded game re-initialises the SDK, so judge only what came
+      // after the LAST "SDK initialized".
+      let from = -1
+      idleLog.forEach((e, i) => { if (/sdk initialized/i.test(e)) from = i })
+      const sinceReload = idleLog.slice(from + 1)
+      const idleStarts = sinceReload.filter(e => /gameplay start/i.test(e)).length
+      if (idleStarts > 0) {
+        set('gameplayStart', 'fail',
+          `"Gameplay start" fired ${idleStarts}x within ${Math.round(reloadIdleMs / 1000)} s of an iframe reload with NO input — `
+          + 'the gesture gate trusts sticky user activation (integrate-poki §1b)')
+      } else if (ev.gameplayStart) {
+        ev.gameplayStart.evidence += `; and none in ${Math.round(reloadIdleMs / 1000)} s idle after an iframe reload`
+      }
+    }
+  }
+
   // ── External resources ──────────────────────────────────────────────────
   // Poki serves the game from more hosts than the two obvious ones: assets
   // come from a.poki-cdn.com and the region lookup from geo.poki.io. Miss them
@@ -712,8 +746,8 @@ export const runInspectorQa = async (cdp, {
  * `--skip-qa-testing`: no pass at all. The Inspector is opened on the version,
  * its QA checklist is waited for, and every box is ticked. For a re-upload of
  * a build whose QA already passed (nothing that QA looks at has changed), to
- * get the new version to playtests without the 5-minute pass. Returns what
- * was applied, row by row.
+ * get the new version to playtests without the full pass. Returns what was
+ * applied, row by row.
  */
 export const tickAllQa = async (cdp, { versionId, log = () => {} }) => {
   await cdp.navigate(inspectorUrl(versionId), { settleMs: 4000 })

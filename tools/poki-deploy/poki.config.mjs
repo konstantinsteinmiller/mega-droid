@@ -33,6 +33,10 @@ export default {
 
   /** What the version is called in P4D. Keep the version number in it — it is
    *  the only thing tying a live build back to a commit. */
+  /** The required "what this update includes" multi-select of the Create Version form (names exactly as Poki lists them; `--update-types a,b`
+   *  overrides for one run). Unknown names make the upload throw with the list Poki actually offers. */
+  updateTypes: ['Bug Fixes'],
+
   versionName: version => `Mega Droid ${version}`,
 
   /** Extra hosts the gates and the runtime sweep should accept. Anything here
@@ -63,6 +67,7 @@ export default {
     // itself: 30 taps on the bolts counter (HUD or hub) within 30 s
     // (src/use/useQaAdTrigger.ts).
     adWaitMs: 120000,
+    reloadIdleMs: 60000,    // no-input window after an iframe reload; any gameplayStart in it FAILS (sticky activation)
   },
 
   /** Surfaces this game actually has. They decide whether a checklist step is

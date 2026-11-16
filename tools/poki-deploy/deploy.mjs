@@ -184,7 +184,7 @@ try {
     } else {
       const notes = arg('notes', gitNotes())
       const up = await uploadVersion(cdp, {
-        zipPath: join(ROOT, cfg.zip), name: versionName, notes, log: m => info(m),
+        zipPath: join(ROOT, cfg.zip), name: versionName, notes, updateTypes: (arg('update-types', null)?.split(',').map(x => x.trim()).filter(Boolean)) ?? cfg.updateTypes ?? ['Bug Fixes'], log: m => info(m),
       })
       versionId = up.id
       pass(`uploaded as "${up.label}"`, `version ${up.id} — ${up.status}`)
@@ -219,6 +219,7 @@ try {
       port,
       playMs: Number(arg('play-ms', cfg.qa?.playMs ?? 45000)),
       adWaitMs: Number(arg('ad-wait-ms', cfg.qa?.adWaitMs ?? 120000)),
+      reloadIdleMs: Number(arg('reload-idle-ms', cfg.qa?.reloadIdleMs ?? 60000)),
       hooks: cfg.hooks ?? {},
       allowHosts: cfg.allowHosts ?? [],
       declares: cfg.declares ?? {},
@@ -281,9 +282,9 @@ function report (qa, applied, versionId) {
   // the local estimate in the gates is only a stand-in until this exists.
   if (qa.metrics?.loadTime) {
     console.log(`\n  ${bold('Measured by the Inspector')}`)
-    console.log(`    load time         ${qa.metrics.loadTime}       ${dim('(budget: under 10 s)')}`)
-    console.log(`    initial download  ${qa.metrics.initialDownload ?? '?'}   ${dim('(budget: 5 MB)')}`)
-    console.log(`    total size        ${qa.metrics.fileSize ?? '?'}   ${dim('(budget: 8 MB)')}`)
+    console.log(`    load time         ${qa.metrics.loadTime}       ${dim('(recommended: under 10 s)')}`)
+    console.log(`    initial download  ${qa.metrics.initialDownload ?? '?'}   ${dim('(recommended: ~5 MB, no hard limit)')}`)
+    console.log(`    total size        ${qa.metrics.fileSize ?? '?'}   ${dim('(recommended: ~8 MB, no hard limit)')}`)
   }
 
   if (failed.length) {

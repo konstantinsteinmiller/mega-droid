@@ -398,7 +398,6 @@ export default {
     'title': 'PAUSA',
     'resume': 'Reprèn',
     'exit': 'Surt del joc',
-    'exit': 'Surt del joc',
     'abandon': 'Abandona la missió',
     'abandonAsk': 'Vols sortir de la missió? Comptarà com a fallida.',
     'abandonWon': 'Vols sortir ara? La victòria contra el cap final encara compta.',

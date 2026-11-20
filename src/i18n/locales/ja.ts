@@ -373,7 +373,6 @@ export default {
     'title': 'ポーズ中',
     'resume': '再開',
     'exit': 'ゲームを終了',
-    'exit': 'ゲームを終了',
     'abandon': 'ミッション放棄',
     'abandonAsk': 'ミッションを離れる？失敗扱いになる。',
     'abandonWon': '今すぐ離れる？ボスへの勝利はそのまま残る。',

@@ -33,6 +33,7 @@ import type { Input } from '../engine/input'
 import { consumeEdges } from '../engine/input'
 import { generateMap, type MapData, type SecretSpec, CELL, WALL_H, pitKindOf } from '../world/levelGen'
 import { createSlicer, type Slice } from '../engine/slicer'
+import { botHook } from '../bot/hook'
 import { createNav, moveCircle, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
 import { buildLevel, buildWallPlug, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
 import { roomSightSteps } from '../world/roomSight'
@@ -825,12 +826,16 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       ? await loadStage(setup.stage, setup.seed)
       : setup.climb ? generateClimb(setup.seed, !!setup.challenge) : generateMap({ seed: setup.seed, rooms: setup.rooms, boss: setup.boss, challenge: setup.challenge })
     this.nav = createNav(this.map)
+    performance.mark('mb:map')
     onProgress(0.04)
     await slice()
     const levelProgress = (f: number) => onProgress(0.04 + f * 0.51)
     this.level = setup.climb
-      ? await buildClimbLevel(this.map, this.theme, slice, levelProgress)
+      ? await buildClimbLevel(this.map, this.theme, slice, levelProgress, setup.tutorial ? this.hotRooms() : undefined)
       : await buildLevel(this.map, this.theme, slice, levelProgress)
+    // (The tutorial's level is staged: the rooms the player starts in and the
+    // next two are built and uploaded now, the rest while he plays, `stepBackfill`.)
+    performance.mark('mb:level')
     this.roomVis = new Uint8Array(this.level.rooms.length)
     const sight = roomSightSteps(this.map, this.level.owner, { eye: EYE_H + 0.1, far: this.theme.fogFar + 6 })
     for (let r = sight.next(); ; r = sight.next()) {
@@ -840,12 +845,14 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
       await slice()
     }
+    performance.mark('mb:sight')
     this.scene.add(this.level.root)
     this.scene.add(this.level.sky)
     onProgress(0.55)
     await slice()
     this.city = await buildCityscape(this.map, this.theme, slice)
     this.scene.add(this.city.root)
+    performance.mark('mb:city')
     await slice()
 
     const th = this.theme
@@ -883,6 +890,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       })
       await slice()
     }
+    performance.mark('mb:doors')
     onProgress(0.62)
 
     this.pad = buildTeleporter(th)
@@ -941,6 +949,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       : setup.climb
         ? await spawnClimb(this.map, setup.encounters, setup.enemyLevel, { slice, onProgress: spawned, tower: setup.quest?.template === 'climb' })
         : await spawnEncounters(this.map, setup.encounters, setup.enemyLevel, { slice, onProgress: spawned })
+    performance.mark('mb:spawned')
     onProgress(0.92)
     this.objects.setupEnemyObjectives(this.enemies, (e) => this.enemies.push(e))
     for (const e of this.enemies) this.scene.add(e.root, e.shadow, e.ring)
@@ -983,6 +992,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     // for phase 2, with a longer charge (#188: a first-timer's first boss).
     if (this.boss && this.setup.tutorial) this.boss.onboard = true
     this.setupChallenge(ng)
+    performance.mark('mb:cast')
     if (this.boss && this.bossRoom) this.arena = new BossArena(this, this.bossRoom, (setup.quest?.seed ?? 1) ^ 0x51ab)
     // The Scrapper fights under his magnet crane (#108).
     // (Loaded with the Scrapper's arena only: no other map pays for it.)
@@ -1055,10 +1065,12 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       }
     }
     if (setup.stage) this.placeStageProps()
+    performance.mark('mb:props')
     this.weapons = new WeaponSystem(this, profile.hero.weaponXp)
     this.scene.add(this.weapons.root)
     // Before the snapshot (it marks capsules taken) and the precompile.
     this.buildBorrowed()
+    performance.mark('mb:weapons')
     this.lessons = new LessonDirector(this, { guided: !!plan })
     if (plan) this.walk = new Walkthrough(this, plan, chest)
     if (setup.snapshot) this.applySnapshot(setup.snapshot)
@@ -1091,6 +1103,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.setupTraining()
     this.buildTraps()
     this.setupDressing()
+    performance.mark('mb:dressing')
 
     await slice()
     // Viewmodel
@@ -1102,6 +1115,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     vmSun.position.set(-0.4, 1, 0.6)
     this.vmScene.add(vmSun, new AmbientLight(0xffffff, 0.15))
     this.buildExit()
+    performance.mark('mb:exit')
     // Atlas (in the scene from the start: the precompile covers it).
     this.atlasVm = buildAtlas()
     this.atlasVm.root.visible = false
@@ -1196,6 +1210,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       const passes = rooms.length + Math.ceil(rest.length / 4)
       let done = 0
       for (let i = 0; i < rooms.length; i++) {
+        if (this.level.pending?.has(i)) { onProgress(++done / passes); continue }
         for (let k = 0; k < rooms.length; k++) rooms[k]!.visible = k === i
         await draw()
         onProgress(++done / passes)
@@ -1214,6 +1229,116 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
       rooms.forEach((g, k) => { g.visible = roomWas[k]! })
       r.setRenderTarget(prev)
       rt.dispose()
+    }
+  }
+
+  /** The room under a point, −1 off the map. */
+  private roomAtXZ(x: number, z: number): number {
+    const i = Math.floor(x / CELL)
+    const j = Math.floor(z / CELL)
+    if (i < 0 || j < 0 || i >= this.map.w || j >= this.map.h) return -1
+    return this.map.room[j * this.map.w + i] ?? -1
+  }
+
+  /** Door hops from `from` to every room (Infinity where there is no way). */
+  private roomHops(from: number): number[] {
+    const n = this.map.rooms.length
+    const hops: number[] = new Array(n).fill(Infinity)
+    if (from < 0 || from >= n) return hops
+    hops[from] = 0
+    for (let queue = [from]; queue.length;) {
+      const next: number[] = []
+      for (const r of queue) {
+        for (const d of this.map.doors) {
+          const o = d.from === r ? d.to : d.to === r ? d.from : -1
+          if (o >= 0 && hops[o] === Infinity) { hops[o] = hops[r]! + 1; next.push(o) }
+        }
+      }
+      queue = next
+    }
+    return hops
+  }
+
+  /**
+   * The rooms a staged build makes first: where the player will stand (the
+   * beam-in pad, or where a resume or its retry point puts him) and the next
+   * two rooms along. Everything else is built after he has landed.
+   */
+  private hotRooms(): Set<number> {
+    const at: number[] = [this.roomAtXZ(this.map.start.x, this.map.start.z)]
+    const snap = this.setup.snapshot
+    if (snap) {
+      at.push(this.roomAtXZ(snap.x, snap.z))
+      if (snap.checkpoint) at.push(this.roomAtXZ(snap.checkpoint.x, snap.checkpoint.z))
+    }
+    const hot = new Set<number>()
+    for (const r of at) {
+      if (r < 0) continue
+      const hops = this.roomHops(r)
+      hops.forEach((h, id) => { if (h <= 2) hot.add(id) })
+    }
+    return hot
+  }
+
+  private disposed = false
+  private warmRt: WebGLRenderTarget | null = null
+  private warmCam: PerspectiveCamera | null = null
+  private backfillBusy = false
+
+  /**
+   * The rest of a staged build, once the player has landed: the unbuilt room
+   * nearest him (by doors) first, one at a time, in small time slices, each
+   * uploaded to the GPU as it lands so entering it costs no hitch. A room he
+   * stands in (a retry, a cheat) is the nearest of all.
+   */
+  private stepBackfill(): void {
+    const pend = this.level.pending
+    if (!pend || !pend.size || this.backfillBusy || this.disposed || hud.phase !== 'play') return
+    const hops = this.roomHops(this.roomAtXZ(this.player.x, this.player.z))
+    let best = -1
+    for (const r of pend) if (best < 0 || (hops[r] ?? Infinity) < (hops[best] ?? Infinity)) best = r
+    if (best < 0) return
+    this.backfillBusy = true
+    const room = best
+    void (async () => {
+      try {
+        await this.level.fill?.([room], createSlicer(3))
+        if (!this.disposed) this.warmRoom(room)
+      } catch (e) {
+        console.warn('[mission] backfill of room', room, 'failed', e)
+      } finally {
+        this.backfillBusy = false
+      }
+    })()
+  }
+
+  /** Upload one room's meshes (and compile nothing new): a tiny off-screen render. */
+  private warmRoom(id: number): void {
+    const r = getRenderer()
+    this.warmRt ??= new WebGLRenderTarget(64, 64)
+    if (!this.warmCam) {
+      const cam = new PerspectiveCamera(70, 1, 1, 2000)
+      const cx = (this.map.w * CELL) / 2
+      const cz = (this.map.h * CELL) / 2
+      cam.position.set(cx, 230, cz + 0.01)
+      cam.lookAt(cx, 0, cz)
+      cam.updateMatrixWorld()
+      this.warmCam = cam
+    }
+    const rooms = this.level.rooms
+    const roomWas = rooms.map(g => g.visible)
+    const top = this.scene.children.filter(o => !(o as { isLight?: boolean }).isLight)
+    const topWas = top.map(o => o.visible)
+    const prev = r.getRenderTarget()
+    try {
+      r.setRenderTarget(this.warmRt)
+      for (const o of top) o.visible = o === this.level.root
+      rooms.forEach((g, k) => { g.visible = k === id })
+      r.render(this.scene, this.warmCam)
+    } finally {
+      top.forEach((o, k) => { o.visible = topWas[k]! })
+      rooms.forEach((g, k) => { g.visible = roomWas[k]! })
+      r.setRenderTarget(prev)
     }
   }
 
@@ -3215,6 +3340,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   // ─── Update ────────────────────────────────────────────────────────────────
 
   update(rawDt: number, first: boolean): void {
+    botHook.driver?.drive(this, rawDt, first)
     // A freeze-frame: the world holds still, the effects play on.
     if (this.freeze.active) {
       this.stepFreeze(rawDt, first)
@@ -3328,6 +3454,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.markers.update(dt, this.time)
     this.shocks.update(dt)
     this.updateDoors(dt)
+    this.stepBackfill()
     this.updateRoomCulling()
     this.markerT = Math.max(0, this.markerT - dt)
     ;(this.marker.material as MeshBasicMaterial).opacity = p.path ? 0.55 + Math.sin(this.time * 8) * 0.25 : this.markerT * 2
@@ -4811,6 +4938,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   private setupDressing(): void {
     if (!this.map.terrain) return
     const plan = planDecor(this.map, this.setup.sector)
+    performance.mark('mb:plan')
     const navOf = plan.props.map(p => {
       if (p.r <= 0) return -1
       this.nav.props.push({ x: p.x, z: p.z, r: p.r, active: true })
@@ -6597,6 +6725,9 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   }
 
   dispose(): void {
+    this.disposed = true
+    this.warmRt?.dispose()
+    this.warmRt = null
     // A lesson freeze left mid-way (quit from the pause menu): its cue goes.
     hud.slideCue = false
     hud.blockCue = false

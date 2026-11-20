@@ -1,4 +1,5 @@
 import { toggleDebug } from '@/use/useMatch'
+import { loadBot } from '@/game/lazy'
 
 /**
  * Dev tooling behind the cheat flag: the ctrl+shift+alt shortcut table the game
@@ -30,7 +31,31 @@ export const devCheatKeys = (): string[] => [...cheats.keys()]
 /** The typed debug word; `buf` is the tail of what the player typed. Flips
  *  debug mode (FPS meter, extra logs) and returns true on a match. */
 export const tryDebugWord = (buf: string): boolean => {
+  if (buf.endsWith('cmpnc')) {
+    toggleBotChunk()
+    return true
+  }
   if (!buf.endsWith('cmarc')) return false
   toggleDebug()
   return true
+}
+
+/** The autopilot (game/bot) loads on first use: typed "cmpnc", or 30 taps
+ *  on the mute button inside 30 seconds (a phone has no keyboard). */
+const toggleBotChunk = (): void => {
+  void loadBot().then(m => m.toggleBot())
+}
+
+const BOT_TAPS = 30
+const BOT_TAP_WINDOW_MS = 30_000
+const muteTaps: number[] = []
+
+/** One tap on the mute button. */
+export const noteMuteTap = (): void => {
+  const now = Date.now()
+  muteTaps.push(now)
+  while (muteTaps.length && now - muteTaps[0]! > BOT_TAP_WINDOW_MS) muteTaps.shift()
+  if (muteTaps.length < BOT_TAPS) return
+  muteTaps.length = 0
+  toggleBotChunk()
 }

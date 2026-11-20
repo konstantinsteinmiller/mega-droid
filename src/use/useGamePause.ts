@@ -85,6 +85,17 @@ export const resumeGame = (): void => {
   if (isPlatformPaused.value) isPlatformPaused.value = false
 }
 
+
+/** Manual escape hatch (Enter in App.vue): a platform QA tool can leave the pause
+ *  latched. Platform plugins register a reset for their own latched state here so
+ *  a later REAL pause event is not swallowed as "unchanged". */
+const forceResumeHooks = new Set<() => void>()
+export const onForceResume = (fn: () => void): void => { forceResumeHooks.add(fn) }
+export const forceResumeGame = (): void => {
+  for (const fn of forceResumeHooks) { try { fn() } catch { /* ignore */ } }
+  resumeGame()
+}
+
 /** OR of all four sources. Drives the renderer's early-return + any
  *  audio mute subscriber. */
 export const isGamePaused = computed(

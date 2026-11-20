@@ -373,7 +373,6 @@ export default {
     'title': 'PAUSA',
     'resume': 'Reanudar',
     'exit': 'Salir del juego',
-    'exit': 'Salir del juego',
     'abandon': 'Abandonar misión',
     'abandonAsk': '¿Salir de la misión? Contará como fallida.',
     'abandonWon': '¿Salir ahora? Tu victoria contra el jefe sigue contando.',

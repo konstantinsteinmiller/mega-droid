@@ -21,6 +21,7 @@ import { installUiScale } from '@/use/useUiScale'
 import { useRenderGate } from '@/platforms/renderGate'
 import { installBrowserGuard } from '@/use/useBrowserGuard'
 import { installMuteKey } from '@/use/useMuteKey'
+import { isPlatformPaused, forceResumeGame } from '@/use/useGamePause'
 
 const { t } = useI18n()
 // The menus' scale on small screens (`--ui-scale`, read by the Lab and FModal).
@@ -117,6 +118,34 @@ onUnmounted(() => {
   clearInterval(dimensionsInterval.value)
 })
 
+// A pause from the platform (Playgama / YouTube Playables `onPause`) makes every
+// button inactive and swallows keyboard input until the resume: the render loop
+// and audio already follow `isGamePaused`; this is the interaction half. The
+// capture-phase listeners run before the game's own window handlers.
+const swallowWhilePaused = (e: Event): void => {
+  if (!isPlatformPaused.value) return
+  if (e.type === 'keydown' && (e as KeyboardEvent).code.startsWith('Enter')) forceResumeGame()
+  // The Bridge reads window `blur` as hidden (= paused) and ONLY `focus` as visible
+  // again. A frozen UI swallowing the click that would have refocused the frame left
+  // the pause latched: hand the focus back on any press, and never cancel the
+  // pointer default (that is what moves focus into the frame).
+  if (e.type === 'pointerdown' || e.type === 'touchstart' || e.type === 'keydown') {
+    try { window.focus() } catch { /* cross-origin quirks */ }
+  }
+  e.stopImmediatePropagation()
+  if (e.cancelable && e.type !== 'pointerdown' && e.type !== 'touchstart') e.preventDefault()
+}
+onMounted(() => {
+  for (const type of ['keydown', 'keyup', 'pointerdown', 'pointerup', 'click', 'touchstart', 'wheel']) {
+    window.addEventListener(type, swallowWhilePaused, { capture: true, passive: false })
+  }
+})
+onUnmounted(() => {
+  for (const type of ['keydown', 'keyup', 'pointerdown', 'pointerup', 'click', 'touchstart', 'wheel']) {
+    window.removeEventListener(type, swallowWhilePaused, { capture: true })
+  }
+})
+
 // Context menus, mouse and rocker gestures, autoscroll, the history buttons,
 // drag, selection, pinch and quick find: see `useBrowserGuard`.
 let removeBrowserGuard: (() => void) | null = null
@@ -156,7 +185,7 @@ const VConsoleHide = import.meta.env.VITE_APP_NATIVE === 'true' || import.meta.e
 </script>
 
 <template lang="pug">
-  div(v-if="isGameShowAllowed" id="app-root" class="h-screen h-dvh w-screen app-container root-protection game-ui-immune")
+  div(v-if="isGameShowAllowed" id="app-root" class="h-screen h-dvh w-screen app-container root-protection game-ui-immune" :class="{ 'platform-paused': isPlatformPaused }" :inert="isPlatformPaused")
     FLogoProgress
     FPerfMeter(v-if="isDebug" :offset-y="52")
     SaveStatusBanner
@@ -195,4 +224,9 @@ const VConsoleHide = import.meta.env.VITE_APP_NATIVE === 'true' || import.meta.e
 
 img
   pointer-events: none
+
+// Platform pause: freeze every CSS animation/transition under the app root.
+.platform-paused, .platform-paused *, .platform-paused *::before, .platform-paused *::after
+  animation-play-state: paused !important
+  transition: none !important
 </style>

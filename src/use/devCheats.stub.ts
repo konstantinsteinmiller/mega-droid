@@ -14,3 +14,5 @@ export const runDevCheat = (_shortcut: string): boolean => false
 export const devCheatKeys = (): string[] => []
 
 export const tryDebugWord = (_buf: string): boolean => false
+
+export const noteMuteTap = (): void => {}

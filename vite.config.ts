@@ -178,9 +178,16 @@ const preloadEngineChunksPlugin = (): Plugin => {
         for (const c of Object.values(bundle)) {
           if (c.type === 'chunk' && c.facadeModuleId && ENGINE_CHUNKS.some(r => r.test(c.facadeModuleId!))) add(c.fileName)
         }
-        return [...files]
+        // The two UI fonts: their @font-face sits in the entry CSS, but a browser
+        // asks for a face only once text that uses it is laid out (the Vue loader,
+        // seconds in), so each one arrived late and the text reflowed.
+        const fonts = Object.keys(bundle)
+          .filter(f => /(?:russo-one|press-start-2p)-latin-400-normal[^/]*\.woff2$/.test(f))
           .filter(f => !html.includes(f))
-          .map(f => ({ tag: 'link', attrs: { rel: 'modulepreload', crossorigin: '', href: base + f }, injectTo: 'head' as const }))
+          .map(f => ({ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '', href: base + f }, injectTo: 'head' as const }))
+        return [...fonts, ...[...files]
+          .filter(f => !html.includes(f))
+          .map(f => ({ tag: 'link', attrs: { rel: 'modulepreload', crossorigin: '', href: base + f }, injectTo: 'head' as const }))]
       }
     }
   }
@@ -263,7 +270,6 @@ const appVersion: string = pkg.version ?? '0.0.0'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
-import javascriptObfuscator from 'vite-plugin-javascript-obfuscator'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import { miniGamePlugin } from './vite.config.miniGame'
 import { buildPlaygamaBridgeConfig, playgamaLeaderboardEnv } from './src/platforms/playgama/bridgeConfig'
@@ -302,11 +308,9 @@ export default defineConfig(({ mode, command }) => {
     )
   }
 
-  // Only obfuscate during a real production build — never during dev,
-  // where the obfuscator rewrites dynamic import strings into lookups
-  // Vite can no longer transform, breaking module specifiers at runtime.
+  // A real production build (never dev). Nothing is obfuscated: it tripled the
+  // code the browser parses (PERF-LEDGER.md), for no protection.
   const isProduction = (mode === 'production' || env.VITE_NODE_ENV === 'production') && command === 'build'
-  const shouldObfuscate = env.VITE_ENABLE_OBFUSCATION === 'true'
 
   // Initialize plugins array
   const plugins = []
@@ -330,179 +334,6 @@ export default defineConfig(({ mode, command }) => {
   // leaderboard". It costs ~2 kB gzipped per build.
   plugins.push(leaderboardSnapshotPlugin((env.VITE_LEADERBOARD_URL ?? '').trim().length === 0))
 
-  // Only push the obfuscator if both conditions are met
-  if (isProduction && shouldObfuscate) {
-    console.log('--- 🛡️  Obfuscating Production Build ---')
-    plugins.push(
-      javascriptObfuscator({
-        // Exclude files with dynamic imports — the obfuscator's stringArray
-        // rewrites import paths into array lookups that Vite can no longer
-        // resolve, which breaks code splitting.
-        exclude: [
-          // FIRST, and not optional: passing ANY `exclude` REPLACES the
-          // plugin's default of `[/node_modules/, /\.nuxt/]` — it does not
-          // add to it. Without this line every vendor library went through the
-          // stringArray pass, three.js included: its shader assembly and
-          // per-draw uniform lookups ran through the decoder, costing ~30 % of
-          // the boot and ~13 % of every frame on a throttled CPU, for zero
-          // protection (it is public code). See PERF-LEDGER.md.
-          /node_modules/,
-          /router\/index\.ts$/,
-          /main\.ts$/,
-          // i18n loader uses `import.meta.glob` for per-locale code
-          // splitting — the obfuscator's stringArray rewrites those
-          // dynamic paths so rollup can no longer produce separate
-          // chunks (every locale ends up inlined in index.js).
-          /i18n[\\/]index\.ts$/,
-          // resolveSaveStrategy uses `await import('@/...')` inside
-          // `import.meta.env.VITE_APP_*`-gated branches so Rollup can
-          // tree-shake unused platform plugins. Obfuscation would
-          // mangle the dynamic-import literals and break runtime
-          // module resolution. (resolveAdProvider stays static-import
-          // sync, so it doesn't need an exclude.)
-          /platforms[\\/]resolveSaveStrategy\.ts$/,
-          // useCrazyGames is the CrazyGames save-strategy delegate that
-          // resolveSaveStrategy hands off to. It lazy-loads
-          // `@/utils/save/CrazyGamesStrategy` via dynamic import. Without
-          // this exclude the obfuscator's stringArray rewrite mangles the
-          // literal, Vite can't resolve the `@/` alias, and the browser
-          // surfaces `Failed to resolve module specifier
-          // '@/utils/save/CrazyGamesStrategy'` at runtime (CG QA flagged
-          // it 2026-05-20).
-          /use[\\/]useCrazyGames\.ts$/,
-          // GameDistributionProvider lazy-loads the heavy
-          // `@/utils/gameDistributionPlugin` (~500 LOC) via dynamic
-          // import so non-GD builds don't ship the GD SDK code.
-          // Same obfuscator-vs-dynamic-import constraint as above.
-          /use[\\/]ads[\\/]GameDistributionProvider\.ts$/,
-          // PlaygamaProvider lazy-loads `@/utils/playgamaPlugin` for the
-          // same reason — keeps the ~280 LOC bridge module off non-Playgama
-          // builds. The obfuscator would mangle the dynamic-import literal.
-          /use[\\/]ads[\\/]PlaygamaProvider\.ts$/,
-          // `playgamaBridgeLoader.ts` is the ONE place `@playgama/bridge`
-          // (Bridge v2, npm) enters the graph, behind an env-literal ternary
-          // around `import('@playgama/bridge')`. Same dynamic-import constraint.
-          /utils[\\/]playgamaBridgeLoader\.ts$/,
-          // GamepixProvider lazy-loads `@/utils/gamepixPlugin` so the
-          // GamePix SDK glue only ships on GamePix builds. Same
-          // obfuscator-vs-dynamic-import constraint as the others.
-          /use[\\/]ads[\\/]GamepixProvider\.ts$/,
-          // FLogoProgress dynamic-imports `@/utils/playgamaPlugin` and
-          // `@/utils/gamepixPlugin` to fire the certification-mandatory
-          // `game_ready` / `gameLoaded` edges. Without this exclude the
-          // obfuscator wraps the string literal in a stringArray-decoder
-          // call expression — Rollup can't statically analyse it for
-          // alias resolution, so `@/utils/...` survives into the chunk
-          // and the browser surfaces `Failed to resolve module specifier
-          // '@/utils/gamepixPlugin'` at runtime.
-          //
-          // NOTE: no `$` end-anchor — Vue SFCs are presented to the
-          // obfuscator's transform hook as virtual paths like
-          // `FLogoProgress.vue?vue&type=script&setup=true&lang.ts`,
-          // which an anchored regex would miss. Match anywhere on the
-          // path so both the raw `.vue` file AND the script-block
-          // virtual module are excluded.
-          /components[\\/]atoms[\\/]FLogoProgress\.vue/,
-          // useMawCampaign lazy-loads the heavy `useStageBuilder`
-          // chunk via `await import('@/use/useStageBuilder')` so all
-          // 20 stage builds stay off the boot critical path. The
-          // obfuscator's stringArray rewrite would inline the chunk
-          // back into the parent, undoing the split.
-          /use[\\/]useMawCampaign\.ts$/,
-          // useAssets.preloadAssets dynamic-imports the campaign module
-          // so the gameplay shared-chunk loads in parallel with the
-          // splash render instead of blocking the entry parse. Same
-          // obfuscator-vs-dynamic-import constraint as above.
-          /use[\\/]useAssets\.ts$/,
-          // capabilities.ts has per-platform URL-detector helpers (with
-          // hostname literals like `'crazygames'`, `'wavedash'`, `'glitch.fun'`,
-          // ...) gated by env-literal IFs so Rollup can tree-shake the dead
-          // branches per build. The obfuscator's `stringArray` transform runs
-          // BEFORE esbuild's constant folding can fold `import.meta.env.X === 'true'`,
-          // baking every hostname into the indirection table regardless of
-          // which build is active. Excluding capabilities.ts keeps the
-          // constant-fold + tree-shake path intact so on a Yandex build the
-          // bundle contains no non-Yandex hostnames — required by Yandex's
-          // moderator ("Service storage URL detected").
-          /platforms[\\/]capabilities\.ts$/,
-          // plattformText.ts is the per-build "available on <hostname>" string
-          // mapping. Same obfuscator-vs-stringArray issue as capabilities.ts —
-          // the ladder needs env-literal DCE to keep non-active hostnames out
-          // of the bundle. The file is intentionally tiny so excluding it
-          // doesn't meaningfully reduce obfuscation coverage of App.vue (which
-          // still gets obfuscated normally and just imports from this helper).
-          /platforms[\\/]plattformText\.ts$/,
-          // useCheats lazy-loads `@/use/useSurvivalGame` to publish
-          // `window.__run` and to drive the stage / damage shortcuts. Without
-          // this exclude the stringArray rewrite mangles the literal and the
-          // BUILT bundle throws `Failed to resolve module specifier
-          // '@/use/useSurvivalGame'` the moment cheats are enabled — which is
-          // exactly when someone is trying to debug a built bundle. Found while
-          // verifying the CG pre-release build. The cheats self-gate on
-          // `localStorage.cheat`, so leaving this file readable grants nothing
-          // devtools would not.
-          /use[\\/]useCheats\.ts$/,
-          // The game's lazy chunks (#121): the mission engine, the intro, the
-          // ending, the debrief, the boss crane, the Fortress finale, and the
-          // platform stages' generators. With the decoder in front of them the
-          // bundler cannot follow the import, the chunk is never built and the
-          // call fails in the shipped game: nine of ten stages were missing.
-          // `tests/meta/lazyImports.test.ts` checks every dynamic import in
-          // `src` against this list.
-          /game[\\/]lazy\.ts$/,
-          /game[\\/]world[\\/]stages[\\/]load\.ts$/,
-          // The Playgama gameplay bracket loads its plugin on demand.
-          /use[\\/]useGameplayLifecycle\.ts$/,
-          // usePlayerIdentity lazy-loads `@/use/useCrazyGames` to read the
-          // portal's player name for the leaderboard. Same failure mode, but on
-          // a PLAYER-facing path rather than a dev-only one.
-          /use[\\/]usePlayerIdentity\.ts$/
-        ],
-        // ─── Obfuscation profile (tuned 2026-04-30) ─────────────────────
-        // The previous profile enabled every aggressive transform the
-        // plugin offers — `controlFlowFlattening`, `numbersToExpressions`,
-        // `splitStrings`, `unicodeEscapeSequence`. Combined they were
-        // inflating the bundle by ~3.4× over the unobfuscated baseline
-        // (e.g. 217KB → 768KB on the entry chunk for the CrazyGames
-        // build flagged by CG QA on 2026-04-30).
-        //
-        // The transforms removed below all have the same trade-off:
-        // huge bundle / runtime cost for protection that any
-        // off-the-shelf deobfuscator strips in seconds. Keeping them on
-        // costs real users real download time without preventing a
-        // motivated reverse-engineer for more than a coffee break.
-        //
-        // What stays (cheap, useful):
-        //   • compact            — single-line output
-        //   • simplify           — CFG simplification
-        //   • stringArray        — string indirection table
-        //   • stringArrayThreshold 0.6 — moderate coverage
-        //
-        // What was removed (expensive, low-value):
-        //   • unicodeEscapeSequence — every `"foo"` → `"foo"`
-        //     ~doubles strings on the wire. Trivially reversed.
-        //   • splitStrings          — splits every string into 2-char
-        //     pieces concatenated at runtime. Triples string size,
-        //     interpretable by any human in <1 minute.
-        //   • controlFlowFlattening — wraps every block in a switch
-        //     dispatcher. ~30% bundle inflation, ~10% runtime perf hit.
-        //   • numbersToExpressions  — every literal `5` becomes
-        //     `0x4 + 0x1` etc. Bloats math-heavy modules (the canvas
-        //     game loop is full of these).
-        //
-        // If a tighter profile is needed later, prefer enabling
-        // `controlFlowFlattening` selectively on a small allowlist of
-        // sensitive files (anti-cheat hot paths, license checks) rather
-        // than blanket-enabling everywhere.
-        options: {
-          compact: true,
-          simplify: true,
-          stringArray: true,
-          stringArrayThreshold: 0.6
-        }
-      } as any)
-    )
-  }
 
   // ─── CSP generation ────────────────────────────────────────────────
   // The whole per-platform CSP shape lives in `src/platforms/csp.ts`
@@ -911,16 +742,9 @@ export default defineConfig(({ mode, command }) => {
             : {})
         }
       },
-      // Source maps follow the obfuscator EXCEPT on production platform builds.
-      //
-      // `!shouldObfuscate` alone conflates two different questions. Turning the
-      // obfuscator off for a portal is a QA decision — Playgama and YouTube
-      // review by hand, and an obfuscated stack trace cannot be mapped back to
-      // a source line — but it must not have the side effect of PUBLISHING the
-      // source: a portal build is served from a public URL, so shipping maps
-      // hands over the original files and adds megabytes to an archive that is
-      // measured against a size budget.
-      sourcemap: !shouldObfuscate && !isProduction
+      // Never publish the source: a portal build is served from a public URL,
+      // and maps add megabytes to an archive measured against a size budget.
+      sourcemap: !isProduction
     }
   }
 })

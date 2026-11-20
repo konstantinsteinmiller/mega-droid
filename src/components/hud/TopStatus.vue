@@ -14,7 +14,7 @@
       :class="{ muted: gameMuted }"
       :aria-label="t(gameMuted ? 'hud.unmute' : 'hud.mute')"
       :aria-pressed="gameMuted"
-      @click="toggleGameMute"
+      @click="onMute"
     )
       GameIcon(:name="gameMuted ? 'sound-off' : 'sound'")
       KeyCap.kc(v-if="desk" code="F2")
@@ -37,6 +37,7 @@ import { formatCount } from '@/utils/localeNumber'
 import { registerQaAdTap } from '@/use/useQaAdTrigger'
 import { toggleHelp } from '@/game/help'
 import { gameMuted, toggleGameMute } from '@/use/useGameMute'
+import { noteMuteTap } from '@/use/devCheats'
 
 defineEmits<{ pause: [] }>()
 const { t, locale } = useI18n()
@@ -46,6 +47,10 @@ const fmt = (n: number) => formatCount(Math.round(n), locale.value)
 const help = () => toggleHelp()
 /** Mouse + keys: both buttons wear their key, like the action buttons. */
 const desk = computed(() => hud.device === 'mouse')
+const onMute = (): void => {
+  noteMuteTap()
+  toggleGameMute()
+}
 </script>
 
 <style scoped lang="sass">

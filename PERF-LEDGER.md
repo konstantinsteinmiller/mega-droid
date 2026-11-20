@@ -294,3 +294,22 @@ phone before acting on it.
 - The rounded kit uses 14–16 radial segments on pilasters and pillars; 10
   may read the same at game distance.
 - Repeated props could be instanced.
+
+### Cold load: staged warm-up, UI in its own chunks, SFX after boot (#206) — KEPT (2026-11-19)
+
+- Measured (built CrazyGames web build, headless Chrome on software GL, a
+  first-timer; `localhost` only — the render gate refuses `127.0.0.1`).
+  Where the tutorial's build behind the intro went (1x): level meshes 2.5 s,
+  set dressing 1.1 s (the dressing plan computed twice), GPU warm-up 5.5 s of
+  12.8 s in all. At 2x CPU + 400 KB/s the tutorial finished 25 s into the 15 s
+  intro.
+- Change: the warm-up uploads the player's room + two doors on first, the rest
+  one room per six frames after the landing, nearest first (`stepBackfill`);
+  `planDecor` is memoised per map; the mission engine is fetched at prime start
+  for a first-timer; the 38 SFX files load after the first scene, 3 at a time,
+  first-minute sounds first (the synth plays until a file lands); the HUD,
+  overlays, modals and story layers are async chunks (GameScene CSS 196 → 63 KB,
+  fetched after the boot, `preloadUiChunks`); the two UI fonts are preloaded;
+  the obfuscator is gone (it was already off in every env file).
+- Result (1x, same machine): tutorial built behind the intro 11.8 → 7.2 s.
+- Level meshes are staged too (`buildClimbLevel`'s `hot`, `LevelMeshes.fill`): the tutorial builds the player's room + two doors on first (3 of 12 rooms), the rest after the landing, nearest first, each uploaded as it lands. Every pass walks the whole map in one order and takes the random rolls for every cell, so a room is the same whichever pass makes it; `tests/game/stagedLevel.test.ts` pins that for the tutorial, every stage and a tower run. Level build 2.7 -> 1.3 s (same machine, same session).

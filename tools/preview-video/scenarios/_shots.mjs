@@ -67,8 +67,8 @@ const masterShot = (sector, { attacks, hp = 0.45, weapons = ['iceLance', 'neonBl
 })
 
 /** Boot a stage and walk into its Core Master's arena; returns once the fight is on. */
-export const enterMaster = async (ctx, sector, weapons = ['iceLance', 'neonBlade']) => {
-  await boot(ctx, { level: 'stage', sector })
+export const enterMaster = async (ctx, sector, weapons = ['iceLance', 'neonBlade'], level = 'stage', seed = 1) => {
+  await boot(ctx, { level, sector, seed })
   await T(ctx, ([w]) => window.__trailer.arm(w), [weapons])
   await T(ctx, () => window.__trailer.enterBoss(4))
   // The shutter, the drop, Dr. Vex's presentation: all off camera.

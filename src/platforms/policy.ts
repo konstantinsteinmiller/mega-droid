@@ -82,7 +82,8 @@ export const DEV_TOOL_STUBS = {
 export const DEV_TOOL_MARKERS: ReadonlyArray<{ text: string; why: string }> = [
   { text: '[CHEAT]', why: 'dev cheats, src/use/devCheats.ts' },
   { text: 'ctrl+shift+alt+', why: 'cheat shortcuts, src/game/cheats.ts' },
-  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/devCheats.ts' }
+  { text: 'cmarc', why: 'typed debug-mode toggle, src/use/devCheats.ts' },
+  { text: 'cmpnc', why: 'typed autopilot toggle, src/use/devCheats.ts' }
   // NOT "cmonc": the typed cheat toggle and the cheat panel (#Cheat1,
   // src/use/useCheats.ts) ship in every build by the owner's decision.
 ]

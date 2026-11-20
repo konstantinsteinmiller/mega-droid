@@ -7,9 +7,9 @@ import type { Mission } from './sim/mission'
 import { HubMode } from './sim/hub'
 import { app, type GameMode } from './engine/app'
 import { initProfile } from './state/profile'
-import { registerModeFactories, createBootMode, ensureJobs } from './flow'
+import { registerModeFactories, createBootMode, ensureJobs, bootTarget, INTRO_ENABLED } from './flow'
 import { installSynth, loadSfxOverrides } from './audio/synth'
-import { loadDebriefModule, loadEndingModule, loadIntroModule, loadMissionModule } from './lazy'
+import { loadDebriefModule, loadEndingModule, loadIntroModule, loadMissionModule, preloadUiChunks } from './lazy'
 
 /**
  * ─── Boot priming ────────────────────────────────────────────────────────────
@@ -52,6 +52,14 @@ const prefetchMission = (): void => {
   const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
   if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 4000 })
   else setTimeout(go, 1500)
+}
+
+/** The HUD, modal and story-layer chunks, once the mission engine is on its way. */
+const prefetchUi = (): void => {
+  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+  const go = () => { void preloadUiChunks() }
+  if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 6000 })
+  else setTimeout(go, 2500)
 }
 
 /**
@@ -122,7 +130,9 @@ registerModeFactories(
   async (quest, snapshot, onProgress) => {
     const { Mission, setupFromQuest } = await loadMission()
     const m = await Mission.create(setupFromQuest(quest, snapshot), input, (p) => onProgress?.(p * 0.82))
+    performance.mark('mb:created')
     await precompile(m, createSlicer(12), (f) => onProgress?.(0.82 + f * 0.1), { scene: m.vmScene, camera: m.vmCamera })
+    performance.mark('mb:compiled')
     // GPU uploads now, behind the loader, not on the first live frame.
     try {
       await m.warmUp(createSlicer(12), (f) => onProgress?.(0.92 + f * 0.08))
@@ -155,9 +165,12 @@ export const primeGame = (onProgress: (p01: number) => void): Promise<void> => {
     ensureJobs()
     installSynth()
     // Drop-in files (only those that exist; see game/assets/overrides.ts).
-    // SFX decode in the background; the detail maps must land before the
-    // atlas bakes, and cost nothing when there are none.
-    loadSfxOverrides()
+    // (The SFX files follow once the first scene is up, below.) The detail
+    // maps must land before the atlas bakes, and cost nothing when there are none.
+    // A first-timer's tutorial needs the mission engine within seconds (it
+    // builds behind the intro): fetch it now, while the CPU builds the intro's
+    // set and the network is idle, not after the boot has finished.
+    if (bootTarget(INTRO_ENABLED).kind !== 'hub') void loadMission().catch(() => { /* the build fetches it again */ })
     onProgress(0.03)
     await yieldToBrowser()
     getRenderer()
@@ -175,6 +188,8 @@ export const primeGame = (onProgress: (p01: number) => void): Promise<void> => {
     prepared = mode
     performance.mark('boot:primed')
     prefetchMission()
+    prefetchUi()
+    loadSfxOverrides()
   })()
   return primed
 }

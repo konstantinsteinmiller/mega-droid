@@ -52,7 +52,7 @@
 import { ref } from 'vue'
 import { isPlaygama } from '@/use/useUser'
 import { isDebug } from '@/use/useMatch'
-import { pauseGame, resumeGame } from '@/use/useGamePause'
+import { pauseGame, resumeGame, onForceResume } from '@/use/useGamePause'
 import { setPlatformAudioMuted } from '@/use/useGamePauseAudio'
 import { toLocale } from '@/i18n/localeTag'
 import type { SaveStrategy } from '@/utils/save/types'
@@ -176,6 +176,8 @@ let bridgeHidden = false
  * click focusing the frame, a real tab switch, a portal pause) ends it.
  */
 let adBlurOverride = false
+
+onForceResume(() => { bridgePaused = false; bridgeHidden = false; adBlurOverride = false })
 
 const applyPauseAggregate = (): void => {
   if (!adBlurOverride && (bridgePaused || bridgeHidden)) pauseGame()

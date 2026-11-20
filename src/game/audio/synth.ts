@@ -509,7 +509,17 @@ const FILE_GAIN = 0.55
 const fileBuffers = new Map<string, AudioBuffer>()
 let filesRequested = false
 
-/** Fetch and decode every drop-in SFX file (from the boot loader). */
+/** The sounds a first minute needs, in the order it needs them; the rest follow. */
+const SFX_FIRST = ['uiClick', 'uiOpen', 'beamIn', 'shoot', 'hit', 'chargeShot', 'charge1', 'charge2', 'charge3', 'hurt', 'door', 'block', 'parry', 'jump', 'dash', 'slide', 'loot', 'chestOpen', 'explode', 'bolt']
+/** Files in flight at once: the first-load download is for the code, not these. */
+const SFX_PARALLEL = 3
+
+/**
+ * Fetch and decode the drop-in SFX files, a few at a time, first-minute
+ * sounds first. Called once the first scene is up, NOT at boot: 38 files
+ * (680 KB) used to queue behind the code on a slow link. Until a file lands
+ * its sound plays from the synth recipe, so nothing waits on it.
+ */
 export const loadSfxOverrides = (): void => {
   if (filesRequested || SFX_FILES.size === 0) return
   filesRequested = true
@@ -517,13 +527,23 @@ export const loadSfxOverrides = (): void => {
     ?? (window as unknown as { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
   if (!Offline) return
   const decoder = new Offline(2, 1, 44100)
-  for (const [name, url] of SFX_FILES) {
-    fetch(url)
+  const queue = [...SFX_FILES].sort(([a], [b]) => {
+    const ia = SFX_FIRST.indexOf(a)
+    const ib = SFX_FIRST.indexOf(b)
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib)
+  })
+  const next = (): Promise<void> => {
+    const item = queue.shift()
+    if (!item) return Promise.resolve()
+    const [name, url] = item
+    return fetch(url)
       .then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then(buf => decoder.decodeAudioData(buf))
       .then(ab => { fileBuffers.set(name, ab) })
       .catch(e => console.warn(`[sfx] drop-in "${name}" could not be loaded — keeping the synth`, e))
+      .then(next)
   }
+  for (let k = 0; k < SFX_PARALLEL; k++) void next()
 }
 
 /** How many drop-in files are decoded and ready (the trailer's sound render waits on it). */

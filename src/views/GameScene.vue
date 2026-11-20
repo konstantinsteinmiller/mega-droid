@@ -4,35 +4,7 @@
     //- The mission's gestures, and the walk through the lab (#173).
     div.input-surface(v-show="flow.screen === 'mission' || flow.screen === 'hub'" ref="surface")
     div.hud-layer(v-if="flow.screen === 'mission'" :class="{ cine: hud.phase === 'beamOut' || hud.introCine || (hud.freezeKind && hud.freezeFrame !== 'fp') }")
-      ScreenFx
-      TrainingFrame
-      DamageMarkers
-      HudLayout
-      FloatingText
-      Crosshair
-      FluxBubble
-      Compass
-      ObjectiveLocator
-      TargetFrame(v-if="!hud.bossName")
-      BossBar
-      SkyClock
-      TitleCard
-      LootCard
-      ControlHints
-      LessonLayer
-      DoorPrompt
-      HudBars
-      ObjectiveTracker
-      LevelUpPop
-      TopStatus(@pause="openPause")
-      Joystick
-      ContextButtons
-      ActionButtons
-      TutorialChecklist
-      LessonPointer
-      LessonGlyph
-      FreezeSpotlight
-      InputCue
+      MissionHud(@pause="openPause")
     HubScreen(v-else-if="flow.screen === 'hub'" @options="optionsOpen = true")
     CutsceneLayer(v-else-if="flow.screen === 'intro'")
     EndingLayer(v-else-if="flow.screen === 'ending'")
@@ -49,30 +21,23 @@
     )
       div.relock-glyph
         InputGlyph(kind="mouse" button="left" :click="true")
-    ExitSkip(v-if="flow.screen === 'mission'")
-    FreezeOverlay(v-if="flow.screen === 'mission'")
-    BigBanner(v-if="flow.screen === 'mission'")
-    AtlasBubble(v-if="flow.screen === 'mission'")
+    MissionOverlays(v-if="flow.screen === 'mission'")
     SceneBubble(v-if="flow.screen === 'mission' || flow.screen === 'hub' || flow.screen === 'ending' || flow.screen === 'debrief'")
-    ResultsModal
-    DefeatModal
-    PauseModal(@options="optionsOpen = true")
-    ControlsIntroModal
-    EnglishVoiceModal
-    LevelUpModal
-    OptionsModal(
-      :is-open="optionsOpen"
+    GameModals(
+      :options-open="optionsOpen"
       :can-replay-intro="INTRO_ENABLED && flow.screen === 'hub'"
-      @close="optionsOpen = false"
+      @options="optionsOpen = true"
+      @close-options="optionsOpen = false"
       @replay-intro="onReplayIntro"
     )
     MissionLoading
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import InputGlyph from '@/components/hud/InputGlyph.vue'
+import { loadMissionHud, loadMissionOverlays, loadGameModals, loadEndingLayer, loadDebriefLayer } from '@/game/lazy'
 import { app } from '@/game/engine/app'
 import {
   attachInput, isPointerLocked, releasePointerLock, requestPointerLock, unlockedRecently
@@ -94,54 +59,12 @@ import { isCrazyGameplayLive, isGameplayLive, syncGameplayLifecycle, type Gamepl
 import { startGameMusic } from '@/use/useSound'
 import { armNavigationGuard, disarmNavigationGuard } from '@/use/useBrowserGuard'
 import { registerGameCheats } from '@/game/cheats'
-import Joystick from '@/components/hud/Joystick.vue'
-import LootCard from '@/components/hud/LootCard.vue'
-import HudBars from '@/components/hud/HudBars.vue'
-import Crosshair from '@/components/hud/Crosshair.vue'
-import TargetFrame from '@/components/hud/TargetFrame.vue'
-import FloatingText from '@/components/hud/FloatingText.vue'
-import HudLayout from '@/components/hud/HudLayout.vue'
-import FluxBubble from '@/components/hud/FluxBubble.vue'
-import ScreenFx from '@/components/hud/ScreenFx.vue'
-import DamageMarkers from '@/components/hud/DamageMarkers.vue'
-import ActionButtons from '@/components/hud/ActionButtons.vue'
-import TopStatus from '@/components/hud/TopStatus.vue'
-import ObjectiveTracker from '@/components/hud/ObjectiveTracker.vue'
-import LevelUpPop from '@/components/hud/LevelUpPop.vue'
-import Compass from '@/components/hud/Compass.vue'
-import ObjectiveLocator from '@/components/hud/ObjectiveLocator.vue'
-import ContextButtons from '@/components/hud/ContextButtons.vue'
-import BossBar from '@/components/hud/BossBar.vue'
-import SkyClock from '@/components/hud/SkyClock.vue'
-import TitleCard from '@/components/hud/TitleCard.vue'
-import ControlHints from '@/components/hud/ControlHints.vue'
-import LessonLayer from '@/components/hud/LessonLayer.vue'
-import DoorPrompt from '@/components/hud/DoorPrompt.vue'
-import BigBanner from '@/components/hud/BigBanner.vue'
-import AtlasBubble from '@/components/hud/AtlasBubble.vue'
 import SceneBubble from '@/components/story/SceneBubble.vue'
-import ExitSkip from '@/components/hud/ExitSkip.vue'
-import FreezeOverlay from '@/components/hud/FreezeOverlay.vue'
-import TrainingFrame from '@/components/hud/TrainingFrame.vue'
-import TutorialChecklist from '@/components/hud/TutorialChecklist.vue'
-import LessonPointer from '@/components/hud/LessonPointer.vue'
-import LessonGlyph from '@/components/hud/LessonGlyph.vue'
-import InputCue from '@/components/hud/InputCue.vue'
-import FreezeSpotlight from '@/components/hud/FreezeSpotlight.vue'
 import HubScreen from '@/components/hub/HubScreen.vue'
-import ResultsModal from '@/components/modals/ResultsModal.vue'
-import DefeatModal from '@/components/modals/DefeatModal.vue'
-import PauseModal from '@/components/modals/PauseModal.vue'
-import EnglishVoiceModal from '@/components/modals/EnglishVoiceModal.vue'
 import { englishVoice, hasOwnVoice } from '@/use/useEnglishVoice'
 import { currentLocale } from '@/game/audio/voice'
-import ControlsIntroModal from '@/components/modals/ControlsIntroModal.vue'
-import LevelUpModal from '@/components/modals/LevelUpModal.vue'
-import OptionsModal from '@/components/organisms/OptionsModal.vue'
 import MissionLoading from '@/components/hud/MissionLoading.vue'
 import CutsceneLayer from '@/components/story/CutsceneLayer.vue'
-import EndingLayer from '@/components/story/EndingLayer.vue'
-import DebriefLayer from '@/components/story/DebriefLayer.vue'
 import { cine, holdToSkip, openGate, skipCutscene } from '@/game/story/cine'
 
 /**
@@ -409,6 +332,16 @@ const liveInputs = computed<GameplayLiveInputs>(() => ({
 const live = computed(() => isGameplayLive(liveInputs.value))
 const crazyLive = computed(() => isCrazyGameplayLive(liveInputs.value))
 watch([live, crazyLive], ([v, c]) => syncGameplayLifecycle(v, c), { immediate: true })
+
+// The mission's HUD, its overlays, the modals and the story layers are their
+// own chunks (and their own CSS): none of them is on screen while the game
+// loads, so none of it is in the first download. `game/boot.ts` fetches them
+// once the first scene is up.
+const MissionHud = defineAsyncComponent(loadMissionHud)
+const MissionOverlays = defineAsyncComponent(loadMissionOverlays)
+const GameModals = defineAsyncComponent(loadGameModals)
+const EndingLayer = defineAsyncComponent(loadEndingLayer)
+const DebriefLayer = defineAsyncComponent(loadDebriefLayer)
 
 onUnmounted(() => {
   syncGameplayLifecycle(false)

@@ -436,7 +436,6 @@ export default {
     'title': 'PAUSED',
     'resume': 'Resume',
     'exit': 'Exit game',
-    'exit': 'Exit game',
     'abandon': 'Abandon mission',
     'abandonAsk': 'Leave the mission? It counts as failed.',
     // The boss is down, only its weapon lesson is left: leaving keeps the win.

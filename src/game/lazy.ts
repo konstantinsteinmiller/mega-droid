@@ -32,3 +32,18 @@ export const loadStreetModule = () => import('./models/street')
 /** The hall's holograms (the Masters over their pedestals, the valley over
  *  the briefing table): fetched once the walkable lab is up (#173). */
 export const loadHubHoloModule = () => import('./models/hubHolo')
+
+/** The mission's HUD, its overlays, the modals and the story layers: Vue
+ *  components in chunks of their own, so their CSS is not in the first load
+ *  (`views/GameScene.vue` wraps each in `defineAsyncComponent`). */
+export const loadMissionHud = () => import('../components/hud/MissionHud.vue')
+export const loadMissionOverlays = () => import('../components/hud/MissionOverlays.vue')
+export const loadGameModals = () => import('../components/modals/GameModals.vue')
+export const loadEndingLayer = () => import('../components/story/EndingLayer.vue')
+export const loadDebriefLayer = () => import('../components/story/DebriefLayer.vue')
+/** Fetch all five (the boot does, once the first scene is up). */
+export const preloadUiChunks = (): Promise<unknown> =>
+  Promise.all([loadMissionHud(), loadGameModals(), loadMissionOverlays(), loadEndingLayer(), loadDebriefLayer()].map(p => p.catch(() => { /* fetched again when shown */ })))
+
+/** The autopilot (`bot/index.ts`): typed "cmpnc" or 30 mute taps (`use/devCheats`). */
+export const loadBot = () => import('./bot/index')

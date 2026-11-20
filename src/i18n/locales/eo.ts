@@ -398,7 +398,6 @@ export default {
     'title': 'PAŬZITA',
     'resume': 'Daŭrigi',
     'exit': 'Eliri el la ludo',
-    'exit': 'Eliri el la ludo',
     'abandon': 'Forlasi mision',
     'abandonAsk': 'Ĉu forlasi la mision? Ĝi kalkuliĝos kiel malsukcesa.',
     'abandonWon': 'Ĉu foriri nun? Via venko super la estro ankoraŭ kalkuliĝas.',

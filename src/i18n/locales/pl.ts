@@ -373,7 +373,6 @@ export default {
     'title': 'PAUZA',
     'resume': 'Wznów',
     'exit': 'Wyjdź z gry',
-    'exit': 'Wyjdź z gry',
     'abandon': 'Porzuć misję',
     'abandonAsk': 'Opuścić misję? Zostanie uznana za nieudaną.',
     'abandonWon': 'Opuścić teraz? Zwycięstwo nad bossem wciąż się liczy.',

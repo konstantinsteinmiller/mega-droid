@@ -58,10 +58,10 @@ type V3 = [number, number, number]
 export { secretWallFaces } from './decor'
 
 export const buildClimbLevel = async (
-  map: MapData, theme: Theme, slice: Slice = noSlice, onProgress: (f01: number) => void = () => {}
+  map: MapData, theme: Theme, slice: Slice = noSlice, onProgress: (f01: number) => void = () => {},
+  hot?: ReadonlySet<number>
 ): Promise<LevelMeshes> => {
   const t = map.terrain!
-  const rng = mulberry32(map.seed ^ 0x5eed)
   const W = map.w
   const templates = new Map<string, BufferGeometry>()
   const piece = (key: string, make: () => BufferGeometry): BufferGeometry => {
@@ -74,10 +74,6 @@ export const buildClimbLevel = async (
   }
   const owner = cellOwners(map)
   const nRooms = map.rooms.length
-  const batches = Array.from({ length: nRooms }, () => new QuadBatch())
-  const decor: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
-  const glows: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
-  const lava: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
 
   const cFloor = new Color(theme.floor)
   const cFloorAlt = new Color(theme.floorAlt)
@@ -195,26 +191,6 @@ export const buildClimbLevel = async (
     }
   }
 
-  // Corner pilasters, deduplicated: the lowest foot and highest top seen.
-  // Each corner also counts the wall runs meeting at it (`axes`: 1 along x,
-  // 2 along z) and whether any of them is a room's: a straight joint inside a
-  // corridor gets no pilaster (playtest 2026-10-06: one every 3 m on both
-  // sides read as pillars blocking the way).
-  const corners = new Map<string, { x: number; z: number; owner: number; lo: number; hi: number; axes: number; runs: number; room: boolean }>()
-  const addCorner = (x: number, z: number, o: number, lo: number, hi: number, alongX: boolean, room: boolean) => {
-    const key = `${Math.round(x * 10)},${Math.round(z * 10)}`
-    const c = corners.get(key)
-    const axis = alongX ? 1 : 2
-    if (!c) corners.set(key, { x, z, owner: o, lo, hi, axes: axis, runs: 1, room })
-    else {
-      c.lo = Math.min(c.lo, lo)
-      c.hi = Math.max(c.hi, hi)
-      c.axes |= axis
-      c.runs++
-      c.room ||= room
-    }
-  }
-
   const doorCells = new Set<number>()
   for (const d of map.doors) doorCells.add(K(d.i, d.j))
 
@@ -238,465 +214,521 @@ export const buildClimbLevel = async (
   const snowy = theme.id === 'cryo'
   const pitKindAt = (k: number) => pitKindOf(t, roomOf(k))
 
-  for (let j = 0; j < map.h; j++) {
-    for (let i = 0; i < W; i++) {
-      const k = K(i, j)
-      const c = map.cell[k]
-      if (c === Cell.Void) continue
-      const o = owner[k]!
-      if (o < 0) continue
-      const b = batches[o]!
-      const x0 = i * CELL
-      const z0 = j * CELL
-      const x1 = x0 + CELL
-      const z1 = z0 + CELL
-      const ramp = t.ramp[k]!
+  type Parts = { batches: QuadBatch[]; decor: BufferGeometry[][]; glows: BufferGeometry[][]; lava: BufferGeometry[][] }
+  /** The set dressing's vertex runs by prop index, filled by the pass that builds its room. */
+  const dressRuns: Array<{ room: number; toon: [number, number]; glow: [number, number] } | null | undefined> = []
 
-      // ── Floor ──
-      if (t.pit[k]) {
-        const y = pitBottomOf(k)
-        b.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], PLAIN_UV, cVoid, cVoid, cVoid, cVoid)
-        const pk = pitKindAt(k)
-        if (pk === 'lava') {
-          // A moving surface a hand over the bottom: lava, not a drop.
-          lava[o]!.push(lavaCell(x0, z0, CELL, y + 0.36))
-        } else if (pk === 'spikes') {
-          // A bed of spikes: three rows of three cones, tall, their tips
-          // lit — from the edge, far above, the pit has to read as spikes
-          // (a plain dark floor read as "a floor to drop onto").
-          for (let a = 0; a < 3; a++) {
-            for (let c2 = 0; c2 < 3; c2++) {
-              decor[o]!.push(xform(piece('spike', () => paint(rcone(0.44, 0.05, 1.8, 0.01, 8), theme.pilaster)), [x0 + 0.5 + a, y + 0.9, z0 + 0.5 + c2]))
-              glows[o]!.push(xform(piece('spikeTip', () => paint(rcone(0.17, 0.02, 0.6, 0.01, 8), theme.accent)), [x0 + 0.5 + a, y + 1.56, z0 + 0.5 + c2]))
+  /**
+   * One walk over the whole map that builds the geometry of the `keep` rooms.
+   * The rolls (light strips, pipes, puffs, pit lights) come off one stream in
+   * map order and are taken for every cell, built or not, so a room is the
+   * same whichever pass makes it.
+   */
+  const pass = async (keep: (o: number) => boolean, slice: Slice, onProgress: (f01: number) => void): Promise<Parts> => {
+    const rng = mulberry32(map.seed ^ 0x5eed)
+    const batches = Array.from({ length: nRooms }, () => new QuadBatch())
+    const decor: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
+    const glows: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
+    const lava: BufferGeometry[][] = Array.from({ length: nRooms }, () => [])
+    // Corner pilasters, deduplicated: the lowest foot and highest top seen.
+    // Each corner also counts the wall runs meeting at it (`axes`: 1 along x,
+    // 2 along z) and whether any of them is a room's: a straight joint inside a
+    // corridor gets no pilaster (playtest 2026-10-06: one every 3 m on both
+    // sides read as pillars blocking the way).
+    const corners = new Map<string, { x: number; z: number; owner: number; lo: number; hi: number; axes: number; runs: number; room: boolean }>()
+    const addCorner = (x: number, z: number, o: number, lo: number, hi: number, alongX: boolean, room: boolean) => {
+      const key = `${Math.round(x * 10)},${Math.round(z * 10)}`
+      const c = corners.get(key)
+      const axis = alongX ? 1 : 2
+      if (!c) corners.set(key, { x, z, owner: o, lo, hi, axes: axis, runs: 1, room })
+      else {
+        c.lo = Math.min(c.lo, lo)
+        c.hi = Math.max(c.hi, hi)
+        c.axes |= axis
+        c.runs++
+        c.room ||= room
+      }
+    }
+
+    for (let j = 0; j < map.h; j++) {
+      for (let i = 0; i < W; i++) {
+        const k = K(i, j)
+        const c = map.cell[k]
+        if (c === Cell.Void) continue
+        const o = owner[k]!
+        if (o < 0) continue
+        const b = batches[o]!
+        const x0 = i * CELL
+        const z0 = j * CELL
+        const x1 = x0 + CELL
+        const z1 = z0 + CELL
+        const ramp = t.ramp[k]!
+        // A pass builds the geometry of the rooms in `keep`; every other cell is
+        // only walked, for its random rolls and its corners.
+        const mine = keep(o)
+
+        // ── Floor ──
+        if (t.pit[k]) {
+          const y = pitBottomOf(k)
+          if (mine) b.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], PLAIN_UV, cVoid, cVoid, cVoid, cVoid)
+          const pk = pitKindAt(k)
+          if (pk === 'lava') {
+            // A moving surface a hand over the bottom: lava, not a drop.
+            if (mine) lava[o]!.push(lavaCell(x0, z0, CELL, y + 0.36))
+          } else if (pk === 'spikes') {
+            if (mine) {
+            // A bed of spikes: three rows of three cones, tall, their tips
+            // lit — from the edge, far above, the pit has to read as spikes
+            // (a plain dark floor read as "a floor to drop onto").
+            for (let a = 0; a < 3; a++) {
+              for (let c2 = 0; c2 < 3; c2++) {
+                decor[o]!.push(xform(piece('spike', () => paint(rcone(0.44, 0.05, 1.8, 0.01, 8), theme.pilaster)), [x0 + 0.5 + a, y + 0.9, z0 + 0.5 + c2]))
+                glows[o]!.push(xform(piece('spikeTip', () => paint(rcone(0.17, 0.02, 0.6, 0.01, 8), theme.accent)), [x0 + 0.5 + a, y + 1.56, z0 + 0.5 + c2]))
+              }
             }
+            }
+          } else if (t.clouds) {
+            // Cloud puffs over the misty bottom: soft, lumpy, bright.
+            for (let n = 0; n < 2; n++) {
+              // (the rolls are taken in this order whether or not the room is built)
+              const r = 1.1 + rng() * 0.8
+              const px = x0 + 0.6 + rng() * 1.8
+              const py = y + 0.2 + rng() * 0.5
+              const pz = z0 + 0.6 + rng() * 1.8
+              if (mine) glows[o]!.push(xform(piece('puff', () => paint(sph(1, 9, 6), '#f4f9ff')), [px, py, pz], [0, 0, 0], [r, r * 0.45, r]))
+            }
+          } else if (((i * 7 + j * 3) & 1) === 0) {
+            // Dim warning lights far down: the pit is a drop, not a floor.
+            const lx = x0 + 0.8 + rng() * 1.4
+            const lz = z0 + 0.8 + rng() * 1.4
+            if (mine) glows[o]!.push(xform(piece('pitLight', () => paint(sph(0.22, 8, 6), '#ff3a2a')), [lx, y + 0.25, lz]))
           }
-        } else if (t.clouds) {
-          // Cloud puffs over the misty bottom: soft, lumpy, bright.
-          for (let n = 0; n < 2; n++) {
-            const r = 1.1 + rng() * 0.8
-            glows[o]!.push(xform(piece('puff', () => paint(sph(1, 9, 6), '#f4f9ff')),
-              [x0 + 0.6 + rng() * 1.8, y + 0.2 + rng() * 0.5, z0 + 0.6 + rng() * 1.8], [0, 0, 0], [r, r * 0.45, r]))
+        } else if (!mine) {
+          // (a floor or a stair of a room built in another pass)
+        } else if (!ramp) {
+          const y = t.floor[k]!
+          const fc0 = c === Cell.Corridor ? cCorr : ((i + j) & 1 ? cFloor : cFloorAlt)
+          const fc = t.ice?.[k] ? fc0.clone().lerp(cIce, 0.7) : fc0
+          b.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], FLOOR_UV, fc, fc, fc, fc)
+          if (t.ice?.[k]) {
+            const off = ((i + j) % 3 - 1) * 0.6
+            glows[o]!.push(xform(piece('iceGlint', () => paint(rbox(0.12, 0.02, 1.7, 0.5, 4, 2), '#e9f9ff')), [x0 + CELL / 2 + off, y + 0.015, z0 + CELL / 2 - off * 0.5], [0, Math.PI / 4, 0]))
           }
-        } else if (((i * 7 + j * 3) & 1) === 0) {
-          // Dim warning lights far down: the pit is a drop, not a floor.
-          glows[o]!.push(xform(piece('pitLight', () => paint(sph(0.22, 8, 6), '#ff3a2a')), [x0 + 0.8 + rng() * 1.4, y + 0.25, z0 + 0.8 + rng() * 1.4]))
-        }
-      } else if (!ramp) {
-        const y = t.floor[k]!
-        const fc0 = c === Cell.Corridor ? cCorr : ((i + j) & 1 ? cFloor : cFloorAlt)
-        const fc = t.ice?.[k] ? fc0.clone().lerp(cIce, 0.7) : fc0
-        b.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], FLOOR_UV, fc, fc, fc, fc)
-        if (t.ice?.[k]) {
-          const off = ((i + j) % 3 - 1) * 0.6
-          glows[o]!.push(xform(piece('iceGlint', () => paint(rbox(0.12, 0.02, 1.7, 0.5, 4, 2), '#e9f9ff')), [x0 + CELL / 2 + off, y + 0.015, z0 + CELL / 2 - off * 0.5], [0, Math.PI / 4, 0]))
-        }
-      } else {
-        // Steps: treads in the floor tones, risers in the trim colour.
-        const alongX = ramp === Ramp.PX || ramp === Ramp.NX
-        const up = ramp === Ramp.PX || ramp === Ramp.PZ ? 1 : -1
-        for (let n = 0; n < STEPS; n++) {
-          const y = tread(k, n)
-          // Tread n spans s ∈ [n, n+1] / STEPS measured uphill.
-          const sa = n / STEPS
-          const sb = (n + 1) / STEPS
-          const fc = t.ice?.[k] ? (n & 1 ? cFloor : cFloorAlt).clone().lerp(cIce, 0.7) : n & 1 ? cFloor : cFloorAlt
-          const uv: UV8 = FLOOR_UV
-          if (alongX) {
-            const xa = up > 0 ? x0 + CELL * sa : x1 - CELL * sa
-            const xb = up > 0 ? x0 + CELL * sb : x1 - CELL * sb
-            const lx = Math.min(xa, xb)
-            const hx = Math.max(xa, xb)
-            b.quad([lx, y, z0], [lx, y, z1], [hx, y, z1], [hx, y, z0], [0, 1, 0], uv, fc, fc, fc, fc)
-            const below = n === 0 ? t.floor[k]! : tread(k, n - 1)
-            face(b, k, xa, z0, xa, z1, [-up, 0, 0], below, () => y, 1, cRiser, cRiser)
-          } else {
-            const za = up > 0 ? z0 + CELL * sa : z1 - CELL * sa
-            const zb = up > 0 ? z0 + CELL * sb : z1 - CELL * sb
-            const lz = Math.min(za, zb)
-            const hz = Math.max(za, zb)
-            b.quad([x0, y, lz], [x0, y, hz], [x1, y, hz], [x1, y, lz], [0, 1, 0], uv, fc, fc, fc, fc)
-            const below = n === 0 ? t.floor[k]! : tread(k, n - 1)
-            face(b, k, x0, za, x1, za, [0, 0, -up], below, () => y, 1, cRiser, cRiser)
-          }
-        }
-        // The last half-riser up to the landing.
-        const top = t.floor[k]! + t.rise[k]!
-        const last = tread(k, STEPS - 1)
-        if (alongX) {
-          const xe = up > 0 ? x1 : x0
-          face(b, k, xe, z0, xe, z1, [-up, 0, 0], last, () => top, 1, cRiser, cRiser)
         } else {
-          const ze = up > 0 ? z1 : z0
-          face(b, k, x0, ze, x1, ze, [0, 0, -up], last, () => top, 1, cRiser, cRiser)
+          // Steps: treads in the floor tones, risers in the trim colour.
+          const alongX = ramp === Ramp.PX || ramp === Ramp.NX
+          const up = ramp === Ramp.PX || ramp === Ramp.PZ ? 1 : -1
+          for (let n = 0; n < STEPS; n++) {
+            const y = tread(k, n)
+            // Tread n spans s ∈ [n, n+1] / STEPS measured uphill.
+            const sa = n / STEPS
+            const sb = (n + 1) / STEPS
+            const fc = t.ice?.[k] ? (n & 1 ? cFloor : cFloorAlt).clone().lerp(cIce, 0.7) : n & 1 ? cFloor : cFloorAlt
+            const uv: UV8 = FLOOR_UV
+            if (alongX) {
+              const xa = up > 0 ? x0 + CELL * sa : x1 - CELL * sa
+              const xb = up > 0 ? x0 + CELL * sb : x1 - CELL * sb
+              const lx = Math.min(xa, xb)
+              const hx = Math.max(xa, xb)
+              b.quad([lx, y, z0], [lx, y, z1], [hx, y, z1], [hx, y, z0], [0, 1, 0], uv, fc, fc, fc, fc)
+              const below = n === 0 ? t.floor[k]! : tread(k, n - 1)
+              face(b, k, xa, z0, xa, z1, [-up, 0, 0], below, () => y, 1, cRiser, cRiser)
+            } else {
+              const za = up > 0 ? z0 + CELL * sa : z1 - CELL * sa
+              const zb = up > 0 ? z0 + CELL * sb : z1 - CELL * sb
+              const lz = Math.min(za, zb)
+              const hz = Math.max(za, zb)
+              b.quad([x0, y, lz], [x0, y, hz], [x1, y, hz], [x1, y, lz], [0, 1, 0], uv, fc, fc, fc, fc)
+              const below = n === 0 ? t.floor[k]! : tread(k, n - 1)
+              face(b, k, x0, za, x1, za, [0, 0, -up], below, () => y, 1, cRiser, cRiser)
+            }
+          }
+          // The last half-riser up to the landing.
+          const top = t.floor[k]! + t.rise[k]!
+          const last = tread(k, STEPS - 1)
+          if (alongX) {
+            const xe = up > 0 ? x1 : x0
+            face(b, k, xe, z0, xe, z1, [-up, 0, 0], last, () => top, 1, cRiser, cRiser)
+          } else {
+            const ze = up > 0 ? z1 : z0
+            face(b, k, x0, ze, x1, ze, [0, 0, -up], last, () => top, 1, cRiser, cRiser)
+          }
         }
-      }
 
-      // An island's underside over open sky, seen from across a gap or from
-      // a roof below (under every standing cell: a sight line that passes
-      // under a wall's outer face goes on under the floor).
-      if (t.clouds && !t.pit[k]) {
-        const y = t.floor[k]! - ISLAND_SLAB
-        const cu = shade(cWallLow, y, k).clone()
-        b.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], [0, -1, 0], PLAIN_UV, cu, cu, cu, cu)
-      }
+        // An island's underside over open sky, seen from across a gap or from
+        // a roof below (under every standing cell: a sight line that passes
+        // under a wall's outer face goes on under the floor).
+        if (mine && t.clouds && !t.pit[k]) {
+          const y = t.floor[k]! - ISLAND_SLAB
+          const cu = shade(cWallLow, y, k).clone()
+          b.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], [0, -1, 0], PLAIN_UV, cu, cu, cu, cu)
+        }
 
-      // ── Edges ──
-      const edges: Array<{ di: number; dj: number; a: [number, number]; bb: [number, number]; n: V3 }> = [
-        { di: -1, dj: 0, a: [x0, z1], bb: [x0, z0], n: [1, 0, 0] },
-        { di: 1, dj: 0, a: [x1, z0], bb: [x1, z1], n: [-1, 0, 0] },
-        { di: 0, dj: -1, a: [x0, z0], bb: [x1, z0], n: [0, 0, 1] },
-        { di: 0, dj: 1, a: [x1, z1], bb: [x0, z1], n: [0, 0, -1] }
-      ]
-      // Where my faces start along an edge: my floor there — a ramp's top at
-      // its uphill edge, its foot at the downhill edge and along its sides.
-      const upI = ramp === Ramp.PX ? 1 : ramp === Ramp.NX ? -1 : 0
-      const upJ = ramp === Ramp.PZ ? 1 : ramp === Ramp.NZ ? -1 : 0
-      const edgeLow = (di: number, dj: number): number => {
-        if (t.pit[k]) return pitBottomOf(k)
-        if (!ramp) return t.floor[k]!
-        return di === upI && dj === upJ ? t.floor[k]! + t.rise[k]! : t.floor[k]!
-      }
-      for (const e of edges) {
-        const ni = i + e.di
-        const nj = j + e.dj
-        const [ax, az] = e.a
-        const [bx, bz] = e.bb
-        const mx = (ax + bx) / 2
-        const mz = (az + bz) / 2
-        const alongX = Math.abs(bx - ax) > 0.1
-        const rotAlong: V3 = alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]
-        const low = edgeLow(e.di, e.dj)
-        // A secret's false wall is drawn on its own (below); the rest of
-        // an alcove's rim is wall like the void.
-        const rim = walkable(ni, nj) && hidden[K(ni, nj)] !== hidden[k]
-        if (rim && isFalseWall(i, j, e.di, e.dj)) continue
-        if (!walkable(ni, nj) || rim) {
-          // Over open sky a gap runs out into the world: no wall on its outer
-          // edge, so the islands' walls stand as panels with sky between.
-          // (Nothing walks there: the void beyond is solid to bodies.)
-          if (t.clouds && t.pit[k] && !rim) continue
-          // A wall to the room's top, from the lowest floor at its foot.
-          const topY = wallTopOf(k)
-          const look = lookOf(k)
-          face(b, k, ax, az, bx, bz, e.n, low, () => topY, 1, look?.low ?? cWallLow, look?.high ?? cWall)
-          // Its outside: seen from a lower room over its own walls, from
-          // across a gap, from a lift (playtest 2026-10-12).
-          if (!rim) {
-            outerWall(b, ax, az, bx, bz, [-e.n[0], 0, -e.n[2]], t.clouds ? low - ISLAND_SLAB : Math.min(low, ground), topY,
-              outerEnd(walled, walkable, i, j, e.di, e.dj, ax, az), outerEnd(walled, walkable, i, j, e.di, e.dj, bx, bz),
-              look?.low ?? cWallLow, look?.high ?? cWall, !!t.clouds)
+        // ── Edges ──
+        const edges: Array<{ di: number; dj: number; a: [number, number]; bb: [number, number]; n: V3 }> = [
+          { di: -1, dj: 0, a: [x0, z1], bb: [x0, z0], n: [1, 0, 0] },
+          { di: 1, dj: 0, a: [x1, z0], bb: [x1, z1], n: [-1, 0, 0] },
+          { di: 0, dj: -1, a: [x0, z0], bb: [x1, z0], n: [0, 0, 1] },
+          { di: 0, dj: 1, a: [x1, z1], bb: [x0, z1], n: [0, 0, -1] }
+        ]
+        // Where my faces start along an edge: my floor there — a ramp's top at
+        // its uphill edge, its foot at the downhill edge and along its sides.
+        const upI = ramp === Ramp.PX ? 1 : ramp === Ramp.NX ? -1 : 0
+        const upJ = ramp === Ramp.PZ ? 1 : ramp === Ramp.NZ ? -1 : 0
+        const edgeLow = (di: number, dj: number): number => {
+          if (t.pit[k]) return pitBottomOf(k)
+          if (!ramp) return t.floor[k]!
+          return di === upI && dj === upJ ? t.floor[k]! + t.rise[k]! : t.floor[k]!
+        }
+        for (const e of edges) {
+          const ni = i + e.di
+          const nj = j + e.dj
+          const [ax, az] = e.a
+          const [bx, bz] = e.bb
+          const mx = (ax + bx) / 2
+          const mz = (az + bz) / 2
+          const alongX = Math.abs(bx - ax) > 0.1
+          const rotAlong: V3 = alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]
+          const low = edgeLow(e.di, e.dj)
+          // A secret's false wall is drawn on its own (below); the rest of
+          // an alcove's rim is wall like the void.
+          const rim = walkable(ni, nj) && hidden[K(ni, nj)] !== hidden[k]
+          if (rim && isFalseWall(i, j, e.di, e.dj)) continue
+          if (!walkable(ni, nj) || rim) {
+            // Over open sky a gap runs out into the world: no wall on its outer
+            // edge, so the islands' walls stand as panels with sky between.
+            // (Nothing walks there: the void beyond is solid to bodies.)
+            if (t.clouds && t.pit[k] && !rim) continue
+            // A wall to the room's top, from the lowest floor at its foot.
+            const topY = wallTopOf(k)
+            const look = lookOf(k)
+            if (mine) face(b, k, ax, az, bx, bz, e.n, low, () => topY, 1, look?.low ?? cWallLow, look?.high ?? cWall)
+            // Its outside: seen from a lower room over its own walls, from
+            // across a gap, from a lift (playtest 2026-10-12).
+            if (mine && !rim) {
+              outerWall(b, ax, az, bx, bz, [-e.n[0], 0, -e.n[2]], t.clouds ? low - ISLAND_SLAB : Math.min(low, ground), topY,
+                outerEnd(walled, walkable, i, j, e.di, e.dj, ax, az), outerEnd(walled, walkable, i, j, e.di, e.dj, bx, bz),
+                look?.low ?? cWallLow, look?.high ?? cWall, !!t.clouds)
+            }
+            addCorner(ax, az, o, low, topY, alongX, c !== Cell.Corridor)
+            addCorner(bx, bz, o, low, topY, alongX, c !== Cell.Corridor)
+            const bands = Math.max(1, Math.ceil((topY - low) / BAND - 0.05))
+            if (mine) {
+              decor[o]!.push(xform(piece('capTop', () => paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim)), [mx, topY, mz], rotAlong))
+              if (snowy) decor[o]!.push(xform(piece('snowTop', () => paint(rbox(0.62, 0.26, CELL + 0.1, 0.45, 8, 4), '#f7fcff')), [mx, topY + 0.2, mz], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
+              // A trim line at every band joint: storeys you can count.
+              for (let m = 1; m < bands; m++) {
+                const yb = low + (topY - low) * m / bands
+                decor[o]!.push(xform(piece('band', () => paint(cap(0.1, CELL - 0.3, 8, 2), theme.pilaster)), [mx + e.n[0] * 0.08, yb, mz + e.n[2] * 0.08], rotAlong))
+              }
+            }
+            if (!t.pit[k]) {
+              const fy = t.floor[k]!
+              if (mine && !ramp) decor[o]!.push(xform(piece('baseboard', () => paint(baseboardGeo(), theme.wallLow)), [mx + e.n[0] * 0.06, fy + 0.14, mz + e.n[2] * 0.06], rotAlong))
+              if (busy.has(`${k}:${e.di},${e.dj}`) || propFaces.has(`${k}:${e.di},${e.dj}`)) {
+                // A secret's wall: kept bare for its button / hint (or a prop's).
+              } else if (c === Cell.Room && rng() < 0.45) {
+                if (mine) {
+                  const accent = look?.accent ?? theme.accent
+                  glows[o]!.push(xform(piece(`strip${accent}`, () => paint(cap(0.07, 1.1, 8, 2), accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
+                }
+              } else if (rng() < 0.25) {
+                // Over head height, both ends back in the wall (`wallPipe.ts`);
+                // never through a band's trim line.
+                const py = wallPipeY(fy, topY, rng(), ramp ? t.rise[k]! : 0)
+                if (mine) {
+                  let clear = py !== null
+                  for (let m = 1; clear && m < bands; m++) if (Math.abs(low + (topY - low) * m / bands - py!) < 0.3) clear = false
+                  if (clear) decor[o]!.push(...wallPipe(mx, mz, e.n, py!, alongX, theme.pipe, theme.pilaster))
+                }
+              }
+            }
+            continue
           }
-          addCorner(ax, az, o, low, topY, alongX, c !== Cell.Corridor)
-          addCorner(bx, bz, o, low, topY, alongX, c !== Cell.Corridor)
-          decor[o]!.push(xform(piece('capTop', () => paint(cap(0.2, CELL - 0.4, 10, 3), theme.trim)), [mx, topY, mz], rotAlong))
-          if (snowy) decor[o]!.push(xform(piece('snowTop', () => paint(rbox(0.62, 0.26, CELL + 0.1, 0.45, 8, 4), '#f7fcff')), [mx, topY + 0.2, mz], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
-          // A trim line at every band joint: storeys you can count.
-          const bands = Math.max(1, Math.ceil((topY - low) / BAND - 0.05))
-          for (let m = 1; m < bands; m++) {
-            const yb = low + (topY - low) * m / bands
-            decor[o]!.push(xform(piece('band', () => paint(cap(0.1, CELL - 0.3, 8, 2), theme.pilaster)), [mx + e.n[0] * 0.08, yb, mz + e.n[2] * 0.08], rotAlong))
+          if (!mine) continue
+          // Another walkable cell: a cliff face on the lower side (drawn by
+          // the lower cell), a striped lip on the upper side.
+          const nk = K(ni, nj)
+          const nPit = t.pit[nk]
+          const nRamp = t.ramp[nk]!
+          // The neighbour's top along the shared edge, as a function of s ∈ [0,1] from a to b.
+          const nTop = (s: number): number => {
+            if (nPit) return pitBottomOf(nk)
+            if (!nRamp) return t.floor[nk]!
+            // Point on the shared edge, in the neighbour's local (u, v).
+            const px = ax + (bx - ax) * s
+            const pz = az + (bz - az) * s
+            const u = Math.max(0, Math.min(1, px / CELL - ni))
+            const v = Math.max(0, Math.min(1, pz / CELL - nj))
+            // A ramp's side follows its steps; its ends are level.
+            const r = nRamp
+            const across = (r === Ramp.PX || r === Ramp.NX) ? alongX : !alongX
+            if (!across) return heightAt(nk, u, v)
+            const sUp = r === Ramp.PX ? u : r === Ramp.NX ? 1 - u : r === Ramp.PZ ? v : 1 - v
+            return tread(nk, Math.min(STEPS - 1, Math.floor(sUp * STEPS)))
           }
-          if (!t.pit[k]) {
+          const nMax = Math.max(nTop(0.001), nTop(0.5), nTop(0.999))
+          // Over open sky an island's edge is a slab, not a cliff down to the
+          // bottom: under it the gap shows sky (its underside is drawn below).
+          const faceLow = t.clouds && t.pit[k] && !nPit ? Math.max(low, Math.min(nTop(0.001), nTop(0.999)) - ISLAND_SLAB) : low
+          if (nMax - faceLow > 0.02) {
+            // Stepped profile along a ramp's side needs one piece per step.
+            const seg = nRamp && ((nRamp === Ramp.PX || nRamp === Ramp.NX) ? alongX : !alongX) ? STEPS : 1
+            face(b, k, ax, az, bx, bz, e.n, faceLow, nTop, seg)
+          }
+          // My lip: I am a real ledge over this neighbour (not a stair riser).
+          if (!t.pit[k] && !ramp) {
             const fy = t.floor[k]!
-            if (!ramp) decor[o]!.push(xform(piece('baseboard', () => paint(baseboardGeo(), theme.wallLow)), [mx + e.n[0] * 0.06, fy + 0.14, mz + e.n[2] * 0.06], rotAlong))
-            if (busy.has(`${k}:${e.di},${e.dj}`) || propFaces.has(`${k}:${e.di},${e.dj}`)) {
-              // A secret's wall: kept bare for its button / hint (or a prop's).
-            } else if (c === Cell.Room && rng() < 0.45) {
-              const accent = look?.accent ?? theme.accent
-              glows[o]!.push(xform(piece(`strip${accent}`, () => paint(cap(0.07, 1.1, 8, 2), accent)), [mx + e.n[0] * 0.12, fy + (ramp ? 3.6 : 2.95), mz + e.n[2] * 0.12], rotAlong))
-            } else if (rng() < 0.25) {
-              // Over head height, both ends back in the wall (`wallPipe.ts`);
-              // never through a band's trim line.
-              const py = wallPipeY(fy, topY, rng(), ramp ? t.rise[k]! : 0)
-              let clear = py !== null
-              for (let m = 1; clear && m < bands; m++) if (Math.abs(low + (topY - low) * m / bands - py!) < 0.3) clear = false
-              if (clear) decor[o]!.push(...wallPipe(mx, mz, e.n, py!, alongX, theme.pipe, theme.pilaster))
+            const nLow = nPit ? -Infinity : Math.min(nTop(0.001), nTop(0.999))
+            if (fy - nLow > 0.9 && !doorCells.has(k)) {
+              // Hazard stripes on the floor along the edge, then a trim cap.
+              const w = 0.3
+              const segs = 6
+              for (let q = 0; q < segs; q++) {
+                const s0 = q / segs
+                const s1 = (q + 1) / segs
+                const pax = ax + (bx - ax) * s0
+                const paz = az + (bz - az) * s0
+                const pbx = ax + (bx - ax) * s1
+                const pbz = az + (bz - az) * s1
+                // Inward = toward my cell = −(di, dj).
+                const ix = -e.di * w
+                const iz = -e.dj * w
+                const cl = q & 1 ? cHazDark : cHaz
+                // The stripes of a ledge's two edges cross in its corner square: one
+                // lies a hair higher than the other, never two faces in one plane (#201).
+                const y = fy + (alongX ? 0.012 : 0.024)
+                const p0: V3 = [pax, y, paz]
+                const p1: V3 = [pbx, y, pbz]
+                const p2: V3 = [pbx + ix, y, pbz + iz]
+                const p3: V3 = [pax + ix, y, paz + iz]
+                // Wind for an up normal: (p1 − p0) × (p3 − p0) must point +Y.
+                const cy = (p1[2] - p0[2]) * (p3[0] - p0[0]) - (p1[0] - p0[0]) * (p3[2] - p0[2])
+                if (cy > 0) b.quad(p0, p1, p2, p3, [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
+                else b.quad(p0, p3, p2, p1, [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
+              }
+              decor[o]!.push(xform(piece('lip', () => paint(cap(0.11, CELL - 0.25, 8, 2), theme.trim)), [mx - e.di * 0.02, fy + 0.02, mz - e.dj * 0.02], rotAlong))
+              // A drift of snow along the ledge, just inside the stripes.
+              if (snowy && !t.ice?.[k]) decor[o]!.push(xform(piece('snowLip', () => paint(rbox(0.5, 0.16, CELL - 0.5, 0.45, 8, 4), '#f7fcff')), [mx - e.di * 0.55, fy + 0.05, mz - e.dj * 0.55], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
             }
           }
-          continue
         }
-        // Another walkable cell: a cliff face on the lower side (drawn by
-        // the lower cell), a striped lip on the upper side.
-        const nk = K(ni, nj)
-        const nPit = t.pit[nk]
-        const nRamp = t.ramp[nk]!
-        // The neighbour's top along the shared edge, as a function of s ∈ [0,1] from a to b.
-        const nTop = (s: number): number => {
-          if (nPit) return pitBottomOf(nk)
-          if (!nRamp) return t.floor[nk]!
-          // Point on the shared edge, in the neighbour's local (u, v).
-          const px = ax + (bx - ax) * s
-          const pz = az + (bz - az) * s
-          const u = Math.max(0, Math.min(1, px / CELL - ni))
-          const v = Math.max(0, Math.min(1, pz / CELL - nj))
-          // A ramp's side follows its steps; its ends are level.
-          const r = nRamp
-          const across = (r === Ramp.PX || r === Ramp.NX) ? alongX : !alongX
-          if (!across) return heightAt(nk, u, v)
-          const sUp = r === Ramp.PX ? u : r === Ramp.NX ? 1 - u : r === Ramp.PZ ? v : 1 - v
-          return tread(nk, Math.min(STEPS - 1, Math.floor(sUp * STEPS)))
-        }
-        const nMax = Math.max(nTop(0.001), nTop(0.5), nTop(0.999))
-        // Over open sky an island's edge is a slab, not a cliff down to the
-        // bottom: under it the gap shows sky (its underside is drawn below).
-        const faceLow = t.clouds && t.pit[k] && !nPit ? Math.max(low, Math.min(nTop(0.001), nTop(0.999)) - ISLAND_SLAB) : low
-        if (nMax - faceLow > 0.02) {
-          // Stepped profile along a ramp's side needs one piece per step.
-          const seg = nRamp && ((nRamp === Ramp.PX || nRamp === Ramp.NX) ? alongX : !alongX) ? STEPS : 1
-          face(b, k, ax, az, bx, bz, e.n, faceLow, nTop, seg)
-        }
-        // My lip: I am a real ledge over this neighbour (not a stair riser).
-        if (!t.pit[k] && !ramp) {
-          const fy = t.floor[k]!
-          const nLow = nPit ? -Infinity : Math.min(nTop(0.001), nTop(0.999))
-          if (fy - nLow > 0.9 && !doorCells.has(k)) {
-            // Hazard stripes on the floor along the edge, then a trim cap.
-            const w = 0.3
-            const segs = 6
-            for (let q = 0; q < segs; q++) {
-              const s0 = q / segs
-              const s1 = (q + 1) / segs
-              const pax = ax + (bx - ax) * s0
-              const paz = az + (bz - az) * s0
-              const pbx = ax + (bx - ax) * s1
-              const pbz = az + (bz - az) * s1
-              // Inward = toward my cell = −(di, dj).
-              const ix = -e.di * w
-              const iz = -e.dj * w
-              const cl = q & 1 ? cHazDark : cHaz
-              // The stripes of a ledge's two edges cross in its corner square: one
-              // lies a hair higher than the other, never two faces in one plane (#201).
-              const y = fy + (alongX ? 0.012 : 0.024)
-              const p0: V3 = [pax, y, paz]
-              const p1: V3 = [pbx, y, pbz]
-              const p2: V3 = [pbx + ix, y, pbz + iz]
-              const p3: V3 = [pax + ix, y, paz + iz]
-              // Wind for an up normal: (p1 − p0) × (p3 − p0) must point +Y.
-              const cy = (p1[2] - p0[2]) * (p3[0] - p0[0]) - (p1[0] - p0[0]) * (p3[2] - p0[2])
-              if (cy > 0) b.quad(p0, p1, p2, p3, [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
-              else b.quad(p0, p3, p2, p1, [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
-            }
-            decor[o]!.push(xform(piece('lip', () => paint(cap(0.11, CELL - 0.25, 8, 2), theme.trim)), [mx - e.di * 0.02, fy + 0.02, mz - e.dj * 0.02], rotAlong))
-            // A drift of snow along the ledge, just inside the stripes.
-            if (snowy && !t.ice?.[k]) decor[o]!.push(xform(piece('snowLip', () => paint(rbox(0.5, 0.16, CELL - 0.5, 0.45, 8, 4), '#f7fcff')), [mx - e.di * 0.55, fy + 0.05, mz - e.dj * 0.55], alongX ? [0, Math.PI / 2, 0] : [0, 0, 0]))
-          }
+        if (mine) await slice()
+      }
+      onProgress((j + 1) / map.h * 0.6)
+    }
+
+    // Pilasters on every wall corner, foot to top — not on a corridor's
+    // straight joints (two runs, one direction, no room wall among them).
+    for (const { x, z, owner: o, lo, hi, axes, runs, room } of corners.values()) {
+      if (!keep(o) || (!room && runs >= 2 && axes !== 3)) continue
+      const h = hi - lo + 0.25
+      decor[o]!.push(xform(piece(`pil${Math.round(h * 4)}`, () => paint(rcyl(0.3, h, 0.12, 14), theme.pilaster)), [x, lo + h / 2, z]))
+      decor[o]!.push(xform(piece('pilasterCap', () => paint(sph(0.34, 14, 8), theme.trim)), [x, hi + 0.25, z]))
+    }
+    await slice()
+
+    // ── Set dressing: each prop into its room's decor and glow (#114) ──
+    // Each keeps its vertex runs in the merged meshes, so a prop shot to bits
+    // (#169) can be taken out of them (`LevelMeshes.breakDecor`).
+    const vertsOf = (gs: BufferGeometry[]): number => gs.reduce((a, g) => a + g.getAttribute('position').count, 0)
+    for (const [n, p] of dressing.props.entries()) {
+      // A wall prop's origin is on the wall's line: its own cell is its face's.
+      const o = owner[p.face ? Number(p.face.split(':')[0]) : K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))]!
+      if (o < 0 || !keep(o)) continue
+      const parts = decorParts(p.kind)
+      const t0 = vertsOf(decor[o]!)
+      const g0 = vertsOf(glows[o]!)
+      for (const g of parts.toon) decor[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
+      for (const g of parts.glow) glows[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
+      dressRuns[n] = { room: o, toon: [t0, vertsOf(decor[o]!) - t0], glow: [g0, vertsOf(glows[o]!) - g0] }
+    }
+    await slice()
+
+    // ── Cover pillars (`Builder.coverPillar`): a post on its cell's floor, a
+    // trim band, a footing sunk a hair into the floor (never flush with it) ──
+    for (const p of map.pillars) {
+      const k = K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      const y = t.floor[k]!
+      decor[o]!.push(xform(paint(rcyl(p.r, 3.2, 0.18, 14), theme.pilaster), [p.x, y + 1.6, p.z]))
+      decor[o]!.push(xform(paint(torus(p.r * 0.97, 0.1, 6, 14), theme.trim), [p.x, y + 2.7, p.z], [Math.PI / 2, 0, 0]))
+      decor[o]!.push(xform(paint(rbox(p.r * 2.3, 0.3, p.r * 2.3, 0.1, 4, 2), theme.trim), [p.x, y + 0.12, p.z]))
+      glows[o]!.push(xform(paint(sph(p.r * 0.45, 14, 8), theme.accent), [p.x, y + 3.25, p.z]))
+    }
+
+    // ── Ladders: two lit rails and rungs on the cliff face ──
+    for (const L of t.ladders) {
+      const k = K(L.i, L.j)
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      if (L.kick) {
+        const parts = kickShaftParts(L, theme)
+        decor[o]!.push(...parts.toon)
+        glows[o]!.push(...parts.glow)
+        continue
+      }
+      // The face line and the normal toward the foot.
+      const ex = L.di ? (L.di > 0 ? (L.i + 1) * CELL : L.i * CELL) : (L.i + 0.5) * CELL
+      const ez = L.dj ? (L.dj > 0 ? (L.j + 1) * CELL : L.j * CELL) : (L.j + 0.5) * CELL
+      const nx = -L.di
+      const nz = -L.dj
+      const ax = L.dj ? 1 : 0
+      const az = L.di ? 1 : 0
+      const off = 0.14
+      const h = L.y1 - L.y0 + 0.95
+      for (const s of [-0.48, 0.48]) {
+        const rx = ex + nx * off + ax * s
+        const rz = ez + nz * off + az * s
+        decor[o]!.push(xform(paint(rcyl(0.075, h, 0.03, 10), theme.pilaster), [rx, L.y0 + h / 2, rz]))
+        decor[o]!.push(xform(piece('railTop', () => paint(sph(0.11, 10, 6), theme.trim)), [rx, L.y0 + h, rz]))
+        glows[o]!.push(xform(paint(cap(0.035, h - 0.6, 6, 2), L.side ? '#8dff7a' : theme.accent), [rx + nx * 0.07, L.y0 + h / 2, rz + nz * 0.07]))
+      }
+      const rungs = Math.floor((L.y1 - L.y0 + 0.6) / 0.36)
+      for (let n = 1; n <= rungs; n++) {
+        const y = L.y0 + n * 0.36
+        decor[o]!.push(xform(piece('rung', () => paint(cap(0.045, 0.86, 8, 2), theme.trim)), [ex + nx * off, y, ez + nz * off], ax ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
+      }
+      await slice()
+    }
+
+    // ── Crusher gantries: posts up from the pit, a beam over the walkway ──
+    for (const cr of t.crushers) {
+      const k = K(cr.i, cr.j)
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      const cx = (cr.i + 0.5) * CELL
+      const cz = (cr.j + 0.5) * CELL
+      // Posts stand on the pit sides of the walkway: across the walk direction.
+      const walkX = walkable(cr.i + 1, cr.j) && !t.pit[K(cr.i + 1, cr.j)]
+      const sideX = walkX ? 0 : 1
+      const sideZ = walkX ? 1 : 0
+      const bot = pitBottomOf(k)
+      const top = cr.y + 5.4
+      for (const s of [-1, 1]) {
+        const px = cx + sideX * s * (CELL / 2 + 0.2)
+        const pz = cz + sideZ * s * (CELL / 2 + 0.2)
+        decor[o]!.push(xform(paint(rcyl(0.26, top - bot, 0.1, 12), theme.pilaster), [px, (top + bot) / 2, pz]))
+      }
+      decor[o]!.push(paintBy(
+        xform(rbox(sideX ? CELL + 1.1 : 0.7, 0.6, sideZ ? CELL + 1.1 : 0.7, 0.3), [cx, top, cz]),
+        (x, y, z) => (Math.floor((sideX ? x : z) * 2.2 + y) & 1 ? theme.hazard : theme.crateTrim)
+      ))
+      await slice()
+    }
+
+    // ── Rolling stairs: the hatch gantry over the top, the gutter at the foot ──
+    // One gantry per room and hatch height: the climb's lanes share a top;
+    // lanes that start on different steps (the Meltdown's barrels cross a
+    // stair run) get a gantry each at their own height.
+    const laneRooms = new Map<string, typeof t.lanes>()
+    for (const ln of t.lanes) {
+      const key = `${ln.room}:${t.floor[K(Math.floor(ln.x / CELL), Math.floor(ln.z / CELL))]}`
+      laneRooms.set(key, [...(laneRooms.get(key) ?? []), ln])
+    }
+    for (const lanes of laneRooms.values()) {
+      const first = lanes[0]!
+      const k = K(Math.floor(first.x / CELL), Math.floor(first.z / CELL))
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      const topY = t.floor[k]!
+      let lo = Infinity
+      let hi = -Infinity
+      for (const ln of lanes) { lo = Math.min(lo, first.dx ? ln.z : ln.x); hi = Math.max(hi, first.dx ? ln.z : ln.x) }
+      lo -= CELL / 2
+      hi += CELL / 2
+      const gx = first.x + first.dx * 0.2
+      const gz = first.z + first.dz * 0.2
+      const beamY = topY + 3
+      const across = first.dx !== 0
+      for (const s of [lo, hi]) {
+        const px = across ? gx : s
+        const pz = across ? s : gz
+        decor[o]!.push(xform(paint(rcyl(0.24, beamY - topY, 0.1, 12), theme.pilaster), [px, topY + (beamY - topY) / 2, pz]))
+      }
+      decor[o]!.push(paintBy(
+        xform(rbox(across ? 0.9 : hi - lo, 0.8, across ? hi - lo : 0.9, 0.3), [across ? gx : (lo + hi) / 2, beamY, across ? (lo + hi) / 2 : gz]),
+        (x, y, z) => (Math.floor((across ? z : x) * 2 + y) & 1 ? theme.hazard : theme.crateTrim)
+      ))
+      for (const ln of lanes) {
+        // A hatch ring under the beam over each lane.
+        decor[o]!.push(xform(piece('hatch', () => paint(torus(BALL_R + 0.12, 0.08, 6, 16), theme.crateTrim)), [ln.x, beamY - 0.42, ln.z], [Math.PI / 2, 0, 0]))
+        // The gutter across the foot: a dark slot with striped lips.
+        // Just past the foot of the stairs, on the landing.
+        const fx = ln.x + ln.dx * (ln.len + 0.5)
+        const fz = ln.z + ln.dz * (ln.len + 0.5)
+        const fk = K(Math.floor(fx / CELL), Math.floor(fz / CELL))
+        const fy = t.floor[fk]! + 0.013
+        const b = batches[o]!
+        const hw = CELL / 2
+        const gw = 0.45
+        const q = (x0: number, z0: number, x1: number, z1: number, cl: Color) =>
+          b.quad([x0, fy, z0], [x0, fy, z1], [x1, fy, z1], [x1, fy, z0], [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
+        if (across) {
+          q(fx - gw, ln.z - hw, fx + gw, ln.z + hw, cVoid)
+          q(fx - gw - 0.14, ln.z - hw, fx - gw, ln.z + hw, cHaz)
+          q(fx + gw, ln.z - hw, fx + gw + 0.14, ln.z + hw, cHaz)
+        } else {
+          q(ln.x - hw, fz - gw, ln.x + hw, fz + gw, cVoid)
+          q(ln.x - hw, fz - gw - 0.14, ln.x + hw, fz - gw, cHaz)
+          q(ln.x - hw, fz + gw, ln.x + hw, fz + gw + 0.14, cHaz)
         }
       }
       await slice()
     }
-    onProgress((j + 1) / map.h * 0.6)
-  }
 
-  // Pilasters on every wall corner, foot to top — not on a corridor's
-  // straight joints (two runs, one direction, no room wall among them).
-  for (const { x, z, owner: o, lo, hi, axes, runs, room } of corners.values()) {
-    if (!room && runs >= 2 && axes !== 3) continue
-    const h = hi - lo + 0.25
-    decor[o]!.push(xform(piece(`pil${Math.round(h * 4)}`, () => paint(rcyl(0.3, h, 0.12, 14), theme.pilaster)), [x, lo + h / 2, z]))
-    decor[o]!.push(xform(piece('pilasterCap', () => paint(sph(0.34, 14, 8), theme.trim)), [x, hi + 0.25, z]))
-  }
-  await slice()
+    // ── Lift guides: rails up a lift's shaft, rails under a shuttle's run ──
+    for (const lf of t.lifts) {
+      const k = K(Math.floor(lf.ax / CELL), Math.floor(lf.az / CELL))
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      const bot = pitBottomOf(k)
+      if (lf.kind === 'v') {
+        const top = Math.max(lf.ay, lf.by) + 1.2
+        for (const [sx, sz] of [[-1, -1], [1, 1]] as const) {
+          const px = lf.ax + sx * (lf.hw + 0.12)
+          const pz = lf.az + sz * (lf.hd + 0.12)
+          decor[o]!.push(xform(paint(rcyl(0.14, top - bot, 0.05, 10), theme.pipe), [px, (top + bot) / 2, pz]))
+          glows[o]!.push(xform(paint(sph(0.16, 10, 6), theme.accent), [px, top + 0.1, pz]))
+        }
+      } else {
+        const len = Math.hypot(lf.bx - lf.ax, lf.bz - lf.az) + lf.hw * 2
+        const alongX = Math.abs(lf.bx - lf.ax) > 0.1
+        const mx = (lf.ax + lf.bx) / 2
+        const mz = (lf.az + lf.bz) / 2
+        for (const s of [-0.8, 0.8]) {
+          decor[o]!.push(xform(paint(cap(0.1, len, 8, 2), theme.pipe), [mx + (alongX ? 0 : s), lf.ay - 0.75, mz + (alongX ? s : 0)], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
+        }
+      }
+    }
 
-  // ── Set dressing: each prop into its room's decor and glow (#114) ──
-  // Each keeps its vertex runs in the merged meshes, so a prop shot to bits
-  // (#169) can be taken out of them (`LevelMeshes.breakDecor`).
-  const vertsOf = (gs: BufferGeometry[]): number => gs.reduce((a, g) => a + g.getAttribute('position').count, 0)
-  const dressRuns: Array<{ room: number; toon: [number, number]; glow: [number, number] } | null> = []
-  for (const p of dressing.props) {
-    // A wall prop's origin is on the wall's line: its own cell is its face's.
-    const o = owner[p.face ? Number(p.face.split(':')[0]) : K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))]!
-    if (o < 0) { dressRuns.push(null); continue }
-    const parts = decorParts(p.kind)
-    const t0 = vertsOf(decor[o]!)
-    const g0 = vertsOf(glows[o]!)
-    for (const g of parts.toon) decor[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
-    for (const g of parts.glow) glows[o]!.push(xform(g, [p.x, p.y, p.z], [0, p.yaw, 0]))
-    dressRuns.push({ room: o, toon: [t0, vertsOf(decor[o]!) - t0], glow: [g0, vertsOf(glows[o]!) - g0] })
-  }
-  await slice()
-
-  // ── Cover pillars (`Builder.coverPillar`): a post on its cell's floor, a
-  // trim band, a footing sunk a hair into the floor (never flush with it) ──
-  for (const p of map.pillars) {
-    const k = K(Math.floor(p.x / CELL), Math.floor(p.z / CELL))
-    const o = owner[k]!
-    if (o < 0) continue
-    const y = t.floor[k]!
-    decor[o]!.push(xform(paint(rcyl(p.r, 3.2, 0.18, 14), theme.pilaster), [p.x, y + 1.6, p.z]))
-    decor[o]!.push(xform(paint(torus(p.r * 0.97, 0.1, 6, 14), theme.trim), [p.x, y + 2.7, p.z], [Math.PI / 2, 0, 0]))
-    decor[o]!.push(xform(paint(rbox(p.r * 2.3, 0.3, p.r * 2.3, 0.1, 4, 2), theme.trim), [p.x, y + 0.12, p.z]))
-    glows[o]!.push(xform(paint(sph(p.r * 0.45, 14, 8), theme.accent), [p.x, y + 3.25, p.z]))
-  }
-
-  // ── Ladders: two lit rails and rungs on the cliff face ──
-  for (const L of t.ladders) {
-    const k = K(L.i, L.j)
-    const o = owner[k]!
-    if (o < 0) continue
-    if (L.kick) {
-      const parts = kickShaftParts(L, theme)
+    // ── A shortcut's signpost: back to the challenge door it lets out past ──
+    for (const c of t.climbs ?? []) {
+      const sg = c.shortcut?.sign
+      if (!sg) continue
+      const k = K(Math.floor(sg.x / CELL), Math.floor(sg.z / CELL))
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      const parts = signPostParts(sg, t.floor[k]!, theme)
       decor[o]!.push(...parts.toon)
       glows[o]!.push(...parts.glow)
-      continue
     }
-    // The face line and the normal toward the foot.
-    const ex = L.di ? (L.di > 0 ? (L.i + 1) * CELL : L.i * CELL) : (L.i + 0.5) * CELL
-    const ez = L.dj ? (L.dj > 0 ? (L.j + 1) * CELL : L.j * CELL) : (L.j + 0.5) * CELL
-    const nx = -L.di
-    const nz = -L.dj
-    const ax = L.dj ? 1 : 0
-    const az = L.di ? 1 : 0
-    const off = 0.14
-    const h = L.y1 - L.y0 + 0.95
-    for (const s of [-0.48, 0.48]) {
-      const rx = ex + nx * off + ax * s
-      const rz = ez + nz * off + az * s
-      decor[o]!.push(xform(paint(rcyl(0.075, h, 0.03, 10), theme.pilaster), [rx, L.y0 + h / 2, rz]))
-      decor[o]!.push(xform(piece('railTop', () => paint(sph(0.11, 10, 6), theme.trim)), [rx, L.y0 + h, rz]))
-      glows[o]!.push(xform(paint(cap(0.035, h - 0.6, 6, 2), L.side ? '#8dff7a' : theme.accent), [rx + nx * 0.07, L.y0 + h / 2, rz + nz * 0.07]))
-    }
-    const rungs = Math.floor((L.y1 - L.y0 + 0.6) / 0.36)
-    for (let n = 1; n <= rungs; n++) {
-      const y = L.y0 + n * 0.36
-      decor[o]!.push(xform(piece('rung', () => paint(cap(0.045, 0.86, 8, 2), theme.trim)), [ex + nx * off, y, ez + nz * off], ax ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
+
+    // ── Reward ledges: a pad that glows under the prize ──
+    // (A borrowed-weapon capsule stands on an emitter plate of its own, in its
+    // weapon's colour: `models/weaponCapsule.ts`.)
+    for (const r of t.rewards) {
+      if (r.kind === 'weapon') continue
+      const k = K(Math.floor(r.x / CELL), Math.floor(r.z / CELL))
+      const o = owner[k]!
+      if (o < 0 || !keep(o)) continue
+      decor[o]!.push(xform(piece('rewardPad', () => paint(rcyl(0.7, 0.14, 0.06, 20), theme.crateTrim)), [r.x, r.y + 0.07, r.z]))
+      glows[o]!.push(xform(piece('rewardRing', () => paint(torus(0.62, 0.05, 6, 24), '#8dff7a')), [r.x, r.y + 0.15, r.z], [Math.PI / 2, 0, 0]))
     }
     await slice()
+    return { batches, decor, glows, lava }
   }
-
-  // ── Crusher gantries: posts up from the pit, a beam over the walkway ──
-  for (const cr of t.crushers) {
-    const k = K(cr.i, cr.j)
-    const o = owner[k]!
-    if (o < 0) continue
-    const cx = (cr.i + 0.5) * CELL
-    const cz = (cr.j + 0.5) * CELL
-    // Posts stand on the pit sides of the walkway: across the walk direction.
-    const walkX = walkable(cr.i + 1, cr.j) && !t.pit[K(cr.i + 1, cr.j)]
-    const sideX = walkX ? 0 : 1
-    const sideZ = walkX ? 1 : 0
-    const bot = pitBottomOf(k)
-    const top = cr.y + 5.4
-    for (const s of [-1, 1]) {
-      const px = cx + sideX * s * (CELL / 2 + 0.2)
-      const pz = cz + sideZ * s * (CELL / 2 + 0.2)
-      decor[o]!.push(xform(paint(rcyl(0.26, top - bot, 0.1, 12), theme.pilaster), [px, (top + bot) / 2, pz]))
-    }
-    decor[o]!.push(paintBy(
-      xform(rbox(sideX ? CELL + 1.1 : 0.7, 0.6, sideZ ? CELL + 1.1 : 0.7, 0.3), [cx, top, cz]),
-      (x, y, z) => (Math.floor((sideX ? x : z) * 2.2 + y) & 1 ? theme.hazard : theme.crateTrim)
-    ))
-    await slice()
-  }
-
-  // ── Rolling stairs: the hatch gantry over the top, the gutter at the foot ──
-  // One gantry per room and hatch height: the climb's lanes share a top;
-  // lanes that start on different steps (the Meltdown's barrels cross a
-  // stair run) get a gantry each at their own height.
-  const laneRooms = new Map<string, typeof t.lanes>()
-  for (const ln of t.lanes) {
-    const key = `${ln.room}:${t.floor[K(Math.floor(ln.x / CELL), Math.floor(ln.z / CELL))]}`
-    laneRooms.set(key, [...(laneRooms.get(key) ?? []), ln])
-  }
-  for (const lanes of laneRooms.values()) {
-    const first = lanes[0]!
-    const k = K(Math.floor(first.x / CELL), Math.floor(first.z / CELL))
-    const o = owner[k]!
-    if (o < 0) continue
-    const topY = t.floor[k]!
-    let lo = Infinity
-    let hi = -Infinity
-    for (const ln of lanes) { lo = Math.min(lo, first.dx ? ln.z : ln.x); hi = Math.max(hi, first.dx ? ln.z : ln.x) }
-    lo -= CELL / 2
-    hi += CELL / 2
-    const gx = first.x + first.dx * 0.2
-    const gz = first.z + first.dz * 0.2
-    const beamY = topY + 3
-    const across = first.dx !== 0
-    for (const s of [lo, hi]) {
-      const px = across ? gx : s
-      const pz = across ? s : gz
-      decor[o]!.push(xform(paint(rcyl(0.24, beamY - topY, 0.1, 12), theme.pilaster), [px, topY + (beamY - topY) / 2, pz]))
-    }
-    decor[o]!.push(paintBy(
-      xform(rbox(across ? 0.9 : hi - lo, 0.8, across ? hi - lo : 0.9, 0.3), [across ? gx : (lo + hi) / 2, beamY, across ? (lo + hi) / 2 : gz]),
-      (x, y, z) => (Math.floor((across ? z : x) * 2 + y) & 1 ? theme.hazard : theme.crateTrim)
-    ))
-    for (const ln of lanes) {
-      // A hatch ring under the beam over each lane.
-      decor[o]!.push(xform(piece('hatch', () => paint(torus(BALL_R + 0.12, 0.08, 6, 16), theme.crateTrim)), [ln.x, beamY - 0.42, ln.z], [Math.PI / 2, 0, 0]))
-      // The gutter across the foot: a dark slot with striped lips.
-      // Just past the foot of the stairs, on the landing.
-      const fx = ln.x + ln.dx * (ln.len + 0.5)
-      const fz = ln.z + ln.dz * (ln.len + 0.5)
-      const fk = K(Math.floor(fx / CELL), Math.floor(fz / CELL))
-      const fy = t.floor[fk]! + 0.013
-      const b = batches[o]!
-      const hw = CELL / 2
-      const gw = 0.45
-      const q = (x0: number, z0: number, x1: number, z1: number, cl: Color) =>
-        b.quad([x0, fy, z0], [x0, fy, z1], [x1, fy, z1], [x1, fy, z0], [0, 1, 0], PLAIN_UV, cl, cl, cl, cl)
-      if (across) {
-        q(fx - gw, ln.z - hw, fx + gw, ln.z + hw, cVoid)
-        q(fx - gw - 0.14, ln.z - hw, fx - gw, ln.z + hw, cHaz)
-        q(fx + gw, ln.z - hw, fx + gw + 0.14, ln.z + hw, cHaz)
-      } else {
-        q(ln.x - hw, fz - gw, ln.x + hw, fz + gw, cVoid)
-        q(ln.x - hw, fz - gw - 0.14, ln.x + hw, fz - gw, cHaz)
-        q(ln.x - hw, fz + gw, ln.x + hw, fz + gw + 0.14, cHaz)
-      }
-    }
-    await slice()
-  }
-
-  // ── Lift guides: rails up a lift's shaft, rails under a shuttle's run ──
-  for (const lf of t.lifts) {
-    const k = K(Math.floor(lf.ax / CELL), Math.floor(lf.az / CELL))
-    const o = owner[k]!
-    if (o < 0) continue
-    const bot = pitBottomOf(k)
-    if (lf.kind === 'v') {
-      const top = Math.max(lf.ay, lf.by) + 1.2
-      for (const [sx, sz] of [[-1, -1], [1, 1]] as const) {
-        const px = lf.ax + sx * (lf.hw + 0.12)
-        const pz = lf.az + sz * (lf.hd + 0.12)
-        decor[o]!.push(xform(paint(rcyl(0.14, top - bot, 0.05, 10), theme.pipe), [px, (top + bot) / 2, pz]))
-        glows[o]!.push(xform(paint(sph(0.16, 10, 6), theme.accent), [px, top + 0.1, pz]))
-      }
-    } else {
-      const len = Math.hypot(lf.bx - lf.ax, lf.bz - lf.az) + lf.hw * 2
-      const alongX = Math.abs(lf.bx - lf.ax) > 0.1
-      const mx = (lf.ax + lf.bx) / 2
-      const mz = (lf.az + lf.bz) / 2
-      for (const s of [-0.8, 0.8]) {
-        decor[o]!.push(xform(paint(cap(0.1, len, 8, 2), theme.pipe), [mx + (alongX ? 0 : s), lf.ay - 0.75, mz + (alongX ? s : 0)], alongX ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0]))
-      }
-    }
-  }
-
-  // ── A shortcut's signpost: back to the challenge door it lets out past ──
-  for (const c of t.climbs ?? []) {
-    const sg = c.shortcut?.sign
-    if (!sg) continue
-    const k = K(Math.floor(sg.x / CELL), Math.floor(sg.z / CELL))
-    const o = owner[k]!
-    if (o < 0) continue
-    const parts = signPostParts(sg, t.floor[k]!, theme)
-    decor[o]!.push(...parts.toon)
-    glows[o]!.push(...parts.glow)
-  }
-
-  // ── Reward ledges: a pad that glows under the prize ──
-  // (A borrowed-weapon capsule stands on an emitter plate of its own, in its
-  // weapon's colour: `models/weaponCapsule.ts`.)
-  for (const r of t.rewards) {
-    if (r.kind === 'weapon') continue
-    const k = K(Math.floor(r.x / CELL), Math.floor(r.z / CELL))
-    const o = owner[k]!
-    if (o < 0) continue
-    decor[o]!.push(xform(piece('rewardPad', () => paint(rcyl(0.7, 0.14, 0.06, 20), theme.crateTrim)), [r.x, r.y + 0.07, r.z]))
-    glows[o]!.push(xform(piece('rewardRing', () => paint(torus(0.62, 0.05, 6, 24), '#8dff7a')), [r.x, r.y + 0.15, r.z], [Math.PI / 2, 0, 0]))
-  }
-  await slice()
 
   // ── Secret false walls: a striped slab over the alcove's mouth, each its
   // own mesh so the run time can take it away ──
@@ -747,38 +779,48 @@ export const buildClimbLevel = async (
     decorGeo.push(null)
     glowGeo.push(null)
     const g = new Group()
-    const geo = batches[r]!.build()
-    if (geo) {
-      geo.computeBoundingSphere()
-      g.add(new Mesh(geo, floorMat))
-      const bs = geo.boundingSphere!
-      bounds.push({ x: bs.center.x, z: bs.center.z, r: bs.radius })
-    } else {
-      bounds.push({ x: 0, z: 0, r: 0 })
-    }
-    await slice()
-    if (decor[r]!.length) {
-      const dg = merge(decor[r]!)
-      dg.computeBoundingSphere()
-      decorGeo[r] = dg
-      g.add(new Mesh(dg, toonVC()))
-      const ol = new Mesh(dg, outlineMat(0.035))
-      ol.renderOrder = -1
-      g.add(ol)
-    }
-    await slice()
-    if (glows[r]!.length) {
-      const gg = merge(glows[r]!)
-      glowGeo[r] = gg
-      g.add(new Mesh(gg, glowVC()))
-    }
-    if (lava[r]!.length) g.add(new Mesh(merge(lava[r]!), lavaMaterial()))
-    secretWalls.forEach((w, n) => { if (secretOwner[n] === r) g.add(w) })
     rooms.push(g)
+    bounds.push({ x: 0, z: 0, r: 0 })
     root.add(g)
-    onProgress(0.65 + ((r + 1) / nRooms) * 0.35)
-    await slice()
   }
+  /** Put the rooms' built geometry into their groups. */
+  const assemble = async (parts: Parts, ids: readonly number[], slice: Slice, onProgress?: (f01: number) => void): Promise<void> => {
+    let n = 0
+    for (const r of ids) {
+      const g = rooms[r]!
+      const geo = parts.batches[r]!.build()
+      if (geo) {
+        geo.computeBoundingSphere()
+        g.add(new Mesh(geo, floorMat))
+        const bs = geo.boundingSphere!
+        bounds[r] = { x: bs.center.x, z: bs.center.z, r: bs.radius }
+      }
+      await slice()
+      if (parts.decor[r]!.length) {
+        const dg = merge(parts.decor[r]!)
+        dg.computeBoundingSphere()
+        decorGeo[r] = dg
+        g.add(new Mesh(dg, toonVC()))
+        const ol = new Mesh(dg, outlineMat(0.035))
+        ol.renderOrder = -1
+        g.add(ol)
+      }
+      await slice()
+      if (parts.glows[r]!.length) {
+        const gg = merge(parts.glows[r]!)
+        glowGeo[r] = gg
+        g.add(new Mesh(gg, glowVC()))
+      }
+      if (parts.lava[r]!.length) g.add(new Mesh(merge(parts.lava[r]!), lavaMaterial()))
+      secretWalls.forEach((w, k) => { if (secretOwner[k] === r) g.add(w) })
+      onProgress?.(++n / ids.length)
+      await slice()
+    }
+  }
+  // `hot`: build only these rooms now, the rest through `fill` (a staged build).
+  const first = hot ? [...hot].filter(r => r >= 0 && r < nRooms) : Array.from({ length: nRooms }, (_, r) => r)
+  const firstSet = new Set(first)
+  await assemble(await pass(o => firstSet.has(o), slice, onProgress), first, slice, (f) => onProgress(0.65 + f * 0.35))
   const frameMat = toonVC()
   const frameOutline = outlineMat(0.035)
   const doorFrames = frameParts.map(({ decor: parts, batch }, n) => {
@@ -795,6 +837,19 @@ export const buildClimbLevel = async (
     return g
   })
   const out: LevelMeshes = { root, rooms, sky: buildSky(theme), bounds, owner, doorFrames }
+  if (first.length < nRooms) {
+    const pending = new Set<number>()
+    for (let r = 0; r < nRooms; r++) if (!firstSet.has(r)) pending.add(r)
+    out.pending = pending
+    out.fill = async (ids, sl = noSlice) => {
+      const want = ids.filter(r => pending.has(r))
+      if (!want.length) return
+      // Claimed up front: a second call for the same rooms does nothing.
+      for (const r of want) pending.delete(r)
+      const set = new Set(want)
+      await assemble(await pass(o => set.has(o), sl, () => {}), want, sl)
+    }
+  }
   if (secretWalls.length) out.secretWalls = secretWalls
   out.breakDecor = (n: number): void => {
     const run = dressRuns[n]

@@ -398,7 +398,6 @@ export default {
     'title': 'FASİLƏ',
     'resume': 'Davam et',
     'exit': 'Oyundan çıx',
-    'exit': 'Oyundan çıx',
     'abandon': 'Missiyanı tərk et',
     'abandonAsk': 'Missiyadan çıxırsan? Uğursuz sayılacaq.',
     'abandonWon': 'İndi çıxırsan? Boss üzərində qələbən yenə sayılır.',

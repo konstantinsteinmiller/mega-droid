@@ -398,7 +398,6 @@ export default {
     'title': 'SZÜNET',
     'resume': 'Folytatás',
     'exit': 'Kilépés a játékból',
-    'exit': 'Kilépés a játékból',
     'abandon': 'Küldetés feladása',
     'abandonAsk': 'Kilépsz a küldetésből? Sikertelennek számít.',
     'abandonWon': 'Kilépsz most? A főellenség legyőzése így is számít.',

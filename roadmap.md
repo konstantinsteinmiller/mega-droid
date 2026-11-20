@@ -550,11 +550,32 @@ Wait for my "go" to start implementation, ask to review the decisions first.
 - [x] #202 In the challenge rooms, after gaining an item, show it like a chest opening, so the player understands what he received.
 - [x] #203 show a freeze vfx on the target hit by the freeze special weapon skill to make it have some real visual impact.
 - [x] #204 the 3d lab does not allow to open the pause/esc menu. fix it. There is also no way to exit full screen in MegaDroid (tested on Wavedash), -> add a button to close/exit the game in the pause menu, which also closes full screen if active.
-- [ ] #20
-- [ ] #20
-- [ ] #20
-- [ ] #20
-- [ ] #20
+- [ ] #205 replicate the button and UI design of the Chaos Machine game project. it has a futuristic look and should also fit the Mega Droid UI look.
+- [x] #206 analyse which part of the game takes so long to load on a cold load (I measured up to 22 seconds on CrazyGames QA stage) and which parts are not essential for the first 1 minute of gameplay. 
+- [x] #207 use a sonnet medium playtester subagent that knows all controls and how the levels are built. the playertester must find an optimal way to play through all level until the frozen master level boss is done. take the deterministic inputs needed to get there, which includes the shooting at obstacles and enemies and taking lifts etc and write a bot that can reproduce this deterministic level completion like the playtester. This playtester bot can be activated by typing "cmpnc" or by clicking/tapping the mute button 30 times within 30 seconds, which activates the bot and lets hims play the game depending on where the player is in the game already until the bot reaches the killing of the frozen master boss, this includes the lab areas to get to the next core masters level.
+- [ ] #208 enemies can jump and land behind a closed door, which is bad as it can lock the player into a room and no way to kill the locked out enemy that is needed to progress the level, if that happens and there is no enemy left in a room that has strict enemy kill requirements like the big guarddroid in the tutorial level, then open the next door to the next room and count the enemy as dead as he has no chance to get into the room back in with all doors locked and the player not being able to shoot him.
+- [ ] #209
+- [ ] #210
+- [ ] #211
+- [ ] #212
+- [ ] #213
+- [ ] #214
+- [ ] #215
+- [ ] #216
+- [ ] #217
+- [ ] #218
+- [ ] #219
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
+- [ ] #22
 
 - [ ] #SPEEDRUN Ask MegaMan speedrunners and streamers to play Mega Droid. Ask Mega man youtube players/reviewers.
 

@@ -244,8 +244,19 @@ const reservedFaces = (map: MapData): Set<string> => {
   return out
 }
 
-/** A level's set dressing plan (deterministic for its map and level). */
+const planCache = new WeakMap<MapData, Map<SectorId, DecorPlan>>()
+
+/** A level's set dressing plan (deterministic for its map and level). The
+ *  level's mesh and the mission both ask for it: the second one is a lookup. */
 export const planDecor = (map: MapData, sector: SectorId): DecorPlan => {
+  let bySector = planCache.get(map)
+  if (!bySector) planCache.set(map, (bySector = new Map()))
+  let plan = bySector.get(sector)
+  if (!plan) bySector.set(sector, (plan = planDecorUncached(map, sector)))
+  return plan
+}
+
+const planDecorUncached = (map: MapData, sector: SectorId): DecorPlan => {
   const t: Terrain | undefined = map.terrain
   if (!t) return { props: [], cranes: [] }
   // The Scrapyard's only terrain map is the tutorial (its jobs are the

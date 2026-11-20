@@ -42,6 +42,10 @@ export interface LevelMeshes {
   /** Take a set-dressing prop (by `planDecor(...).props` index) out of its
    *  room's meshes: it was shot to bits (#169). */
   breakDecor?: (n: number) => void
+  /** A staged build (`buildClimbLevel`'s `hot`): the rooms not built yet. */
+  pending?: Set<number>
+  /** Build these rooms' meshes into their (empty) groups, time-sliced. */
+  fill?: (rooms: readonly number[], slice?: Slice) => Promise<void>
 }
 
 export class QuadBatch {

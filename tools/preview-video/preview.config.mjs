@@ -46,6 +46,18 @@ export default {
       },
       scenarios: { success: 'preview-success', fail: 'preview-fail' }
     },
+    // The CrazyGames previews (pv-*): two boss-fight + platforming cuts, each a
+    // SUCCESS and a FAIL, recorded shot by shot (make-previews.mjs) per size.
+    // dpr 2 keeps the canvas at the full output size (dprCap() is 2).
+    pv: {
+      durationMs: 3_000,
+      quality: ['lossless'],
+      orientations: {
+        portrait: { width: 720, height: 1280, dpr: 2, isMobile: true, hasTouch: true },
+        landscape: { width: 1280, height: 720, dpr: 1.6, isMobile: false, hasTouch: false },
+        tall: { width: 1080, height: 1620, dpr: 2, isMobile: true, hasTouch: true }
+      }
+    },
     // One trailer shot. Its length is the shot's, passed as --duration by
     // make.mjs. 1920x1080 at dpr 2 is a 960x540 CSS desktop: `dprCap()` is 2
     // on a fine pointer, so the canvas is drawn at the full 1920x1080.
@@ -58,7 +70,7 @@ export default {
     }
   },
 
-  scenarios: ['trailer-shot'],
+  scenarios: ['trailer-shot', 'pv-shot'],
   fps: 30,
   outDir: 'preview-videos',
   capture: 'virtual',

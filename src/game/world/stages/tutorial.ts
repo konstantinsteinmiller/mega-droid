@@ -19,7 +19,7 @@ import { Builder, finish, YAW_PX, YAW_NX, YAW_PZ } from './builder'
  *   1 Salvage bay      a Hardhat, then the glowing crate (charge's second use)
  *   2 Shield hall      the Shield Trooper: block (and the perfect block)
  *   3 Crossing hall    a fighting room, no lesson (the gap lesson was cut):
- *                      a Hardhat, a mortar turret, a Guardroid
+ *                      a mortar turret, a Guardroid
  *   4 Store room       a chest: open it
  *   5 Stomper yard     the Stomper's red ring: slide out of it
  *   6 Drone room       two rotor drones: lock on and shoot (a playtest ask:
@@ -49,7 +49,7 @@ export const TUTORIAL_STEPS: string[][] = [
 ]
 /** Who stands in each walkthrough room (by its place on the path), where the
  *  lesson's own teacher is not enough: the fighting rooms after the lessons. */
-export const TUTORIAL_CAST: string[][] = [[], [], [], ['hardhat', 'turret', 'brute'], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
+export const TUTORIAL_CAST: string[][] = [[], [], [], ['turret', 'brute'], [], [], ['heli', 'heli'], ['roller', 'trooper'], ['golem'], []]
 
 /**
  * Every room its own look (#118): a wall colour, an accent and a wall prop it

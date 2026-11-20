@@ -398,7 +398,6 @@ export default {
     'title': 'EM PAUSA',
     'resume': 'Continuar',
     'exit': 'Sair do jogo',
-    'exit': 'Sair do jogo',
     'abandon': 'Abandonar missão',
     'abandonAsk': 'Sair da missão? Conta como falhada.',
     'abandonWon': 'Sair agora? A vitória sobre o chefe continua a contar.',

@@ -80,8 +80,32 @@ const direct = (): void => {
   }
 }
 
+/** A dev badge on the page (the bot has no UI of its own, and on a portal's QA
+ *  stage there is no console to read): what it is doing, for three seconds,
+ *  and a small tag while it plays. Dev overlay: not user-facing copy. */
+let badge: HTMLDivElement | null = null
+let badgeTimer: ReturnType<typeof setTimeout> | null = null
+const say = (text: string, hold = 3000): void => {
+  if (typeof document === 'undefined') return
+  if (!badge) {
+    badge = document.createElement('div')
+    badge.setAttribute('style', 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:99999;padding:4px 12px;border-radius:12px;background:rgba(10,14,30,.85);color:#7df;font:600 13px system-ui,sans-serif;pointer-events:none;letter-spacing:.04em')
+    document.body.appendChild(badge)
+  }
+  badge.textContent = text
+  badge.style.display = 'block'
+  if (badgeTimer) clearTimeout(badgeTimer)
+  if (hold > 0) badgeTimer = setTimeout(() => { if (badge) badge.style.display = botActive.value ? 'block' : 'none'; if (badge && botActive.value) badge.textContent = 'BOT' }, hold)
+}
+
 export const startBot = (): void => {
   if (botActive.value) return
+  if (profile.world.bosses.includes(BOT_LAST_BOSS)) {
+    // Nothing left to chase: say so (a silent no-op looks like a broken trigger).
+    console.warn('[bot] the Frost Master is already down on this save')
+    say('BOT: the Frost Master is already down on this save', 5000)
+    if (flow.screen !== 'mission') return
+  }
   markCheated()
   pilot = new Autopilot()
   pilot.echo = (s) => console.info(`[bot] ${s}`)
@@ -89,6 +113,7 @@ export const startBot = (): void => {
   botActive.value = true
   timer = setInterval(direct, 400)
   console.warn('[bot] on')
+  say('BOT ON (type cmpnc again to stop)')
 }
 
 export const stopBot = (why = 'off'): void => {
@@ -99,6 +124,8 @@ export const stopBot = (why = 'off'): void => {
   if (timer) clearInterval(timer)
   timer = null
   console.warn(`[bot] ${why}`)
+  say(`BOT OFF: ${why}`)
+  if (badge && !botActive.value) setTimeout(() => { if (badge && !botActive.value) badge.style.display = 'none' }, 3000)
 }
 
 export const toggleBot = (): void => (botActive.value ? stopBot() : startBot())

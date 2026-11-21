@@ -47,8 +47,12 @@ interface State {
   ringAt: number
   healthKey: string
   healthSince: number
+  /** Anti-hang: where he stood `ancAt` s ago, and the commit window (s) he walks on with no lookahead. */
+  anc: { x: number; z: number; y: number }
+  ancAt: number
+  commitUntil: number
 }
-const newState = (): State => ({ path: null, pathAt: -9, charge0: -1, lastShot: -9, spent: new Map(), ignore: new Map(), lastLog: -9, hp: 0, dodged: new Map(), ringAt: -9, healthKey: '', healthSince: 0 })
+const newState = (): State => ({ path: null, pathAt: -9, charge0: -1, lastShot: -9, spent: new Map(), ignore: new Map(), lastLog: -9, hp: 0, dodged: new Map(), ringAt: -9, healthKey: '', healthSince: 0, anc: { x: 0, z: 0, y: 0 }, ancAt: -99, commitUntil: -1 })
 
 /** The room the boss waits in: the walk's goal. */
 const bossGoal = (c: Ctx): { x: number; z: number } => {
@@ -114,7 +118,26 @@ function* tick(c: Ctx, st: State): Task {
   st.hp = m.combat.hp
   if (m.time - st.lastLog > 4) { st.lastLog = m.time; c.log(`at (${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)}) hp ${m.combat.hp.toFixed(0)} foes: ${c.foes({ awake: true }).filter(e => c.dist(e.x, e.z) < 16).slice(0, 4).map(e => `${e.kind} ${Math.round(e.hp)}/${Math.round(e.maxHp)} g${e.guard.toFixed(1)}`).join(', ')}`) }
   if (dodgeRed(c, st)) { st.charge0 = -1; yield; return }
+  // Anti-hang: ten seconds on the same few metres, nothing on him and nothing
+  // to shoot, is a wait that will never end (a timed hazard the lookahead
+  // keeps calling unsafe). Then he commits: a short window of walking on with
+  // only a glance ahead, as a player who has waited long enough would.
+  if (m.time - st.ancAt > 10) {
+    const stalled = Math.hypot(p.x - st.anc.x, p.z - st.anc.z) < 1.5 && Math.abs(p.y - st.anc.y) < 1
+    if (stalled && st.ancAt > 0 && !c.foes({ awake: true }).some(e => !e.boss && c.dist(e.x, e.z) < 9)) {
+      st.commitUntil = m.time + 6
+      c.log(`STALL at (${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)}): committing`)
+    }
+    st.anc = { x: p.x, z: p.z, y: p.y }
+    st.ancAt = m.time
+  }
   const way = wayTo(c, st)
+  if (m.time < st.commitUntil && !way.hop) {
+    if (Math.hypot(way.wx - p.x, way.wz - p.z) > 0.3) p.yaw = Math.atan2(-(way.wx - p.x), -(way.wz - p.z))
+    move(c, st, way.wx, way.wz, false, 0.25)
+    yield
+    return
+  }
   const threats = meleeThreats(c)
   if (c.reflexBusy) {
     // Blocking: back away from what is on him, or out of a jet; never stand in a pile.

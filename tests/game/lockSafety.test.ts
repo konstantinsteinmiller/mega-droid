@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { generateStage } from '@/game/world/stages'
 import { roomCenter } from '@/game/world/levelGen'
-import { EXIT_STALL, exitStalled, strayGuards } from '@/game/sim/lockSafety'
+import { EXIT_STALL, STRANDED_AFTER, StrandedClock, exitStalled, strayGuards } from '@/game/sim/lockSafety'
 import type { Enemy } from '@/game/sim/world'
 
 describe('the beam-out room never locks', () => {
@@ -36,5 +36,20 @@ describe('a held room never waits on a machine outside it', () => {
     const out = mk(bx, bz)
     expect(strayGuards(map, [out], [{ room: a!.id }], b!.id)).toEqual([])
     expect(strayGuards(map, [out], [], a!.id)).toEqual([])
+  })
+})
+
+describe('a machine cut off outside a held room is written off (#208)', () => {
+  const a = { id: 1 } as Enemy
+  const b = { id: 2 } as Enemy
+  it('only after it has been cut off for STRANDED_AFTER, and starts over if it can reach again', () => {
+    const c = new StrandedClock()
+    expect(c.update(0, [a, b])).toEqual([])
+    expect(c.update(STRANDED_AFTER - 0.1, [a, b])).toEqual([])
+    // b found a way again: its clock restarts; a has been cut off long enough.
+    expect(c.update(STRANDED_AFTER, [a])).toEqual([a])
+    expect(c.update(STRANDED_AFTER + 1, [a, b])).toEqual([a])
+    expect(c.update(STRANDED_AFTER + 1.1, [])).toEqual([])
+    expect(c.update(STRANDED_AFTER + 2, [a])).toEqual([])
   })
 })

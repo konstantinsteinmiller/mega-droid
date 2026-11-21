@@ -1,8 +1,8 @@
 {
   "source": "https://mega-adventure-leaderboard.rodent-race.workers.dev",
-  "fetchedAt": 1795195015211,
-  "updatedAt": 1795195015093,
-  "total": 302,
+  "fetchedAt": 1795200731534,
+  "updatedAt": 1795200731413,
+  "total": 303,
   "entries": [
     {
       "rank": 1,
@@ -1059,6 +1059,10 @@
       1
     ],
     [
+      992,
+      1
+    ],
+    [
       991,
       1
     ],
@@ -1081,6 +1085,10 @@
     [
       927,
       2
+    ],
+    [
+      925,
+      1
     ],
     [
       923,
@@ -1196,10 +1204,6 @@
     ],
     [
       720,
-      1
-    ],
-    [
-      716,
       1
     ],
     [

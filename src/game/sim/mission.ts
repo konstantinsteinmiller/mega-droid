@@ -34,7 +34,7 @@ import { consumeEdges } from '../engine/input'
 import { generateMap, type MapData, type SecretSpec, CELL, WALL_H, pitKindOf } from '../world/levelGen'
 import { createSlicer, type Slice } from '../engine/slicer'
 import { botHook } from '../bot/hook'
-import { createNav, moveCircle, isSolidAt, hasLineOfSight, floorAt, type Nav, type Slab } from '../world/nav'
+import { createNav, moveCircle, isSolidAt, hasLineOfSight, floorAt, findPath, type Nav, type Slab } from '../world/nav'
 import { buildLevel, buildWallPlug, doorFramePos, SKY_FAR, type LevelMeshes } from '../world/levelMesh'
 import { roomSightSteps } from '../world/roomSight'
 import { THEMES, type Theme, type SectorId } from '../world/themes'
@@ -67,7 +67,7 @@ import { setMusicTrack } from '@/use/useSound'
 import { Coach, type CoachContext, type HintView } from './coach'
 import { LessonDirector, roomAt, type LessonTick } from './lessons'
 import { Walkthrough, planWalkthrough, doorwayOf, helperSpot, roomHoloSpot, type HoloSpot, type WalkChest, type WalkPlan, type GelPlan, type WalkNeed, STRAGGLE_AFTER } from './walkthrough'
-import { exitStalled, strayGuards } from './lockSafety'
+import { StrandedClock, exitStalled, strayGuards } from './lockSafety'
 import { DoorPrompt, IDLE_RANGE, CLOSE_RANGE, type DoorTick } from './doorPrompt'
 import { TrapSystem, planTraps, type TrapTick } from './traps'
 import { buildTrapView } from '../models/traps'
@@ -1105,6 +1105,10 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.setupDressing()
     performance.mark('mb:dressing')
 
+    // Whatever placed Flux (the pad, a resume, a checkpoint, a retry), the
+    // rooms around where he REALLY stands are built before the loading
+    // screen goes: nobody lands in a level that is not there yet.
+    await this.ensureLanding(slice)
     await slice()
     // Viewmodel
     this.vm = buildViewmodel(heroColors())
@@ -1280,6 +1284,20 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     return hot
   }
 
+  /** Build every still-pending room within two doors of where the player
+   *  stands now (and of the pad), before the loading screen is released. */
+  private async ensureLanding(slice: Slice): Promise<void> {
+    const pend = this.level.pending
+    if (!pend || !pend.size || !this.level.fill) return
+    const p = this.player
+    const need = new Set<number>()
+    for (const r of [this.roomAtXZ(p.x, p.z), this.roomAtXZ(this.map.start.x, this.map.start.z)]) {
+      if (r < 0) continue
+      this.roomHops(r).forEach((h, id) => { if (h <= 2 && pend.has(id)) need.add(id) })
+    }
+    if (need.size) await this.level.fill([...need], slice)
+  }
+
   private disposed = false
   private warmRt: WebGLRenderTarget | null = null
   private warmCam: PerspectiveCamera | null = null
@@ -1293,11 +1311,13 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
    */
   private stepBackfill(): void {
     const pend = this.level.pending
-    if (!pend || !pend.size || this.backfillBusy || this.disposed || hud.phase !== 'play') return
+    if (!pend || !pend.size || this.backfillBusy || this.disposed) return
     const hops = this.roomHops(this.roomAtXZ(this.player.x, this.player.z))
     let best = -1
     for (const r of pend) if (best < 0 || (hops[r] ?? Infinity) < (hops[best] ?? Infinity)) best = r
     if (best < 0) return
+    // Out of play (a beam-in, a scene) only the rooms next to him wait for no one.
+    if (hud.phase !== 'play' && (hops[best] ?? Infinity) > 1) return
     this.backfillBusy = true
     const room = best
     void (async () => {
@@ -3479,6 +3499,7 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
     this.sky?.update(dt, lt.playing)
     this.training.update(this.time, lt.playing)
     this.updateDoorPrompt(dt, lt.playing)
+    this.stepStranded()
     this.stepGuards()
     // Traps run on the mission's dt (hit-stop slows them) and park in a fight
     // that reaches them (`fightNear`).
@@ -4045,6 +4066,36 @@ export class Mission implements GameMode, CombatHost, ObjectiveHost, ExitHost, T
   /** Since when a guard room's machine has stood outside it (-1: none). */
   private guardStrayFrom = -1
   private guardWaived = new WeakSet<Enemy>()
+
+  private strandedClock = new StrandedClock()
+  private strandedAt = 0
+
+  /**
+   * A machine that leapt (or was knocked) out of a held room over a shut door
+   * can never come back in, and Flux can never reach it: a room that waits on
+   * its death would stay shut for good. Once it has stood outside, with no
+   * walk to Flux, for STRANDED_AFTER, it counts as down (quietly: no loot, no
+   * XP) and the room's door goes on to open as if it had fallen.
+   */
+  private stepStranded(): void {
+    if (this.time < this.strandedAt) return
+    this.strandedAt = this.time + 0.5
+    const held: Array<{ room: number }> = this.guardDoors.map(g => ({ room: g.room }))
+    const gate = this.walk?.active ? this.walk.current : null
+    if (gate) held.push({ room: gate.room })
+    const p = this.player
+    const here = roomAt(this.map, p.x, p.z)
+    const strays = held.length ? strayGuards(this.map, this.enemies, held, here) : []
+    const cut = strays.filter(e => !findPath(this.nav, e.x, e.z, p.x, p.z, 1400, 0, false))
+    for (const e of this.strandedClock.update(this.time, cut)) {
+      e.hp = 0
+      e.state = 'dead'
+      e.deathT = 10
+      e.root.visible = false
+      e.shadow.visible = false
+      this.fx.riseRing(e.x, 0.1, e.z, PAL.glowCyan, 0.8, 18)
+    }
+  }
 
   private stepGuards(): void {
     // A held room never waits on a machine that left it (a flyer through the

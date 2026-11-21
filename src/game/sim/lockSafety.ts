@@ -38,3 +38,31 @@ export const strayGuards = (
   }
   return out
 }
+
+/** A machine of a held room that stands outside it with every door between
+ *  them shut (no walk to Flux) this long (s) is written off. */
+export const STRANDED_AFTER = 4
+
+/**
+ * Hold-times for machines outside a held room that cannot reach Flux (a Stomper
+ * that leapt over a shut door: the room can never be cleared, nor the machine
+ * ever get back in). `update` takes this step's stranded machines and returns
+ * those that have been so for STRANDED_AFTER; one that is reachable again
+ * (or gone) starts over.
+ */
+export class StrandedClock {
+  private since = new Map<Enemy, number>()
+
+  update(now: number, stranded: readonly Enemy[]): Enemy[] {
+    const out: Enemy[] = []
+    for (const e of [...this.since.keys()]) if (!stranded.includes(e)) this.since.delete(e)
+    for (const e of stranded) {
+      const t0 = this.since.get(e)
+      if (t0 === undefined) this.since.set(e, now)
+      else if (now - t0 >= STRANDED_AFTER) out.push(e)
+    }
+    return out
+  }
+
+  clear(): void { this.since.clear() }
+}

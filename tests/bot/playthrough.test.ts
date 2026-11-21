@@ -63,7 +63,7 @@ const ctx: unknown = new Proxy(function () {}, {
 const level = process.env.BOT_LEVEL
 const seconds = Number(process.env.BOT_SECONDS ?? 600)
 const trace = !!process.env.BOT_TRACE
-const STEP = 1 / 60
+const STEP = Number(process.env.BOT_DT ?? 1 / 60)
 
 const seedRandom = (seed: number): void => {
   let a = seed >>> 0
